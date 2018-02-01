@@ -1,7 +1,7 @@
 '''
 Created on Jan 31, 2018
 
-@author: Brian
+@author: Pat
 '''
 
 from keras.models import Sequential
