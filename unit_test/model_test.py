@@ -37,7 +37,6 @@ For given stock and time period, get daily adj_close values and calculate 'momen
 Frame the data as a supervised learning problem and normalize the input. Build LSTM model. 
 '''
 
-#Visualization
 import matplotlib.pyplot as plt
 
 def get_data(start,end,symbol):
