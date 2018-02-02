@@ -149,7 +149,7 @@ def save_enhanced_historical_data(df_data):
     return
 
 def save_symbol_historical_data(ticker, df_data):
-    output_file = get_devdata_dir() + "\\AI Projects\\Quandl\\symbols\\" + ticker + ".csv"
+    output_file = get_devdata_dir() + "\\symbols\\" + ticker + ".csv"
     print ("Saving %s to file %s" % (ticker, output_file))
     #print ("Save_Symbol_Historical_Data() data head:\n", df_data.head(3))
     #print ("Save_Symbol_Historical_Data() data tail:\n", df_data.tail(3))
@@ -158,7 +158,7 @@ def save_symbol_historical_data(ticker, df_data):
     return
 
 def read_symbol_historical_data(ticker):
-    input_file = get_devdata_dir() + "\\AI Projects\\Quandl\\symbols\\" + ticker + ".csv"
+    input_file = get_devdata_dir() + "\\symbols\\" + ticker + ".csv"
     #print ("Reading %s file %s" % (ticker, input_file))
     df_data = pd.read_csv(input_file)
     df_data = df_data.set_index('date')

@@ -8,7 +8,7 @@ import time
 import warnings
 import numpy as np
 import matplotlib.pyplot as plt
-from quandl_library import fetch_timeseries_data, get_devdata_dir
+from quandl_library import fetch_timeseries_data, get_devdata_dir, get_ini_data
 
 from numpy import newaxis
 from keras.layers.core import Dense, Activation
@@ -20,20 +20,14 @@ from keras.utils import print_summary
 warnings.filterwarnings("ignore")
 
 def get_lstm_config():
-    config_file = get_devdata_dir() + "\\AI Projects\\keras.ini"
-    config = configparser.ConfigParser()
-    config.read(config_file)
-    config.sections()
-    lstm_config_data = config['LSTM']
-    #print ("LSTM config data: %s" % lstm_config_data)
+    lstm_config_data = get_ini_data['LSTM']
+    print ("LSTM config data: %s" % lstm_config_data)
     
     return lstm_config_data
 
 def save_model(model):
-    root_dir = get_devdata_dir() + "\\AI Projects"
-    lstm_config_data = get_lstm_config()
-    filedir = root_dir + "\\" + lstm_config_data['dir']
-    filename = filedir + "\\" + lstm_config_data['model']
+    lstm_config_data = get_ini_data("LSTM")
+    filename = lstm_config_data['dir'] + "\\" + lstm_config_data['model']
     print ("Saving model to: %s" % filename)
     
     model.save(filename)
@@ -41,10 +35,8 @@ def save_model(model):
     return
 
 def load_model():
-    root_dir = get_devdata_dir() + "\\AI Projects"
-    lstm_config_data = get_lstm_config()
-    filedir = root_dir + "\\" + lstm_config_data['dir']
-    filename = filedir + "\\" + lstm_config_data['model']
+    lstm_config_data = get_ini_data("LSTM")
+    filename = lstm_config_data['dir'] + "\\" + lstm_config_data['model']
     print ("Loading model from: %s" % filename)
     
     model = load_model(filename)
@@ -52,10 +44,8 @@ def load_model():
     return (model)
 
 def save_model_plot(model):
-    root_dir = get_devdata_dir() + "\\AI Projects"
-    lstm_config_data = get_lstm_config()
-    filedir = root_dir + "\\" + lstm_config_data['dir']
-    filename = filedir + "\\" + lstm_config_data['plot']
+    lstm_config_data = get_ini_data("LSTM")
+    filename = lstm_config_data['dir'] + "\\" + lstm_config_data['plot']
     print ("Plotting model to: %s" % filename)
 
     plot_model(model, to_file=filename)
