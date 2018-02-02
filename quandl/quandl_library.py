@@ -128,6 +128,7 @@ def quandl_data_last_updated():
 
     return(date)
 
+
 def save_last_quandl_update():
     # Save in a file the date of the last download from Quandl
     date = datetime.datetime.today() # date and time
