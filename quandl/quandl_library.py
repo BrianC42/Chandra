@@ -105,7 +105,7 @@ def fetch_timeseries_data(field_of_interest,symbol,source):
 
 def get_list_of_tickers():
     print ("Getting the list of tickers")
-    import_file = get_devdata_dir() + "\\AI Projects\\Quandl\\TickerMetadata.csv"
+    import_file = get_devdata_dir() + "\\TickerMetadata.csv"
     df_tickers = pd.read_csv(import_file)
     df_tickers = df_tickers.set_index('ticker')
     #print (df_tickers)
@@ -113,14 +113,14 @@ def get_list_of_tickers():
     return(df_tickers)
 
 def save_list_of_tickers(df_tickers):
-    output_file = get_devdata_dir() + "\\AI Projects\\Quandl\\TickerMetadata.csv"
+    output_file = get_devdata_dir() + "\\TickerMetadata.csv"
     #print ("Creating a file containing the list of the tickers processed ...", output_file, df_tickers)
     df_tickers.to_csv(output_file)
     
     return
 
 def quandl_data_last_updated():
-    input_file = get_devdata_dir() + "\\AI Projects\\Quandl\\Quandl_update.csv"
+    input_file = get_devdata_dir() + "\\Quandl_update.csv"
     f = open(input_file, 'r')
     date = f.read()
     f.closed
@@ -132,7 +132,7 @@ def save_last_quandl_update():
     # Save in a file the date of the last download from Quandl
     date = datetime.datetime.today() # date and time
     #print("Saving %s as the date the data from Quandl was last added to the local data set" % date)
-    output_file = get_devdata_dir() + "\\AI Projects\\Quandl\\Quandl_update.csv"
+    output_file = get_devdata_dir() + "\\Quandl_update.csv"
     f = open(output_file, 'w')
     f.write(date.date().isoformat())
     f.closed
@@ -140,7 +140,7 @@ def save_last_quandl_update():
     return
 
 def save_enhanced_historical_data(df_data):
-    output_file = get_devdata_dir() + "\\AI Projects\\Quandl\\Enhanced historical data.csv"
+    output_file = get_devdata_dir() + "\\Enhanced historical data.csv"
     print ("Creating enhanced historical data...", output_file)
     print ("Save_enhanced_historical_data() df_quandl head:\n", df_data.head(3))
     print ("Save_enhanced_historical_data() df_quandl tail:\n", df_data.tail(3))
@@ -173,7 +173,7 @@ def read_historical_data(recs=none):
             'volume', 'ex-dividend', 'adj_low', 'ticker', 'adj_open', 'adj_close', 
             'high', 'adj_volume', 'low', 'date', 'close', 'open', 'adj_high', 'split_ratio'
     '''
-    import_file = get_devdata_dir() + "\\AI Projects\\Quandl\\Quandl stock data.csv"
+    import_file = get_devdata_dir() + "\\Quandl stock data.csv"
     #print ("Processing historical data...", import_file)
     if recs == none:
         df_data = pd.read_csv(import_file)
