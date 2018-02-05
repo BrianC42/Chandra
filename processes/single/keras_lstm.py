@@ -3,6 +3,8 @@ Created on Jan 31, 2018
 
 @author: Brian
 '''
+import logging
+
 from lstm import build_model
 from lstm import predict_sequences_multiple
 from lstm import plot_results_multiple
@@ -10,6 +12,7 @@ from lstm import prepare_ts_lstm
 from lstm import train_lstm
 from lstm import evaluate_model
 from lstm import save_model
+from quandl_library import get_ini_data
 
 if __name__ == '__main__':
     print ("Good morning Dr. Chandra. I am ready for my first lesson.")
@@ -19,6 +22,20 @@ if __name__ == '__main__':
     #print( "Symbol selected " + usersymbolselection)
     ANALASIS_SAMPLE_LENGTH = 50
     FORECAST_LENGTH = 10
+
+    lstm_config_data = get_ini_data("LSTM")
+    log_file = lstm_config_data['dir'] + "\\lstm_log.txt"
+    logging.basicConfig(filename=log_file, level=logging.DEBUG, format='%(asctime)s: %(levelname)s: %(message)s')
+    
+    logger = logging.getLogger('lstm_logger')
+    log_fmt = logging.Formatter('%(asctime)s - %(name)s - %levelname - %(messages)s')
+    
+    logger.debug('debug - lowest level message to log file')
+    logger.info('info')
+    logger.warn('warning')
+    logger.error('error')
+    logger.critical('critical')
+    logger.debug("Logging to %s", log_file)
 
     ''' ................... Step 1 Build Model ............................
     =================================================================== '''

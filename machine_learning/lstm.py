@@ -3,32 +3,35 @@ Created on Jan 31, 2018
 
 @author: Brian
 '''
-import configparser
 import time
 import warnings
+import logging
 import numpy as np
 import matplotlib.pyplot as plt
-from quandl_library import fetch_timeseries_data, get_devdata_dir, get_ini_data
-
 from numpy import newaxis
-from keras.layers.core import Dense, Activation
+from keras.layers.core import Dense
+from keras.layers.core import Activation
+from keras.layers.core import Dropout
 from keras.layers.recurrent import LSTM
 from keras.models import Sequential
 from keras.utils import plot_model
 from keras.utils import print_summary
+from quandl_library import fetch_timeseries_data
+from quandl_library import get_ini_data
 
 warnings.filterwarnings("ignore")
 
 def get_lstm_config():
     lstm_config_data = get_ini_data['LSTM']
-    print ("LSTM config data: %s" % lstm_config_data)
+    #print ("LSTM config data: %s" % lstm_config_data)
+    logging.debug ("LSTM config data: %s", lstm_config_data)
     
     return lstm_config_data
 
 def save_model(model):
     lstm_config_data = get_ini_data("LSTM")
     filename = lstm_config_data['dir'] + "\\" + lstm_config_data['model']
-    print ("Saving model to: %s" % filename)
+    logging.debug ("Saving model to: %s", filename)
     
     model.save(filename)
 
@@ -37,7 +40,7 @@ def save_model(model):
 def load_model():
     lstm_config_data = get_ini_data("LSTM")
     filename = lstm_config_data['dir'] + "\\" + lstm_config_data['model']
-    print ("Loading model from: %s" % filename)
+    logging.debug ("Loading model from: %s", filename)
     
     model = load_model(filename)
     
@@ -46,14 +49,15 @@ def load_model():
 def save_model_plot(model):
     lstm_config_data = get_ini_data("LSTM")
     filename = lstm_config_data['dir'] + "\\" + lstm_config_data['plot']
-    print ("Plotting model to: %s" % filename)
+    #print ("Plotting model to: %s" % filename)
+    logging.debug ("Plotting model to: %s", filename)
 
     plot_model(model, to_file=filename)
 
     return
 
 def prepare_ts_lstm(ticker, seq_len, source):
-    print ("prepare_ts_lstm: ticker: %s, sequence length: %s" % (ticker, seq_len))
+    logging.info ("prepare_ts_lstm: ticker: %s, sequence length: %s", ticker, seq_len)
     
     '''
     Prepare time series data for presentation to an LSTM model from the Keras library
@@ -62,17 +66,17 @@ def prepare_ts_lstm(ticker, seq_len, source):
     Returns training (90%) and test (10) sets
     '''
     ts_data = fetch_timeseries_data(["adj_close","adj_volume"], ticker, source)
-    print ("prepare_ts_lstm: data shape: %s, sequence length: %s" % (ts_data.shape, seq_len))
-    #print ("adj_open %s ... %s" % (ts_data[ :3, 0], ts_data[ -3: , 0]))
-    #print ("adj_volume %s ... %s" % (ts_data[ :3, 1], ts_data[ -3:, 1]))
+    logging.info ("prepare_ts_lstm: data shape: %s, sequence length: %s", ts_data.shape, seq_len)
+    logging.debug ("adj_open %s ... %s", ts_data[ :3, 0], ts_data[ -3: , 0])
+    logging.debug ("adj_volume %s ... %s", ts_data[ :3, 1], ts_data[ -3:, 1])
     
     ts_windows = normalise_windows(ts_data, seq_len, norm=[0,1])
     ts_windows = np.array(ts_windows)
   
-    print ("ts_windows has %s type and is of shape %s" % (type(ts_windows), ts_windows.shape))
+    logging.debug ("ts_windows has %s type and is of shape %s", type(ts_windows), ts_windows.shape)
         
-    #print ("Normalized ts_windows length: %s\nts_windows[0]\n%s\nts_windows[1]\n%s\nts_windows[%s]\n%s" \
-    #      % (len(ts_windows), ts_windows[0], ts_windows[1], len(ts_windows)-1, ts_windows[len(ts_windows)-1]))
+    logging.debug ("Normalized ts_windows length: %s\nts_windows[0]\n%s\nts_windows[1]\n%s\nts_windows[%s]\n%s", \
+                   len(ts_windows), ts_windows[0], ts_windows[1], len(ts_windows)-1, ts_windows[len(ts_windows)-1])
   
     row = round(0.9 * ts_windows.shape[0])
     train = ts_windows[:int(row), :]
@@ -80,9 +84,9 @@ def prepare_ts_lstm(ticker, seq_len, source):
     x_train = train[:, :-1, 0]    
     y_train = train[:,  -1, 0]
     
-    #print ('x_train slice ', x_train)
-    #print ('train slice ', train[:, 1])
-    #print ('y_train slice ', y_train)
+    logging.debug ('x_train slice %s', x_train)
+    logging.debug ('train slice %s', train[:, 1])
+    logging.debug ('y_train slice %s', y_train)
     
     x_test = ts_windows[int(row):, :-1, 0]
     y_test = ts_windows[int(row):,  -1, 0]
@@ -90,8 +94,8 @@ def prepare_ts_lstm(ticker, seq_len, source):
     x_train = np.reshape(x_train, (x_train.shape[0], x_train.shape[1], 1))
     x_test  = np.reshape(x_test,  (x_test.shape[0],  x_test.shape[1],  1))  
     
-    print ("training shapes - x: %s - y: %s" % (x_train.shape, y_train.shape))
-    print ("testing  shapes - x: %s - y: %s" % (x_test.shape,  y_test.shape))
+    logging.debug ("training shapes - x: %s - y: %s", x_train.shape, y_train.shape)
+    logging.debug ("testing  shapes - x: %s - y: %s", x_test.shape,  y_test.shape)
 
     return [x_train, y_train, x_test, y_test]
 
@@ -128,10 +132,10 @@ def normalise_windows(raw_ts_data, seq_len, norm=0):
     dim_ts_data = seq_len
     dim_data_point = len(raw_ts_data[0])
     normalised_data = np.zeros( (dim_ts_seq, dim_ts_data, dim_data_point) )
-    #print ("dimensions: raw data %s, windows %s, data points %s" % (dim_ts_seq, dim_ts_data, dim_data_point))
-    #print ("initialized normalised_data with dimensions [%s][%s][%s]" % (len(normalised_data), len(normalised_data[0]), len(normalised_data[0][0])))
-    print ("normalise %s time series data of length %s, with %s data points, normalizations: %s" % 
-           (dim_ts_seq, dim_ts_data, dim_data_point, norm))
+    logging.debug ("dimensions: raw data %s, windows %s, data points %s", dim_ts_seq, dim_ts_data, dim_data_point)
+    logging.debug ("initialized normalised_data with dimensions [%s][%s][%s]", len(normalised_data), len(normalised_data[0]), len(normalised_data[0][0]))
+    logging.info  ("normalise %s time series data of length %s, with %s data points, normalizations: %s", \
+                   dim_ts_seq, dim_ts_data, dim_data_point, norm)
     
     for ts_seq in range(dim_ts_seq):
         for ts_data_ndx in range(dim_ts_data):
@@ -147,7 +151,7 @@ def normalise_windows(raw_ts_data, seq_len, norm=0):
                         raw_ts_data[ts_seq + ts_data_ndx][data_point] / \
                         max(raw_ts_data[ts_seq:ts_seq+seq_len, 1])
                 else:
-                    #print ("normalization method %s is not implemented" % norm[data_point])
+                    logging.warning ("normalization method %s is not implemented", norm[data_point])
                     normalised_data[ts_seq][ts_data_ndx][data_point] = 2.0
                     pass
                     
@@ -157,7 +161,7 @@ def normalise_windows(raw_ts_data, seq_len, norm=0):
     return normalised_data
 
 def build_model(sample_length=50, data_points=1):
-    print ("Building model")
+    logging.info ("Building model")
     '''
     Sequential model
         Attributes
@@ -245,7 +249,7 @@ def build_model(sample_length=50, data_points=1):
         Locally-connected layer types
             LocallyConnected1D
             LocallyConnected2D
-        Recurrent layer types
+        Recurrent layer types - RNN is the base class for recurrent layers
             RNN(
                 cell, 
                 return_sequences=False, 
@@ -254,7 +258,6 @@ def build_model(sample_length=50, data_points=1):
                 stateful=False, 
                 unroll=False
                 )
-                Base class for recurrent layers
                 cell: A RNN cell instance. A RNN cell is a class that has:
                     a call(input_at_t, states_at_t) method, returning (output_at_t, states_at_t_plus_1). 
                         The call method of the cell can also take the optional argument constants, see section 
@@ -348,25 +351,25 @@ def build_model(sample_length=50, data_points=1):
         softmax
         elu
         selu
-        softplus
-        softsign
-        relu - Rectified Linear Unit - output = input if >0 otherwise 0
-        tanh - Limit output to the range -1 <= output <= +1
-        sigmoid - limit output to the range 0 <= output <= +1
+        softplus - 
+        softsign - 
+        relu     - Rectified Linear Unit - output = input if >0 otherwise 0
+        tanh     - Limit output to the range -1 <= output <= +1
+        sigmoid  - limit output to the range 0 <= output <= +1
         hard_sigmoid
         linear
     '''
     model.add(LSTM      (name="input_layer", activation='tanh', input_dim=data_points, 
                          output_dim=sample_length, 
-                         return_sequences=True, dropout=0.2))
-    #model.add(Dropout   (0.2))
+                         return_sequences=True))
+    model.add(Dropout   (0.2, name="dropout_1_20"))
     model.add(LSTM      (sample_length*2, 
                          name="hidden_layer_1", activation='tanh', 
-                         return_sequences=False, dropout=0.2))
-    #model.add(Dropout   (0.2))
+                         return_sequences=False))
+    model.add(Dropout   (0.2, name="dropout_2_20"))
     model.add(Dense     (name="Output_layer", output_dim=1))
     model.add(Activation("linear"))
-    
+
     start = time.time()
     '''
     compile
@@ -404,7 +407,7 @@ def build_model(sample_length=50, data_points=1):
         spares_top_k_categorical_accuracy
     '''
     model.compile(loss="mse", optimizer="rmsprop", metrics=['accuracy'])
-    print ("Time to compile: ", time.time() - start)
+    logging.info ("Time to compile: %s", time.time() - start)
     
     # 2 visualizations of the model
     save_model_plot(model)
@@ -413,8 +416,8 @@ def build_model(sample_length=50, data_points=1):
     return model
 
 def train_lstm(model, x_train, y_train):
-    print ("Fitting model using training data: %s x and %s y" % \
-           (len(x_train), len(y_train)))
+    logging.info ("Fitting model using training data: %s x and %s y", \
+                  len(x_train), len(y_train))
     '''
     fit(self, 
         x=None,
@@ -491,8 +494,8 @@ def predict_sequences_multiple(model, data, series_length, prediction_len):
     prediction_seqs = []
     ts_ndx = int(len(data)/prediction_len)
     #print ("predict_sequences_multiple")
-    print ("predict_sequences_multiple: \ndata shape: %s (number of time series, series length, data points)\nwindow_size: %s, prediction_length: %s making %s predictions (%s/%s) one every %s days" % 
-           (data.shape, series_length, prediction_len, ts_ndx, len(data), prediction_len, prediction_len))
+    logging.info ("predict_sequences_multiple: \ndata shape: %s (number of time series, series length, data points)\nwindow_size: %s, prediction_length: %s making %s predictions (%s/%s) one every %s days",  \
+                  data.shape, series_length, prediction_len, ts_ndx, len(data), prediction_len, prediction_len)
     
     for i in range(ts_ndx):
         #Step through time series and make predictions over data from non-overlapping times
@@ -510,8 +513,8 @@ def predict_sequences_multiple(model, data, series_length, prediction_len):
             curr_frame = np.insert(curr_frame, series_length-1, predicted[-1], axis=0)
             # Step forward through the data one time interval
             curr_frame = curr_frame[1:]
-            #print ("for window %s, predicted len = %s\n%s\n, curr_frame len = %s\n%s" % \
-            #       (i, len(predicted), predicted, len(curr_frame), curr_frame))
+            logging.debug ("for window %s, predicted len = %s\n%s\n, curr_frame len = %s\n%s", \
+                          i, len(predicted), predicted, len(curr_frame), curr_frame)
             
         prediction_seqs.append(predicted)
         
@@ -524,7 +527,7 @@ def plot_results_multiple(predicted_data, true_data, prediction_len):
     On screen plot of actual data and multiple sets of predicted data
     '''
     #print ('plot_results_multiple')
-    print ("plot_results_multiple: %s predictions of length %s, based on %s time series" % (len(predicted_data), prediction_len, len(true_data)))
+    logging.info ("plot_results_multiple: %s predictions of length %s, based on %s time series", len(predicted_data), prediction_len, len(true_data))
 
     fig = plt.figure(facecolor='white')
     ax = fig.add_subplot(111)
