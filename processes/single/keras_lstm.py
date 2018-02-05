@@ -24,18 +24,13 @@ if __name__ == '__main__':
     FORECAST_LENGTH = 10
 
     lstm_config_data = get_ini_data("LSTM")
-    log_file = lstm_config_data['dir'] + "\\lstm_log.txt"
+    log_file = lstm_config_data['log']
     logging.basicConfig(filename=log_file, level=logging.DEBUG, format='%(asctime)s: %(levelname)s: %(message)s')
-    
+    print ("Logging to", log_file)
     logger = logging.getLogger('lstm_logger')
     log_fmt = logging.Formatter('%(asctime)s - %(name)s - %levelname - %(messages)s')
     
-    logger.debug('debug - lowest level message to log file')
-    logger.info('info')
-    logger.warn('warning')
-    logger.error('error')
-    logger.critical('critical')
-    logger.debug("Logging to %s", log_file)
+    logger.info('Keras LSTM model for stock market prediction')
 
     ''' ................... Step 1 Build Model ............................
     =================================================================== '''

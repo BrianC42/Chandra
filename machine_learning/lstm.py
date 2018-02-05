@@ -23,12 +23,11 @@ warnings.filterwarnings("ignore")
 
 def get_lstm_config():
     lstm_config_data = get_ini_data['LSTM']
-    #print ("LSTM config data: %s" % lstm_config_data)
-    logging.debug ("LSTM config data: %s", lstm_config_data)
     
     return lstm_config_data
 
 def save_model(model):
+    logging.info('save_model')
     lstm_config_data = get_ini_data("LSTM")
     filename = lstm_config_data['dir'] + "\\" + lstm_config_data['model']
     logging.debug ("Saving model to: %s", filename)
@@ -38,6 +37,7 @@ def save_model(model):
     return
 
 def load_model():
+    logging.info('load_model')
     lstm_config_data = get_ini_data("LSTM")
     filename = lstm_config_data['dir'] + "\\" + lstm_config_data['model']
     logging.debug ("Loading model from: %s", filename)
@@ -47,9 +47,9 @@ def load_model():
     return (model)
 
 def save_model_plot(model):
+    logging.info('save_model_plot')
     lstm_config_data = get_ini_data("LSTM")
     filename = lstm_config_data['dir'] + "\\" + lstm_config_data['plot']
-    #print ("Plotting model to: %s" % filename)
     logging.debug ("Plotting model to: %s", filename)
 
     plot_model(model, to_file=filename)
@@ -72,9 +72,7 @@ def prepare_ts_lstm(ticker, seq_len, source):
     
     ts_windows = normalise_windows(ts_data, seq_len, norm=[0,1])
     ts_windows = np.array(ts_windows)
-  
     logging.debug ("ts_windows has %s type and is of shape %s", type(ts_windows), ts_windows.shape)
-        
     logging.debug ("Normalized ts_windows length: %s\nts_windows[0]\n%s\nts_windows[1]\n%s\nts_windows[%s]\n%s", \
                    len(ts_windows), ts_windows[0], ts_windows[1], len(ts_windows)-1, ts_windows[len(ts_windows)-1])
   
@@ -83,23 +81,21 @@ def prepare_ts_lstm(ticker, seq_len, source):
     np.random.shuffle(train)
     x_train = train[:, :-1, 0]    
     y_train = train[:,  -1, 0]
-    
     logging.debug ('x_train slice %s', x_train)
     logging.debug ('train slice %s', train[:, 1])
     logging.debug ('y_train slice %s', y_train)
     
     x_test = ts_windows[int(row):, :-1, 0]
     y_test = ts_windows[int(row):,  -1, 0]
-
     x_train = np.reshape(x_train, (x_train.shape[0], x_train.shape[1], 1))
     x_test  = np.reshape(x_test,  (x_test.shape[0],  x_test.shape[1],  1))  
-    
     logging.debug ("training shapes - x: %s - y: %s", x_train.shape, y_train.shape)
     logging.debug ("testing  shapes - x: %s - y: %s", x_test.shape,  y_test.shape)
 
     return [x_train, y_train, x_test, y_test]
 
 def normalise_windows(raw_ts_data, seq_len, norm=0):
+    logging.info('normalise_windows')
     '''
     create Numpy array : raw_ts_data
     Divide the time series data into a number of series, each of length seq_len
@@ -127,7 +123,7 @@ def normalise_windows(raw_ts_data, seq_len, norm=0):
         normalize the values to the percentage of the maximum value in the series
         range 0 to 1
     '''
-    #print ("Raw data\n%s\n1st data point: %s, 2nd data point: %s" % (raw_ts_data, raw_ts_data[0][0], raw_ts_data[0][1]))
+    logging.debug ("Raw data\n%s\n1st data point: %s, 2nd data point: %s", raw_ts_data, raw_ts_data[0][0], raw_ts_data[0][1])
     dim_ts_seq = len(raw_ts_data)-(seq_len)
     dim_ts_data = seq_len
     dim_data_point = len(raw_ts_data[0])
@@ -155,13 +151,13 @@ def normalise_windows(raw_ts_data, seq_len, norm=0):
                     normalised_data[ts_seq][ts_data_ndx][data_point] = 2.0
                     pass
                     
-    #print ("ts_seq %s, ts_data_ndx %s, data_point %s" % (ts_seq, ts_data_ndx, data_point))
-    #print ("Normalized data\n%s\n1st data point: %s, 2nd data point: %s" % (normalised_data, normalised_data[0][0], normalised_data[0][1]))
+    logging.debug ("ts_seq %s, ts_data_ndx %s, data_point %s", ts_seq, ts_data_ndx, data_point)
+    logging.debug ("Normalized data\n%s\n1st data point: %s, 2nd data point: %s", normalised_data, normalised_data[0][0], normalised_data[0][1])
 
     return normalised_data
 
 def build_model(sample_length=50, data_points=1):
-    logging.info ("Building model")
+    logging.info ("build_model: Building model")
     '''
     Sequential model
         Attributes
@@ -370,7 +366,6 @@ def build_model(sample_length=50, data_points=1):
     model.add(Dense     (name="Output_layer", output_dim=1))
     model.add(Activation("linear"))
 
-    start = time.time()
     '''
     compile
     loss
@@ -406,6 +401,7 @@ def build_model(sample_length=50, data_points=1):
         top_k_categorical_accuracy
         spares_top_k_categorical_accuracy
     '''
+    start = time.time()
     model.compile(loss="mse", optimizer="rmsprop", metrics=['accuracy'])
     logging.info ("Time to compile: %s", time.time() - start)
     
@@ -416,7 +412,7 @@ def build_model(sample_length=50, data_points=1):
     return model
 
 def train_lstm(model, x_train, y_train):
-    logging.info ("Fitting model using training data: %s x and %s y", \
+    logging.info ("train_lstm: Fitting model using training data: %s x and %s y", \
                   len(x_train), len(y_train))
     '''
     fit(self, 
@@ -481,6 +477,7 @@ def train_lstm(model, x_train, y_train):
     return
 
 def evaluate_model(model, x_data, y_data):
+    logging.info('evaluate_model')
     score = model.evaluate(x=x_data, y=y_data, verbose=0)
     print ("Test loss: ", score[0])
     print ("Test accuracy: ", score[1])
@@ -488,6 +485,7 @@ def evaluate_model(model, x_data, y_data):
     return
 
 def predict_sequences_multiple(model, data, series_length, prediction_len):
+    logging.info('info')
     '''
     Use a trained model to forecast future behavior
     '''   
@@ -513,9 +511,10 @@ def predict_sequences_multiple(model, data, series_length, prediction_len):
             curr_frame = np.insert(curr_frame, series_length-1, predicted[-1], axis=0)
             # Step forward through the data one time interval
             curr_frame = curr_frame[1:]
+            '''
             logging.debug ("for window %s, predicted len = %s\n%s\n, curr_frame len = %s\n%s", \
                           i, len(predicted), predicted, len(curr_frame), curr_frame)
-            
+            '''
         prediction_seqs.append(predicted)
         
     #print ("%s predictions of length %s" % (len(prediction_seqs), len(prediction_seqs[0])))
@@ -523,12 +522,10 @@ def predict_sequences_multiple(model, data, series_length, prediction_len):
     return prediction_seqs
 
 def plot_results_multiple(predicted_data, true_data, prediction_len):
+    logging.info ("plot_results_multiple: %s predictions of length %s, based on %s time series", len(predicted_data), prediction_len, len(true_data))
     '''
     On screen plot of actual data and multiple sets of predicted data
     '''
-    #print ('plot_results_multiple')
-    logging.info ("plot_results_multiple: %s predictions of length %s, based on %s time series", len(predicted_data), prediction_len, len(true_data))
-
     fig = plt.figure(facecolor='white')
     ax = fig.add_subplot(111)
     ax.plot(true_data, label='actual % change')

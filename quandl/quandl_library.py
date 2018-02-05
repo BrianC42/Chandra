@@ -7,10 +7,12 @@ import os
 import datetime
 import configparser
 import quandl
+import logging
 import pandas as pd
 from numpy.distutils.fcompiler import none
 
 def get_devdata_dir():
+    logging.info('get_devdata_dir')
     devdata = get_ini_data('DEVDATA')
     devdata_dir = devdata['dir']
     return devdata_dir
@@ -24,17 +26,20 @@ def get_ini_data(csection):
     return ini_data
 
 def get_quandl_key():
+    logging.info('get_quandl_key')
     quandl_data = get_ini_data("QUANDL")
     quandl.ApiConfig.api_key = quandl_data['key']
     
     return (quandl)
 
 def ticker_status_dict():
+    logging.info('ticker_status_dict')
     StatusDict = dict(inactive=-1, unknown=0, active=1)
     
     return(StatusDict)
 
 def quandl_data_dict():
+    logging.info('quandl_data_dict')
     QColsDict = dict({'ticker' : 1, \
                 'date' : 2, \
                 'open' : 3, \
@@ -53,6 +58,7 @@ def quandl_data_dict():
     return(QColsDict)
 
 def update_eod_data():
+    logging.info('update_eod_data')
     '''
     https://www.quandl.com/api/v3/datatables/WIKI/PRICES/delta.json?api_key=1wWyDnk64NgsEtxwg1Lb
     
@@ -81,11 +87,12 @@ def update_eod_data():
                                paginate=True, \
                                qopts={'columns':{field_of_interest}})
     '''
-    #print ("New data\n%s\n%s\nhas a shape %s" % (df_data.head(2), df_data.tail(2),df_data.shape))
+    logging.debug ("New data\n%s\n%s\nhas a shape %s", df_data.head(2), df_data.tail(2),df_data.shape)
 
     return(df_data)
 
 def fetch_timeseries_data(field_of_interest,symbol,source):  
+    logging.info('fetch_timeseries_data')
     if source == "remote":
         quandl_data = get_ini_data("QUANDL")
         quandl.ApiConfig.api_key = quandl_data['key']
@@ -96,43 +103,46 @@ def fetch_timeseries_data(field_of_interest,symbol,source):
         '''
         df_data = read_symbol_historical_data(symbol)
     data = df_data[field_of_interest].values
-    #print ("Time series for %s, field(s) of interest: %s, time series has %s data points:\n%s ... %s" % 
-    #       (symbol, field_of_interest, len(data), data[:3], data[-3:]))
-    print ("Time series for %s, field(s) of interest: %s, time series has %s data points" % 
-           (symbol, field_of_interest, len(data)))
+    logging.debug ("Time series for %s, field(s) of interest: %s, time series has %s data points:\n%s ... %s", \
+                   symbol, field_of_interest, len(data), data[:3], data[-3:])
+    logging.info ("Time series for %s, field(s) of interest: %s, time series has %s data points", \
+                  symbol, field_of_interest, len(data))
     
     return (data)
 
 def get_list_of_tickers():
-    print ("Getting the list of tickers")
+    logging.info('get_list_of_tickers')
     import_file = get_devdata_dir() + "\\TickerMetadata.csv"
     df_tickers = pd.read_csv(import_file)
     df_tickers = df_tickers.set_index('ticker')
-    #print (df_tickers)
+    logging.debug ("Tickers", df_tickers)
     
     return(df_tickers)
 
 def save_list_of_tickers(df_tickers):
+    logging.info('save_list_of_tickers')
     output_file = get_devdata_dir() + "\\TickerMetadata.csv"
-    #print ("Creating a file containing the list of the tickers processed ...", output_file, df_tickers)
+    logging.debug ("Creating a file containing the list of the tickers processed ...", output_file, df_tickers)
     df_tickers.to_csv(output_file)
     
     return
 
 def quandl_data_last_updated():
+    logging.info('quandl_data_last_updated')
     input_file = get_devdata_dir() + "\\Quandl_update.csv"
     f = open(input_file, 'r')
     date = f.read()
     f.closed
-    #print("Quandl data last updated %s" % date)
+    logging.debug ("Quandl data last updated %s", date)
 
     return(date)
 
 
 def save_last_quandl_update():
+    logging.info('save_last_quandl_update')
     # Save in a file the date of the last download from Quandl
     date = datetime.datetime.today() # date and time
-    #print("Saving %s as the date the data from Quandl was last added to the local data set" % date)
+    logging.debug ("Saving %s as the date the data from Quandl was last added to the local data set", date)
     output_file = get_devdata_dir() + "\\Quandl_update.csv"
     f = open(output_file, 'w')
     f.write(date.date().isoformat())
@@ -141,33 +151,37 @@ def save_last_quandl_update():
     return
 
 def save_enhanced_historical_data(df_data):
+    logging.info('save_enhanced_historical_data')
     output_file = get_devdata_dir() + "\\Enhanced historical data.csv"
-    print ("Creating enhanced historical data...", output_file)
-    print ("Save_enhanced_historical_data() df_quandl head:\n", df_data.head(3))
-    print ("Save_enhanced_historical_data() df_quandl tail:\n", df_data.tail(3))
+    logging.debug  ("Creating enhanced historical data...", output_file)
+    logging.debug  ("Save_enhanced_historical_data() df_quandl head:\n", df_data.head(3))
+    logging.debug  ("Save_enhanced_historical_data() df_quandl tail:\n", df_data.tail(3))
     df_data.to_csv(output_file)
     
     return
 
 def save_symbol_historical_data(ticker, df_data):
+    logging.info('save_symbol_historical_data')
     output_file = get_devdata_dir() + "\\symbols\\" + ticker + ".csv"
     print ("Saving %s to file %s" % (ticker, output_file))
-    #print ("Save_Symbol_Historical_Data() data head:\n", df_data.head(3))
-    #print ("Save_Symbol_Historical_Data() data tail:\n", df_data.tail(3))
+    logging.debug ("Save_Symbol_Historical_Data() data head:\n", df_data.head(3))
+    logging.debug ("Save_Symbol_Historical_Data() data tail:\n", df_data.tail(3))
     df_data.to_csv(output_file)
     
     return
 
 def read_symbol_historical_data(ticker):
+    logging.info('read_symbol_historical_data')
     input_file = get_devdata_dir() + "\\symbols\\" + ticker + ".csv"
-    #print ("Reading %s file %s" % (ticker, input_file))
+    logging.debug ("Reading %s file %s", ticker, input_file)
     df_data = pd.read_csv(input_file)
     df_data = df_data.set_index('date')
-    #print ("Read_Symbol_Historical_Data(): \n%s\n%s " % (df_data.head(1), df_data.tail(1)))
+    logging.debug ("Read_Symbol_Historical_Data(): \n%s\n%s ", df_data.head(1), df_data.tail(1))
     
     return (df_data)
 
 def read_historical_data(recs=none):  
+    logging.info('read_historical_data')
     '''
     Open and process source data file
         Data fields in Quandl file are
@@ -180,10 +194,11 @@ def read_historical_data(recs=none):
         df_data = pd.read_csv(import_file)
     else:
         df_data = pd.read_csv(import_file, nrows=recs)
-    #print ("Historical data starts: \n\t", df_data.head(5))
-    #print ("Historical data row 2 - ticker is:", df_data.loc[2,"ticker"])
-    #print ("Historical data tail: \n\t", df_data.tail(2))
-    #print ("historical data processed...", df_data.shape)
+
+    logging.debug ("Historical data starts: \n\t", df_data.head(5))
+    logging.debug ("Historical data row 2 - ticker is:", df_data.loc[2,"ticker"])
+    logging.debug ("Historical data tail: \n\t", df_data.tail(2))
+    logging.debug ("historical data processed...", df_data.shape)
 
     return (df_data)
 
