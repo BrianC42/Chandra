@@ -22,10 +22,7 @@ if __name__ == '__main__':
     np_windows_array = np.array(ts_windows)
     
     print("np_windows_array type",type(np_windows_array))
-  
     print("ts_windows has shape",np_windows_array.shape)
-    
-    
     print("ts_windows data",np_windows_array)
     
     row = round(0.9 * ts_windows.shape[0])

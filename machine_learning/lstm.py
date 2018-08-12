@@ -7,6 +7,7 @@ import time
 import warnings
 import logging
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 from numpy import newaxis
 from keras.layers.core import Dense
@@ -18,6 +19,7 @@ from keras.utils import plot_model
 from keras.utils import print_summary
 from quandl_library import fetch_timeseries_data
 from quandl_library import get_ini_data
+from time_series_data import series_to_supervised
 
 warnings.filterwarnings("ignore")
 
@@ -56,8 +58,12 @@ def save_model_plot(model):
 
     return
 
-def prepare_ts_lstm(ticker, seq_len, source):
-    logging.info ("prepare_ts_lstm: ticker: %s, sequence length: %s", ticker, seq_len)
+def prepare_ts_lstm(ticker, time_steps, forecast_steps, source=''):
+    logging.info('')
+    logging.info('====> ==============================================')
+    logging.info('====> prepare_ts_lstm: ticker: %s, time_steps: %s, forecast_steps: %s', \
+                  ticker, time_steps, forecast_steps)
+    logging.info('====> ==============================================')
     
     '''
     Prepare time series data for presentation to an LSTM model from the Keras library
@@ -65,53 +71,205 @@ def prepare_ts_lstm(ticker, seq_len, source):
     
     Returns training (90%) and test (10) sets
     '''
-    ts_data = fetch_timeseries_data(["adj_close","adj_volume"], ticker, source)
-    logging.info ("prepare_ts_lstm: data shape: %s, sequence length: %s", ts_data.shape, seq_len)
-    logging.debug ("adj_open %s ... %s", ts_data[ :3, 0], ts_data[ -3: , 0])
-    logging.debug ("adj_volume %s ... %s", ts_data[ :3, 1], ts_data[ -3:, 1])
     
-    ts_windows = normalise_windows(ts_data, seq_len, norm=[0,1])
-    ts_windows = np.array(ts_windows)
-    logging.debug ("ts_windows has %s type and is of shape %s", type(ts_windows), ts_windows.shape)
-    logging.debug ("Normalized ts_windows length: %s\nts_windows[0]\n%s\nts_windows[1]\n%s\nts_windows[%s]\n%s", \
-                   len(ts_windows), ts_windows[0], ts_windows[1], len(ts_windows)-1, ts_windows[len(ts_windows)-1])
+    '''
+    Read data
+    '''
+    result_drivers = ["adj_low", "adj_close", "adj_volume"]
+    forecast_feature = [False, True, False]
+    feature_count = len(result_drivers)
+
+    '''
+    Load raw data
+    '''
+    df_data = fetch_timeseries_data(result_drivers, ticker, source)
+    logging.info ('')
+    logging.info ("Using %s features as predictors", feature_count)
+    logging.info ("data shape: %s", df_data.shape)
+    logging.debug('')
+    logging.debug("%s: %s ... %s", result_drivers[0], df_data[ :3, 0], df_data[ -3: , 0])
+    logging.debug("%s: %s ... %s", result_drivers[1], df_data[ :3, 1], df_data[ -3: , 1])
+    
+    '''
+    Flatten data to a data frame where each row includes the 
+        historical data driving the result - 
+        time_steps examples of result_drivers data points
+        result - 
+        forecast_steps of data points (same data as drivers)
+    '''
+    #values = ts_data.values
+    logging.info('Prepare as multi-variant time series data for LSTM')
+    logging.info('series_to_supervised(values, time_steps=%s, forecast_steps=%s)', time_steps, forecast_steps)
+    df_data = series_to_supervised(df_data, time_steps, forecast_steps)
+    
+    '''
+    np_data[
+        feature
+        feature time steps and forecast steps:
+        feature data point:
+        ]
+    '''
+    np_data = np.empty([df_data.shape[0], time_steps+forecast_steps, feature_count])
+    logging.debug('np_data shape: %s', np_data.shape)
+
+    '''
+    Convert 2D LSTM data frame into 3D Numpy array for data pre-processing
+    '''
+    for ndx_feature_value in range(0, feature_count) :
+        for ndx_feature in range(0, time_steps+forecast_steps) :        
+            for ndx_time_period in range(0, df_data.shape[0]) :
+                
+                np_data[ndx_time_period, ndx_feature, ndx_feature_value] = \
+                    df_data.iloc[ndx_time_period, (ndx_feature_value + (ndx_feature * feature_count))]
+                
+                ndx_time_period += 1            
+            ndx_feature += 1
+        logging.debug('np_data feature: %s, %s', ndx_feature_value, result_drivers[ndx_feature_value])
+        logging.debug('\n%s', np_data[: , : , ndx_feature_value])
+        ndx_feature_value += 1  
+    
+    '''
+    *** Specific to the analysis being performed ***
+    Calculate future % change of forecast feature
+    '''
+    for ndx_feature_value in range(0, feature_count) :
+        if forecast_feature[ndx_feature_value] :
+            for ndx_feature in range(time_steps, time_steps+forecast_steps) :        
+                for ndx_time_period in range(0, df_data.shape[0]) :
+                
+                    np_data[ndx_time_period, ndx_feature, ndx_feature_value] = \
+                        np_data[ndx_time_period, ndx_feature, ndx_feature_value] / np_data[ndx_time_period, time_steps-1, ndx_feature_value]
+                
+                    ndx_time_period += 1            
+                ndx_feature += 1
+            logging.debug('np_data feature: %s, %s', ndx_feature_value, result_drivers[ndx_feature_value])
+            logging.debug('\n%s', np_data[: , : , ndx_feature_value])
+        ndx_feature_value += 1  
+    
+    '''
+    *** Specific to the analysis being performed ***
+    Find the maximum adj_high for each time period sample
+    '''
+    np_max_forecast = np.zeros([df_data.shape[0]])
+    for ndx_feature_value in range(0, feature_count) :
+        if forecast_feature[ndx_feature_value] :
+            for ndx_feature in range(time_steps, time_steps+forecast_steps) :        
+                for ndx_time_period in range(0, df_data.shape[0]) :
+                    
+                    if (np_data[ndx_time_period, ndx_feature, ndx_feature_value] > np_max_forecast[ndx_time_period]) :
+                        np_max_forecast[ndx_time_period] = np_data[ndx_time_period, ndx_feature, ndx_feature_value]
+                    
+                    ndx_time_period += 1            
+                ndx_feature += 1
+        ndx_feature_value += 1
+    logging.debug('Maximum forecast values %s\n%s', np_max_forecast.shape, np_max_forecast)
+
+    '''
+    normalise the data in each row
+    each data point for all historical data points is reduced to 0<=data<=+1
+    1. Find the maximum value for each feature in each time series sample
+    2. Normalize each feature value by dividing each value by the maximum value for that time series sample
+    '''
+    np_max = np.zeros([df_data.shape[0], feature_count])
+    for ndx_feature_value in range(0, feature_count) : # normalize all features
+        for ndx_feature in range(0, time_steps) : # normalize only the time steps before the forecast time steps
+            for ndx_time_period in range(0, df_data.shape[0]) : # normalize all time periods
+                
+                if (np_data[ndx_time_period, ndx_feature, ndx_feature_value] > np_max[ndx_time_period, ndx_feature_value]) :
+                    '''
+                    logging.debug('New maximum %s, %s, %s was %s will be %s', \
+                                  ndx_time_period , ndx_feature, ndx_feature_value, \
+                                  np_max[ndx_time_period, ndx_feature_value], \
+                                  np_data[ndx_time_period, ndx_feature, ndx_feature_value])
+                    '''
+                    np_max[ndx_time_period, ndx_feature_value] = np_data[ndx_time_period, ndx_feature, ndx_feature_value]
+                    
+                ndx_time_period += 1            
+            ndx_feature += 1
+        ndx_feature_value += 1  
+
+
+    for ndx_feature_value in range(0, feature_count) :
+        for ndx_feature in range(0, time_steps) :        
+            for ndx_time_period in range(0, df_data.shape[0]) :
+                
+                np_data[ndx_time_period, ndx_feature, ndx_feature_value] = \
+                    np_data[ndx_time_period, ndx_feature, ndx_feature_value] / np_max[ndx_time_period, ndx_feature_value]
+                    
+                ndx_time_period += 1            
+            ndx_feature += 1
+        logging.debug('np_data normalized feature: %s, %s', ndx_feature_value, result_drivers[ndx_feature_value])
+        logging.debug('\n%s', np_data[: , : , ndx_feature_value])
+        ndx_feature_value += 1  
+
+
+    '''
+    Convert 3D pre-processed Numpy array back into 2D LSTM data frame 
+    Drop columns we are not trying to predict
+    '''
+    df_lstm = df_data
+    for ndx_feature_value in range(0, feature_count) :
+        for ndx_feature in range(0, time_steps+forecast_steps) :        
+            for ndx_time_period in range(0, df_data.shape[0]) :
+                
+                x_lstm = (ndx_feature_value + (ndx_feature * feature_count))
+                df_lstm.iloc[ ndx_time_period:ndx_time_period+1 , x_lstm:x_lstm+1] = \
+                    np_data[ndx_time_period, ndx_feature, ndx_feature_value]
+                
+                ndx_time_period += 1            
+            ndx_feature += 1
+        ndx_feature_value += 1
+        
+    df_lstm = df_lstm.iloc[ :  ,  : (time_steps * feature_count) +1 ]
+    logging.debug('Data prepared for LSTM: df_lstm\n type %s\n of shape %s', type(df_lstm), df_lstm.shape)
+    logging.debug('\n%s\n%s', df_lstm.head(3), df_lstm.tail(3))
   
-    row = round(0.9 * ts_windows.shape[0])
-    train = ts_windows[:int(row), :]
+    '''
+    Split into test and training portions
+    '''
+    row = round(0.9 * df_lstm.shape[0])
+    logging.debug('Training on %s samples', int(row))
+    x_test  = df_lstm.iloc[        :int(row),   :-1]
+    x_train = df_lstm.iloc[int(row):        ,   :-1]
+    y_test  = np_max_forecast[        :int(row)]
+    y_train = np_max_forecast[int(row):        ]  
+
+    '''[
+    train = df_lstm.iloc[:int(row), :]
     np.random.shuffle(train)
-    x_train = train[:, :-1, 0]    
-    y_train = train[:,  -1, 0]
-    logging.debug ('x_train slice %s', x_train)
-    logging.debug ('train slice %s', train[:, 1])
-    logging.debug ('y_train slice %s', y_train)
+    x_train = train[:, :-1]    
+    y_train = train[:,  -1]
+    #logging.debug ('x_train slice %s', x_train)
+    #logging.debug ('train slice %s', train[:, 1])
+    #logging.debug ('y_train slice %s', y_train)
     
-    x_test = ts_windows[int(row):, :-1, 0]
-    y_test = ts_windows[int(row):,  -1, 0]
+    x_test = df_lstm[int(row):, :-1]
+    y_test = df_lstm[int(row):,  -1]
     x_train = np.reshape(x_train, (x_train.shape[0], x_train.shape[1], 1))
     x_test  = np.reshape(x_test,  (x_test.shape[0],  x_test.shape[1],  1))  
-    logging.debug ("training shapes - x: %s - y: %s", x_train.shape, y_train.shape)
-    logging.debug ("testing  shapes - x: %s - y: %s", x_test.shape,  y_test.shape)
+    #logging.debug ("training shapes - x: %s - y: %s", x_train.shape, y_train.shape)
+    #logging.debug ("testing  shapes - x: %s - y: %s", x_test.shape,  y_test.shape)
+    '''
+
+    logging.info('<---------------------------------------------------')
+    logging.info('<---- prepare_ts_lstm shapes: \nx_test %s\nx_train %s\ny_test %s\ny_train %s', \
+                 x_test.shape, x_train.shape, y_test.shape, y_train.shape)
+    logging.info('<---------------------------------------------------')
+    logging.info('')
 
     return [x_train, y_train, x_test, y_test]
 
-def normalise_windows(raw_ts_data, seq_len, norm=0):
+def normalise_windows(raw_ts_data, time_steps, forecast_steps, data_points, norm=0):
+    logging.info('')
+    logging.info('===================================================')
     logging.info('normalise_windows')
+    logging.info ("data type: %s, shape: %s, \nsequence length: %s, forecast_steps=%s, data_points=%s, norm=%s", \
+                  type(raw_ts_data), raw_ts_data.shape, time_steps, forecast_steps, data_points, norm)
     '''
-    create Numpy array : raw_ts_data
-    Divide the time series data into a number of series, each of length seq_len
-    each ts_window is shifted by one interval from the one before
-    
-    raw_ts_data - time series
-
-    normalization:
-    price related - percentage change from prior period - range -1 to +1
-    volume - percentage of max value - range 0 to 1
-
-
-    raw_ts_data is a numpy array of time series data.
-    
-    Each element of raw_ts_data is a time series offset by one time interval from the previous (by index) element
-    
+    raw_ts_data: 
+    time_steps: 
+    forecast_steps: 
+    data_points: 
     norm=0 (default)
         normalize values to percentage change from the first element in the series
         range -1 to +1
@@ -122,37 +280,16 @@ def normalise_windows(raw_ts_data, seq_len, norm=0):
     norm=1
         normalize the values to the percentage of the maximum value in the series
         range 0 to 1
+        
+    2. Separate each data point into its own data frame (iloc with list of lists)
+    3. Normalize all data point data frames (pandas.Series.min / max)
+    4. Recombine individual data points into single data frame
     '''
-    logging.debug ("Raw data\n%s\n1st data point: %s, 2nd data point: %s", raw_ts_data, raw_ts_data[0][0], raw_ts_data[0][1])
-    dim_ts_seq = len(raw_ts_data)-(seq_len)
-    dim_ts_data = seq_len
-    dim_data_point = len(raw_ts_data[0])
-    normalised_data = np.zeros( (dim_ts_seq, dim_ts_data, dim_data_point) )
-    logging.debug ("dimensions: raw data %s, windows %s, data points %s", dim_ts_seq, dim_ts_data, dim_data_point)
-    logging.debug ("initialized normalised_data with dimensions [%s][%s][%s]", len(normalised_data), len(normalised_data[0]), len(normalised_data[0][0]))
-    logging.info  ("normalise %s time series data of length %s, with %s data points, normalizations: %s", \
-                   dim_ts_seq, dim_ts_data, dim_data_point, norm)
     
-    for ts_seq in range(dim_ts_seq):
-        for ts_data_ndx in range(dim_ts_data):
-            for data_point in range(dim_data_point):
-                if norm[data_point] == 0:
-                    #Percentage difference compared to time series start
-                    normalised_data[ts_seq][ts_data_ndx][data_point] = \
-                        (float(raw_ts_data[ts_seq + ts_data_ndx][data_point]) / \
-                         float(raw_ts_data[ts_seq][data_point])) - 1
-                elif norm[data_point] == 1:
-                    #Percentage of maximum value during time series
-                    normalised_data[ts_seq][ts_data_ndx][data_point] = \
-                        raw_ts_data[ts_seq + ts_data_ndx][data_point] / \
-                        max(raw_ts_data[ts_seq:ts_seq+seq_len, 1])
-                else:
-                    logging.warning ("normalization method %s is not implemented", norm[data_point])
-                    normalised_data[ts_seq][ts_data_ndx][data_point] = 2.0
-                    pass
-                    
-    logging.debug ("ts_seq %s, ts_data_ndx %s, data_point %s", ts_seq, ts_data_ndx, data_point)
-    logging.debug ("Normalized data\n%s\n1st data point: %s, 2nd data point: %s", normalised_data, normalised_data[0][0], normalised_data[0][1])
+    normalised_data = raw_ts_data
+                        
+    logging.debug ("Normalized data\n%s", normalised_data)
+    logging.info  ('===================================================')
 
     return normalised_data
 
@@ -180,9 +317,15 @@ def build_model(sample_length=50, data_points=1):
             evaluate_generator
             predict_generator
             get_layer
-    '''
-    model = Sequential()
-    '''
+            
+    You can create a Sequential model by passing a list of layer instances to the constructor:
+    model = Sequential([
+        Dense(32, input_shape=(784,)),
+        Activation('relu'),
+        Dense(10),
+        Activation('softmax'),
+        ])
+    
     Layers
         Methods
             get_weights
@@ -355,13 +498,19 @@ def build_model(sample_length=50, data_points=1):
         hard_sigmoid
         linear
     '''
-    model.add(LSTM      (name="input_layer", activation='tanh', input_dim=data_points, 
+    model = Sequential()
+    model.add(LSTM      (name="input_layer", 
+                         activation='tanh', 
+                         input_dim=data_points, 
                          output_dim=sample_length, 
-                         return_sequences=True))
+                         return_sequences=True
+                         ))
     model.add(Dropout   (0.2, name="dropout_1_20"))
     model.add(LSTM      (sample_length*2, 
-                         name="hidden_layer_1", activation='tanh', 
-                         return_sequences=False))
+                         name="hidden_layer_1", 
+                         activation='tanh', 
+                         return_sequences=False
+                         ))
     model.add(Dropout   (0.2, name="dropout_2_20"))
     model.add(Dense     (name="Output_layer", output_dim=1))
     model.add(Activation("linear"))

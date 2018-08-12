@@ -21,7 +21,7 @@ if __name__ == '__main__':
     ticker = "F"
     #print( "Symbol selected " + usersymbolselection)
     ANALASIS_SAMPLE_LENGTH = 50
-    FORECAST_LENGTH = 10
+    FORECAST_LENGTH = 30
 
     lstm_config_data = get_ini_data("LSTM")
     log_file = lstm_config_data['log']
@@ -40,7 +40,7 @@ if __name__ == '__main__':
     ''' .......... Step 2 - Load and prepare data .........................
     =================================================================== '''
     print ('\nStep 2 Load and prepare the data for analysis')
-    X_train, y_train, X_test, y_test = prepare_ts_lstm(ticker, ANALASIS_SAMPLE_LENGTH, source="local")
+    X_train, y_train, X_test, y_test = prepare_ts_lstm(ticker, ANALASIS_SAMPLE_LENGTH, FORECAST_LENGTH, source="local")
     
     ''' ...................... Step 3 Train the model .....................
     =================================================================== '''

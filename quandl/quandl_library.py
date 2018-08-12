@@ -60,7 +60,7 @@ def quandl_data_dict():
 def update_eod_data():
     logging.info('update_eod_data')
     '''
-    https://www.quandl.com/api/v3/datatables/WIKI/PRICES/delta.json?api_key=1wWyDnk64NgsEtxwg1Lb
+    https://www.quandl.com/api/v3/datatables/WIKI/PRICES/delta.json?api_key=XXX
     
     The latest_full_data corresponds to a full dump of the data in the table at the time specified. 
     In the above example this equals 2016-09-04T18h37m34.
