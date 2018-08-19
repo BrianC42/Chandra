@@ -20,7 +20,7 @@ Initialize logging
 '''
 lstm_config_data = get_ini_data("LSTM")
 log_file = lstm_config_data['log']
-logging.basicConfig(filename=log_file, level=logging.INFO, format='%(asctime)s: %(levelname)s: %(message)s')
+logging.basicConfig(filename=log_file, level=logging.DEBUG, format='%(asctime)s: %(levelname)s: %(message)s')
 print ("Logging to", log_file)
 logger = logging.getLogger('lstm_logger')
 log_fmt = logging.Formatter('%(asctime)s - %(name)s - %levelname - %(messages)s')
