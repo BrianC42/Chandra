@@ -122,7 +122,6 @@ def prepare_ts_lstm(ticker, time_steps, forecast_steps, source=''):
 
     '''
     Convert 2D LSTM data frame into 3D Numpy array for data pre-processing
-    '''
     logging.debug('')
     for ndx_feature_value in range(0, feature_count) :
         for ndx_feature in range(0, time_steps+forecast_steps) :        
@@ -135,25 +134,12 @@ def prepare_ts_lstm(ticker, time_steps, forecast_steps, source=''):
             ndx_feature += 1
         #logging.debug('\nnp_data raw feature values: %s, %s', ndx_feature_value, result_drivers[ndx_feature_value])
         #logging.debug('\n%s', np_data[: , : , ndx_feature_value])
-        ndx_feature_value += 1  
-    
+        ndx_feature_value += 1
     '''
-    Experimentation code
-    The iteration above requires most of the data preparation time
-    create a second 3D numpy array and experiment with setting the contents by slicing
-    np_exp = np.empty([samples, time_steps+forecast_steps, feature_count])
-    #slicing goes here
     for ndx_feature_value in range(0, feature_count) :
-        np_exp[ : , : , ndx_feature_value] = df_data[ : , ::5]
+        np_data[ : , : , ndx_feature_value] = df_data.iloc[:, np.r_[   ndx_feature_value : df_data.shape[1] : feature_count]]
         ndx_feature_value += 1  
     
-    if (np.array_equiv(np_exp, np_data)) :
-        print ("\t\tnp_exp is EQUIVALENT to np_data")
-    else :
-        print ("\t\tnp_exp differs from np_data")
-    Experimentation code end
-    '''
-        
     '''
     *** Specific to the analysis being performed ***
     Calculate future % change of forecast feature
