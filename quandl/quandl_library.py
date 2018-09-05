@@ -101,7 +101,8 @@ def fetch_timeseries_data(field_of_interest,symbol,source):
         '''
         From locally stored file
         '''
-        df_data = read_symbol_historical_data(symbol)
+        #df_data = read_symbol_historical_data(symbol)
+        df_data = read_enhanced_symbol_data(symbol)
     data = df_data[field_of_interest].values
     logging.debug ("Time series for %s, field(s) of interest: %s, time series has %s data points:\n%s ... %s", \
                    symbol, field_of_interest, len(data), data[:3], data[-3:])
@@ -142,7 +143,7 @@ def save_last_quandl_update():
     logging.info('save_last_quandl_update')
     # Save in a file the date of the last download from Quandl
     date = datetime.datetime.today() # date and time
-    logging.debug ("Saving %s as the date the data from Quandl was last added to the local data set", date)
+    logging.debug("Saving %s as the date the data from Quandl was last added to the local data set", date)
     output_file = get_devdata_dir() + "\\Quandl_update.csv"
     f = open(output_file, 'w')
     f.write(date.date().isoformat())
@@ -151,24 +152,44 @@ def save_last_quandl_update():
     return
 
 def save_enhanced_historical_data(df_data):
-    logging.info('save_enhanced_historical_data')
+    logging.debug('save_enhanced_historical_data')
     output_file = get_devdata_dir() + "\\Enhanced historical data.csv"
-    logging.debug  ("Creating enhanced historical data...", output_file)
-    logging.debug  ("Save_enhanced_historical_data() df_quandl head:\n", df_data.head(3))
-    logging.debug  ("Save_enhanced_historical_data() df_quandl tail:\n", df_data.tail(3))
+    logging.debug("Creating enhanced historical data...", output_file)
+    logging.debug("Save_enhanced_historical_data() df_quandl head:\n", df_data.head(3))
+    logging.debug("Save_enhanced_historical_data() df_quandl tail:\n", df_data.tail(3))
+    df_data.to_csv(output_file)
+    
+    return
+
+def save_enhanced_symbol_data(ticker, df_data):
+    logging.debug('save_enhanced_symbol_data')
+    output_file = get_devdata_dir() + "\\symbols\\" + ticker + "_enriched.csv"
+    print ("Saving %s to file %s" % (ticker, output_file))
+    logging.debug("Save_Symbol_Historical_Data() data head:\n", df_data.head(3))
+    logging.debug("Save_Symbol_Historical_Data() data tail:\n", df_data.tail(3))
     df_data.to_csv(output_file)
     
     return
 
 def save_symbol_historical_data(ticker, df_data):
-    logging.info('save_symbol_historical_data')
-    output_file = get_devdata_dir() + "\\symbols\\" + ticker + ".csv"
+    logging.debug('save_symbol_historical_data')
+    output_file = get_devdata_dir() + "\\symbols\\" + ticker + "_enriched.csv"
     print ("Saving %s to file %s" % (ticker, output_file))
-    logging.debug ("Save_Symbol_Historical_Data() data head:\n", df_data.head(3))
-    logging.debug ("Save_Symbol_Historical_Data() data tail:\n", df_data.tail(3))
+    logging.debug("Save_Symbol_Historical_Data() data head:\n", df_data.head(3))
+    logging.debug("Save_Symbol_Historical_Data() data tail:\n", df_data.tail(3))
     df_data.to_csv(output_file)
     
     return
+
+def read_enhanced_symbol_data(ticker):
+    logging.info('read_enhanced_symbol_data')
+    input_file = get_devdata_dir() + "\\symbols\\" + ticker + "_enriched.csv"
+    logging.debug ("Reading %s file %s", ticker, input_file)
+    df_data = pd.read_csv(input_file)
+    df_data = df_data.set_index('date')
+    logging.debug ("Read_Symbol_Historical_Data(): \n%s\n%s ", df_data.head(1), df_data.tail(1))
+    
+    return (df_data)
 
 def read_symbol_historical_data(ticker):
     logging.info('read_symbol_historical_data')

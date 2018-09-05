@@ -10,15 +10,25 @@ from multiprocessing import Process, Pipe
 import os
 import datetime
 import time
+import logging
+
 import pandas as pd
 
 #from test.libregrtest.save_env import multiprocessing
 from quandl_worker import quandl_worker_pipe
 from quandl_library import save_enhanced_historical_data
+from quandl_library import save_enhanced_symbol_data
 from quandl_library import read_historical_data
+from quandl_library import get_ini_data
 
 def mp_prep_quandl_data():
-    
+    lstm_config_data = get_ini_data("LSTM")
+    log_file = lstm_config_data['log']
+    logging.basicConfig(filename=log_file, level=logging.INFO, format='%(asctime)s: %(levelname)s: %(message)s')
+    print ("Logging to", log_file)
+    logger = logging.getLogger('lstm_logger')
+    log_fmt = logging.Formatter('%(asctime)s - %(name)s - %levelname - %(messages)s')    
+
     print ("Affirmative, Dave. I read you\n")
     
     '''.......................................................
@@ -60,7 +70,7 @@ def mp_prep_quandl_data():
         Reading historical data and have worker processes perform technical analyses
     '''
     print ("\nBeginning technical analysis ...")
-    df_data = read_historical_data(recs=200000)
+    df_data = read_historical_data()#recs=200000)
     df_tickers = df_data.drop_duplicates("ticker") 
 
     idx = 0
@@ -94,6 +104,7 @@ def mp_prep_quandl_data():
         while p_ndx < core_count and p_ndx <= p_active:
             data_enh = c_send[p_ndx].recv()        
             print ("Data from technical analysis worker: ...", data_enh.ix[0, 'ticker'], " ", len(data_enh), "data points")
+            save_enhanced_symbol_data(data_enh.ix[0, 'ticker'], data_enh)
             #print (data_enh.head(2), "\n", data_enh.tail(2))
             output_data = pd.concat([output_data, data_enh])
             p_ndx += 1
