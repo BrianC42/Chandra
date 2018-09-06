@@ -29,7 +29,7 @@ if __name__ == '__main__':
     Notes
         MACD_Buy and MACD_Sell drive test accuracy to 0
     '''
-    tickers = ["aapl", "ge"]
+    tickers = ["aapl", "abt"]
     result_drivers = ["adj_low", "adj_high", "adj_open", "adj_close", "adj_volume", "BB_Lower", "BB_Upper", "SMA20", "OBV", "AccumulationDistribution"]
     forecast_feature = [False, True, False, False, False, False, False, False, False, False]
     

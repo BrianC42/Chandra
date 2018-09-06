@@ -70,7 +70,7 @@ def mp_prep_quandl_data():
         Reading historical data and have worker processes perform technical analyses
     '''
     print ("\nBeginning technical analysis ...")
-    df_data = read_historical_data()#recs=200000)
+    df_data = read_historical_data(recs=200000)
     df_tickers = df_data.drop_duplicates("ticker") 
 
     idx = 0

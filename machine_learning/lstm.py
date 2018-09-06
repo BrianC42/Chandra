@@ -20,6 +20,7 @@ from keras.utils import print_summary
 from quandl_library import fetch_timeseries_data
 from quandl_library import get_ini_data
 from time_series_data import series_to_supervised
+from tensorflow.python.layers.core import dense
 
 warnings.filterwarnings("ignore")
 
@@ -472,13 +473,22 @@ def build_model(np_input):
         hard_sigmoid
         linear
     '''
+    logging.debug("Input dimensions: %s %s %s", np_input.shape[0], np_input.shape[1], np_input.shape[2])
     model = Sequential()
-    model.add(LSTM(units=30,
+    model.add(Dense(units=np_input.shape[1], input_shape=(np_input.shape[1], np_input.shape[2]), name="input_layer"))
+    '''
+    model.add(LSTM(units=np_input.shape[1],
                 name="input_layer", 
                 activation='tanh', 
                 input_shape=(np_input.shape[1], np_input.shape[2]) ,
                 return_sequences=False
                 ))
+    '''
+    model.add(LSTM(units=np_input.shape[2], 
+                   name="lstm_layer", 
+                   activation='tanh', 
+                   return_sequences=False
+                   ))
     model.add(Dense(name="Output_layer", output_dim=1))
 
     '''
@@ -595,7 +605,7 @@ def train_lstm(model, x_train, y_train):
                  x_train.shape, y_train.shape)
     logging.info('====> ==============================================')
 
-    model.fit(x_train, y_train, shuffle=True, batch_size=512, nb_epoch=1, validation_split=0.05, verbose=1)
+    model.fit(x_train, y_train, shuffle=True, batch_size=128, nb_epoch=2, validation_split=0.05, verbose=1)
     
     logging.info('<---- ----------------------------------------------')
     logging.info('<---- train_lstm:')
