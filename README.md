@@ -1,4 +1,10 @@
 # Chandra
+
+1/4/2019
+Set up Slack for Chandra and subscribed to this repository
+
+Also added this comment to understand the 'issue' functionality
+
 How to set up your environment As of 7/6/2018
 =============================================
 
