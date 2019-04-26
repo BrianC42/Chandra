@@ -29,10 +29,10 @@ if __name__ == '__main__':
     Notes
         MACD_Buy and MACD_Sell drive test accuracy to 0
     '''
-    tickers = ["aapl", "abt"]
-    result_drivers = ["adj_low", "adj_high", "adj_open", "adj_close", "adj_volume", "BB_Lower", "BB_Upper", "SMA20", "OBV", "AccumulationDistribution"]
-    forecast_feature = [False, True, False, False, False, False, False, False, False, False]
-    
+    tickers = ["aapl"]
+    #result_drivers   = ["adj_low", "adj_high", "adj_open", "adj_close", "adj_volume", "BB_Lower", "BB_Upper", "SMA20", "OBV", "AccumulationDistribution"]
+    result_drivers   = ["adj_low", "adj_high", "adj_open", "adj_close", "adj_volume", "BB_Lower", "BB_Upper", "SMA20", "OBV", "AccumulationDistribution", "MACD_Sell", "MACD_Buy"]
+    forecast_feature = [False,     True,       False,      False,       False,        False,       False,     False,   False, False,                      False,       False]
     ANALASIS_SAMPLE_LENGTH = 120
     FORECAST_LENGTH = 30
 
@@ -73,7 +73,7 @@ if __name__ == '__main__':
     =========================================================================================== '''
     step5 = time.time()
     print ("\nStep 5 - clean up, archive and visualize accuracy!")
-    predictions = predict_sequences_multiple(model, x_test, ANALASIS_SAMPLE_LENGTH, FORECAST_LENGTH)
+    predictions = predict_sequences_multiple(model, x_test)
     save_model(model)  
     end = time.time()
     print ("")
