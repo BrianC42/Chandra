@@ -9,6 +9,7 @@ import logging
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import tensorflow as tf
 from numpy import newaxis, NaN, NAN
 from keras.layers.core import Activation
 from keras.layers import Input, Dense, Embedding
@@ -25,6 +26,8 @@ from quandl_library import get_ini_data
 from time_series_data import series_to_supervised
 from tensorflow.python.layers.core import dense
 from keras.backend.tensorflow_backend import dtype
+from keras.backend.tensorflow_backend import shape
+
 
 '''
     Sequential model
@@ -614,16 +617,19 @@ def build_model(np_input):
         logging.debug   ("Building model - feature set %s\n\tInput dimensions: %s %s %s", \
                          str_name, np_feature_set.shape[0], np_feature_set.shape[1], np_feature_set.shape[2])        
 
-        #create and retain input layers for each technical analysis
-        kf_input = Input(shape=(np_feature_set.shape[2],), dtype='float32', name=str_name)
+        #create input tensor for each technical analysis
+        kf_input = Input(shape=(np_feature_set.shape[1], np_feature_set.shape[2], ), dtype='float32', name=str_name)
+        print('kf_input shape %s' % tf.shape(kf_input))
+        
+        #retain input tensor for model definition
         kf_feature_sets.append(kf_input)              
 
         #create the layers used to model each technical analysis
-        kf_input_i_ndx = Embedding(output_dim=512, input_dim=np_feature_set.shape[1], input_length=np_feature_set.shape[1])(kf_input)
-        kf_input_i_ndx = LSTM(32, name=str_lstm)(kf_input_i_ndx)
         '''
-        kf_input_i_ndx = LSTM(32, name=str_lstm)(kf_input)
+        kf_input_i_ndx = Embedding(output_dim=512, input_dim=np_feature_set.shape[1], input_length=np_feature_set.shape[0])(kf_input)
+        kf_input_i_ndx = LSTM(np_feature_set.shape[2], name=str_lstm)(kf_input_i_ndx)
         '''
+        kf_input_i_ndx = LSTM(32)(kf_input)
         kf_input_i_ndx = Dense(output_dim=1)(kf_input_i_ndx)
 
         #identify the output of each individual technical analysis
@@ -644,9 +650,9 @@ def build_model(np_input):
     kf_composite = Concatenate(axis=-1)(kf_feature_set_outputs[:])
     
     #create the layers used to analyze the composite of all technical analysis 
-    kf_composite = Dense(len(np_input), activation='relu')(kf_composite)
-    kf_composite = Dense(len(np_input), activation='relu')(kf_composite)
-    kf_composite = Dense(len(np_input), activation='relu')(kf_composite)
+    kf_composite = Dense(len(kf_feature_set_outputs), activation='relu')(kf_composite)
+    kf_composite = Dense(len(kf_feature_set_outputs), activation='relu')(kf_composite)
+    kf_composite = Dense(len(kf_feature_set_outputs), activation='relu')(kf_composite)
     
     #create the composite output layer
     kf_composite = Dense(output_dim=1, name="composite_output")(kf_composite)
@@ -675,16 +681,25 @@ def build_model(np_input):
 def train_lstm(model, x_train, y_train):
     logging.info('')
     logging.info('====> ==============================================')
-    logging.info("====> train_lstm: Fitting model using training data: x=%s and y=%s", \
+    logging.info("====> train_lstm: Fitting model using training data inputs: x=%s and y=%s", \
                  len(x_train), y_train.shape)
     logging.info('====> ==============================================')
 
-    i_model = 0    
-    for np_model in x_train:
-        i_model += 1
-
-    model.fit(x_train[0], y_train, shuffle=True, batch_size=2056, nb_epoch=2, validation_split=0.05, verbose=1)
+    print('train_lstm: Fitting model using training data: len(x)=%s and y=%s' % \
+                 (len(x_train), y_train.shape))
     
+    '''
+    model.fit(x_train[0], y_train, shuffle=True, batch_size=2056, nb_epoch=2, validation_split=0.05, verbose=1)
+    '''
+    lst_x = []
+    lst_y = []
+    for i_ndx in range(0, len(x_train)) :
+        lst_x.append(x_train[i_ndx])
+        lst_y.append(y_train)
+    lst_y.append(y_train)
+        
+    model.fit(x=lst_x, y=lst_y, shuffle=True, batch_size=2056, nb_epoch=2, validation_split=0.05, verbose=1)
+        
     logging.info('<---- ----------------------------------------------')
     logging.info('<---- train_lstm:')
     logging.info('<---- ----------------------------------------------')
@@ -695,14 +710,17 @@ def evaluate_model(model, x_data, y_data):
     logging.info ('')
     logging.info ('====> ==============================================')
     logging.info ('====> evaluate_model')
-    logging.debug('====> x_data = \n%s\ny_data = \n%s', x_data[0], y_data)
+    logging.debug('====> x_data inputs = \n%s\ny_data = \n%s', len(x_data), y_data)
     logging.info ('====> ==============================================')
     
-    i_model = 0    
-    for np_model in x_data:
-        i_model += 1
+    lst_x = []
+    lst_y = []
+    for i_ndx in range(0, len(x_data)) :
+        lst_x.append(x_data[i_ndx])
+        lst_y.append(y_data)
+    lst_y.append(y_data)
 
-    score = model.evaluate(x=x_data[0], y=y_data, verbose=0)    
+    score = model.evaluate(x=lst_x, y=lst_y, verbose=0)    
     print ("\tevaluate_model: Test loss=%s, Test accuracy=%s" % (score[0], score[1]))
 
     logging.info('<---- ----------------------------------------------')
@@ -711,39 +729,47 @@ def evaluate_model(model, x_data, y_data):
     
     return
 
-def predict_single(model, df_data):
-    '''
-    df_data: 3D numpy array
-        dimension 1: samples - length 1
-        dimension 2: time series
-        dimension 3: features
-    '''
-        
+def predict_single(model, df_data):   
     '''
     *** Specific to the analysis being performed ***
     Find the maximum adj_high for each time period sample
     '''
-    prediction = model.predict(df_data)
+    prediction = model.predict(x=df_data)
 
     return prediction
 
 def predict_sequences_multiple(model, df_data):
-    logging.info ('')
-    logging.info ('====> ==============================================')
-    logging.info ('====> predict_sequences_multiple: data shape=%s', df_data[0].shape)
-    logging.info ('====> data=\n%s', df_data[0])
-    logging.info ('====> ==============================================')
-        
-    samples = df_data[0].shape[0]
-    np_predictions = np.empty([samples])
-    logging.debug('np_predictions shape: %s', np_predictions.shape)
-
     '''
     *** Specific to the analysis being performed ***
     Find the maximum adj_high for each time period sample
+        One input for each technical analysis set of features
+        One output for each technical analysis plus one composite output
+        
+    df_data: list of 3D numpy arrays, one for each technical analysis set of features
+        dimension 1: samples - length 1
+        dimension 2: time series
+        dimension 3: features
     '''
+    logging.info ('')
+    logging.info ('====> ==============================================')
+    logging.info ('====> predict_sequences_multiple: %s technical analysis feature sets', len(df_data))
+    print('====> predict_sequences_multiple: technical analysis feature sets', len(df_data))
+    for i_ndx in range(0, len(df_data)) :
+        logging.info ('====> data shape=%s', df_data[i_ndx].shape)
+        print('====> data shape= ', df_data[i_ndx].shape)
+        logging.info ('====> data=\n%s', df_data[i_ndx])
+    logging.info ('====> ==============================================')
+        
+    samples = df_data[0].shape[0]
+    np_predictions = np.empty([samples, len(df_data) + 1])
+    logging.debug('Output shape: %s', np_predictions.shape)
+    print('Output shape: ', np_predictions.shape)
+
     for ndx_samples in range(0, samples) :
-        np_predictions[ndx_samples] = predict_single(model, df_data[0][ndx_samples:ndx_samples+1])
+        lst_x = []
+        for i_ndx in range(0, len(df_data)) :
+            lst_x.append(df_data[i_ndx][ndx_samples:ndx_samples+1])
+        np_predictions[ndx_samples] = predict_single(model, lst_x)
         #np_predictions[ndx_samples] = model.predict(df_data[ndx_samples:ndx_samples+1])
         ndx_samples += 1
 
@@ -762,19 +788,20 @@ def plot_results_multiple(predicted_data, true_data):
     logging.debug('====> \npredicted_data=\n%s\ntrue_data=\n%s', predicted_data, true_data)
     logging.info ('====> ==============================================')
         
-    np_diff = np.zeros(predicted_data.shape[0])
-    ndx_data = 0
+    np_diff = np.zeros([predicted_data.shape[0], predicted_data.shape[1]])
     for ndx_data in range(0, predicted_data.shape[0]) :
-        np_diff[ndx_data] = true_data[ndx_data] - predicted_data[ndx_data] 
+        for ndx_output in range(0,predicted_data.shape[1]) :
+            np_diff[ndx_data][ndx_output] = true_data[ndx_data] - predicted_data[ndx_data][ndx_output]
+            ndx_output += 1
         ndx_data += 1
     '''
     On screen plot of actual and predicted data
     '''
-    fig = plt.figure(facecolor='white')
-    ax = fig.add_subplot(111)
-    ax.plot(np_diff, label='actual - prediction')
-    plt.legend(title='actual / prediction difference', loc='upper center', ncol=2)
-    plt.show()
-
-
-    
+    for ndx_output in range(0,predicted_data.shape[1]) :
+        fig = plt.figure(facecolor='white')
+        ax = fig.add_subplot(111)
+        np_output_diff = np_diff[:][ndx_output]
+        ax.plot(np_output_diff, label='actual - prediction')
+        plt.legend(title='actual / prediction difference', loc='upper center', ncol=2)
+        plt.show()
+        ndx_output += 1
