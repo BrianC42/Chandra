@@ -554,9 +554,13 @@ def prepare_ts_lstm(tickers, result_drivers, forecast_feature, time_steps, forec
     list_x_train = list([])
     #list_x_test  = list( (x_test, x_test) )
     #list_x_train = list( (x_train, x_train) )
+    
+    lst_technical_analysis = []
+    
     #Use list_x_test[0] on a model to learn to forecast based on "adj_low", "adj_high", "adj_open", "adj_close", "adj_volume"
     list_x_test.append (x_test [:, :, :5])
     list_x_train.append(x_train[:, :, :5])
+    lst_technical_analysis.append('Market_Activity')
     
     #Use list_x_test[1] on a model to learn to forecast based on "BB_Lower", "BB_Upper"
     
@@ -565,10 +569,12 @@ def prepare_ts_lstm(tickers, result_drivers, forecast_feature, time_steps, forec
     #Use list_x_test[3] on a model to learn to forecast based on "MACD_Sell"
     list_x_test.append (x_test [:, :, 10:11])
     list_x_train.append(x_train[:, :, 10:11])
+    lst_technical_analysis.append('MACD_Sell')
     
     #Use list_x_test[3] on a model to learn to forecast based on "MACD_Buy"
     list_x_test.append (x_test [:, :, 11:12])
     list_x_train.append(x_train[:, :, 11:12])
+    lst_technical_analysis.append('MACD_Buy')
     
     #Use list_x_test[3] on a model to learn to forecast based on "AccumulationDistribution"
     
@@ -587,18 +593,19 @@ def prepare_ts_lstm(tickers, result_drivers, forecast_feature, time_steps, forec
     logging.info ("\tCreating test and training data took %s" % (end - step4))
 
     logging.info ('<---------------------------------------------------')
+    logging.info ('<---- Including the following technical analyses:\n\t%s' % lst_technical_analysis)
     logging.info ('<---- prepare_ts_lstm shapes: \nx_test %s\nx_train %s\ny_test %s\ny_train %s', \
                  x_test.shape, x_train.shape, y_test.shape, y_train.shape)
     logging.debug('\nx_test\n%s\nx_train\n%s\ny_test\n%s\ny_train\n%s', \
                  x_test, x_train, y_test, y_train)
     logging.info ('<---------------------------------------------------')
     
-    return [list_x_train, y_train, list_x_test, y_test]
+    return [lst_technical_analysis, list_x_train, y_train, list_x_test, y_test]
 
-def build_model(np_input):
-    logging.info('')
+def build_model(lst_analyses, np_input):
     logging.info('====> ==============================================')
-    logging.info('====> build_model: Building model, inputs=%s', len(np_input))
+    logging.info('====> build_model: Building model, analyses %s', lst_analyses)
+    logging.info('====> inputs=%s', len(np_input))
     logging.info('====> ==============================================')
 
     start = time.time()
@@ -608,32 +615,23 @@ def build_model(np_input):
     kf_feature_set_solo_outputs = []
     i_ndx = 0
     for np_feature_set in np_input:
-        str_name = "feature_set_input_{0}".format(i_ndx)
-        str_lstm = "LSTM_{0}".format(i_ndx)
-        str_out  = "feature_{0}_output".format(i_ndx)
-        str_solo_out  = "feature_{0}_solo_output".format(i_ndx)
-        print           ('\nBuilding model - %s\n\tdim[0] (samples)=%s,\n\tdim[1] (time series length)=%s\n\tdim[2] (feature count)=%s\n' % \
-                        (str_name, np_feature_set.shape[0], np_feature_set.shape[1], np_feature_set.shape[2]))
+        str_name = "{0}_input".format(lst_analyses[i_ndx])
+        str_solo_out  = "{0}_output".format(lst_analyses[i_ndx])
+        print           ('Building model - %s\n\tdim[0] (samples)=%s,\n\tdim[1] (time series length)=%s\n\tdim[2] (feature count)=%s' % \
+                        (lst_analyses[i_ndx], np_feature_set.shape[0], np_feature_set.shape[1], np_feature_set.shape[2]))
         logging.debug   ("Building model - feature set %s\n\tInput dimensions: %s %s %s", \
-                         str_name, np_feature_set.shape[0], np_feature_set.shape[1], np_feature_set.shape[2])        
+                         lst_analyses[i_ndx], np_feature_set.shape[0], np_feature_set.shape[1], np_feature_set.shape[2])        
 
-        #create input tensor for each technical analysis
-        kf_input = Input(shape=(np_feature_set.shape[1], np_feature_set.shape[2], ), dtype='float32', name=str_name)
-        print('kf_input shape %s' % tf.shape(kf_input))
-        
-        #retain input tensor for model definition
-        kf_feature_sets.append(kf_input)              
+        #create and retain for model definition an input tensor for each technical analysis
+        kf_feature_sets.append(Input(shape=(np_feature_set.shape[1], np_feature_set.shape[2], ), dtype='float32', name=str_name))
+        print('\tkf_input shape %s' % tf.shape(kf_feature_sets[i_ndx]))
 
         #create the layers used to model each technical analysis
-        '''
-        kf_input_i_ndx = Embedding(output_dim=512, input_dim=np_feature_set.shape[1], input_length=np_feature_set.shape[0])(kf_input)
-        kf_input_i_ndx = LSTM(np_feature_set.shape[2], name=str_lstm)(kf_input_i_ndx)
-        '''
-        kf_input_i_ndx = LSTM(32)(kf_input)
+        kf_input_i_ndx = LSTM(32)(kf_feature_sets[i_ndx])
         kf_input_i_ndx = Dense(output_dim=1)(kf_input_i_ndx)
 
         #identify the output of each individual technical analysis
-        kf_feature_set_output = Dense(output_dim=1, name=str_out)(kf_input_i_ndx)
+        kf_feature_set_output = Dense(output_dim=1)(kf_input_i_ndx)
         kf_feature_set_outputs.append(kf_feature_set_output)        
 
         #create outputs that can be used to assess the individual technical analysis         
@@ -641,7 +639,6 @@ def build_model(np_input):
         kf_feature_set_solo_outputs.append(kf_feature_set_solo_output)        
 
         i_ndx += 1
-    print('Feature sets - %s' % (len(kf_feature_sets)))
     
     '''
     Create a model to take the feature set assessments and create a composite assessment
@@ -663,7 +660,6 @@ def build_model(np_input):
     for solo_output in kf_feature_set_solo_outputs:
         lst_outputs.append(solo_output)
     
-    #k_model = Model(inputs=kf_feature_sets, outputs=[kf_composite, kf_feature_set_solo_outputs[]])
     k_model = Model(inputs=kf_feature_sets, outputs=lst_outputs)
     k_model.compile(loss="mse", optimizer="rmsprop", metrics=['accuracy'])
     logging.info ("Time to compile: %s", time.time() - start)
@@ -675,7 +671,6 @@ def build_model(np_input):
     logging.info('<---- ----------------------------------------------')
     logging.info('<---- build_model')
     logging.info('<---- ----------------------------------------------')
-
     return k_model
 
 def train_lstm(model, x_train, y_train):
@@ -753,12 +748,12 @@ def predict_sequences_multiple(model, df_data):
     logging.info ('')
     logging.info ('====> ==============================================')
     logging.info ('====> predict_sequences_multiple: %s technical analysis feature sets', len(df_data))
-    print('====> predict_sequences_multiple: technical analysis feature sets', len(df_data))
+    print        ('====> predict_sequences_multiple: technical analysis feature sets', len(df_data))
     for i_ndx in range(0, len(df_data)) :
         logging.info ('====> data shape=%s', df_data[i_ndx].shape)
-        print('====> data shape= ', df_data[i_ndx].shape)
+        print        ('====> data shape= ', df_data[i_ndx].shape)
         logging.info ('====> data=\n%s', df_data[i_ndx])
-    logging.info ('====> ==============================================')
+    logging.info     ('====> ==============================================')
         
     samples = df_data[0].shape[0]
     np_predictions = np.empty([samples, len(df_data) + 1])
@@ -781,7 +776,7 @@ def predict_sequences_multiple(model, df_data):
     
     return np_predictions
 
-def plot_results_multiple(predicted_data, true_data):
+def plot_results_multiple(technical_analysis_names, predicted_data, true_data):
     logging.info ('')
     logging.info ('====> ==============================================')
     logging.info ('====> plot_results_multiple: predicted_data shape=%s true_data shape=%s', predicted_data.shape, true_data.shape)
@@ -801,7 +796,10 @@ def plot_results_multiple(predicted_data, true_data):
         fig = plt.figure(facecolor='white')
         ax = fig.add_subplot(111)
         np_output_diff = np_diff[:][ndx_output]
-        ax.plot(np_output_diff, label='actual - prediction')
-        plt.legend(title='actual / prediction difference', loc='upper center', ncol=2)
+        ax.plot(np_output_diff, label = 'actual - prediction')
+        if ndx_output<len(technical_analysis_names) :
+            plt.legend(title=technical_analysis_names[ndx_output], loc='upper center', ncol=2)
+        else :
+            plt.legend(title='Composite actual / prediction difference', loc='upper center', ncol=2)
         plt.show()
         ndx_output += 1

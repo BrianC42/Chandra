@@ -49,13 +49,13 @@ if __name__ == '__main__':
     ======================================================================= '''
     step1 = time.time()
     print ('\nStep 1 - Load and prepare the data for analysis')
-    x_train, y_train, x_test, y_test = prepare_ts_lstm(tickers, result_drivers, forecast_feature, ANALASIS_SAMPLE_LENGTH, FORECAST_LENGTH, source="local")
+    lst_analyses, x_train, y_train, x_test, y_test = prepare_ts_lstm(tickers, result_drivers, forecast_feature, ANALASIS_SAMPLE_LENGTH, FORECAST_LENGTH, source="local")
     
     ''' ................... Step 2 - Build Model ............................
     ========================================================================= '''
     step2 = time.time()
     print ('\nStep 2 - Build Model')
-    model = build_model(x_train)
+    model = build_model(lst_analyses, x_train)
     
     ''' ...................... Step 3 - Train the model .....................
     ========================================================================= '''
@@ -83,6 +83,6 @@ if __name__ == '__main__':
     print ("\tStep 4 Evaluate the model! took %s" % (step5 - step4)) 
     print ("\tStep 5 Visualize accuracy, clean up and archive! took %s" % (end - step5))
     
-    plot_results_multiple(predictions, y_test)
+    plot_results_multiple(lst_analyses, predictions, y_test)
     
     print ('\nNow go and make us rich')
