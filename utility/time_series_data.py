@@ -21,10 +21,10 @@ def series_to_supervised(data, n_in=1, n_out=1, dropnan=True):
         Pandas DataFrame of series framed for supervised learning.
     """
     logging.debug('')
-    logging.debug('===>========================================')
+    logging.debug('===========================================>')
     logging.debug('===> series_to_supervised(\n%s\n, %s, %s, %s)', data, n_in, n_out, dropnan)
     logging.debug('===> data type: %s', type(data))
-    logging.debug('===>========================================')
+    logging.debug('===========================================>')
 
     n_vars = 1 if type(data) is list else data.shape[1]
     df = DataFrame(data)
@@ -45,11 +45,12 @@ def series_to_supervised(data, n_in=1, n_out=1, dropnan=True):
     agg.columns = names
     # drop rows with NaN values
     if dropnan:
+        logging.debug('Dropping NaN from agg. Original shape %s', agg.shape)
         agg.dropna(inplace=True)
 
-    logging.debug('<-------------------------------------------')
-    logging.debug('<--- series_to_supervised:\nshape %s', agg.shape)
-    logging.debug('<--- head\n%s', agg.head())
-    logging.debug('<--- tail\n%s', agg.tail())
-    logging.debug('<-------------------------------------------')
+    logging.debug('<===========================================')
+    logging.debug('<=== series_to_supervised:\nshape %s', agg.shape)
+    logging.debug('<=== head\n%s', agg.head())
+    logging.debug('<=== tail\n%s', agg.tail())
+    logging.debug('<===========================================')
     return agg

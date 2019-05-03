@@ -10,24 +10,26 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import tensorflow as tf
+
 from numpy import newaxis, NaN, NAN
-from keras.layers.core import Activation
-from keras.layers import Input, Dense, Embedding
-from keras.layers import Concatenate
-from keras.layers.core import Dense
-from keras.layers.core import Dropout
-from keras.layers.recurrent import LSTM
-from keras.models import Sequential
-from keras.models import Model
-from keras.utils import plot_model
-from keras.utils import print_summary
 from quandl_library import fetch_timeseries_data
 from quandl_library import get_ini_data
 from time_series_data import series_to_supervised
 from tensorflow.python.layers.core import dense
 from keras.backend.tensorflow_backend import dtype
 from keras.backend.tensorflow_backend import shape
-
+from keras.layers.core import Activation
+from keras.layers.core import Dense
+from keras.layers.core import Dropout
+from keras.layers.recurrent import LSTM
+from keras.layers import Input
+from keras.layers import Dense
+from keras.layers import Embedding
+from keras.layers import Concatenate
+from keras.models import Sequential
+from keras.models import Model
+from keras.utils import plot_model
+from keras.utils import print_summary
 
 '''
     Sequential model
@@ -363,11 +365,14 @@ def save_model_plot(model):
 def prepare_ts_lstm(tickers, result_drivers, forecast_feature, time_steps, forecast_steps, source=''):
     logging.info('')
     logging.info('====> ==============================================')
-    logging.info('====> prepare_ts_lstm: time_steps: %s, forecast_steps: % stickers: \n\t%s', \
-                  tickers, time_steps, forecast_steps)
+    logging.info('====> prepare_ts_lstm: Prepare as multi-variant time series data for LSTM')
+    logging.info('====> \ttime_steps: %s', time_steps)
+    logging.info('====> \tforecast_steps: %s', forecast_steps)
+    logging.info('====> \t%s feature(s): %s', len(result_drivers), result_drivers)
+    logging.info('====> \t%s ticker(s): %s', len(tickers), tickers)
     logging.info('====> ==============================================')
     print ("\tAccessing %s time steps, with %s time step future values for\n\t\t%s" % (time_steps, forecast_steps, tickers))
-    
+    print ("\tPreparing time series samples of \n\t\t%s" % result_drivers)    
     '''
     Prepare time series data for presentation to an LSTM model from the Keras library
     seq_len - the number of elements from the time series for ?
@@ -381,20 +386,12 @@ def prepare_ts_lstm(tickers, result_drivers, forecast_feature, time_steps, forec
     '''
     Load raw data
     '''
-    print ("\tPreparing time series samples of \n\t\t%s" % result_drivers)
-    logging.debug("Number of symbols: %s", len(tickers))
-    logging.info('Prepare as multi-variant time series data for LSTM')
-    logging.info('series_to_supervised(values, time_steps=%s, forecast_steps=%s)', time_steps, forecast_steps)
-    
     for ndx_symbol in range(0, len(tickers)) :
         df_symbol = fetch_timeseries_data(result_drivers, tickers[ndx_symbol], source)
-
-        logging.info ('')
-        logging.info ("Using %s features as predictors", feature_count)
-        logging.info ("data shape: %s", df_symbol.shape)
-        logging.debug('')
+        logging.info ("df_symbol data shape: %s, %s samples of drivers\n%s", df_symbol.shape, df_symbol.shape[0], df_symbol.shape[1])
         for ndx_feature_value in range(0, feature_count) :
-            logging.debug("%s: %s ... %s", result_drivers[ndx_feature_value], df_symbol[ :3, ndx_feature_value], df_symbol[ -3: , ndx_feature_value])
+            logging.debug("result_drivers %s: df_symbol %s ... df_symbol %s", \
+                          result_drivers[ndx_feature_value], df_symbol[ :3, ndx_feature_value], df_symbol[ -3: , ndx_feature_value])
             ndx_feature_value += 1  
     
         '''
@@ -409,26 +406,19 @@ def prepare_ts_lstm(tickers, result_drivers, forecast_feature, time_steps, forec
         else :
             df_n = series_to_supervised(df_symbol, time_steps, forecast_steps)
             df_data = pd.concat([df_data, df_n])
-        logging.debug("\ndf_data shape: %s",  df_data.shape)
         
     step1 = time.time()
-    #print ("\tStructuring 3D data")
     '''
-    np_data[
+    Convert 2D data frame into 3D Numpy array for data processing by LSTM
+    np_data[ 
         Dim1: time series samples
         Dim2: feature time series
         Dim3: features
         ]
     '''
     samples = df_data.shape[0]
-    
     np_data = np.empty([samples, time_steps+forecast_steps, feature_count])
-    logging.debug('np_data shape: %s', np_data.shape)
-
-    '''
-    Convert 2D LSTM data frame into 3D Numpy array for data pre-processing
-    '''
-    logging.debug('')
+    logging.debug("convert 2D flat data frame of shape: %s to 3D numpy array of shape %s",  df_data.shape, np_data.shape)
     for ndx_feature_value in range(0, feature_count) :
         np_data[ : , : , ndx_feature_value] = df_data.iloc[:, np.r_[   ndx_feature_value : df_data.shape[1] : feature_count]]
         ndx_feature_value += 1  
@@ -444,10 +434,8 @@ def prepare_ts_lstm(tickers, result_drivers, forecast_feature, time_steps, forec
         if forecast_feature[ndx_feature_value] :
             for ndx_feature in range(time_steps, time_steps+forecast_steps) :        
                 for ndx_time_period in range(0, samples) :
-                
                     np_data[ndx_time_period, ndx_feature, ndx_feature_value] = \
                         np_data[ndx_time_period, ndx_feature, ndx_feature_value] / np_data[ndx_time_period, time_steps-1, ndx_feature_value]
-                
                     ndx_time_period += 1            
                 ndx_feature += 1
             logging.debug('\nnp_data feature forecast as percentage change : %s, %s', ndx_feature_value, result_drivers[ndx_feature_value])
@@ -464,21 +452,18 @@ def prepare_ts_lstm(tickers, result_drivers, forecast_feature, time_steps, forec
         if forecast_feature[ndx_feature_value] :
             for ndx_feature in range(time_steps, time_steps+forecast_steps) :        
                 for ndx_time_period in range(0, samples) :
-                    
                     if (np_data[ndx_time_period, ndx_feature, ndx_feature_value] > np_max_forecast[ndx_time_period]) :
                         np_max_forecast[ndx_time_period] = np_data[ndx_time_period, ndx_feature, ndx_feature_value]
-                    
                     ndx_time_period += 1            
                 ndx_feature += 1
         ndx_feature_value += 1
     logging.debug('\nMaximum forecast values %s\n%s', np_max_forecast.shape, np_max_forecast)
 
-
     '''
     normalise the data in each row
-    each data point for all historical data points is reduced to 0<=data<=+1
-    1. Find the maximum value for each feature in each time series sample
-    2. Normalize each feature value by dividing each value by the maximum value for that time series sample
+        each data point for all historical data points is reduced to 0<=data<=+1
+        1. Find the maximum value for each feature in each time series sample
+        2. Normalize each feature value by dividing each value by the maximum value for that time series sample
     '''
     step3 = time.time()
     #print ("\tNormalizing data")
@@ -488,7 +473,6 @@ def prepare_ts_lstm(tickers, result_drivers, forecast_feature, time_steps, forec
     for ndx_feature_value in range(0, feature_count) : # normalize all features
         for ndx_feature in range(0, time_steps+forecast_steps) : # normalize only the time steps before the forecast time steps
             for ndx_time_period in range(0, samples) : # normalize all time periods
-                
                 if (np_data[ndx_time_period, ndx_feature, ndx_feature_value] > np_max[ndx_time_period, ndx_feature_value]) :
                     '''
                     logging.debug('New maximum %s, %s, %s was %s will be %s', \
@@ -497,7 +481,6 @@ def prepare_ts_lstm(tickers, result_drivers, forecast_feature, time_steps, forec
                                   np_data[ndx_time_period, ndx_feature, ndx_feature_value])
                     '''
                     np_max[ndx_time_period, ndx_feature_value] = np_data[ndx_time_period, ndx_feature, ndx_feature_value]
-                    
                 if (np_data[ndx_time_period, ndx_feature, ndx_feature_value] < np_min[ndx_time_period, ndx_feature_value]) :
                     '''
                     logging.debug('New maximum %s, %s, %s was %s will be %s', \
@@ -506,27 +489,20 @@ def prepare_ts_lstm(tickers, result_drivers, forecast_feature, time_steps, forec
                                   np_data[ndx_time_period, ndx_feature, ndx_feature_value])
                     '''
                     np_min[ndx_time_period, ndx_feature_value] = np_data[ndx_time_period, ndx_feature, ndx_feature_value]
-                    
                 ndx_time_period += 1            
             ndx_feature += 1
         ndx_feature_value += 1  
 
-
     for ndx_feature_value in range(0, feature_count) :
         for ndx_feature in range(0, time_steps+forecast_steps) :        
             for ndx_time_period in range(0, samples) :
-                if np_min[ndx_time_period, ndx_feature_value] <= 0 :
-                    
+                if np_min[ndx_time_period, ndx_feature_value] <= 0 :                    
                     np_data[ndx_time_period, ndx_feature, ndx_feature_value] += abs(np_min[ndx_time_period, ndx_feature_value])
                     np_max[ndx_time_period, ndx_feature_value] += abs(np_min[ndx_time_period, ndx_feature_value])
-                    
                 np_data[ndx_time_period, ndx_feature, ndx_feature_value] = \
                     np_data[ndx_time_period, ndx_feature, ndx_feature_value] / np_max[ndx_time_period, ndx_feature_value]
-                    
-                '''
                 if np_data[ndx_time_period, ndx_feature, ndx_feature_value] == NAN :
                     logging.debug('NaN: %s %s %s', ndx_time_period, ndx_feature, ndx_feature_value) 
-                '''
                 ndx_time_period += 1            
             ndx_feature += 1
         logging.debug('normalized np_data feature values (0.0 to 1.0): %s, %s type: %s', \
@@ -536,15 +512,10 @@ def prepare_ts_lstm(tickers, result_drivers, forecast_feature, time_steps, forec
 
     step4 = time.time()
     '''
-    Shuffle data
+    Shuffle data and split into test and training portions
     '''
     np.random.shuffle(np_data)
-    
-    '''
-    Split into test and training portions
-    '''
     row = round(0.1 * np_data.shape[0])
-    
     x_test  = np_data        [        :int(row), :time_steps , : ]
     x_train = np_data        [int(row):        , :time_steps , : ]
     y_test  = np_max_forecast[        :int(row)]
@@ -552,39 +523,38 @@ def prepare_ts_lstm(tickers, result_drivers, forecast_feature, time_steps, forec
 
     list_x_test  = list([])
     list_x_train = list([])
-    #list_x_test  = list( (x_test, x_test) )
-    #list_x_train = list( (x_train, x_train) )
-    
     lst_technical_analysis = []
     
     #Use list_x_test[0] on a model to learn to forecast based on "adj_low", "adj_high", "adj_open", "adj_close", "adj_volume"
+    lst_technical_analysis.append('Market_Activity')
     list_x_test.append (x_test [:, :, :5])
     list_x_train.append(x_train[:, :, :5])
-    lst_technical_analysis.append('Market_Activity')
     
     #Use list_x_test[1] on a model to learn to forecast based on "BB_Lower", "BB_Upper"
     
     #Use list_x_test[2] on a model to learn to forecast based on "OBV"
     
     #Use list_x_test[3] on a model to learn to forecast based on "MACD_Sell"
+    lst_technical_analysis.append('MACD_Sell')
     list_x_test.append (x_test [:, :, 10:11])
     list_x_train.append(x_train[:, :, 10:11])
-    lst_technical_analysis.append('MACD_Sell')
     
     #Use list_x_test[3] on a model to learn to forecast based on "MACD_Buy"
+    lst_technical_analysis.append('MACD_Buy')
     list_x_test.append (x_test [:, :, 11:12])
     list_x_train.append(x_train[:, :, 11:12])
-    lst_technical_analysis.append('MACD_Buy')
     
     #Use list_x_test[3] on a model to learn to forecast based on "AccumulationDistribution"
-    
+   
     end = time.time()
 
-    i_model = 0    
+    i_ndx = 0    
     for np_model in list_x_test:
-        logging.info('\nAnalyzing ndx_model \n\tdim[0] (samples)=%s,\n\tdim[1] (time series length)=%s\n\tdim[2] (feature count)=%s\n' % \
-                    (np_model.shape[0], np_model.shape[1], np_model.shape[2]))
-        i_model += 1
+        logging.debug('lst_technical_analysis %s, shape %s', lst_technical_analysis[i_ndx], list_x_train[i_ndx].shape)
+        logging.info ('\nAnalyzing ndx_model \n\tdim[0] (samples)=%s,\n\tdim[1] (time series length)=%s\n\tdim[2] (feature count)=%s\n' % \
+                     (np_model.shape[0], np_model.shape[1], np_model.shape[2]))
+        logging.debug('%s data:\n%s', lst_technical_analysis[i_ndx], list_x_train[i_ndx])
+        i_ndx += 1
 
     logging.info ("\tCreating time series took %s" % (step1 - start))
     logging.info ("\tStructuring 3D data took %s" % (step2 - step1))
@@ -705,12 +675,13 @@ def evaluate_model(model, x_data, y_data):
     logging.info ('')
     logging.info ('====> ==============================================')
     logging.info ('====> evaluate_model')
-    logging.debug('====> x_data inputs = \n%s\ny_data = \n%s', len(x_data), y_data)
+    logging.debug('====> x_data includes %s inputs', len(x_data))
     logging.info ('====> ==============================================')
     
     lst_x = []
     lst_y = []
     for i_ndx in range(0, len(x_data)) :
+        logging.info ('Input %s - shape %s', i_ndx, x_data[i_ndx].shape)
         lst_x.append(x_data[i_ndx])
         lst_y.append(y_data)
     lst_y.append(y_data)

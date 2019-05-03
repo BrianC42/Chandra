@@ -8,5 +8,6 @@
 <path>/${PROJECT_DIR_NAME}/processes/child</path>
 <path>/${PROJECT_DIR_NAME}/technical_analysis</path>
 <path>/${PROJECT_DIR_NAME}/utility</path>
+<path>/${PROJECT_DIR_NAME}/unit_test</path>
 </pydev_pathproperty>
 </pydev_project>

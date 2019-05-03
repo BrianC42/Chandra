@@ -104,9 +104,9 @@ def fetch_timeseries_data(field_of_interest,symbol,source):
         #df_data = read_symbol_historical_data(symbol)
         df_data = read_enhanced_symbol_data(symbol)
     data = df_data[field_of_interest].values
-    logging.debug ("Time series for %s, field(s) of interest: %s, time series has %s data points:\n%s ... %s", \
+    logging.debug ("Time series for %s\n\tfield(s) of interest: %s\n\ttime series has %s data points:\n%s ... %s", \
                    symbol, field_of_interest, len(data), data[:3], data[-3:])
-    logging.info ("Time series for %s, field(s) of interest: %s, time series has %s data points", \
+    logging.info ("Time series for %s\n\tfield(s) of interest: %s\n\ttime series has %s data points", \
                   symbol, field_of_interest, len(data))
     
     return (data)
@@ -182,12 +182,20 @@ def save_symbol_historical_data(ticker, df_data):
     return
 
 def read_enhanced_symbol_data(ticker):
-    logging.info('read_enhanced_symbol_data')
+    logging.debug('====> ==============================================')
+    logging.info ('====> read_enhanced_symbol_data start')
+    logging.debug('====> ==============================================')
+    
     input_file = get_devdata_dir() + "\\symbols\\" + ticker + "_enriched.csv"
-    logging.debug ("Reading %s file %s", ticker, input_file)
     df_data = pd.read_csv(input_file)
     df_data = df_data.set_index('date')
-    logging.debug ("Read_Symbol_Historical_Data(): \n%s\n%s ", df_data.head(1), df_data.tail(1))
+
+    logging.debug("ticker %s, shape %s - data file: %s", ticker, df_data.shape, input_file)
+    logging.debug("data head:\n%s", df_data.head(5))
+    logging.debug("data tail:\n%s", df_data.tail(5))
+    logging.debug('<==== ==============================================')
+    logging.info ('<==== read_enhanced_symbol_data end')
+    logging.debug('<==== ==============================================')
     
     return (df_data)
 
@@ -202,7 +210,9 @@ def read_symbol_historical_data(ticker):
     return (df_data)
 
 def read_historical_data(recs=none):  
-    logging.info('read_historical_data')
+    logging.debug('====> ==============================================')
+    logging.info ('====> read_historical_data start')
+    logging.debug('====> ==============================================')
     '''
     Open and process source data file
         Data fields in Quandl file are
@@ -210,16 +220,17 @@ def read_historical_data(recs=none):
             'high', 'adj_volume', 'low', 'date', 'close', 'open', 'adj_high', 'split_ratio'
     '''
     import_file = get_devdata_dir() + "\\Quandl stock data.csv"
-    #print ("Processing historical data...", import_file)
     if recs == none:
         df_data = pd.read_csv(import_file)
     else:
         df_data = pd.read_csv(import_file, nrows=recs)
 
-    logging.debug ("Historical data starts: \n\t", df_data.head(5))
-    logging.debug ("Historical data row 2 - ticker is:", df_data.loc[2,"ticker"])
-    logging.debug ("Historical data tail: \n\t", df_data.tail(2))
-    logging.debug ("historical data processed...", df_data.shape)
+    logging.debug("Historical ticker %s, shape %s - data file: %s", df_data.loc[2,"ticker"], df_data.shape, import_file)
+    logging.debug("Historical data starts: \n%s", df_data.head(5))
+    logging.debug("Historical data tail: \n%s", df_data.tail(2))
+    logging.debug('<==== ==============================================')
+    logging.info ('<==== read_historical_data end')
+    logging.debug('<==== ==============================================')
 
     return (df_data)
 

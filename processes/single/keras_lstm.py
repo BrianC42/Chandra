@@ -52,7 +52,8 @@ if __name__ == '__main__':
     lst_analyses, x_train, y_train, x_test, y_test = prepare_ts_lstm(tickers, result_drivers, forecast_feature, ANALASIS_SAMPLE_LENGTH, FORECAST_LENGTH, source="local")
     
     ''' ................... Step 2 - Build Model ............................
-    ========================================================================= '''
+    =========================================
+    ================================ '''
     step2 = time.time()
     print ('\nStep 2 - Build Model')
     model = build_model(lst_analyses, x_train)
