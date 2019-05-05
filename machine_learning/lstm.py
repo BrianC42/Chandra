@@ -31,6 +31,9 @@ from keras.models import Model
 from keras.utils import plot_model
 from keras.utils import print_summary
 
+from buy_sell_hold import calculate_single_bsh_flag
+from buy_sell_hold import calculate_sample_bsh_flag
+
 '''
     Sequential model
         Attributes
@@ -362,7 +365,7 @@ def save_model_plot(model):
 
     return
 
-def prepare_ts_lstm(tickers, result_drivers, forecast_feature, time_steps, forecast_steps, source=''):
+def prepare_ts_lstm(tickers, result_drivers, forecast_feature, time_steps, forecast_steps, source='', analysis=''):
     logging.info('')
     logging.info('====> ==============================================')
     logging.info('====> prepare_ts_lstm: Prepare as multi-variant time series data for LSTM')
@@ -418,6 +421,7 @@ def prepare_ts_lstm(tickers, result_drivers, forecast_feature, time_steps, forec
     '''
     samples = df_data.shape[0]
     np_data = np.empty([samples, time_steps+forecast_steps, feature_count])
+    np_prediction = np.empty([samples, forecast_steps])
     logging.debug("convert 2D flat data frame of shape: %s to 3D numpy array of shape %s",  df_data.shape, np_data.shape)
     for ndx_feature_value in range(0, feature_count) :
         np_data[ : , : , ndx_feature_value] = df_data.iloc[:, np.r_[   ndx_feature_value : df_data.shape[1] : feature_count]]
@@ -425,7 +429,7 @@ def prepare_ts_lstm(tickers, result_drivers, forecast_feature, time_steps, forec
     
     '''
     *** Specific to the analysis being performed ***
-    Calculate future % change of forecast feature
+    Calculate forecast feature
     '''
     step2 = time.time()
     #print ("\tCalculating forecast y-axis characteristic value")
@@ -434,12 +438,20 @@ def prepare_ts_lstm(tickers, result_drivers, forecast_feature, time_steps, forec
         if forecast_feature[ndx_feature_value] :
             for ndx_feature in range(time_steps, time_steps+forecast_steps) :        
                 for ndx_time_period in range(0, samples) :
-                    np_data[ndx_time_period, ndx_feature, ndx_feature_value] = \
-                        np_data[ndx_time_period, ndx_feature, ndx_feature_value] / np_data[ndx_time_period, time_steps-1, ndx_feature_value]
+                    if (analysis == 'TBD') :
+                        print ('Analysis model is not yet defined')
+                    elif (analysis == 'buy_sell_hold') :
+                        np_prediction[ndx_time_period, ndx_feature-time_steps] = \
+                            calculate_single_bsh_flag(np_data[ndx_time_period, time_steps-1, ndx_feature_value], \
+                                                      np_data[ndx_time_period, ndx_feature, ndx_feature_value]  )
+                    else :
+                        print ('Analysis model is not specified')
                     ndx_time_period += 1            
                 ndx_feature += 1
-            logging.debug('\nnp_data feature forecast as percentage change : %s, %s', ndx_feature_value, result_drivers[ndx_feature_value])
-            logging.debug('\n%s', np_data[: , time_steps : , ndx_feature_value])
+            logging.debug('Using feature %s as feature to forecast, np_data feature forecast:', ndx_feature_value)
+            logging.debug('Current value of forecast feature:\n%s', np_data[: , time_steps-1, ndx_feature_value])
+            logging.debug('Future values\n%s', np_data[: , time_steps : , ndx_feature_value])
+            logging.debug('Generated prediction values the model can forecast\n%s', np_prediction[:, :])
         ndx_feature_value += 1  
     
     '''
@@ -447,17 +459,16 @@ def prepare_ts_lstm(tickers, result_drivers, forecast_feature, time_steps, forec
     Find the maximum adj_high for each time period sample
     '''
     logging.debug('')
-    np_max_forecast = np.zeros([samples])
-    for ndx_feature_value in range(0, feature_count) :
-        if forecast_feature[ndx_feature_value] :
-            for ndx_feature in range(time_steps, time_steps+forecast_steps) :        
-                for ndx_time_period in range(0, samples) :
-                    if (np_data[ndx_time_period, ndx_feature, ndx_feature_value] > np_max_forecast[ndx_time_period]) :
-                        np_max_forecast[ndx_time_period] = np_data[ndx_time_period, ndx_feature, ndx_feature_value]
-                    ndx_time_period += 1            
-                ndx_feature += 1
-        ndx_feature_value += 1
-    logging.debug('\nMaximum forecast values %s\n%s', np_max_forecast.shape, np_max_forecast)
+    np_forecast = np.zeros([samples])
+    for ndx_time_period in range(0, samples) :
+        if (analysis == 'TBD') :
+            print ('Analysis model is not yet defined')
+        elif (analysis == 'buy_sell_hold') :
+            np_forecast[ndx_time_period] = calculate_sample_bsh_flag(np_prediction[ndx_time_period, :])
+        else :
+            print ('Analysis model is not specified')
+        ndx_time_period += 1            
+    logging.debug('\nforecast shape %s and values\n%s', np_forecast.shape, np_forecast)
 
     '''
     normalise the data in each row
@@ -516,10 +527,10 @@ def prepare_ts_lstm(tickers, result_drivers, forecast_feature, time_steps, forec
     '''
     np.random.shuffle(np_data)
     row = round(0.1 * np_data.shape[0])
-    x_test  = np_data        [        :int(row), :time_steps , : ]
-    x_train = np_data        [int(row):        , :time_steps , : ]
-    y_test  = np_max_forecast[        :int(row)]
-    y_train = np_max_forecast[int(row):        ]
+    x_test  = np_data    [        :int(row), :time_steps , : ]
+    x_train = np_data    [int(row):        , :time_steps , : ]
+    y_test  = np_forecast[        :int(row)]
+    y_train = np_forecast[int(row):        ]
 
     list_x_test  = list([])
     list_x_train = list([])

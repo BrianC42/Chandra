@@ -49,7 +49,9 @@ if __name__ == '__main__':
     ======================================================================= '''
     step1 = time.time()
     print ('\nStep 1 - Load and prepare the data for analysis')
-    lst_analyses, x_train, y_train, x_test, y_test = prepare_ts_lstm(tickers, result_drivers, forecast_feature, ANALASIS_SAMPLE_LENGTH, FORECAST_LENGTH, source="local")
+    lst_analyses, x_train, y_train, x_test, y_test = prepare_ts_lstm(tickers, result_drivers, forecast_feature, \
+                                                                     ANALASIS_SAMPLE_LENGTH, FORECAST_LENGTH, \
+                                                                     source="local", analysis='buy_sell_hold')
     
     ''' ................... Step 2 - Build Model ............................
     =========================================
