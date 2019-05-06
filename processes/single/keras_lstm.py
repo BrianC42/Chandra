@@ -31,8 +31,9 @@ if __name__ == '__main__':
     '''
     tickers = ["aapl"]
     #result_drivers   = ["adj_low", "adj_high", "adj_open", "adj_close", "adj_volume", "BB_Lower", "BB_Upper", "SMA20", "OBV", "AccumulationDistribution"]
-    result_drivers   = ["adj_low", "adj_high", "adj_open", "adj_close", "adj_volume", "BB_Lower", "BB_Upper", "SMA20", "OBV", "AccumulationDistribution", "MACD_Sell", "MACD_Buy"]
-    forecast_feature = [False,     True,       False,      False,       False,        False,       False,     False,   False, False,                      False,       False]
+    result_drivers   = ["adj_low", "adj_high", "adj_open", "adj_close", "adj_volume", "BB_Lower", "BB_Upper", "SMA20",   "OBV",     "AccumulationDistribution", "MACD_Sell", "MACD_Buy"]
+    forecast_feature = [False,     True,       False,      False,       False,        False,       False,     False,     False,     False,                      False,       False]
+    feature_type     = ['numeric', 'numeric',  'numeric', 'numeric',    'numeric',    'numeric',   'numeric', 'numeric', 'numeric', 'numeric',                  'boolean',   'boolean']
     ANALASIS_SAMPLE_LENGTH = 120
     FORECAST_LENGTH = 30
 
@@ -49,13 +50,12 @@ if __name__ == '__main__':
     ======================================================================= '''
     step1 = time.time()
     print ('\nStep 1 - Load and prepare the data for analysis')
-    lst_analyses, x_train, y_train, x_test, y_test = prepare_ts_lstm(tickers, result_drivers, forecast_feature, \
+    lst_analyses, x_train, y_train, x_test, y_test = prepare_ts_lstm(tickers, result_drivers, forecast_feature, feature_type, \
                                                                      ANALASIS_SAMPLE_LENGTH, FORECAST_LENGTH, \
                                                                      source="local", analysis='buy_sell_hold')
     
     ''' ................... Step 2 - Build Model ............................
-    =========================================
-    ================================ '''
+    ========================================================================= '''
     step2 = time.time()
     print ('\nStep 2 - Build Model')
     model = build_model(lst_analyses, x_train)

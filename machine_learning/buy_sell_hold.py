@@ -13,10 +13,10 @@ import numpy as np
 def calculate_single_bsh_flag(current_price, future_price):
     
     bsh_change = future_price / current_price
-    if bsh_change >= 1.03 :
+    if bsh_change >= 1.2 :
         # 3% increase
         bsh_flag = 1
-    elif bsh_change <= 0.97 :
+    elif bsh_change <= 0.8 :
         # 3% decline
         bsh_flag = -1
     else :
@@ -29,10 +29,6 @@ def calculate_sample_bsh_flag(sample_single_flags):
     
     bsh_flag = 0
     
-    '''
-    if (np_data[ndx_time_period, ndx_feature, ndx_feature_value] > np_max_forecast[ndx_time_period]) :
-        np_max_forecast[ndx_time_period] = np_data[ndx_time_period, ndx_feature, ndx_feature_value]
-    '''
     bsh_flag_max = np.amax(sample_single_flags)
     bsh_flag_min = np.amin(sample_single_flags)
     

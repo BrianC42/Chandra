@@ -365,7 +365,7 @@ def save_model_plot(model):
 
     return
 
-def prepare_ts_lstm(tickers, result_drivers, forecast_feature, time_steps, forecast_steps, source='', analysis=''):
+def prepare_ts_lstm(tickers, result_drivers, forecast_feature, feature_type, time_steps, forecast_steps, source='', analysis=''):
     logging.info('')
     logging.info('====> ==============================================')
     logging.info('====> prepare_ts_lstm: Prepare as multi-variant time series data for LSTM')
@@ -393,9 +393,22 @@ def prepare_ts_lstm(tickers, result_drivers, forecast_feature, time_steps, forec
         df_symbol = fetch_timeseries_data(result_drivers, tickers[ndx_symbol], source)
         logging.info ("df_symbol data shape: %s, %s samples of drivers\n%s", df_symbol.shape, df_symbol.shape[0], df_symbol.shape[1])
         for ndx_feature_value in range(0, feature_count) :
-            logging.debug("result_drivers %s: df_symbol %s ... df_symbol %s", \
+            logging.debug("result_drivers %s: head %s ... tail %s", \
                           result_drivers[ndx_feature_value], df_symbol[ :3, ndx_feature_value], df_symbol[ -3: , ndx_feature_value])
-            ndx_feature_value += 1  
+            '''
+            Convert any boolean data to numeric
+            false = 0
+            true = 1
+            '''
+            if (feature_type[ndx_feature_value] == 'boolean') :
+                logging.debug("Converting symbol %s, %s from boolean: %s data points", \
+                              ndx_feature_value, result_drivers[ndx_feature_value], df_symbol.shape[0])
+                for ndx_sample in range(0, df_symbol.shape[0]) :
+                    if (df_symbol[ndx_sample, ndx_feature_value]) :
+                        df_symbol[ndx_sample, ndx_feature_value] = 1
+                    else :
+                        df_symbol[ndx_sample, ndx_feature_value] = 0
+                logging.debug("to %s ... %s", df_symbol[ :3, ndx_feature_value], df_symbol[ -3: , ndx_feature_value])
     
         '''
         Flatten data to a data frame where each row includes the 
@@ -425,7 +438,6 @@ def prepare_ts_lstm(tickers, result_drivers, forecast_feature, time_steps, forec
     logging.debug("convert 2D flat data frame of shape: %s to 3D numpy array of shape %s",  df_data.shape, np_data.shape)
     for ndx_feature_value in range(0, feature_count) :
         np_data[ : , : , ndx_feature_value] = df_data.iloc[:, np.r_[   ndx_feature_value : df_data.shape[1] : feature_count]]
-        ndx_feature_value += 1  
     
     '''
     *** Specific to the analysis being performed ***
@@ -446,13 +458,10 @@ def prepare_ts_lstm(tickers, result_drivers, forecast_feature, time_steps, forec
                                                       np_data[ndx_time_period, ndx_feature, ndx_feature_value]  )
                     else :
                         print ('Analysis model is not specified')
-                    ndx_time_period += 1            
-                ndx_feature += 1
             logging.debug('Using feature %s as feature to forecast, np_data feature forecast:', ndx_feature_value)
             logging.debug('Current value of forecast feature:\n%s', np_data[: , time_steps-1, ndx_feature_value])
             logging.debug('Future values\n%s', np_data[: , time_steps : , ndx_feature_value])
             logging.debug('Generated prediction values the model can forecast\n%s', np_prediction[:, :])
-        ndx_feature_value += 1  
     
     '''
     *** Specific to the analysis being performed ***
@@ -467,7 +476,6 @@ def prepare_ts_lstm(tickers, result_drivers, forecast_feature, time_steps, forec
             np_forecast[ndx_time_period] = calculate_sample_bsh_flag(np_prediction[ndx_time_period, :])
         else :
             print ('Analysis model is not specified')
-        ndx_time_period += 1            
     logging.debug('\nforecast shape %s and values\n%s', np_forecast.shape, np_forecast)
 
     '''
@@ -475,51 +483,54 @@ def prepare_ts_lstm(tickers, result_drivers, forecast_feature, time_steps, forec
         each data point for all historical data points is reduced to 0<=data<=+1
         1. Find the maximum value for each feature in each time series sample
         2. Normalize each feature value by dividing each value by the maximum value for that time series sample
+        N.B. boolean fields have been normalized by conversion above
     '''
     step3 = time.time()
     #print ("\tNormalizing data")
     logging.debug('')
     np_max = np.zeros([samples, feature_count])
     np_min = np.zeros([samples, feature_count])
-    for ndx_feature_value in range(0, feature_count) : # normalize all features
-        for ndx_feature in range(0, time_steps+forecast_steps) : # normalize only the time steps before the forecast time steps
-            for ndx_time_period in range(0, samples) : # normalize all time periods
-                if (np_data[ndx_time_period, ndx_feature, ndx_feature_value] > np_max[ndx_time_period, ndx_feature_value]) :
-                    '''
-                    logging.debug('New maximum %s, %s, %s was %s will be %s', \
+    for ndx_feature_value in range(0, feature_count) : # normalize all numeric features
+        if (feature_type[ndx_feature_value] == 'boolean') :
+            logging.debug("Feature %s, %s is boolean and does not require normalizing", \
+                          ndx_feature_value, result_drivers[ndx_feature_value])
+        else :
+            for ndx_feature in range(0, time_steps+forecast_steps) : # normalize only the time steps before the forecast time steps
+                for ndx_time_period in range(0, samples) : # normalize all time periods
+                    if (np_data[ndx_time_period, ndx_feature, ndx_feature_value] > np_max[ndx_time_period, ndx_feature_value]) :
+                        '''
+                        logging.debug('New maximum %s, %s, %s was %s will be %s', \
                                   ndx_time_period , ndx_feature, ndx_feature_value, \
                                   np_max[ndx_time_period, ndx_feature_value], \
                                   np_data[ndx_time_period, ndx_feature, ndx_feature_value])
-                    '''
-                    np_max[ndx_time_period, ndx_feature_value] = np_data[ndx_time_period, ndx_feature, ndx_feature_value]
-                if (np_data[ndx_time_period, ndx_feature, ndx_feature_value] < np_min[ndx_time_period, ndx_feature_value]) :
-                    '''
-                    logging.debug('New maximum %s, %s, %s was %s will be %s', \
+                        '''
+                        np_max[ndx_time_period, ndx_feature_value] = np_data[ndx_time_period, ndx_feature, ndx_feature_value]
+                        if (np_data[ndx_time_period, ndx_feature, ndx_feature_value] < np_min[ndx_time_period, ndx_feature_value]) :
+                            '''
+                        logging.debug('New maximum %s, %s, %s was %s will be %s', \
                                   ndx_time_period , ndx_feature, ndx_feature_value, \
                                   np_max[ndx_time_period, ndx_feature_value], \
                                   np_data[ndx_time_period, ndx_feature, ndx_feature_value])
-                    '''
-                    np_min[ndx_time_period, ndx_feature_value] = np_data[ndx_time_period, ndx_feature, ndx_feature_value]
-                ndx_time_period += 1            
-            ndx_feature += 1
-        ndx_feature_value += 1  
+                        '''
+                            np_min[ndx_time_period, ndx_feature_value] = np_data[ndx_time_period, ndx_feature, ndx_feature_value]
 
     for ndx_feature_value in range(0, feature_count) :
-        for ndx_feature in range(0, time_steps+forecast_steps) :        
-            for ndx_time_period in range(0, samples) :
-                if np_min[ndx_time_period, ndx_feature_value] <= 0 :                    
-                    np_data[ndx_time_period, ndx_feature, ndx_feature_value] += abs(np_min[ndx_time_period, ndx_feature_value])
-                    np_max[ndx_time_period, ndx_feature_value] += abs(np_min[ndx_time_period, ndx_feature_value])
-                np_data[ndx_time_period, ndx_feature, ndx_feature_value] = \
-                    np_data[ndx_time_period, ndx_feature, ndx_feature_value] / np_max[ndx_time_period, ndx_feature_value]
-                if np_data[ndx_time_period, ndx_feature, ndx_feature_value] == NAN :
-                    logging.debug('NaN: %s %s %s', ndx_time_period, ndx_feature, ndx_feature_value) 
-                ndx_time_period += 1            
-            ndx_feature += 1
-        logging.debug('normalized np_data feature values (0.0 to 1.0): %s, %s type: %s', \
-                      ndx_feature_value, result_drivers[ndx_feature_value], type(np_data[0, 0, ndx_feature_value]))
-        logging.debug('\n%s', np_data[: , : time_steps , ndx_feature_value] )
-        ndx_feature_value += 1  
+        if (feature_type[ndx_feature_value] == 'boolean') :
+            logging.debug("Feature %s, %s is boolean and already normalized", \
+                          ndx_feature_value, result_drivers[ndx_feature_value])
+        else :
+            for ndx_feature in range(0, time_steps+forecast_steps) :        
+                for ndx_time_period in range(0, samples) :
+                    if np_min[ndx_time_period, ndx_feature_value] <= 0 :                    
+                        np_data[ndx_time_period, ndx_feature, ndx_feature_value] += abs(np_min[ndx_time_period, ndx_feature_value])
+                        np_max[ndx_time_period, ndx_feature_value] += abs(np_min[ndx_time_period, ndx_feature_value])
+                        np_data[ndx_time_period, ndx_feature, ndx_feature_value] = \
+                            np_data[ndx_time_period, ndx_feature, ndx_feature_value] / np_max[ndx_time_period, ndx_feature_value]
+                    if np_data[ndx_time_period, ndx_feature, ndx_feature_value] == NAN :
+                            logging.debug('NaN: %s %s %s', ndx_time_period, ndx_feature, ndx_feature_value) 
+            logging.debug('normalized np_data feature values (0.0 to 1.0): %s, %s type: %s', \
+                          ndx_feature_value, result_drivers[ndx_feature_value], type(np_data[0, 0, ndx_feature_value]))
+            logging.debug('\n%s', np_data[: , : time_steps , ndx_feature_value] )
 
     step4 = time.time()
     '''
@@ -608,7 +619,7 @@ def build_model(lst_analyses, np_input):
         print('\tkf_input shape %s' % tf.shape(kf_feature_sets[i_ndx]))
 
         #create the layers used to model each technical analysis
-        kf_input_i_ndx = LSTM(32)(kf_feature_sets[i_ndx])
+        kf_input_i_ndx = LSTM(3)(kf_feature_sets[i_ndx])
         kf_input_i_ndx = Dense(output_dim=1)(kf_input_i_ndx)
 
         #identify the output of each individual technical analysis
@@ -616,7 +627,7 @@ def build_model(lst_analyses, np_input):
         kf_feature_set_outputs.append(kf_feature_set_output)        
 
         #create outputs that can be used to assess the individual technical analysis         
-        kf_feature_set_solo_output = Dense(output_dim=1, name=str_solo_out)(kf_feature_set_output)        
+        kf_feature_set_solo_output = Dense(name=str_solo_out, output_dim=1)(kf_feature_set_output)        
         kf_feature_set_solo_outputs.append(kf_feature_set_solo_output)        
 
         i_ndx += 1
@@ -674,7 +685,7 @@ def train_lstm(model, x_train, y_train):
         lst_y.append(y_train)
     lst_y.append(y_train)
         
-    model.fit(x=lst_x, y=lst_y, shuffle=True, batch_size=2056, nb_epoch=2, validation_split=0.05, verbose=1)
+    model.fit(x=lst_x, y=lst_y, shuffle=True, batch_size=256, nb_epoch=4, validation_split=0.05, verbose=1)
         
     logging.info('<---- ----------------------------------------------')
     logging.info('<---- train_lstm:')
@@ -730,17 +741,15 @@ def predict_sequences_multiple(model, df_data):
     logging.info ('')
     logging.info ('====> ==============================================')
     logging.info ('====> predict_sequences_multiple: %s technical analysis feature sets', len(df_data))
-    print        ('====> predict_sequences_multiple: technical analysis feature sets', len(df_data))
+    print        ('====> predict_sequences_multiple: %s technical analysis feature sets' % (len(df_data)))
     for i_ndx in range(0, len(df_data)) :
-        logging.info ('====> data shape=%s', df_data[i_ndx].shape)
-        print        ('====> data shape= ', df_data[i_ndx].shape)
-        logging.info ('====> data=\n%s', df_data[i_ndx])
+        logging.info ('====> technical analysis feature set %s, data shape=%s\n%s', i_ndx, df_data[i_ndx].shape, df_data[i_ndx])
+        print        ('====> technical analysis feature set %s, data shape=%s' % (i_ndx, df_data[i_ndx].shape))
     logging.info     ('====> ==============================================')
         
     samples = df_data[0].shape[0]
     np_predictions = np.empty([samples, len(df_data) + 1])
     logging.debug('Output shape: %s', np_predictions.shape)
-    print('Output shape: ', np_predictions.shape)
 
     for ndx_samples in range(0, samples) :
         lst_x = []
@@ -748,12 +757,11 @@ def predict_sequences_multiple(model, df_data):
             lst_x.append(df_data[i_ndx][ndx_samples:ndx_samples+1])
         np_predictions[ndx_samples] = predict_single(model, lst_x)
         #np_predictions[ndx_samples] = model.predict(df_data[ndx_samples:ndx_samples+1])
-        ndx_samples += 1
 
     #print ("%s predictions of length %s" % (len(prediction_seqs), len(prediction_seqs[0])))
     logging.info ('<---- ----------------------------------------------')
     logging.info ('<---- predict_sequences_multiple:')
-    logging.debug('<---- prediction_seqs=\n%s', np_predictions)
+    logging.debug('<---- %s predictions, prediction_seqs=\n%s', len(np_predictions), np_predictions)
     logging.info ('<---- ----------------------------------------------')
     
     return np_predictions
@@ -769,19 +777,17 @@ def plot_results_multiple(technical_analysis_names, predicted_data, true_data):
     for ndx_data in range(0, predicted_data.shape[0]) :
         for ndx_output in range(0,predicted_data.shape[1]) :
             np_diff[ndx_data][ndx_output] = true_data[ndx_data] - predicted_data[ndx_data][ndx_output]
-            ndx_output += 1
-        ndx_data += 1
     '''
     On screen plot of actual and predicted data
     '''
     for ndx_output in range(0,predicted_data.shape[1]) :
         fig = plt.figure(facecolor='white')
         ax = fig.add_subplot(111)
-        np_output_diff = np_diff[:][ndx_output]
+        np_output_diff = np_diff[:, ndx_output]
+        logging.debug('plotting values, shape %s, values\n%s', np_output_diff.shape, np_output_diff)
         ax.plot(np_output_diff, label = 'actual - prediction')
         if ndx_output<len(technical_analysis_names) :
             plt.legend(title=technical_analysis_names[ndx_output], loc='upper center', ncol=2)
         else :
             plt.legend(title='Composite actual / prediction difference', loc='upper center', ncol=2)
         plt.show()
-        ndx_output += 1
