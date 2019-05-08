@@ -507,11 +507,11 @@ def prepare_ts_lstm(tickers, result_drivers, forecast_feature, feature_type, tim
                         np_max[ndx_time_period, ndx_feature_value] = np_data[ndx_time_period, ndx_feature, ndx_feature_value]
                         if (np_data[ndx_time_period, ndx_feature, ndx_feature_value] < np_min[ndx_time_period, ndx_feature_value]) :
                             '''
-                        logging.debug('New maximum %s, %s, %s was %s will be %s', \
-                                  ndx_time_period , ndx_feature, ndx_feature_value, \
-                                  np_max[ndx_time_period, ndx_feature_value], \
-                                  np_data[ndx_time_period, ndx_feature, ndx_feature_value])
-                        '''
+                            logging.debug('New maximum %s, %s, %s was %s will be %s', \
+                                ndx_time_period , ndx_feature, ndx_feature_value, \
+                                np_max[ndx_time_period, ndx_feature_value], \
+                                np_data[ndx_time_period, ndx_feature, ndx_feature_value])
+                            '''
                             np_min[ndx_time_period, ndx_feature_value] = np_data[ndx_time_period, ndx_feature, ndx_feature_value]
 
     for ndx_feature_value in range(0, feature_count) :
@@ -524,8 +524,13 @@ def prepare_ts_lstm(tickers, result_drivers, forecast_feature, feature_type, tim
                     if np_min[ndx_time_period, ndx_feature_value] <= 0 :                    
                         np_data[ndx_time_period, ndx_feature, ndx_feature_value] += abs(np_min[ndx_time_period, ndx_feature_value])
                         np_max[ndx_time_period, ndx_feature_value] += abs(np_min[ndx_time_period, ndx_feature_value])
-                        np_data[ndx_time_period, ndx_feature, ndx_feature_value] = \
-                            np_data[ndx_time_period, ndx_feature, ndx_feature_value] / np_max[ndx_time_period, ndx_feature_value]
+                        if (np_max[ndx_time_period, ndx_feature_value] == 0) :
+                            #
+                            np_data[ndx_time_period, ndx_feature, ndx_feature_value] = 0
+                        else :
+                            np_data[ndx_time_period, ndx_feature, ndx_feature_value] = \
+                                np_data[ndx_time_period, ndx_feature, ndx_feature_value] / \
+                                np_max[ndx_time_period, ndx_feature_value]
                     if np_data[ndx_time_period, ndx_feature, ndx_feature_value] == NAN :
                             logging.debug('NaN: %s %s %s', ndx_time_period, ndx_feature, ndx_feature_value) 
             logging.debug('normalized np_data feature values (0.0 to 1.0): %s, %s type: %s', \
@@ -553,8 +558,14 @@ def prepare_ts_lstm(tickers, result_drivers, forecast_feature, feature_type, tim
     list_x_train.append(x_train[:, :, :5])
     
     #Use list_x_test[1] on a model to learn to forecast based on "BB_Lower", "BB_Upper"
+    lst_technical_analysis.append('Bollinger_bands')
+    list_x_test.append (x_test [:, :, 5:7])
+    list_x_train.append(x_train[:, :, 5:7])
     
-    #Use list_x_test[2] on a model to learn to forecast based on "OBV"
+    #Use list_x_test[2] on a model to learn to forecast based on "AccumulationDistribution"
+    lst_technical_analysis.append('AccumulationDistribution')
+    list_x_test.append (x_test [:, :, 9:10])
+    list_x_train.append(x_train[:, :, 9:10])
     
     #Use list_x_test[3] on a model to learn to forecast based on "MACD_Sell"
     lst_technical_analysis.append('MACD_Sell')
@@ -685,7 +696,7 @@ def train_lstm(model, x_train, y_train):
         lst_y.append(y_train)
     lst_y.append(y_train)
         
-    model.fit(x=lst_x, y=lst_y, shuffle=True, batch_size=256, nb_epoch=4, validation_split=0.05, verbose=1)
+    model.fit(x=lst_x, y=lst_y, shuffle=True, batch_size=2048, nb_epoch=2, validation_split=0.05, verbose=1)
         
     logging.info('<---- ----------------------------------------------')
     logging.info('<---- train_lstm:')
@@ -765,29 +776,3 @@ def predict_sequences_multiple(model, df_data):
     logging.info ('<---- ----------------------------------------------')
     
     return np_predictions
-
-def plot_results_multiple(technical_analysis_names, predicted_data, true_data):
-    logging.info ('')
-    logging.info ('====> ==============================================')
-    logging.info ('====> plot_results_multiple: predicted_data shape=%s true_data shape=%s', predicted_data.shape, true_data.shape)
-    logging.debug('====> \npredicted_data=\n%s\ntrue_data=\n%s', predicted_data, true_data)
-    logging.info ('====> ==============================================')
-        
-    np_diff = np.zeros([predicted_data.shape[0], predicted_data.shape[1]])
-    for ndx_data in range(0, predicted_data.shape[0]) :
-        for ndx_output in range(0,predicted_data.shape[1]) :
-            np_diff[ndx_data][ndx_output] = true_data[ndx_data] - predicted_data[ndx_data][ndx_output]
-    '''
-    On screen plot of actual and predicted data
-    '''
-    for ndx_output in range(0,predicted_data.shape[1]) :
-        fig = plt.figure(facecolor='white')
-        ax = fig.add_subplot(111)
-        np_output_diff = np_diff[:, ndx_output]
-        logging.debug('plotting values, shape %s, values\n%s', np_output_diff.shape, np_output_diff)
-        ax.plot(np_output_diff, label = 'actual - prediction')
-        if ndx_output<len(technical_analysis_names) :
-            plt.legend(title=technical_analysis_names[ndx_output], loc='upper center', ncol=2)
-        else :
-            plt.legend(title='Composite actual / prediction difference', loc='upper center', ncol=2)
-        plt.show()

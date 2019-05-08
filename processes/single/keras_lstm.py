@@ -6,15 +6,14 @@ Created on Jan 31, 2018
 import logging
 import time
 
+from quandl_library import get_ini_data
 from lstm import build_model
 from lstm import predict_sequences_multiple
-from lstm import plot_results_multiple
 from lstm import prepare_ts_lstm
 from lstm import train_lstm
 from lstm import evaluate_model
 from lstm import save_model
-
-from quandl_library import get_ini_data
+from buy_sell_hold import bsh_results_multiple
 
 if __name__ == '__main__':
     print ("Good morning Dr. Chandra. I am ready for my first lesson.\n")
@@ -22,15 +21,8 @@ if __name__ == '__main__':
     start = time.time()
     
     #ticker = input("Pick a symbol ")
-    '''
     tickers = ["aapl", "ge", "ko", "hpq", "arnc", "dis", "ibm", "ba", "cat", "dd", "ip", "mo", "mrk", "jnj", "c", "f", "t"]
-    result_drivers = ["adj_low", "adj_high", "adj_open", "adj_close", "adj_volume", "BB_Lower", "BB_Upper", "SMA20", "OBV", "AccumulationDistribution", "MACD_Sell", "MACD_Buy"]
-    
-    Notes
-        MACD_Buy and MACD_Sell drive test accuracy to 0
-    '''
     tickers = ["aapl"]
-    #result_drivers   = ["adj_low", "adj_high", "adj_open", "adj_close", "adj_volume", "BB_Lower", "BB_Upper", "SMA20", "OBV", "AccumulationDistribution"]
     result_drivers   = ["adj_low", "adj_high", "adj_open", "adj_close", "adj_volume", "BB_Lower", "BB_Upper", "SMA20",   "OBV",     "AccumulationDistribution", "MACD_Sell", "MACD_Buy"]
     forecast_feature = [False,     True,       False,      False,       False,        False,       False,     False,     False,     False,                      False,       False]
     feature_type     = ['numeric', 'numeric',  'numeric', 'numeric',    'numeric',    'numeric',   'numeric', 'numeric', 'numeric', 'numeric',                  'boolean',   'boolean']
@@ -45,6 +37,8 @@ if __name__ == '__main__':
     log_fmt = logging.Formatter('%(asctime)s - %(name)s - %levelname - %(messages)s')
     
     logger.info('Keras LSTM model for stock market prediction')
+    
+    analysis_choice='buy_sell_hold'
 
     ''' .......... Step 1 - Load and prepare data .........................
     ======================================================================= '''
@@ -52,7 +46,7 @@ if __name__ == '__main__':
     print ('\nStep 1 - Load and prepare the data for analysis')
     lst_analyses, x_train, y_train, x_test, y_test = prepare_ts_lstm(tickers, result_drivers, forecast_feature, feature_type, \
                                                                      ANALASIS_SAMPLE_LENGTH, FORECAST_LENGTH, \
-                                                                     source="local", analysis='buy_sell_hold')
+                                                                     source="local", analysis=analysis_choice)
     
     ''' ................... Step 2 - Build Model ............................
     ========================================================================= '''
@@ -86,6 +80,11 @@ if __name__ == '__main__':
     print ("\tStep 4 Evaluate the model! took %s" % (step5 - step4)) 
     print ("\tStep 5 Visualize accuracy, clean up and archive! took %s" % (end - step5))
     
-    plot_results_multiple(lst_analyses, predictions, y_test)
+    if (analysis_choice == 'TBD') :
+        print ('Analysis model is not yet defined')
+    elif (analysis_choice == 'buy_sell_hold') :
+        bsh_results_multiple(lst_analyses, predictions, y_test)
+    else :
+        print ('Analysis model is not specified')
     
     print ('\nNow go and make us rich')
