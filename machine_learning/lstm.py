@@ -696,7 +696,7 @@ def train_lstm(model, x_train, y_train):
         lst_y.append(y_train)
     lst_y.append(y_train)
         
-    model.fit(x=lst_x, y=lst_y, shuffle=True, batch_size=2048, nb_epoch=2, validation_split=0.05, verbose=1)
+    model.fit(x=lst_x, y=lst_y, shuffle=True, batch_size=64, nb_epoch=2, validation_split=0.05, verbose=1)
         
     logging.info('<---- ----------------------------------------------')
     logging.info('<---- train_lstm:')

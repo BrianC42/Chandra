@@ -63,7 +63,7 @@ def plot_bsh_results(technical_analysis_names, predicted_data, true_data, np_dif
 
     return
 
-def categorize_prediction_risks(technical_analysis_names, predicted_data, true_data, np_diff) :
+def categorize_prediction_risks(technical_analysis_names, predicted_data, true_data, np_diff, f_out) :
     '''
     Actual bsh flag    Prediction        Categorization
     -1:   sell        <-0.5              Correct sell
@@ -93,8 +93,8 @@ def categorize_prediction_risks(technical_analysis_names, predicted_data, true_d
     ACTUAL_SELL = -1
     ACTUAL_HOLD = 0
     ACTUAL_BUY = 1
-    PREDICTION_BUY_THRESHOLD = 0.9
-    PREDICTION_SELL_THRESHOLD = 0.1
+    PREDICTION_BUY_THRESHOLD = 0.2
+    PREDICTION_SELL_THRESHOLD = 0.15
     
     actual_sample_count = true_data.shape[0]
     prediction_count = predicted_data.shape[1]
@@ -170,9 +170,17 @@ def categorize_prediction_risks(technical_analysis_names, predicted_data, true_d
     logging.debug('Result characterizations:\n%s', np_characterization)
     logging.debug('Result characterizations pct:\n%s', np_characterization_percentage)
 
-    print       ('Prediction results (%d) can be categorized as follows:' % actual_sample_count)    
-    logging.info('Prediction results (%d) can be categorized as follows:', actual_sample_count)    
-    print       ('Actual\t\t\t\t\tbuys: %d\tholds: %d\tsells: %d' % ( \
+    f_out.write ('\n\nPrediction results can be categorized as follows:')   
+    print       ('\nPrediction results can be categorized as follows:')   
+    logging.info('\nPrediction results can be categorized as follows:')    
+    f_out.write ('\nActual\ttotal:\t{:.0f}\tbuys:\t{:.0f}\tholds:\t{:.0f}\tsells:{:.0f}'.format( \
+                actual_sample_count, \
+                np_counts[BUY_INDEX], \
+                np_counts[HOLD_INDEX], \
+                np_counts[SELL_INDEX] \
+                ))
+    print       ('Actual\ttotal:\t%d\tbuys: %d\tholds: %d\tsells: %d' % ( \
+                actual_sample_count, \
                 np_counts[BUY_INDEX], \
                 np_counts[HOLD_INDEX], \
                 np_counts[SELL_INDEX] \
@@ -185,68 +193,85 @@ def categorize_prediction_risks(technical_analysis_names, predicted_data, true_d
 
     for ndx_analysis in range (0, prediction_count) :
         if ndx_analysis == 0 :
+            f_out.write ('\nComposite analysis')   
             print       ('Composite analysis')
             logging.info('Composite analysis')
-        else :   
+        else :
+            f_out.write ('\n{:s}'.format(technical_analysis_names[ndx_analysis-1]))      
             print       ('\n%s' % technical_analysis_names[ndx_analysis-1])
             logging.info('\n%s', technical_analysis_names[ndx_analysis-1])
             
-        print       ('\tPrediction values range from %f to %f' % (min(predicted_data[ndx_analysis, : ]), max(predicted_data[ndx_analysis, : ])))
-        logging.info('\tPrediction values range from %f to %f' % (min(predicted_data[ndx_analysis, : ]), max(predicted_data[ndx_analysis, : ])))
+        f_out.write ('\n\tPrediction values range from\t{:f} to {:f}'.format(min(predicted_data[ndx_analysis, : ]), max(predicted_data[ndx_analysis, : ])))   
+        print       ('\tPrediction values range from\t%f to %f' % (min(predicted_data[ndx_analysis, : ]), max(predicted_data[ndx_analysis, : ])))
+        logging.info('\tPrediction values range from\t%f to %f' % (min(predicted_data[ndx_analysis, : ]), max(predicted_data[ndx_analysis, : ])))
 
-        print       ('\tPredicted\t\t\tbuys: %d\t\tholds: %d\tsells: %d' % ( \
+        f_out.write ('\n\tPredicted\t\t\tbuys:\t\t{:.0f}\t\tholds:\t\t{:.0f}\t\tsells:\t\t{:.0f}'.format( \
+                    np_predictions[ndx_analysis, BUY_INDEX], \
+                    np_predictions[ndx_analysis, HOLD_INDEX], \
+                    np_predictions[ndx_analysis, SELL_INDEX] \
+                    ))   
+        print       ('\tPredicted\t\t\tbuys:\t\t%d\t\tholds:\t\t%d\t\tsells:\t\t%d' % ( \
                     np_predictions[ndx_analysis, BUY_INDEX], \
                     np_predictions[ndx_analysis, HOLD_INDEX], \
                     np_predictions[ndx_analysis, SELL_INDEX] \
                     ))
-        logging.info('\tPredicted\t\t\tbuys: %d\t\tholds: %d\tsells: %d' % ( \
+        logging.info('\tPredicted\t\t\tbuys:\t\t%d\t\tholds:\t\t%d\t\tsells:\t\t%d' % ( \
                     np_predictions[ndx_analysis, BUY_INDEX], \
                     np_predictions[ndx_analysis, HOLD_INDEX], \
                     np_predictions[ndx_analysis, SELL_INDEX] \
                     ))
 
-        print       ('\tCorrect predictions:\t\tBuy\t\tHold\t\tSell')            
-        print       ('\t\t\t\t\t%d\t%.2f\t%d\t%.2f\t%d\t%.2f' % ( \
+        f_out.write ('\n\tCorrect predictions:\t\tBuy\t\t{:.0f}\t{:.2f}\tHold\t\t{:.0f}\t{:.2f}\tSell\t\t{:.0f}\t{:.2f}'.format(\
+                    np_characterization[ndx_analysis, BUY_INDEX, BUY_INDEX], np_characterization_percentage[ndx_analysis, BUY_INDEX, BUY_INDEX], \
+                    np_characterization[ndx_analysis, HOLD_INDEX, HOLD_INDEX], np_characterization_percentage[ndx_analysis, HOLD_INDEX, HOLD_INDEX], \
+                    np_characterization[ndx_analysis, SELL_INDEX, SELL_INDEX], np_characterization_percentage[ndx_analysis, SELL_INDEX, SELL_INDEX] \
+                    ))   
+        print       ('\tCorrect predictions:\t\tBuy\t\t%d\t%.2f\tHold\t\t%d\t%.2f\tSell\t\t%d\t%.2f' % ( \
                     np_characterization[ndx_analysis, BUY_INDEX, BUY_INDEX], np_characterization_percentage[ndx_analysis, BUY_INDEX, BUY_INDEX], \
                     np_characterization[ndx_analysis, HOLD_INDEX, HOLD_INDEX], np_characterization_percentage[ndx_analysis, HOLD_INDEX, HOLD_INDEX], \
                     np_characterization[ndx_analysis, SELL_INDEX, SELL_INDEX], np_characterization_percentage[ndx_analysis, SELL_INDEX, SELL_INDEX] \
                     ))
-        logging.info('\tCorrect predictions:\t\tBuy\t\tHold\t\tSell')            
-        logging.info('\t\t\t\t\t%d\t%.2f\t%d\t%.2f\t%d\t%.2f', \
+        logging.info('\tCorrect predictions:\t\tBuy\t\t%d\t%.2f\tHold\t\t%d\t%.2f\tSell\t%d\t\t%.2f', \
                     np_characterization[ndx_analysis, BUY_INDEX, BUY_INDEX], np_characterization_percentage[ndx_analysis, BUY_INDEX, BUY_INDEX], \
                     np_characterization[ndx_analysis, HOLD_INDEX, HOLD_INDEX], np_characterization_percentage[ndx_analysis, HOLD_INDEX, HOLD_INDEX], \
                     np_characterization[ndx_analysis, SELL_INDEX, SELL_INDEX], np_characterization_percentage[ndx_analysis, SELL_INDEX, SELL_INDEX] \
                     )
         
-        print       ('\tLost opportunities:\t\thold as sell\tbuy as hold\tbuy as sell')            
-        print       ('\t\t\t\t\t%d\t%.2f\t%d\t%.2f\t%d\t%.2f' % ( \
-                    np_characterization[ndx_analysis, HOLD_INDEX, SELL_INDEX], np_characterization_percentage[ndx_analysis, HOLD_INDEX, SELL_INDEX], \
-                    np_characterization[ndx_analysis, BUY_INDEX, HOLD_INDEX], np_characterization_percentage[ndx_analysis, BUY_INDEX, SELL_INDEX], \
-                    np_characterization[ndx_analysis, BUY_INDEX, SELL_INDEX], np_characterization_percentage[ndx_analysis, BUY_INDEX, HOLD_INDEX] \
+        f_out.write ('\n\tLost opportunities:\t\thold as sell\t{:.0f}\t{:.2f}\tbuy as hold\t{:.0f}\t{:.2f}\tbuy as sell\t{:.0f}\t{:.2f}'.format( \
+                    np_characterization[ndx_analysis, SELL_INDEX, HOLD_INDEX], np_characterization_percentage[ndx_analysis, SELL_INDEX, HOLD_INDEX], \
+                    np_characterization[ndx_analysis, HOLD_INDEX, BUY_INDEX], np_characterization_percentage[ndx_analysis, HOLD_INDEX, BUY_INDEX], \
+                    np_characterization[ndx_analysis, SELL_INDEX, BUY_INDEX], np_characterization_percentage[ndx_analysis, SELL_INDEX, BUY_INDEX] \
+                    ))   
+        print       ('\tLost opportunities:\t\thold as sell\t%d\t%.2f\tbuy as hold\t%d\t%.2f\tbuy as sell\t%d\t%.2f' % ( \
+                    np_characterization[ndx_analysis, SELL_INDEX, HOLD_INDEX], np_characterization_percentage[ndx_analysis, SELL_INDEX, HOLD_INDEX], \
+                    np_characterization[ndx_analysis, HOLD_INDEX, BUY_INDEX], np_characterization_percentage[ndx_analysis, HOLD_INDEX, BUY_INDEX], \
+                    np_characterization[ndx_analysis, SELL_INDEX, BUY_INDEX], np_characterization_percentage[ndx_analysis, SELL_INDEX, BUY_INDEX] \
                     ))
-        logging.info('\tLost opportunities:\t\thold as sell\tbuy as hold\tbuy as sell')            
-        logging.info('\t\t\t\t\t%d\t%.2f\t%d\t%.2f\t%d\t%.2f', \
-                    np_characterization[ndx_analysis, HOLD_INDEX, SELL_INDEX], np_characterization_percentage[ndx_analysis, HOLD_INDEX, SELL_INDEX], \
-                    np_characterization[ndx_analysis, BUY_INDEX, HOLD_INDEX], np_characterization_percentage[ndx_analysis, BUY_INDEX, SELL_INDEX], \
-                    np_characterization[ndx_analysis, BUY_INDEX, SELL_INDEX], np_characterization_percentage[ndx_analysis, BUY_INDEX, HOLD_INDEX] \
+        logging.info('\tLost opportunities:\t\thold as sell\t%d\t%.2f\tbuy as hold\t%d\t%.2f\tbuy as sell\t%d\t%.2f', \
+                    np_characterization[ndx_analysis, SELL_INDEX, HOLD_INDEX], np_characterization_percentage[ndx_analysis, SELL_INDEX, HOLD_INDEX], \
+                    np_characterization[ndx_analysis, HOLD_INDEX, BUY_INDEX], np_characterization_percentage[ndx_analysis, HOLD_INDEX, BUY_INDEX], \
+                    np_characterization[ndx_analysis, SELL_INDEX, BUY_INDEX], np_characterization_percentage[ndx_analysis, SELL_INDEX, BUY_INDEX] \
                     )
         
-        print       ('\tFinancial loss if acted on:\tsell as hold\tsell as buy\thold as buy')            
-        print       ('\t\t\t\t\t%d\t%.2f\t%d\t%.2f\t%d\t%.2f' % ( \
-                    np_characterization[ndx_analysis, SELL_INDEX, HOLD_INDEX], np_characterization_percentage[ndx_analysis, SELL_INDEX, HOLD_INDEX], \
-                    np_characterization[ndx_analysis, SELL_INDEX, BUY_INDEX], np_characterization_percentage[ndx_analysis, SELL_INDEX, BUY_INDEX], \
-                    np_characterization[ndx_analysis, HOLD_INDEX, BUY_INDEX], np_characterization_percentage[ndx_analysis, HOLD_INDEX, BUY_INDEX] \
+        f_out.write ('\n\tFinancial loss if acted on:\tsell as hold\t{:.0f}\t{:.2f}\tsell as buy\t{:.0f}\t{:.2f}\thold as buy\t{:.0f}\t{:.2f}'.format( \
+                    np_characterization[ndx_analysis, HOLD_INDEX, SELL_INDEX], np_characterization_percentage[ndx_analysis, HOLD_INDEX, SELL_INDEX], \
+                    np_characterization[ndx_analysis, BUY_INDEX, SELL_INDEX], np_characterization_percentage[ndx_analysis, BUY_INDEX, BUY_INDEX], \
+                    np_characterization[ndx_analysis, BUY_INDEX, HOLD_INDEX], np_characterization_percentage[ndx_analysis, BUY_INDEX, HOLD_INDEX] \
+                    ))   
+        print       ('\tFinancial loss if acted on:\tsell as hold\t%d\t%.2f\tsell as buy\t%d\t%.2f\thold as buy\t%d\t%.2f' % ( \
+                    np_characterization[ndx_analysis, HOLD_INDEX, SELL_INDEX], np_characterization_percentage[ndx_analysis, HOLD_INDEX, SELL_INDEX], \
+                    np_characterization[ndx_analysis, BUY_INDEX, SELL_INDEX], np_characterization_percentage[ndx_analysis, BUY_INDEX, SELL_INDEX], \
+                    np_characterization[ndx_analysis, BUY_INDEX, HOLD_INDEX], np_characterization_percentage[ndx_analysis, BUY_INDEX, HOLD_INDEX] \
                     ))
-        logging.info('\tFinancial loss if acted on:\tsell as hold\tsell as buy\thold as buy')            
-        logging.info('\t\t\t\t\t%d\t%.2f\t%d\t%.2f\t%d\t%.2f', \
-                    np_characterization[ndx_analysis, SELL_INDEX, HOLD_INDEX], np_characterization_percentage[ndx_analysis, SELL_INDEX, HOLD_INDEX], \
-                    np_characterization[ndx_analysis, SELL_INDEX, BUY_INDEX], np_characterization_percentage[ndx_analysis, SELL_INDEX, BUY_INDEX], \
-                    np_characterization[ndx_analysis, HOLD_INDEX, BUY_INDEX], np_characterization_percentage[ndx_analysis, HOLD_INDEX, BUY_INDEX] \
+        logging.info('\tFinancial loss if acted on:\tsell as hold\t%d\t%.2f\tsell as buy\t%d\t%.2f\thold as buy\t%d\t%.2f', \
+                    np_characterization[ndx_analysis, HOLD_INDEX, SELL_INDEX], np_characterization_percentage[ndx_analysis, HOLD_INDEX, SELL_INDEX], \
+                    np_characterization[ndx_analysis, BUY_INDEX, SELL_INDEX], np_characterization_percentage[ndx_analysis, BUY_INDEX, SELL_INDEX], \
+                    np_characterization[ndx_analysis, BUY_INDEX, HOLD_INDEX], np_characterization_percentage[ndx_analysis, BUY_INDEX, HOLD_INDEX] \
                     )
     
     return
 
-def bsh_results_multiple(technical_analysis_names, predicted_data, true_data) :
+def bsh_results_multiple(technical_analysis_names, predicted_data, true_data, f_out) :
     logging.info ('')
     logging.info ('====> ==============================================')
     logging.info ('====> bsh_results_multiple: predicted_data shape=%s true_data shape=%s', predicted_data.shape, true_data.shape)
@@ -260,7 +285,7 @@ def bsh_results_multiple(technical_analysis_names, predicted_data, true_data) :
     '''
     On screen plot of actual and predicted data
     '''
-    categorize_prediction_risks(technical_analysis_names, predicted_data, true_data, np_diff)
+    categorize_prediction_risks(technical_analysis_names, predicted_data, true_data, np_diff, f_out)
     '''
     Display plots of differences
     plot_bsh_results(technical_analysis_names, predicted_data, true_data, np_diff)

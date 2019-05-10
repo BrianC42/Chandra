@@ -21,7 +21,7 @@ if __name__ == '__main__':
     start = time.time()
     
     #ticker = input("Pick a symbol ")
-    tickers = ["aapl", "ge", "ko", "hpq", "arnc", "dis", "ibm", "ba", "cat", "dd", "ip", "mo", "mrk", "jnj", "c", "f", "t"]
+    tickers = ["aapl", "arnc", "ba", "c", "cat", "dd", "f", "ge", "jnj", "ko", "hpq", "dis", "ibm", "ip", "mcd", "mo", "mrk", "mro", "pg", "t", "utx", "xom"]
     tickers = ["aapl"]
     result_drivers   = ["adj_low", "adj_high", "adj_open", "adj_close", "adj_volume", "BB_Lower", "BB_Upper", "SMA20",   "OBV",     "AccumulationDistribution", "MACD_Sell", "MACD_Buy"]
     forecast_feature = [False,     True,       False,      False,       False,        False,       False,     False,     False,     False,                      False,       False]
@@ -31,14 +31,18 @@ if __name__ == '__main__':
 
     lstm_config_data = get_ini_data("LSTM")
     log_file = lstm_config_data['log']
+
     logging.basicConfig(filename=log_file, level=logging.DEBUG, format='%(asctime)s: %(levelname)s: %(message)s')
     print ("Logging to", log_file)
     logger = logging.getLogger('lstm_logger')
     log_fmt = logging.Formatter('%(asctime)s - %(name)s - %levelname - %(messages)s')
-    
     logger.info('Keras LSTM model for stock market prediction')
     
+    output_file = lstm_config_data['result']
+    f_out = open(output_file, 'w')
+    
     analysis_choice='buy_sell_hold'
+    f_out.write(analysis_choice)
 
     ''' .......... Step 1 - Load and prepare data .........................
     ======================================================================= '''
@@ -83,8 +87,9 @@ if __name__ == '__main__':
     if (analysis_choice == 'TBD') :
         print ('Analysis model is not yet defined')
     elif (analysis_choice == 'buy_sell_hold') :
-        bsh_results_multiple(lst_analyses, predictions, y_test)
+        bsh_results_multiple(lst_analyses, predictions, y_test, f_out)
     else :
         print ('Analysis model is not specified')
     
+    f_out.close()
     print ('\nNow go and make us rich')
