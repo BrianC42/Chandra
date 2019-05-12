@@ -11,6 +11,10 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import tensorflow as tf
 
+from configuration_constants import BATCH_SIZE
+from configuration_constants import EPOCHS
+from configuration_constants import ACTIVATION
+
 from numpy import newaxis, NaN, NAN
 from quandl_library import fetch_timeseries_data
 from quandl_library import get_ini_data
@@ -630,8 +634,10 @@ def build_model(lst_analyses, np_input):
         print('\tkf_input shape %s' % tf.shape(kf_feature_sets[i_ndx]))
 
         #create the layers used to model each technical analysis
-        kf_input_i_ndx = LSTM(3)(kf_feature_sets[i_ndx])
-        kf_input_i_ndx = Dense(output_dim=1)(kf_input_i_ndx)
+        kf_input_i_ndx = LSTM(3, activation=ACTIVATION)(kf_feature_sets[i_ndx])
+        kf_input_i_ndx = Dense(output_dim=1, activation=ACTIVATION)(kf_input_i_ndx)
+        kf_input_i_ndx = Dense(output_dim=1, activation=ACTIVATION)(kf_input_i_ndx)
+        kf_input_i_ndx = Dense(output_dim=1, activation=ACTIVATION)(kf_input_i_ndx)
 
         #identify the output of each individual technical analysis
         kf_feature_set_output = Dense(output_dim=1)(kf_input_i_ndx)
@@ -650,9 +656,11 @@ def build_model(lst_analyses, np_input):
     kf_composite = Concatenate(axis=-1)(kf_feature_set_outputs[:])
     
     #create the layers used to analyze the composite of all technical analysis 
-    kf_composite = Dense(len(kf_feature_set_outputs), activation='relu')(kf_composite)
-    kf_composite = Dense(len(kf_feature_set_outputs), activation='relu')(kf_composite)
-    kf_composite = Dense(len(kf_feature_set_outputs), activation='relu')(kf_composite)
+    kf_composite = Dense(len(kf_feature_set_outputs), activation=ACTIVATION)(kf_composite)
+    kf_composite = Dense(len(kf_feature_set_outputs), activation=ACTIVATION)(kf_composite)
+    kf_composite = Dense(len(kf_feature_set_outputs), activation=ACTIVATION)(kf_composite)
+    kf_composite = Dense(len(kf_feature_set_outputs), activation=ACTIVATION)(kf_composite)
+    kf_composite = Dense(len(kf_feature_set_outputs), activation=ACTIVATION)(kf_composite)
     
     #create the composite output layer
     kf_composite = Dense(output_dim=1, name="composite_output")(kf_composite)
@@ -696,7 +704,7 @@ def train_lstm(model, x_train, y_train):
         lst_y.append(y_train)
     lst_y.append(y_train)
         
-    model.fit(x=lst_x, y=lst_y, shuffle=True, batch_size=64, nb_epoch=2, validation_split=0.05, verbose=1)
+    model.fit(x=lst_x, y=lst_y, shuffle=True, batch_size=BATCH_SIZE, nb_epoch=EPOCHS, validation_split=0.05, verbose=1)
         
     logging.info('<---- ----------------------------------------------')
     logging.info('<---- train_lstm:')

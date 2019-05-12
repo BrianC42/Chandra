@@ -7,6 +7,15 @@ import logging
 import time
 
 from quandl_library import get_ini_data
+from configuration_constants import tickers
+from configuration_constants import result_drivers
+from configuration_constants import forecast_feature
+from configuration_constants import feature_type
+from configuration_constants import ANALASIS_SAMPLE_LENGTH
+from configuration_constants import FORECAST_LENGTH
+from configuration_constants import ACTIVATION
+from configuration_constants import BATCH_SIZE
+from configuration_constants import EPOCHS
 from lstm import build_model
 from lstm import predict_sequences_multiple
 from lstm import prepare_ts_lstm
@@ -20,15 +29,6 @@ if __name__ == '__main__':
     
     start = time.time()
     
-    #ticker = input("Pick a symbol ")
-    tickers = ["aapl", "arnc", "ba", "c", "cat", "dd", "f", "ge", "jnj", "ko", "hpq", "dis", "ibm", "ip", "mcd", "mo", "mrk", "mro", "pg", "t", "utx", "xom"]
-    tickers = ["aapl"]
-    result_drivers   = ["adj_low", "adj_high", "adj_open", "adj_close", "adj_volume", "BB_Lower", "BB_Upper", "SMA20",   "OBV",     "AccumulationDistribution", "MACD_Sell", "MACD_Buy"]
-    forecast_feature = [False,     True,       False,      False,       False,        False,       False,     False,     False,     False,                      False,       False]
-    feature_type     = ['numeric', 'numeric',  'numeric', 'numeric',    'numeric',    'numeric',   'numeric', 'numeric', 'numeric', 'numeric',                  'boolean',   'boolean']
-    ANALASIS_SAMPLE_LENGTH = 120
-    FORECAST_LENGTH = 30
-
     lstm_config_data = get_ini_data("LSTM")
     log_file = lstm_config_data['log']
 
@@ -40,6 +40,21 @@ if __name__ == '__main__':
     
     output_file = lstm_config_data['result']
     f_out = open(output_file, 'w')
+    
+    str_symbols = ''
+    for ndx_symbol in range (0, len(tickers)) :
+        str_symbols += tickers[ndx_symbol]
+        str_symbols += ' '
+    str_drivers = ''
+    for ndx_driver in range (0, len(result_drivers)) :
+        str_drivers += result_drivers[ndx_symbol]
+        str_drivers += ' '
+    
+    f_out.write('\nTraining a model to provide buy, sell or hold recommendations')
+    f_out.write('\nUsing symbols\n\t' + str_symbols + '\nfor training and testing')
+    f_out.write('\nUsing\n\t' + str_drivers + '\nsample data points')
+    f_out.write('\nUsing a time series of {:.0f} periods and a time window the next {:.0f} time periods'.format(ANALASIS_SAMPLE_LENGTH, FORECAST_LENGTH))
+    f_out.write('\nKeras parameters: Activation = ' + ACTIVATION + ', Batch Size = {:.0f}, Epochs = {:.0f}\n'.format(BATCH_SIZE, EPOCHS))
     
     analysis_choice='buy_sell_hold'
     f_out.write(analysis_choice)
