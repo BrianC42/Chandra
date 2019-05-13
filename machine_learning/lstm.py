@@ -577,13 +577,13 @@ def prepare_ts_lstm(tickers, result_drivers, forecast_feature, feature_type, tim
     
     #Use list_x_test[3] on a model to learn to forecast based on "MACD_Sell"
     lst_technical_analysis.append('MACD_Sell')
-    list_x_test.append (x_test [:, :, 10:11])
-    list_x_train.append(x_train[:, :, 10:11])
+    list_x_test.append (x_test [:, :, 10:12])
+    list_x_train.append(x_train[:, :, 10:12])
     
     #Use list_x_test[3] on a model to learn to forecast based on "MACD_Buy"
     lst_technical_analysis.append('MACD_Buy')
-    list_x_test.append (x_test [:, :, 11:12])
-    list_x_train.append(x_train[:, :, 11:12])
+    list_x_test.append (x_test [:, :, 12:13])
+    list_x_train.append(x_train[:, :, 12:13])
     
     #Use list_x_test[3] on a model to learn to forecast based on "AccumulationDistribution"
    

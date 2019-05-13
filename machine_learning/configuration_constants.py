@@ -9,9 +9,9 @@ tickers = ["hsc", "msft", "gntx", "csfl", "vrnt", "intc", "hsbc", "xlnx", "amgn"
 tickers = ["aapl", "arnc", "ba", "c", "cat", "dd", "f", "ge", "jnj", "ko", "hpq", "dis", "ibm", "ip", "mcd", "mo", "mrk", "mro", "pg", "t", "utx", "xom"]
 tickers = ["f"]
 
-result_drivers   = ["adj_low", "adj_high", "adj_open", "adj_close", "adj_volume", "BB_Lower", "BB_Upper", "SMA20",   "OBV",     "AccumulationDistribution", "MACD_Sell", "MACD_Buy"]
-forecast_feature = [False,     True,       False,      False,       False,        False,       False,     False,     False,     False,                      False,       False]
-feature_type     = ['numeric', 'numeric',  'numeric', 'numeric',    'numeric',    'numeric',   'numeric', 'numeric', 'numeric', 'numeric',                  'boolean',   'boolean']
+result_drivers   = ["adj_low", "adj_high", "adj_open", "adj_close", "adj_volume", "BB_Lower", "BB_Upper", "SMA20",   "OBV",     "AccumulationDistribution", "momentum", "MACD_Sell", "MACD_Buy"]
+forecast_feature = [False,     True,       False,      False,       False,        False,       False,     False,     False,     False,                      False,      False,       False]
+feature_type     = ['numeric', 'numeric',  'numeric', 'numeric',    'numeric',    'numeric',   'numeric', 'numeric', 'numeric', 'numeric',                  'numeric',  'boolean',   'boolean']
 ANALASIS_SAMPLE_LENGTH = 120
 FORECAST_LENGTH = 30
 ACTIVATION = 'relu'
