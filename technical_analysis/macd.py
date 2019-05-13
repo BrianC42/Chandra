@@ -49,8 +49,8 @@ def add_macd_fields(df_data, short_data=None, long_data=None):
     '''
     Additional fields added to the digest are
         MACD fields: 
-            Short Exponnential Moving Average, 
-            Long Exponnential Moving Average, 
+            Short Exponential Moving Average, 
+            Long Exponential Moving Average, 
             MACD_Buy, 
             MACD_Sell, 
             MACD_flag, 
@@ -72,7 +72,7 @@ def add_macd_profile_fields(df_data, short_data=None, mid_data=None, long_data=N
     '''
     Additional fields added to the digest are
         MACD fields: 
-            Midpoint Exponnential Moving Average, 
+            Midpoint Exponential Moving Average, 
             MACD_flag, 
             30day_chg
         Other fields

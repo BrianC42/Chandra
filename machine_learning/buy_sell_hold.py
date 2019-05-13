@@ -14,19 +14,24 @@ import matplotlib.pyplot as plt
 
 from configuration_constants import PREDICTION_SELL_THRESHOLD
 from configuration_constants import PREDICTION_BUY_THRESHOLD
+from configuration_constants import BUY_INDICATION_THRESHOLD
+from configuration_constants import SELL_INDICATION_THRESHOLD
+from configuration_constants import BUY_INDICATION
+from configuration_constants import HOLD_INDICATION
+from configuration_constants import SELL_INDICATION
 
 def calculate_single_bsh_flag(current_price, future_price):
     
     bsh_change = future_price / current_price
-    if bsh_change >= 1.2 :
+    if bsh_change >= BUY_INDICATION_THRESHOLD :
         # 3% increase
-        bsh_flag = 1
-    elif bsh_change <= 0.8 :
+        bsh_flag = BUY_INDICATION
+    elif bsh_change <= SELL_INDICATION_THRESHOLD :
         # 3% decline
-        bsh_flag = -1
+        bsh_flag = SELL_INDICATION
     else :
         # change between -3% and +3%
-        bsh_flag = 0
+        bsh_flag = HOLD_INDICATION
 
     return bsh_flag
 
@@ -37,12 +42,12 @@ def calculate_sample_bsh_flag(sample_single_flags):
     bsh_flag_max = np.amax(sample_single_flags)
     bsh_flag_min = np.amin(sample_single_flags)
     
-    if (bsh_flag_max == 1) :
-        bsh_flag = 1
-    elif (bsh_flag_min == -1) :
-        bsh_flag = -1
+    if (bsh_flag_max == BUY_INDICATION) :
+        bsh_flag = BUY_INDICATION
+    elif (bsh_flag_min == SELL_INDICATION) :
+        bsh_flag = SELL_INDICATION
     else :
-        bsh_flag = 0
+        bsh_flag = HOLD_INDICATION
     
     return bsh_flag
 
@@ -66,32 +71,38 @@ def plot_bsh_results(technical_analysis_names, predicted_data, true_data, np_dif
 
     return
 
-def plot_bsh_result_distribution(predicted_data, true_data):
+def plot_bsh_result_distribution(technical_analysis_names, predicted_data, true_data):
     logging.info ('')
     logging.info ('====> ==============================================')
     logging.info ('====> plot_bsh_result_distribution:')
     logging.info ('====> ==============================================')
 
+    logging.debug('Technical analysis names: %s\nPredicted data shape%s', technical_analysis_names, predicted_data.shape)
     mu = 100  # mean of distribution
     sigma = 15  # standard deviation of distribution
 
-    np_sorted_predictions = np.msort(predicted_data[0])
-    fig = plt.figure(facecolor='white')
-    ax = fig.add_subplot(111)
+    for ndx_output in range(0, predicted_data.shape[1]) :
+        np_sorted_predictions = np.msort(predicted_data[ndx_output])
+        fig = plt.figure(facecolor='white')
+        ax = fig.add_subplot(111)
     
-    n, bins, patches = ax.hist(np_sorted_predictions, 100, density=1)
-    # add a 'best fit' line
-    y = ((1 / (np.sqrt(2 * np.pi) * sigma)) *
-         np.exp(-0.5 * (1 / sigma * (bins - mu))**2))
-    ax.plot(bins, y, '--')
+        n, bins, patches = ax.hist(np_sorted_predictions, 100, density=1)
+        # add a 'best fit' line
+        y = ((1 / (np.sqrt(2 * np.pi) * sigma)) *
+             np.exp(-0.5 * (1 / sigma * (bins - mu))**2))
+        ax.plot(bins, y, '--')
     
-    #ax.plot(np_sorted_predictions, label = 'prediction')
-    ax.set_xlabel('x')
-    ax.set_ylabel('y')
-    #ax.set_title('Predictions')
+        if ndx_output == 0 :
+            str_prediction_basis = 'Composite'
+        else :
+            str_prediction_basis = technical_analysis_names[ndx_output - 1]
+        #ax.plot(np_sorted_predictions, label = 'prediction')
+        ax.set_xlabel('Predicted value')
+        ax.set_ylabel('Prediction Counts')
+        #ax.set_title('Predictions')
     
-    plt.legend(title='Predictions', loc='upper center', ncol=2)
-    plt.show()
+        plt.legend(title='Predictions: ' + str_prediction_basis, loc='upper center', ncol=2)
+        plt.show()
     
     return
 
@@ -113,18 +124,15 @@ def categorize_prediction_risks(technical_analysis_names, predicted_data, true_d
     logging.info ('====> categorize_prediction_risks:')
     logging.info ('====> ==============================================')
 
-    #constants for accessing arrays
+    #local constants for accessing arrays
     BUY_INDEX = 2
     HOLD_INDEX = 1
     SELL_INDEX = 0
-    ACTUAL_INDEX = 0
-    PREDICTION_INDEX = 1
+    #ACTUAL_INDEX = 0
+    #PREDICTION_INDEX = 1
     ACTUAL_CHARACTERISTIC_COUNTS = 3
-    ACTUAL_CHARACTERIZATION = 2
+    #ACTUAL_CHARACTERIZATION = 2
     PREDICTION_CHARACTERISTICS_COUNTS = 3
-    ACTUAL_SELL = -1
-    ACTUAL_HOLD = 0
-    ACTUAL_BUY = 1
     
     actual_sample_count = true_data.shape[0]
     prediction_count = predicted_data.shape[1]
@@ -136,10 +144,10 @@ def categorize_prediction_risks(technical_analysis_names, predicted_data, true_d
     
     
     for ndx_actual in range (0, actual_sample_count) :
-        if true_data[ndx_actual] == ACTUAL_SELL :
+        if true_data[ndx_actual] == SELL_INDICATION :
             #actual data indicated sell
             np_counts[SELL_INDEX] += 1
-        elif true_data[ndx_actual] == ACTUAL_HOLD :
+        elif true_data[ndx_actual] == HOLD_INDICATION :
             #actual data indicated hold
             np_counts[HOLD_INDEX] += 1
         else :
@@ -147,7 +155,7 @@ def categorize_prediction_risks(technical_analysis_names, predicted_data, true_d
             np_counts[BUY_INDEX] += 1
             
         for ndx_predicted in range (0, prediction_count) :
-            if true_data[ndx_actual] == ACTUAL_SELL :
+            if true_data[ndx_actual] == SELL_INDICATION :
                 #actual data indicated sell
                 if (predicted_data[ndx_actual, ndx_predicted] < PREDICTION_SELL_THRESHOLD) :
                     np_characterization [ndx_predicted, SELL_INDEX, SELL_INDEX] += 1
@@ -161,7 +169,7 @@ def categorize_prediction_risks(technical_analysis_names, predicted_data, true_d
                     np_characterization [ndx_predicted, HOLD_INDEX, SELL_INDEX] += 1
                     np_predictions      [ndx_predicted, HOLD_INDEX] += 1
                     
-            elif true_data[ndx_actual] == ACTUAL_HOLD :
+            elif true_data[ndx_actual] == HOLD_INDICATION :
                 #actual data indicated hold
                 if (predicted_data[ndx_actual, ndx_predicted] < PREDICTION_SELL_THRESHOLD) :
                     np_characterization[ndx_predicted, SELL_INDEX, HOLD_INDEX] += 1
@@ -272,7 +280,7 @@ def bsh_results_multiple(technical_analysis_names, predicted_data, true_data, f_
     On screen display of actual and predicted data
     '''
     categorize_prediction_risks(technical_analysis_names, predicted_data, true_data, f_out)
-    plot_bsh_result_distribution(predicted_data, true_data)
+    plot_bsh_result_distribution(technical_analysis_names, predicted_data, true_data)
     '''
     Display plots of differences
     np_diff = np.zeros([predicted_data.shape[0], predicted_data.shape[1]])

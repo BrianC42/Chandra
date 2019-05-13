@@ -445,7 +445,6 @@ def prepare_ts_lstm(tickers, result_drivers, forecast_feature, feature_type, tim
     
     '''
     *** Specific to the analysis being performed ***
-    Calculate forecast feature
     '''
     step2 = time.time()
     #print ("\tCalculating forecast y-axis characteristic value")
@@ -453,13 +452,16 @@ def prepare_ts_lstm(tickers, result_drivers, forecast_feature, feature_type, tim
     for ndx_feature_value in range(0, feature_count) :
         if forecast_feature[ndx_feature_value] :
             for ndx_feature in range(time_steps, time_steps+forecast_steps) :        
-                for ndx_time_period in range(0, samples) :
+                for ndx_time_series_sample in range(0, samples) :
                     if (analysis == 'TBD') :
                         print ('Analysis model is not yet defined')
                     elif (analysis == 'buy_sell_hold') :
-                        np_prediction[ndx_time_period, ndx_feature-time_steps] = \
-                            calculate_single_bsh_flag(np_data[ndx_time_period, time_steps-1, ndx_feature_value], \
-                                                      np_data[ndx_time_period, ndx_feature, ndx_feature_value]  )
+                        '''
+                        Calculate buy, sell or hold flag value for individual time period forecast feature value
+                        '''
+                        np_prediction[ndx_time_series_sample, ndx_feature-time_steps] = \
+                            calculate_single_bsh_flag(np_data[ndx_time_series_sample, time_steps-1, ndx_feature_value], \
+                                                      np_data[ndx_time_series_sample, ndx_feature, ndx_feature_value]  )
                     else :
                         print ('Analysis model is not specified')
             logging.debug('Using feature %s as feature to forecast, np_data feature forecast:', ndx_feature_value)
@@ -469,15 +471,17 @@ def prepare_ts_lstm(tickers, result_drivers, forecast_feature, feature_type, tim
     
     '''
     *** Specific to the analysis being performed ***
-    Find the maximum adj_high for each time period sample
     '''
     logging.debug('')
     np_forecast = np.zeros([samples])
-    for ndx_time_period in range(0, samples) :
+    for ndx_time_series_sample in range(0, samples) :
         if (analysis == 'TBD') :
             print ('Analysis model is not yet defined')
         elif (analysis == 'buy_sell_hold') :
-            np_forecast[ndx_time_period] = calculate_sample_bsh_flag(np_prediction[ndx_time_period, :])
+            '''
+            Find the buy, sell or hold flag for the overall forecast interval
+            '''
+            np_forecast[ndx_time_series_sample] = calculate_sample_bsh_flag(np_prediction[ndx_time_series_sample, :])
         else :
             print ('Analysis model is not specified')
     logging.debug('\nforecast shape %s and values\n%s', np_forecast.shape, np_forecast)
@@ -500,23 +504,23 @@ def prepare_ts_lstm(tickers, result_drivers, forecast_feature, feature_type, tim
                           ndx_feature_value, result_drivers[ndx_feature_value])
         else :
             for ndx_feature in range(0, time_steps+forecast_steps) : # normalize only the time steps before the forecast time steps
-                for ndx_time_period in range(0, samples) : # normalize all time periods
-                    if (np_data[ndx_time_period, ndx_feature, ndx_feature_value] > np_max[ndx_time_period, ndx_feature_value]) :
+                for ndx_time_series_sample in range(0, samples) : # normalize all time periods
+                    if (np_data[ndx_time_series_sample, ndx_feature, ndx_feature_value] > np_max[ndx_time_series_sample, ndx_feature_value]) :
                         '''
                         logging.debug('New maximum %s, %s, %s was %s will be %s', \
-                                  ndx_time_period , ndx_feature, ndx_feature_value, \
-                                  np_max[ndx_time_period, ndx_feature_value], \
-                                  np_data[ndx_time_period, ndx_feature, ndx_feature_value])
+                                  ndx_time_series_sample , ndx_feature, ndx_feature_value, \
+                                  np_max[ndx_time_series_sample, ndx_feature_value], \
+                                  np_data[ndx_time_series_sample, ndx_feature, ndx_feature_value])
                         '''
-                        np_max[ndx_time_period, ndx_feature_value] = np_data[ndx_time_period, ndx_feature, ndx_feature_value]
-                        if (np_data[ndx_time_period, ndx_feature, ndx_feature_value] < np_min[ndx_time_period, ndx_feature_value]) :
+                        np_max[ndx_time_series_sample, ndx_feature_value] = np_data[ndx_time_series_sample, ndx_feature, ndx_feature_value]
+                        if (np_data[ndx_time_series_sample, ndx_feature, ndx_feature_value] < np_min[ndx_time_series_sample, ndx_feature_value]) :
                             '''
                             logging.debug('New maximum %s, %s, %s was %s will be %s', \
-                                ndx_time_period , ndx_feature, ndx_feature_value, \
-                                np_max[ndx_time_period, ndx_feature_value], \
-                                np_data[ndx_time_period, ndx_feature, ndx_feature_value])
+                                ndx_time_series_sample , ndx_feature, ndx_feature_value, \
+                                np_max[ndx_time_series_sample, ndx_feature_value], \
+                                np_data[ndx_time_series_sample, ndx_feature, ndx_feature_value])
                             '''
-                            np_min[ndx_time_period, ndx_feature_value] = np_data[ndx_time_period, ndx_feature, ndx_feature_value]
+                            np_min[ndx_time_series_sample, ndx_feature_value] = np_data[ndx_time_series_sample, ndx_feature, ndx_feature_value]
 
     for ndx_feature_value in range(0, feature_count) :
         if (feature_type[ndx_feature_value] == 'boolean') :
@@ -524,19 +528,19 @@ def prepare_ts_lstm(tickers, result_drivers, forecast_feature, feature_type, tim
                           ndx_feature_value, result_drivers[ndx_feature_value])
         else :
             for ndx_feature in range(0, time_steps+forecast_steps) :        
-                for ndx_time_period in range(0, samples) :
-                    if np_min[ndx_time_period, ndx_feature_value] <= 0 :                    
-                        np_data[ndx_time_period, ndx_feature, ndx_feature_value] += abs(np_min[ndx_time_period, ndx_feature_value])
-                        np_max[ndx_time_period, ndx_feature_value] += abs(np_min[ndx_time_period, ndx_feature_value])
-                        if (np_max[ndx_time_period, ndx_feature_value] == 0) :
+                for ndx_time_series_sample in range(0, samples) :
+                    if np_min[ndx_time_series_sample, ndx_feature_value] <= 0 :                    
+                        np_data[ndx_time_series_sample, ndx_feature, ndx_feature_value] += abs(np_min[ndx_time_series_sample, ndx_feature_value])
+                        np_max[ndx_time_series_sample, ndx_feature_value] += abs(np_min[ndx_time_series_sample, ndx_feature_value])
+                        if (np_max[ndx_time_series_sample, ndx_feature_value] == 0) :
                             #
-                            np_data[ndx_time_period, ndx_feature, ndx_feature_value] = 0
+                            np_data[ndx_time_series_sample, ndx_feature, ndx_feature_value] = 0
                         else :
-                            np_data[ndx_time_period, ndx_feature, ndx_feature_value] = \
-                                np_data[ndx_time_period, ndx_feature, ndx_feature_value] / \
-                                np_max[ndx_time_period, ndx_feature_value]
-                    if np_data[ndx_time_period, ndx_feature, ndx_feature_value] == NAN :
-                            logging.debug('NaN: %s %s %s', ndx_time_period, ndx_feature, ndx_feature_value) 
+                            np_data[ndx_time_series_sample, ndx_feature, ndx_feature_value] = \
+                                np_data[ndx_time_series_sample, ndx_feature, ndx_feature_value] / \
+                                np_max[ndx_time_series_sample, ndx_feature_value]
+                    if np_data[ndx_time_series_sample, ndx_feature, ndx_feature_value] == NAN :
+                            logging.debug('NaN: %s %s %s', ndx_time_series_sample, ndx_feature, ndx_feature_value) 
             logging.debug('normalized np_data feature values (0.0 to 1.0): %s, %s type: %s', \
                           ndx_feature_value, result_drivers[ndx_feature_value], type(np_data[0, 0, ndx_feature_value]))
             logging.debug('\n%s', np_data[: , : time_steps , ndx_feature_value] )
