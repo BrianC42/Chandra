@@ -63,7 +63,7 @@ def plot_bsh_results(technical_analysis_names, predicted_data, true_data, np_dif
         np_output_diff = np_diff[:, ndx_output]
         logging.debug('plotting values, shape %s, values\n%s', np_output_diff.shape, np_output_diff)
         ax.plot(np_output_diff, label = 'actual - prediction')
-        if ndx_output<len(technical_analysis_names) :
+        if ndx_output < len(technical_analysis_names) :
             plt.legend(title=technical_analysis_names[ndx_output], loc='upper center', ncol=2)
         else :
             plt.legend(title='Composite actual / prediction difference', loc='upper center', ncol=2)
@@ -76,33 +76,19 @@ def plot_bsh_result_distribution(technical_analysis_names, predicted_data, true_
     logging.info ('====> ==============================================')
     logging.info ('====> plot_bsh_result_distribution:')
     logging.info ('====> ==============================================')
-
     logging.debug('Technical analysis names: %s\nPredicted data shape%s', technical_analysis_names, predicted_data.shape)
-    mu = 100  # mean of distribution
-    sigma = 15  # standard deviation of distribution
 
+    fig = plt.figure(facecolor='white')
     for ndx_output in range(0, predicted_data.shape[1]) :
-        np_sorted_predictions = np.msort(predicted_data[ndx_output])
-        fig = plt.figure(facecolor='white')
-        ax = fig.add_subplot(111)
-    
-        n, bins, patches = ax.hist(np_sorted_predictions, 100, density=1)
-        # add a 'best fit' line
-        y = ((1 / (np.sqrt(2 * np.pi) * sigma)) *
-             np.exp(-0.5 * (1 / sigma * (bins - mu))**2))
-        ax.plot(bins, y, '--')
-    
         if ndx_output == 0 :
             str_prediction_basis = 'Composite'
         else :
             str_prediction_basis = technical_analysis_names[ndx_output - 1]
-        #ax.plot(np_sorted_predictions, label = 'prediction')
+        ax = fig.add_subplot(2, 3, ndx_output+1, title=str_prediction_basis)
+        n, bins, patches = ax.hist(predicted_data[ndx_output], len(predicted_data[ndx_output]), density=True)
         ax.set_xlabel('Predicted value')
         ax.set_ylabel('Prediction Counts')
-        #ax.set_title('Predictions')
-    
-        plt.legend(title='Predictions: ' + str_prediction_basis, loc='upper center', ncol=2)
-        plt.show()
+    plt.show()
     
     return
 
