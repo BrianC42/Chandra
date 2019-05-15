@@ -589,13 +589,13 @@ def prepare_ts_lstm(tickers, result_drivers, forecast_feature, feature_type, tim
    
     end = time.time()
 
-    i_ndx = 0    
+    ndx_i = 0    
     for np_model in list_x_test:
-        logging.debug('lst_technical_analysis %s, shape %s', lst_technical_analysis[i_ndx], list_x_train[i_ndx].shape)
+        logging.debug('lst_technical_analysis %s, shape %s', lst_technical_analysis[ndx_i], list_x_train[ndx_i].shape)
         logging.info ('\nAnalyzing ndx_model \n\tdim[0] (samples)=%s,\n\tdim[1] (time series length)=%s\n\tdim[2] (feature count)=%s\n' % \
                      (np_model.shape[0], np_model.shape[1], np_model.shape[2]))
-        logging.debug('%s data:\n%s', lst_technical_analysis[i_ndx], list_x_train[i_ndx])
-        i_ndx += 1
+        logging.debug('%s data:\n%s', lst_technical_analysis[ndx_i], list_x_train[ndx_i])
+        ndx_i += 1
 
     logging.info ("\tCreating time series took %s" % (step1 - start))
     logging.info ("\tStructuring 3D data took %s" % (step2 - step1))
@@ -624,34 +624,34 @@ def build_model(lst_analyses, np_input):
     kf_feature_sets = []
     kf_feature_set_outputs = []
     kf_feature_set_solo_outputs = []
-    i_ndx = 0
+    ndx_i = 0
     for np_feature_set in np_input:
-        str_name = "{0}_input".format(lst_analyses[i_ndx])
-        str_solo_out  = "{0}_output".format(lst_analyses[i_ndx])
+        str_name = "{0}_input".format(lst_analyses[ndx_i])
+        str_solo_out  = "{0}_output".format(lst_analyses[ndx_i])
         print           ('Building model - %s\n\tdim[0] (samples)=%s,\n\tdim[1] (time series length)=%s\n\tdim[2] (feature count)=%s' % \
-                        (lst_analyses[i_ndx], np_feature_set.shape[0], np_feature_set.shape[1], np_feature_set.shape[2]))
+                        (lst_analyses[ndx_i], np_feature_set.shape[0], np_feature_set.shape[1], np_feature_set.shape[2]))
         logging.debug   ("Building model - feature set %s\n\tInput dimensions: %s %s %s", \
-                         lst_analyses[i_ndx], np_feature_set.shape[0], np_feature_set.shape[1], np_feature_set.shape[2])        
+                         lst_analyses[ndx_i], np_feature_set.shape[0], np_feature_set.shape[1], np_feature_set.shape[2])        
 
         #create and retain for model definition an input tensor for each technical analysis
         kf_feature_sets.append(Input(shape=(np_feature_set.shape[1], np_feature_set.shape[2], ), dtype='float32', name=str_name))
-        print('\tkf_input shape %s' % tf.shape(kf_feature_sets[i_ndx]))
+        print('\tkf_input shape %s' % tf.shape(kf_feature_sets[ndx_i]))
 
         #create the layers used to model each technical analysis
-        kf_input_i_ndx = LSTM(3, activation=ACTIVATION)(kf_feature_sets[i_ndx])
-        kf_input_i_ndx = Dense(output_dim=1, activation=ACTIVATION)(kf_input_i_ndx)
-        kf_input_i_ndx = Dense(output_dim=1, activation=ACTIVATION)(kf_input_i_ndx)
-        kf_input_i_ndx = Dense(output_dim=1, activation=ACTIVATION)(kf_input_i_ndx)
+        kf_input_ndx_i = LSTM(3, activation=ACTIVATION)(kf_feature_sets[ndx_i])
+        kf_input_ndx_i = Dense(output_dim=1, activation=ACTIVATION)(kf_input_ndx_i)
+        kf_input_ndx_i = Dense(output_dim=1, activation=ACTIVATION)(kf_input_ndx_i)
+        kf_input_ndx_i = Dense(output_dim=1, activation=ACTIVATION)(kf_input_ndx_i)
 
         #identify the output of each individual technical analysis
-        kf_feature_set_output = Dense(output_dim=1)(kf_input_i_ndx)
+        kf_feature_set_output = Dense(output_dim=1)(kf_input_ndx_i)
         kf_feature_set_outputs.append(kf_feature_set_output)        
 
         #create outputs that can be used to assess the individual technical analysis         
         kf_feature_set_solo_output = Dense(name=str_solo_out, output_dim=1)(kf_feature_set_output)        
         kf_feature_set_solo_outputs.append(kf_feature_set_solo_output)        
 
-        i_ndx += 1
+        ndx_i += 1
     
     '''
     Create a model to take the feature set assessments and create a composite assessment
@@ -703,8 +703,8 @@ def train_lstm(model, x_train, y_train):
     '''
     lst_x = []
     lst_y = []
-    for i_ndx in range(0, len(x_train)) :
-        lst_x.append(x_train[i_ndx])
+    for ndx_i in range(0, len(x_train)) :
+        lst_x.append(x_train[ndx_i])
         lst_y.append(y_train)
     lst_y.append(y_train)
         
@@ -725,9 +725,9 @@ def evaluate_model(model, x_data, y_data):
     
     lst_x = []
     lst_y = []
-    for i_ndx in range(0, len(x_data)) :
-        logging.info ('Input %s - shape %s', i_ndx, x_data[i_ndx].shape)
-        lst_x.append(x_data[i_ndx])
+    for ndx_i in range(0, len(x_data)) :
+        logging.info ('Input %s - shape %s', ndx_i, x_data[ndx_i].shape)
+        lst_x.append(x_data[ndx_i])
         lst_y.append(y_data)
     lst_y.append(y_data)
 
@@ -743,9 +743,9 @@ def evaluate_model(model, x_data, y_data):
 def predict_single(model, df_data):   
     '''
     *** Specific to the analysis being performed ***
-    Find the maximum adj_high for each time period sample
+    find the models predictions for each output
     '''
-    prediction = model.predict(x=df_data)
+    prediction = model.predict(x=df_data, batch_size=1)
 
     return prediction
 
@@ -765,9 +765,9 @@ def predict_sequences_multiple(model, df_data):
     logging.info ('====> ==============================================')
     logging.info ('====> predict_sequences_multiple: %s technical analysis feature sets', len(df_data))
     print        ('====> predict_sequences_multiple: %s technical analysis feature sets' % (len(df_data)))
-    for i_ndx in range(0, len(df_data)) :
-        logging.info ('====> technical analysis feature set %s, data shape=%s\n%s', i_ndx, df_data[i_ndx].shape, df_data[i_ndx])
-        print        ('====> technical analysis feature set %s, data shape=%s' % (i_ndx, df_data[i_ndx].shape))
+    for ndx_i in range(0, len(df_data)) :
+        logging.info ('====> technical analysis feature set %s, data shape=%s\n%s', ndx_i, df_data[ndx_i].shape, df_data[ndx_i])
+        print        ('====> technical analysis feature set %s, data shape=%s' % (ndx_i, df_data[ndx_i].shape))
     logging.info     ('====> ==============================================')
         
     samples = df_data[0].shape[0]
@@ -776,10 +776,9 @@ def predict_sequences_multiple(model, df_data):
 
     for ndx_samples in range(0, samples) :
         lst_x = []
-        for i_ndx in range(0, len(df_data)) :
-            lst_x.append(df_data[i_ndx][ndx_samples:ndx_samples+1])
+        for ndx_i in range(0, len(df_data)) :
+            lst_x.append(df_data[ndx_i][ndx_samples:ndx_samples+1])
         np_predictions[ndx_samples] = predict_single(model, lst_x)
-        #np_predictions[ndx_samples] = model.predict(df_data[ndx_samples:ndx_samples+1])
 
     #print ("%s predictions of length %s" % (len(prediction_seqs), len(prediction_seqs[0])))
     logging.info ('<---- ----------------------------------------------')

@@ -24,21 +24,17 @@ def calculate_single_bsh_flag(current_price, future_price):
     
     bsh_change = future_price / current_price
     if bsh_change >= BUY_INDICATION_THRESHOLD :
-        # 3% increase
         bsh_flag = BUY_INDICATION
     elif bsh_change <= SELL_INDICATION_THRESHOLD :
-        # 3% decline
         bsh_flag = SELL_INDICATION
     else :
-        # change between -3% and +3%
         bsh_flag = HOLD_INDICATION
 
     return bsh_flag
 
 def calculate_sample_bsh_flag(sample_single_flags):
     
-    bsh_flag = 0
-    
+    bsh_flag = HOLD_INDICATION
     bsh_flag_max = np.amax(sample_single_flags)
     bsh_flag_min = np.amin(sample_single_flags)
     
@@ -85,7 +81,8 @@ def plot_bsh_result_distribution(technical_analysis_names, predicted_data, true_
         else :
             str_prediction_basis = technical_analysis_names[ndx_output - 1]
         ax = fig.add_subplot(2, 3, ndx_output+1, title=str_prediction_basis)
-        n, bins, patches = ax.hist(predicted_data[ndx_output], len(predicted_data[ndx_output]), density=True)
+        n, bins, patches = ax.hist(predicted_data[:, ndx_output])
+        logging.debug('hist returns\nn:%s\nbins: %s', n, bins)
         ax.set_xlabel('Predicted value')
         ax.set_ylabel('Prediction Counts')
     plt.show()
