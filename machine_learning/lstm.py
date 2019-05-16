@@ -15,24 +15,14 @@ from configuration_constants import EPOCHS
 from configuration_constants import ACTIVATION
 from configuration_constants import ANALYSIS
 
-#from numpy import newaxis
 from numpy import NAN
-#from numpy import NaN
 from quandl_library import fetch_timeseries_data
 from quandl_library import get_ini_data
 from time_series_data import series_to_supervised
-#from tensorflow.python.layers.core import dense
-#from keras.backend.tensorflow_backend import dtype
-#from keras.backend.tensorflow_backend import shape
-#from keras.layers.core import Activation
 from keras.layers.core import Dense
-#from keras.layers.core import Dropout
 from keras.layers.recurrent import LSTM
 from keras.layers import Input
-#from keras.layers import Dense
-#from keras.layers import Embedding
 from keras.layers import Concatenate
-#from keras.models import Sequential
 from keras.models import Model
 from keras.utils import plot_model
 from keras.utils import print_summary
