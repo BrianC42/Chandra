@@ -13,12 +13,15 @@ This file contains constants used to control the:
             "f"
 '''
 
-#ticker = input("Pick a symbol ")
-tickers = ["f"]
 
-result_drivers   = ["adj_low", "adj_high", "adj_open", "adj_close", "adj_volume", "BB_Lower", "BB_Upper", "SMA20",   "OBV",     "AccumulationDistribution", "momentum", "MACD_Sell", "MACD_Buy"]
-forecast_feature = [False,     True,       False,      False,       False,        False,       False,     False,     False,     False,                      False,      False,       False]
-feature_type     = ['numeric', 'numeric',  'numeric', 'numeric',    'numeric',    'numeric',   'numeric', 'numeric', 'numeric', 'numeric',                  'numeric',  'boolean',   'boolean']
+
+'''
+data sources to use as samples to train, evaluate and use for predictions
+'''
+TICKERS = ["f"]
+
+RESULT_DRIVERS   = ["adj_low", "adj_high", "adj_open", "adj_close", "adj_volume", "BB_Lower", "BB_Upper", "SMA20",   "OBV",     "AccumulationDistribution", "momentum", "MACD_Sell", "MACD_Buy"]
+FEATURE_TYPE     = ['numeric', 'numeric',  'numeric', 'numeric',    'numeric',    'numeric',   'numeric', 'numeric', 'numeric', 'numeric',                  'numeric',  'boolean',   'boolean']
 ANALASIS_SAMPLE_LENGTH = 120
 FORECAST_LENGTH = 30
 
@@ -35,6 +38,15 @@ Sample data processing controls
 '''
 BATCH_SIZE = 1024
 EPOCHS = 2
+
+'''
+Which analysis approach to use
+choices
+    buy_sell_hold 
+    pct_change
+'''
+ANALYSIS = 'buy_sell_hold'
+FORECAST_FEATURE = [False, True, False, False, False, False, False, False, False, False, False, False, False]
 
 '''
 Output thresholds for characterization of results

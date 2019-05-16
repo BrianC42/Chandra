@@ -8,35 +8,39 @@ import warnings
 import logging
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 import tensorflow as tf
 
 from configuration_constants import BATCH_SIZE
 from configuration_constants import EPOCHS
 from configuration_constants import ACTIVATION
+from configuration_constants import ANALYSIS
 
-from numpy import newaxis, NaN, NAN
+#from numpy import newaxis
+from numpy import NAN
+#from numpy import NaN
 from quandl_library import fetch_timeseries_data
 from quandl_library import get_ini_data
 from time_series_data import series_to_supervised
-from tensorflow.python.layers.core import dense
-from keras.backend.tensorflow_backend import dtype
-from keras.backend.tensorflow_backend import shape
-from keras.layers.core import Activation
+#from tensorflow.python.layers.core import dense
+#from keras.backend.tensorflow_backend import dtype
+#from keras.backend.tensorflow_backend import shape
+#from keras.layers.core import Activation
 from keras.layers.core import Dense
-from keras.layers.core import Dropout
+#from keras.layers.core import Dropout
 from keras.layers.recurrent import LSTM
 from keras.layers import Input
-from keras.layers import Dense
-from keras.layers import Embedding
+#from keras.layers import Dense
+#from keras.layers import Embedding
 from keras.layers import Concatenate
-from keras.models import Sequential
+#from keras.models import Sequential
 from keras.models import Model
 from keras.utils import plot_model
 from keras.utils import print_summary
 
 from buy_sell_hold import calculate_single_bsh_flag
 from buy_sell_hold import calculate_sample_bsh_flag
+from percentage_change import calculate_single_pct_change
+from percentage_change import calculate_sample_pct_change
 
 '''
     Sequential model
@@ -453,9 +457,9 @@ def prepare_ts_lstm(tickers, result_drivers, forecast_feature, feature_type, tim
         if forecast_feature[ndx_feature_value] :
             for ndx_feature in range(time_steps, time_steps+forecast_steps) :        
                 for ndx_time_series_sample in range(0, samples) :
-                    if (analysis == 'TBD') :
-                        print ('Analysis model is not yet defined')
-                    elif (analysis == 'buy_sell_hold') :
+                    if (ANALYSIS == 'pct_change') :
+                        np_prediction[ndx_time_series_sample, ndx_feature-time_steps] = calculate_single_pct_change()
+                    elif (ANALYSIS == 'buy_sell_hold') :
                         '''
                         Calculate buy, sell or hold flag value for individual time period forecast feature value
                         '''
@@ -475,9 +479,9 @@ def prepare_ts_lstm(tickers, result_drivers, forecast_feature, feature_type, tim
     logging.debug('')
     np_forecast = np.zeros([samples])
     for ndx_time_series_sample in range(0, samples) :
-        if (analysis == 'TBD') :
-            print ('Analysis model is not yet defined')
-        elif (analysis == 'buy_sell_hold') :
+        if (ANALYSIS == 'pct_change') :
+            np_forecast[ndx_time_series_sample] = calculate_sample_pct_change()
+        elif (ANALYSIS == 'buy_sell_hold') :
             '''
             Find the buy, sell or hold flag for the overall forecast interval
             '''
