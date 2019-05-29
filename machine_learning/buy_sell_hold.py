@@ -19,33 +19,38 @@ from configuration_constants import SELL_INDICATION_THRESHOLD
 from configuration_constants import BUY_INDICATION
 from configuration_constants import HOLD_INDICATION
 from configuration_constants import SELL_INDICATION
+from configuration_constants import BUY_INDEX
+from configuration_constants import HOLD_INDEX
+from configuration_constants import SELL_INDEX
+from configuration_constants import CLASSIFICATION_COUNT
+from configuration_constants import CLASSIFICATION_ID
 
 def calculate_single_bsh_flag(current_price, future_price):
-    
+    '''
+    Calculate the percentage change between the current_price and future_price
+    '''
     bsh_change = future_price / current_price
-    if bsh_change >= BUY_INDICATION_THRESHOLD :
-        bsh_flag = BUY_INDICATION
-    elif bsh_change <= SELL_INDICATION_THRESHOLD :
-        bsh_flag = SELL_INDICATION
-    else :
-        bsh_flag = HOLD_INDICATION
 
-    return bsh_flag
+    return bsh_change
 
 def calculate_sample_bsh_flag(sample_single_flags):
-    
-    bsh_flag = HOLD_INDICATION
+    '''
+    return a classification array where all values are zero except for a single array entry which is set to 1
+    Determine which array entry to set to 1 based on the maximum value of the individual changes and based on thresholds
+    '''
+    bsh_classification = [0, 0, 0]
+
     bsh_flag_max = np.amax(sample_single_flags)
     bsh_flag_min = np.amin(sample_single_flags)
     
-    if (bsh_flag_max == BUY_INDICATION) :
-        bsh_flag = BUY_INDICATION
-    elif (bsh_flag_min == SELL_INDICATION) :
-        bsh_flag = SELL_INDICATION
+    if (bsh_flag_max >= BUY_INDICATION_THRESHOLD) :
+        bsh_classification[BUY_INDEX] = CLASSIFICATION_ID
+    elif (bsh_flag_min <= SELL_INDICATION_THRESHOLD) :
+        bsh_classification[SELL_INDEX] = CLASSIFICATION_ID
     else :
-        bsh_flag = HOLD_INDICATION
+        bsh_classification[HOLD_INDEX] = CLASSIFICATION_ID
     
-    return bsh_flag
+    return bsh_classification
 
 def plot_bsh_results(technical_analysis_names, predicted_data, true_data, np_diff) :
     logging.info ('')
@@ -91,60 +96,48 @@ def plot_bsh_result_distribution(technical_analysis_names, predicted_data, true_
 
 def categorize_prediction_risks(technical_analysis_names, predicted_data, true_data, f_out) :
     '''
-    Actual bsh flag    Prediction        Categorization
-    -1:   sell        <PREDICTION_SELL_THRESHOLD                                      Correct sell
-    -1:   sell        PREDICTION_SELL_THRESHOLD < pred < PREDICTION_BUY_THRESHOLD     Sell predicted as hold - financial loss
-    -1:   sell        >PREDICTION_BUY_THRESHOLD                                       Sell predicted as buy - financial loss
-    0:    hold        <PREDICTION_SELL_THRESHOLD                                      Hold predicted as sell - opportunity loss
-    0:    hold        PREDICTION_SELL_THRESHOLD < pred < PREDICTION_BUY_THRESHOLD     Correct hold
-    0:    hold        >PREDICTION_BUY_THRESHOLD                                       Hold predicted as buy - financial loss
-    1:    Buy         <PREDICTION_SELL_THRESHOLD                                      Buy predicted as sell - opportunity loss
-    1:    Buy         PREDICTION_SELL_THRESHOLD < pred < PREDICTION_BUY_THRESHOLD     Buy predicted as hold - opportunity loss
-    1:    Buy         >PREDICTION_BUY_THRESHOLD                                       Correct buy
     '''
     logging.info ('')
     logging.info ('====> ==============================================')
     logging.info ('====> categorize_prediction_risks:')
     logging.info ('====> ==============================================')
 
-    #local constants for accessing arrays
-    BUY_INDEX = 2
-    HOLD_INDEX = 1
-    SELL_INDEX = 0
-    #ACTUAL_INDEX = 0
-    #PREDICTION_INDEX = 1
-    ACTUAL_CHARACTERISTIC_COUNTS = 3
-    #ACTUAL_CHARACTERIZATION = 2
-    PREDICTION_CHARACTERISTICS_COUNTS = 3
+    ACTUAL_CHARACTERISTIC_COUNTS = CLASSIFICATION_COUNT
+    PREDICTION_CHARACTERISTICS_COUNTS = CLASSIFICATION_COUNT
     
     actual_sample_count = true_data.shape[0]
     prediction_count = predicted_data.shape[1]
 
     np_counts                       = np.zeros([PREDICTION_CHARACTERISTICS_COUNTS])
     np_predictions                  = np.zeros([prediction_count, PREDICTION_CHARACTERISTICS_COUNTS])
+    np_predictions_index            = np.zeros([prediction_count, PREDICTION_CHARACTERISTICS_COUNTS])
     np_characterization             = np.zeros([prediction_count, PREDICTION_CHARACTERISTICS_COUNTS, ACTUAL_CHARACTERISTIC_COUNTS])
     np_characterization_percentage  = np.zeros([prediction_count, PREDICTION_CHARACTERISTICS_COUNTS, ACTUAL_CHARACTERISTIC_COUNTS])
-    
-    
+        
     for ndx_actual in range (0, actual_sample_count) :
-        if true_data[ndx_actual] == SELL_INDICATION :
+        if true_data[ndx_actual, SELL_INDEX] == CLASSIFICATION_ID :
             #actual data indicated sell
             np_counts[SELL_INDEX] += 1
-        elif true_data[ndx_actual] == HOLD_INDICATION :
+        elif true_data[ndx_actual, HOLD_INDEX] == CLASSIFICATION_ID :
             #actual data indicated hold
             np_counts[HOLD_INDEX] += 1
         else :
             #actual data indicated buy
             np_counts[BUY_INDEX] += 1
             
+        '''
         for ndx_predicted in range (0, prediction_count) :
-            if true_data[ndx_actual] == SELL_INDICATION :
+            if predicted_data[ndx_actual, ndx_classification, ndx_predicted] >  :
+        '''
+            
+        for ndx_predicted in range (0, prediction_count) :
+            if true_data[ndx_actual, SELL_INDEX] == CLASSIFICATION_ID :
                 #actual data indicated sell
-                if (predicted_data[ndx_actual, ndx_predicted] < PREDICTION_SELL_THRESHOLD) :
+                if (predicted_data[ndx_actual, ndx_predicted, SELL_INDEX] < PREDICTION_SELL_THRESHOLD) :
                     np_characterization [ndx_predicted, SELL_INDEX, SELL_INDEX] += 1
                     np_predictions      [ndx_predicted, SELL_INDEX] += 1
                     
-                elif (predicted_data[ndx_actual, ndx_predicted] > PREDICTION_BUY_THRESHOLD) :
+                elif (predicted_data[ndx_actual, ndx_predicted, BUY_INDEX] > PREDICTION_BUY_THRESHOLD) :
                     np_characterization [ndx_predicted, BUY_INDEX, SELL_INDEX] += 1
                     np_predictions      [ndx_predicted, BUY_INDEX] += 1
                     
@@ -152,13 +145,13 @@ def categorize_prediction_risks(technical_analysis_names, predicted_data, true_d
                     np_characterization [ndx_predicted, HOLD_INDEX, SELL_INDEX] += 1
                     np_predictions      [ndx_predicted, HOLD_INDEX] += 1
                     
-            elif true_data[ndx_actual] == HOLD_INDICATION :
+            elif true_data[ndx_actual, HOLD_INDEX] == CLASSIFICATION_ID :
                 #actual data indicated hold
-                if (predicted_data[ndx_actual, ndx_predicted] < PREDICTION_SELL_THRESHOLD) :
+                if (predicted_data[ndx_actual, ndx_predicted, SELL_INDEX] < PREDICTION_SELL_THRESHOLD) :
                     np_characterization[ndx_predicted, SELL_INDEX, HOLD_INDEX] += 1
                     np_predictions     [ndx_predicted, SELL_INDEX] += 1
                     
-                elif (predicted_data[ndx_actual, ndx_predicted] > PREDICTION_BUY_THRESHOLD) :
+                elif (predicted_data[ndx_actual, ndx_predicted, BUY_INDEX] > PREDICTION_BUY_THRESHOLD) :
                     np_characterization[ndx_predicted, BUY_INDEX, HOLD_INDEX] += 1
                     np_predictions     [ndx_predicted, BUY_INDEX] += 1
                     
@@ -168,11 +161,11 @@ def categorize_prediction_risks(technical_analysis_names, predicted_data, true_d
                     
             else :
                 #actual data indicated buy
-                if (predicted_data[ndx_actual, ndx_predicted] < PREDICTION_SELL_THRESHOLD) :
+                if (predicted_data[ndx_actual, ndx_predicted, SELL_INDEX] < PREDICTION_SELL_THRESHOLD) :
                     np_characterization[ndx_predicted, SELL_INDEX, BUY_INDEX] += 1
                     np_predictions     [ndx_predicted, SELL_INDEX] += 1
                     
-                elif (predicted_data[ndx_actual, ndx_predicted] > PREDICTION_BUY_THRESHOLD) :
+                elif (predicted_data[ndx_actual, ndx_predicted, BUY_INDEX] > PREDICTION_BUY_THRESHOLD) :
                     np_characterization[ndx_predicted, BUY_INDEX, BUY_INDEX] += 1
                     np_predictions     [ndx_predicted, BUY_INDEX] += 1
                     
@@ -214,7 +207,8 @@ def categorize_prediction_risks(technical_analysis_names, predicted_data, true_d
             print       (str_analysis)
             logging.info(str_analysis)
             
-        str_prediction_range = '\tPrediction values range from\t{:f} to {:f}'.format(min(predicted_data[:, ndx_predicted]), max(predicted_data[:, ndx_predicted]))
+        str_prediction_range = '\tPrediction values range from\t{:f} to {:f}'.format( \
+                    min(predicted_data[:, ndx_predicted, BUY_INDEX]), max(predicted_data[:, ndx_predicted, BUY_INDEX]))
         str_prediction_counts = '\tPredicted\t\t\tbuys:\t\t{:.0f}\t\tholds:\t\t{:.0f}\t\tsells:\t\t{:.0f}'.format( \
                     np_predictions[ndx_predicted, BUY_INDEX], np_predictions[ndx_predicted, HOLD_INDEX], np_predictions[ndx_predicted, SELL_INDEX] \
                     )
@@ -263,7 +257,7 @@ def bsh_results_multiple(technical_analysis_names, predicted_data, true_data, f_
     On screen display of actual and predicted data
     '''
     categorize_prediction_risks(technical_analysis_names, predicted_data, true_data, f_out)
-    plot_bsh_result_distribution(technical_analysis_names, predicted_data, true_data)
+    #plot_bsh_result_distribution(technical_analysis_names, predicted_data, true_data)
     '''
     Display plots of differences
     np_diff = np.zeros([predicted_data.shape[0], predicted_data.shape[1]])

@@ -91,7 +91,7 @@ if __name__ == '__main__':
     =========================================================================================== '''
     step5 = time.time()
     print ("\nStep 5 - clean up, archive and visualize accuracy!")
-    predictions = predict_sequences_multiple(model, x_test)
+    predictions = predict_sequences_multiple(model, x_test, lst_analyses)
     save_model(model)  
     end = time.time()
     print ("")

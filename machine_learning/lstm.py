@@ -14,6 +14,16 @@ from configuration_constants import BATCH_SIZE
 from configuration_constants import EPOCHS
 from configuration_constants import ACTIVATION
 from configuration_constants import ANALYSIS
+from configuration_constants import CLASSIFICATION_ID
+from configuration_constants import BUY_INDICATION
+from configuration_constants import BUY_INDEX
+from configuration_constants import HOLD_INDICATION
+from configuration_constants import HOLD_INDEX
+from configuration_constants import SELL_INDICATION
+from configuration_constants import SELL_INDEX
+from configuration_constants import BUY_INDICATION_THRESHOLD
+from configuration_constants import SELL_INDICATION_THRESHOLD
+from configuration_constants import CLASSIFICATION_COUNT
 
 from numpy import NAN
 from quandl_library import fetch_timeseries_data
@@ -451,7 +461,7 @@ def prepare_ts_lstm(tickers, result_drivers, forecast_feature, feature_type, tim
                         np_prediction[ndx_time_series_sample, ndx_feature-time_steps] = calculate_single_pct_change()
                     elif (ANALYSIS == 'buy_sell_hold') :
                         '''
-                        Calculate buy, sell or hold flag value for individual time period forecast feature value
+                        Calculate % change of the for each time period forecast feature value compared to the current value
                         '''
                         np_prediction[ndx_time_series_sample, ndx_feature-time_steps] = \
                             calculate_single_bsh_flag(np_data[ndx_time_series_sample, time_steps-1, ndx_feature_value], \
@@ -467,15 +477,15 @@ def prepare_ts_lstm(tickers, result_drivers, forecast_feature, feature_type, tim
     *** Specific to the analysis being performed ***
     '''
     logging.debug('')
-    np_forecast = np.zeros([samples])
+    np_forecast = np.zeros([samples, CLASSIFICATION_COUNT])
     for ndx_time_series_sample in range(0, samples) :
         if (ANALYSIS == 'pct_change') :
             np_forecast[ndx_time_series_sample] = calculate_sample_pct_change()
         elif (ANALYSIS == 'buy_sell_hold') :
             '''
-            Find the buy, sell or hold flag for the overall forecast interval
+            Find the buy, sell or hold classification for each sample
             '''
-            np_forecast[ndx_time_series_sample] = calculate_sample_bsh_flag(np_prediction[ndx_time_series_sample, :])
+            np_forecast[ndx_time_series_sample, :] = calculate_sample_bsh_flag(np_prediction[ndx_time_series_sample, :])                
         else :
             print ('Analysis model is not specified')
     logging.debug('\nforecast shape %s and values\n%s', np_forecast.shape, np_forecast)
@@ -547,8 +557,8 @@ def prepare_ts_lstm(tickers, result_drivers, forecast_feature, feature_type, tim
     row = round(0.1 * np_data.shape[0])
     x_test  = np_data    [        :int(row), :time_steps , : ]
     x_train = np_data    [int(row):        , :time_steps , : ]
-    y_test  = np_forecast[        :int(row)]
-    y_train = np_forecast[int(row):        ]
+    y_test  = np_forecast[        :int(row), :]
+    y_train = np_forecast[int(row):        , :]
 
     list_x_test  = list([])
     list_x_train = list([])
@@ -632,17 +642,17 @@ def build_model(lst_analyses, np_input):
         print('\tkf_input shape %s' % tf.shape(kf_feature_sets[ndx_i]))
 
         #create the layers used to model each technical analysis
-        kf_input_ndx_i = LSTM(3, activation=ACTIVATION)(kf_feature_sets[ndx_i])
-        kf_input_ndx_i = Dense(output_dim=1, activation=ACTIVATION)(kf_input_ndx_i)
-        kf_input_ndx_i = Dense(output_dim=1, activation=ACTIVATION)(kf_input_ndx_i)
-        kf_input_ndx_i = Dense(output_dim=1, activation=ACTIVATION)(kf_input_ndx_i)
+        kf_input_ndx_i = LSTM(256, activation=ACTIVATION)(kf_feature_sets[ndx_i])
+        kf_input_ndx_i = Dense(256, activation=ACTIVATION)(kf_input_ndx_i)
+        kf_input_ndx_i = Dense(256, activation=ACTIVATION)(kf_input_ndx_i)
+        kf_input_ndx_i = Dense(256, activation=ACTIVATION)(kf_input_ndx_i)
 
         #identify the output of each individual technical analysis
-        kf_feature_set_output = Dense(output_dim=1)(kf_input_ndx_i)
+        kf_feature_set_output = Dense(output_dim=CLASSIFICATION_COUNT)(kf_input_ndx_i)
         kf_feature_set_outputs.append(kf_feature_set_output)        
 
         #create outputs that can be used to assess the individual technical analysis         
-        kf_feature_set_solo_output = Dense(name=str_solo_out, output_dim=1)(kf_feature_set_output)        
+        kf_feature_set_solo_output = Dense(name=str_solo_out, output_dim=CLASSIFICATION_COUNT)(kf_feature_set_output)        
         kf_feature_set_solo_outputs.append(kf_feature_set_solo_output)        
 
         ndx_i += 1
@@ -654,14 +664,17 @@ def build_model(lst_analyses, np_input):
     kf_composite = Concatenate(axis=-1)(kf_feature_set_outputs[:])
     
     #create the layers used to analyze the composite of all technical analysis 
-    kf_composite = Dense(len(kf_feature_set_outputs), activation=ACTIVATION)(kf_composite)
-    kf_composite = Dense(len(kf_feature_set_outputs), activation=ACTIVATION)(kf_composite)
-    kf_composite = Dense(len(kf_feature_set_outputs), activation=ACTIVATION)(kf_composite)
-    kf_composite = Dense(len(kf_feature_set_outputs), activation=ACTIVATION)(kf_composite)
-    kf_composite = Dense(len(kf_feature_set_outputs), activation=ACTIVATION)(kf_composite)
+    kf_composite = Dense(256, activation=ACTIVATION)(kf_composite)
+    kf_composite = Dense(256, activation=ACTIVATION)(kf_composite)
+    kf_composite = Dense(256, activation=ACTIVATION)(kf_composite)
+    kf_composite = Dense(256, activation=ACTIVATION)(kf_composite)
+    kf_composite = Dense(256, activation=ACTIVATION)(kf_composite)
     
     #create the composite output layer
+    '''
     kf_composite = Dense(output_dim=1, name="composite_output")(kf_composite)
+    '''
+    kf_composite = Dense(output_dim=CLASSIFICATION_COUNT, name="composite_output")(kf_composite)
     
     #create list of outputs
     lst_outputs = []
@@ -692,9 +705,6 @@ def train_lstm(model, x_train, y_train):
     print('train_lstm: Fitting model using training data: len(x)=%s and y=%s' % \
                  (len(x_train), y_train.shape))
     
-    '''
-    model.fit(x_train[0], y_train, shuffle=True, batch_size=2056, nb_epoch=2, validation_split=0.05, verbose=1)
-    '''
     lst_x = []
     lst_y = []
     for ndx_i in range(0, len(x_train)) :
@@ -707,7 +717,6 @@ def train_lstm(model, x_train, y_train):
     logging.info('<---- ----------------------------------------------')
     logging.info('<---- train_lstm:')
     logging.info('<---- ----------------------------------------------')
-    
     return
 
 def evaluate_model(model, x_data, y_data):
@@ -731,10 +740,9 @@ def evaluate_model(model, x_data, y_data):
     logging.info('<---- ----------------------------------------------')
     logging.info('<---- evaluate_model: Test loss=%s, Test accuracy=%s', score[0], score[1])
     logging.info('<---- ----------------------------------------------')
-    
     return
 
-def predict_single(model, df_data):   
+def predict_sequences_single(model, df_data):   
     '''
     *** Specific to the analysis being performed ***
     find the models predictions for each output
@@ -743,7 +751,7 @@ def predict_single(model, df_data):
 
     return prediction
 
-def predict_sequences_multiple(model, df_data):
+def predict_sequences_multiple(model, df_data, lst_analyses):
     '''
     *** Specific to the analysis being performed ***
     Find the maximum adj_high for each time period sample
@@ -760,24 +768,23 @@ def predict_sequences_multiple(model, df_data):
     logging.info ('====> predict_sequences_multiple: %s technical analysis feature sets', len(df_data))
     print        ('====> predict_sequences_multiple: %s technical analysis feature sets' % (len(df_data)))
     for ndx_i in range(0, len(df_data)) :
-        logging.info ('====> technical analysis feature set %s, data shape=%s\n%s', ndx_i, df_data[ndx_i].shape, df_data[ndx_i])
-        print        ('====> technical analysis feature set %s, data shape=%s' % (ndx_i, df_data[ndx_i].shape))
-    logging.info     ('====> ==============================================')
+        logging.info ('====> technical analysis feature set %s, %s, data shape=%s\n%s', ndx_i, lst_analyses[ndx_i], df_data[ndx_i].shape, df_data[ndx_i])
+        print        ('\t====> technical analysis feature set %s, %s, data shape=%s' % (ndx_i, lst_analyses[ndx_i], df_data[ndx_i].shape))
+    logging.info ('====> ==============================================')
         
     samples = df_data[0].shape[0]
-    np_predictions = np.empty([samples, len(df_data) + 1])
+    np_predictions = np.empty([samples, (len(df_data) + 1), CLASSIFICATION_COUNT])
     logging.debug('Output shape: %s', np_predictions.shape)
 
     for ndx_samples in range(0, samples) :
         lst_x = []
         for ndx_i in range(0, len(df_data)) :
             lst_x.append(df_data[ndx_i][ndx_samples:ndx_samples+1])
-        np_predictions[ndx_samples] = predict_single(model, lst_x)
+        np_predictions[ndx_samples] = predict_sequences_single(model, lst_x)
 
     #print ("%s predictions of length %s" % (len(prediction_seqs), len(prediction_seqs[0])))
     logging.info ('<---- ----------------------------------------------')
     logging.info ('<---- predict_sequences_multiple:')
-    logging.debug('<---- %s predictions, prediction_seqs=\n%s', len(np_predictions), np_predictions)
-    logging.info ('<---- ----------------------------------------------')
-    
+    logging.debug('<---- \tprediction shape: %s, length: %s predictions, values=\n%s', np_predictions.shape, len(np_predictions), np_predictions)
+    logging.info ('<---- ----------------------------------------------')    
     return np_predictions
