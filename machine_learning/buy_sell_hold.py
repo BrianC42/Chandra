@@ -96,6 +96,17 @@ def plot_bsh_result_distribution(technical_analysis_names, predicted_data, true_
 
 def categorize_prediction_risks(technical_analysis_names, predicted_data, true_data, f_out) :
     '''
+    Generate a report to demonstrate the accuracy of the composite and technical analysis by comparing the counts of
+    actual buy, sell and hold indications with the predictions
+    technical_analysis_names - list of individual technical analysis names
+    predicted_data - 3D array of predictions from the model
+        Axis 0 - the sample analyzed
+        Axis 1 - the output the composite output at index 0 and one output for each technical analysis at index 1 and beyond
+        Axis 2 - the CLASSIFICATION_COUNT values output by the model
+    true_data - One Hot Encoded 2D array of actual buy/sell/hold indications for each sample
+        Axis 0 - sample
+        Axis 1 - one hot classification encoding
+    f_out - execution report file
     '''
     logging.info ('')
     logging.info ('====> ==============================================')
@@ -108,77 +119,81 @@ def categorize_prediction_risks(technical_analysis_names, predicted_data, true_d
     actual_sample_count = true_data.shape[0]
     prediction_count = predicted_data.shape[1]
 
-    np_counts                       = np.zeros([PREDICTION_CHARACTERISTICS_COUNTS])
-    np_predictions                  = np.zeros([prediction_count, PREDICTION_CHARACTERISTICS_COUNTS])
-    np_predictions_index            = np.zeros([prediction_count, PREDICTION_CHARACTERISTICS_COUNTS])
+    np_counts                       = np.zeros([                  PREDICTION_CHARACTERISTICS_COUNTS])
+    np_predictions_classification   = np.zeros([prediction_count, PREDICTION_CHARACTERISTICS_COUNTS])
     np_characterization             = np.zeros([prediction_count, PREDICTION_CHARACTERISTICS_COUNTS, ACTUAL_CHARACTERISTIC_COUNTS])
     np_characterization_percentage  = np.zeros([prediction_count, PREDICTION_CHARACTERISTICS_COUNTS, ACTUAL_CHARACTERISTIC_COUNTS])
-        
-    for ndx_actual in range (0, actual_sample_count) :
-        if true_data[ndx_actual, SELL_INDEX] == CLASSIFICATION_ID :
-            #actual data indicated sell
-            np_counts[SELL_INDEX] += 1
-        elif true_data[ndx_actual, HOLD_INDEX] == CLASSIFICATION_ID :
-            #actual data indicated hold
-            np_counts[HOLD_INDEX] += 1
-        else :
-            #actual data indicated buy
-            np_counts[BUY_INDEX] += 1
-            
-        '''
-        for ndx_predicted in range (0, prediction_count) :
-            if predicted_data[ndx_actual, ndx_classification, ndx_predicted] >  :
-        '''
-            
-        for ndx_predicted in range (0, prediction_count) :
-            if true_data[ndx_actual, SELL_INDEX] == CLASSIFICATION_ID :
-                #actual data indicated sell
-                if (predicted_data[ndx_actual, ndx_predicted, SELL_INDEX] < PREDICTION_SELL_THRESHOLD) :
-                    np_characterization [ndx_predicted, SELL_INDEX, SELL_INDEX] += 1
-                    np_predictions      [ndx_predicted, SELL_INDEX] += 1
-                    
-                elif (predicted_data[ndx_actual, ndx_predicted, BUY_INDEX] > PREDICTION_BUY_THRESHOLD) :
-                    np_characterization [ndx_predicted, BUY_INDEX, SELL_INDEX] += 1
-                    np_predictions      [ndx_predicted, BUY_INDEX] += 1
-                    
-                else :
-                    np_characterization [ndx_predicted, HOLD_INDEX, SELL_INDEX] += 1
-                    np_predictions      [ndx_predicted, HOLD_INDEX] += 1
-                    
-            elif true_data[ndx_actual, HOLD_INDEX] == CLASSIFICATION_ID :
-                #actual data indicated hold
-                if (predicted_data[ndx_actual, ndx_predicted, SELL_INDEX] < PREDICTION_SELL_THRESHOLD) :
-                    np_characterization[ndx_predicted, SELL_INDEX, HOLD_INDEX] += 1
-                    np_predictions     [ndx_predicted, SELL_INDEX] += 1
-                    
-                elif (predicted_data[ndx_actual, ndx_predicted, BUY_INDEX] > PREDICTION_BUY_THRESHOLD) :
-                    np_characterization[ndx_predicted, BUY_INDEX, HOLD_INDEX] += 1
-                    np_predictions     [ndx_predicted, BUY_INDEX] += 1
-                    
-                else :
-                    np_characterization[ndx_predicted, HOLD_INDEX, HOLD_INDEX] += 1
-                    np_predictions     [ndx_predicted, HOLD_INDEX] += 1
-                    
-            else :
-                #actual data indicated buy
-                if (predicted_data[ndx_actual, ndx_predicted, SELL_INDEX] < PREDICTION_SELL_THRESHOLD) :
-                    np_characterization[ndx_predicted, SELL_INDEX, BUY_INDEX] += 1
-                    np_predictions     [ndx_predicted, SELL_INDEX] += 1
-                    
-                elif (predicted_data[ndx_actual, ndx_predicted, BUY_INDEX] > PREDICTION_BUY_THRESHOLD) :
-                    np_characterization[ndx_predicted, BUY_INDEX, BUY_INDEX] += 1
-                    np_predictions     [ndx_predicted, BUY_INDEX] += 1
-                    
-                else :
-                    np_characterization[ndx_predicted, HOLD_INDEX, BUY_INDEX] += 1
-                    np_predictions     [ndx_predicted, HOLD_INDEX] += 1
     
+    '''
+    Assess the accuracy of each output of the prediction for each possible classification
+    '''
+    for ndx_classification in range (0, CLASSIFICATION_COUNT) :
+        # Count actual buy, sell and hold indications
+        np_counts[ndx_classification]  = np.count_nonzero(true_data[:, ndx_classification])
+
+    '''
+    Assess the accuracy of the composite and each individual technical analysis
+    Calculate accuracy counts
+    '''
+    for ndx_predicted in range (0, prediction_count) :
+        for ndx_sample in range (0, actual_sample_count) :
+            '''
+            Identify the 
+                predicted classification output with the highest value
+                true_data classification (from one hot encoding)
+            '''
+            i_prediction_classification = np.argmax(predicted_data[ndx_sample, ndx_predicted, :])
+            i_true_classification = np.argmax(true_data[ndx_sample, :])
+            
+            #Count the number of predictions of each specific classification
+            np_predictions_classification[ndx_predicted, i_prediction_classification] += 1
+
+            '''
+            Count all possible classification combinations of prediction and actual
+            '''
+            if i_true_classification == BUY_INDEX :
+                if (i_prediction_classification == SELL_INDEX) :
+                    # actual buy / predicted sell
+                    np_characterization [ndx_predicted, SELL_INDEX, BUY_INDEX] += 1
+                elif (i_prediction_classification == HOLD_INDEX) :
+                    # actual buy / predicted hold
+                    np_characterization [ndx_predicted, HOLD_INDEX, BUY_INDEX] += 1
+                else :
+                    # actual buy / predicted buy
+                    np_characterization [ndx_predicted, BUY_INDEX, BUY_INDEX] += 1
+            elif  i_true_classification == SELL_INDEX :
+                if (i_prediction_classification == SELL_INDEX) :
+                    # actual sell / predicted sell
+                    np_characterization [ndx_predicted, SELL_INDEX, SELL_INDEX] += 1
+                elif (i_prediction_classification == HOLD_INDEX) :
+                    # actual sell / predicted hold
+                    np_characterization [ndx_predicted, HOLD_INDEX, SELL_INDEX] += 1
+                else :
+                    # actual sell / predicted buy
+                    np_characterization [ndx_predicted, BUY_INDEX, SELL_INDEX] += 1
+            else :
+                if (i_prediction_classification == SELL_INDEX) :
+                    # actual hold / predicted sell
+                    np_characterization [ndx_predicted, SELL_INDEX, HOLD_INDEX] += 1
+                elif (i_prediction_classification == HOLD_INDEX) :
+                    # actual hold / predicted hold
+                    np_characterization [ndx_predicted, HOLD_INDEX, HOLD_INDEX] += 1
+                else :
+                    # actual hold / predicted buy
+                    np_characterization [ndx_predicted, BUY_INDEX, HOLD_INDEX] += 1
+            
+    '''
+    Calculate the percentage accuracy
+    '''
     for ndx_predicted in range (0, prediction_count) :
         for ndx_bsh_actual in range (0, ACTUAL_CHARACTERISTIC_COUNTS) :
             for ndx_bsh_predicted in range (0, PREDICTION_CHARACTERISTICS_COUNTS) :
                 np_characterization_percentage[ndx_predicted, ndx_bsh_predicted, ndx_bsh_actual] = \
                     np_characterization[ndx_predicted, ndx_bsh_predicted, ndx_bsh_actual] / actual_sample_count
 
+    '''
+    Format the report and output it to the screen, logging and report file
+    '''
     logging.debug('\nAnalysis names:\t%s\npredicted data shape: %s\nactual data shape: %s', \
                   technical_analysis_names, predicted_data.shape, true_data.shape)
     logging.debug('Result characterizations:\n%s', np_characterization)
@@ -210,7 +225,9 @@ def categorize_prediction_risks(technical_analysis_names, predicted_data, true_d
         str_prediction_range = '\tPrediction values range from\t{:f} to {:f}'.format( \
                     min(predicted_data[:, ndx_predicted, BUY_INDEX]), max(predicted_data[:, ndx_predicted, BUY_INDEX]))
         str_prediction_counts = '\tPredicted\t\t\tbuys:\t\t{:.0f}\t\tholds:\t\t{:.0f}\t\tsells:\t\t{:.0f}'.format( \
-                    np_predictions[ndx_predicted, BUY_INDEX], np_predictions[ndx_predicted, HOLD_INDEX], np_predictions[ndx_predicted, SELL_INDEX] \
+                    np_predictions_classification[ndx_predicted, BUY_INDEX], \
+                    np_predictions_classification[ndx_predicted, HOLD_INDEX], \
+                    np_predictions_classification[ndx_predicted, SELL_INDEX] \
                     )
         str_correct_prediction = '\tCorrect predictions:\t\tBuy\t\t{:.0f}\t{:.2%}\tHold\t\t{:.0f}\t{:.2%}\tSell\t\t{:.0f}\t{:.2%}'.format( \
                     np_characterization[ndx_predicted, BUY_INDEX, BUY_INDEX], np_characterization_percentage[ndx_predicted, BUY_INDEX, BUY_INDEX], \

@@ -8,17 +8,18 @@ This file contains constants used to control the:
     the data elements used
     the data sources used
 '''
-
-
+import logging
 
 '''
 data sources to use as samples to train, evaluate and use for predictions
         for testing the following options are frequently used
-            "hsc", "msft", "gntx", "csfl", "vrnt", "intc", "hsbc", "xlnx", "amgn", "f", "gm", "c"
             "aapl", "arnc", "ba", "c", "cat", "dd", "f", "ge", "jnj", "ko", "hpq", "dis", "ibm", "ip", "mcd", "mo", "mrk", "mro", "pg", "t", "utx", "xom"
+            "hsc", "msft", "gntx", "csfl", "vrnt", "intc", "hsbc", "xlnx", "amgn", "f", "gm", "c"
+            "bios", "cfg", "chl",  "ddd", "gild",  "m",  "mygn",  "nvda",  "wmt",  "xxii",  "c"
+            "aapl", "arnc", "ba", "c"
             "f"
 '''
-TICKERS = ["f"]
+TICKERS = ["aapl"]
 
 RESULT_DRIVERS   = ["adj_low", "adj_high", "adj_open", "adj_close", "adj_volume", "BB_Lower", "BB_Upper", "SMA20",   "OBV",     "AccumulationDistribution", "momentum", "MACD_Sell", "MACD_Buy"]
 FEATURE_TYPE     = ['numeric', 'numeric',  'numeric', 'numeric',    'numeric',    'numeric',   'numeric', 'numeric', 'numeric', 'numeric',                  'numeric',  'boolean',   'boolean']
@@ -26,18 +27,26 @@ ANALASIS_SAMPLE_LENGTH = 120
 FORECAST_LENGTH = 30
 
 '''
-Activation choices
-    relu
-    tanh
-    softmax
+Recurrent layer parameter
+    Activation choices: relu tanh softmax
+    Use_bias: True False
+    dropout: floating point number 0.0
 '''
 ACTIVATION = 'softmax'
+USE_BIAS = True
+DROPOUT = 0.25
 
 '''
 Sample data processing controls
 '''
 BATCH_SIZE = 1024
-EPOCHS = 2
+EPOCHS = 5
+
+'''
+Model training parameters
+'''
+VALIDATION_SPLIT = 0.05
+VERBOSE = 1
 
 '''
 Which analysis approach to use
@@ -69,3 +78,9 @@ HOLD_INDICATION = 0.0
 HOLD_INDEX = 1
 SELL_INDICATION = -1.0
 SELL_INDEX = 0
+
+'''
+Logging controls
+'''
+LOGGING_LEVEL = logging.DEBUG
+LOGGING_FORMAT = '%(asctime)s: %(levelname)s: %(message)s'

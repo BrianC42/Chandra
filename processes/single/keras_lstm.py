@@ -17,6 +17,8 @@ from configuration_constants import ANALYSIS
 from configuration_constants import RESULT_DRIVERS
 from configuration_constants import FEATURE_TYPE
 from configuration_constants import FORECAST_FEATURE
+from configuration_constants import LOGGING_LEVEL
+from configuration_constants import LOGGING_FORMAT
 
 from lstm import build_model
 from lstm import predict_sequences_multiple
@@ -35,7 +37,7 @@ if __name__ == '__main__':
     lstm_config_data = get_ini_data("LSTM")
     log_file = lstm_config_data['log']
 
-    logging.basicConfig(filename=log_file, level=logging.DEBUG, format='%(asctime)s: %(levelname)s: %(message)s')
+    logging.basicConfig(filename=log_file, level=LOGGING_LEVEL, format=LOGGING_FORMAT)
     print ("Logging to", log_file)
     logger = logging.getLogger('lstm_logger')
     log_fmt = logging.Formatter('%(asctime)s - %(name)s - %levelname - %(messages)s')

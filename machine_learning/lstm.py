@@ -13,17 +13,12 @@ import tensorflow as tf
 from configuration_constants import BATCH_SIZE
 from configuration_constants import EPOCHS
 from configuration_constants import ACTIVATION
+from configuration_constants import USE_BIAS
+from configuration_constants import DROPOUT
 from configuration_constants import ANALYSIS
-from configuration_constants import CLASSIFICATION_ID
-from configuration_constants import BUY_INDICATION
-from configuration_constants import BUY_INDEX
-from configuration_constants import HOLD_INDICATION
-from configuration_constants import HOLD_INDEX
-from configuration_constants import SELL_INDICATION
-from configuration_constants import SELL_INDEX
-from configuration_constants import BUY_INDICATION_THRESHOLD
-from configuration_constants import SELL_INDICATION_THRESHOLD
 from configuration_constants import CLASSIFICATION_COUNT
+from configuration_constants import VALIDATION_SPLIT
+from configuration_constants import VERBOSE
 
 from numpy import NAN
 from quandl_library import fetch_timeseries_data
@@ -642,7 +637,7 @@ def build_model(lst_analyses, np_input):
         print('\tkf_input shape %s' % tf.shape(kf_feature_sets[ndx_i]))
 
         #create the layers used to model each technical analysis
-        kf_input_ndx_i = LSTM(256, activation=ACTIVATION)(kf_feature_sets[ndx_i])
+        kf_input_ndx_i = LSTM(256, activation=ACTIVATION, use_bias=USE_BIAS, dropout=DROPOUT)(kf_feature_sets[ndx_i])
         kf_input_ndx_i = Dense(256, activation=ACTIVATION)(kf_input_ndx_i)
         kf_input_ndx_i = Dense(256, activation=ACTIVATION)(kf_input_ndx_i)
         kf_input_ndx_i = Dense(256, activation=ACTIVATION)(kf_input_ndx_i)
@@ -712,7 +707,7 @@ def train_lstm(model, x_train, y_train):
         lst_y.append(y_train)
     lst_y.append(y_train)
         
-    model.fit(x=lst_x, y=lst_y, shuffle=True, batch_size=BATCH_SIZE, nb_epoch=EPOCHS, validation_split=0.05, verbose=1)
+    model.fit(x=lst_x, y=lst_y, shuffle=True, batch_size=BATCH_SIZE, nb_epoch=EPOCHS, validation_split=VALIDATION_SPLIT, verbose=VERBOSE)
         
     logging.info('<---- ----------------------------------------------')
     logging.info('<---- train_lstm:')
@@ -766,10 +761,11 @@ def predict_sequences_multiple(model, df_data, lst_analyses):
     logging.info ('')
     logging.info ('====> ==============================================')
     logging.info ('====> predict_sequences_multiple: %s technical analysis feature sets', len(df_data))
-    print        ('====> predict_sequences_multiple: %s technical analysis feature sets' % (len(df_data)))
+    print        ('\tpredicting %s technical analysis feature sets plus a composite prediction' % (len(df_data)))
     for ndx_i in range(0, len(df_data)) :
-        logging.info ('====> technical analysis feature set %s, %s, data shape=%s\n%s', ndx_i, lst_analyses[ndx_i], df_data[ndx_i].shape, df_data[ndx_i])
-        print        ('\t====> technical analysis feature set %s, %s, data shape=%s' % (ndx_i, lst_analyses[ndx_i], df_data[ndx_i].shape))
+        logging.info ('%s technical analysis includes %s features', lst_analyses[ndx_i], df_data[ndx_i].shape[2])
+        print        ('\t\t%s technical analysis includes %s features' % (lst_analyses[ndx_i], df_data[ndx_i].shape[2]))
+    print        ('\t%s predictions, each based on %s historical time steps' % (df_data[0].shape[0], df_data[0].shape[1]))
     logging.info ('====> ==============================================')
         
     samples = df_data[0].shape[0]
