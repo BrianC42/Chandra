@@ -7,15 +7,19 @@ import logging
 import time
 
 from quandl_library import get_ini_data
-from configuration_constants import tickers
-from configuration_constants import result_drivers
-from configuration_constants import forecast_feature
-from configuration_constants import feature_type
+from configuration_constants import TICKERS
 from configuration_constants import ANALASIS_SAMPLE_LENGTH
 from configuration_constants import FORECAST_LENGTH
 from configuration_constants import ACTIVATION
 from configuration_constants import BATCH_SIZE
 from configuration_constants import EPOCHS
+from configuration_constants import ANALYSIS
+from configuration_constants import RESULT_DRIVERS
+from configuration_constants import FEATURE_TYPE
+from configuration_constants import FORECAST_FEATURE
+from configuration_constants import LOGGING_LEVEL
+from configuration_constants import LOGGING_FORMAT
+
 from lstm import build_model
 from lstm import predict_sequences_multiple
 from lstm import prepare_ts_lstm
@@ -23,6 +27,7 @@ from lstm import train_lstm
 from lstm import evaluate_model
 from lstm import save_model
 from buy_sell_hold import bsh_results_multiple
+from percentage_change import pct_change_multiple
 
 if __name__ == '__main__':
     print ("Good morning Dr. Chandra. I am ready for my first lesson.\n")
@@ -32,7 +37,7 @@ if __name__ == '__main__':
     lstm_config_data = get_ini_data("LSTM")
     log_file = lstm_config_data['log']
 
-    logging.basicConfig(filename=log_file, level=logging.DEBUG, format='%(asctime)s: %(levelname)s: %(message)s')
+    logging.basicConfig(filename=log_file, level=LOGGING_LEVEL, format=LOGGING_FORMAT)
     print ("Logging to", log_file)
     logger = logging.getLogger('lstm_logger')
     log_fmt = logging.Formatter('%(asctime)s - %(name)s - %levelname - %(messages)s')
@@ -42,12 +47,12 @@ if __name__ == '__main__':
     f_out = open(output_file, 'w')
     
     str_symbols = ''
-    for ndx_symbol in range (0, len(tickers)) :
-        str_symbols += tickers[ndx_symbol]
+    for ndx_symbol in range (0, len(TICKERS)) :
+        str_symbols += TICKERS[ndx_symbol]
         str_symbols += ' '
     str_drivers = ''
-    for ndx_driver in range (0, len(result_drivers)) :
-        str_drivers += result_drivers[ndx_symbol]
+    for ndx_driver in range (0, len(RESULT_DRIVERS)) :
+        str_drivers += RESULT_DRIVERS[ndx_symbol]
         str_drivers += ' '
     
     f_out.write('\nTraining a model to provide buy, sell or hold recommendations')
@@ -56,16 +61,15 @@ if __name__ == '__main__':
     f_out.write('\nUsing a time series of {:.0f} periods and a time window the next {:.0f} time periods'.format(ANALASIS_SAMPLE_LENGTH, FORECAST_LENGTH))
     f_out.write('\nKeras parameters: Activation = ' + ACTIVATION + ', Batch Size = {:.0f}, Epochs = {:.0f}\n'.format(BATCH_SIZE, EPOCHS))
     
-    analysis_choice='buy_sell_hold'
-    f_out.write(analysis_choice)
+    f_out.write(ANALYSIS)
 
     ''' .......... Step 1 - Load and prepare data .........................
     ======================================================================= '''
     step1 = time.time()
     print ('\nStep 1 - Load and prepare the data for analysis')
-    lst_analyses, x_train, y_train, x_test, y_test = prepare_ts_lstm(tickers, result_drivers, forecast_feature, feature_type, \
+    lst_analyses, x_train, y_train, x_test, y_test = prepare_ts_lstm(TICKERS, RESULT_DRIVERS, FORECAST_FEATURE, FEATURE_TYPE, \
                                                                      ANALASIS_SAMPLE_LENGTH, FORECAST_LENGTH, \
-                                                                     source="local", analysis=analysis_choice)
+                                                                     source="local", analysis=ANALYSIS)
     
     ''' ................... Step 2 - Build Model ............................
     ========================================================================= '''
@@ -89,7 +93,7 @@ if __name__ == '__main__':
     =========================================================================================== '''
     step5 = time.time()
     print ("\nStep 5 - clean up, archive and visualize accuracy!")
-    predictions = predict_sequences_multiple(model, x_test)
+    predictions = predict_sequences_multiple(model, x_test, lst_analyses)
     save_model(model)  
     end = time.time()
     print ("")
@@ -99,9 +103,9 @@ if __name__ == '__main__':
     print ("\tStep 4 Evaluate the model! took %s" % (step5 - step4)) 
     print ("\tStep 5 Visualize accuracy, clean up and archive! took %s" % (end - step5))
     
-    if (analysis_choice == 'TBD') :
-        print ('Analysis model is not yet defined')
-    elif (analysis_choice == 'buy_sell_hold') :
+    if (ANALYSIS == 'pct_change') :
+        pct_change_multiple()
+    elif (ANALYSIS == 'buy_sell_hold') :
         bsh_results_multiple(lst_analyses, predictions, y_test, f_out)
     else :
         print ('Analysis model is not specified')
