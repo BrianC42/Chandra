@@ -8,22 +8,145 @@ Code specific to building, training, evaluating and using a model capable of ret
     Hold (0) data is indicating the price will remain within 2% of the current price for the coming 30 days
     Sell (-1): data is indicating an decrease in price >2% in the coming 30 days
 '''
+import time
 import logging
 import numpy as np
 import matplotlib.pyplot as plt
+import tensorflow as tf
 
-from configuration_constants import PREDICTION_SELL_THRESHOLD
-from configuration_constants import PREDICTION_BUY_THRESHOLD
+from keras.layers.core import Dense
+from keras.layers.recurrent import LSTM
+from keras.layers import Input
+from keras.layers import Concatenate
+from keras.models import Model
+
+from configuration_constants import ACTIVATION
+from configuration_constants import USE_BIAS
+from configuration_constants import DROPOUT
 from configuration_constants import BUY_INDICATION_THRESHOLD
 from configuration_constants import SELL_INDICATION_THRESHOLD
-from configuration_constants import BUY_INDICATION
-from configuration_constants import HOLD_INDICATION
-from configuration_constants import SELL_INDICATION
 from configuration_constants import BUY_INDEX
 from configuration_constants import HOLD_INDEX
 from configuration_constants import SELL_INDEX
 from configuration_constants import CLASSIFICATION_COUNT
 from configuration_constants import CLASSIFICATION_ID
+from configuration_constants import COMPILATION_LOSS
+from configuration_constants import COMPILATION_OPTIMIZER
+from configuration_constants import COMPILATION_METRICS
+
+def build_mlp_model(lst_analyses, np_input) :
+    logging.info('====> ==============================================')
+    logging.info('====> build_mlp_model: Building model, analyses %s', lst_analyses)
+    logging.info('====> inputs=%s', len(np_input))
+    logging.info('====> ==============================================')
+
+    k_model = 1
+    
+    logging.info('<==== ==============================================')
+    logging.info('<==== build_mlp_model')
+    logging.info('<==== ==============================================')
+    return k_model
+
+def build_cnn_model(lst_analyses, np_input) :
+    logging.info('====> ==============================================')
+    logging.info('====> build_cnn_model: Building model, analyses %s', lst_analyses)
+    logging.info('====> inputs=%s', len(np_input))
+    logging.info('====> ==============================================')
+
+    k_model = 1
+    
+    logging.info('<==== ==============================================')
+    logging.info('<==== build_cnn_model')
+    logging.info('<==== ==============================================')
+    return k_model
+
+def build_rnn_lstm_model(lst_analyses, np_input) :
+    logging.info('====> ==============================================')
+    logging.info('====> build_rnn_lstm_model: Building model, analyses %s', lst_analyses)
+    logging.info('====> inputs=%s', len(np_input))
+    logging.info('====> ==============================================')
+
+    kf_feature_sets = []
+    kf_feature_set_outputs = []
+    kf_feature_set_solo_outputs = []
+    ndx_i = 0
+    for np_feature_set in np_input:
+        str_name = "{0}_input".format(lst_analyses[ndx_i])
+        str_solo_out  = "{0}_output".format(lst_analyses[ndx_i])
+        print           ('Building model - %s\n\tdim[0] (samples)=%s,\n\tdim[1] (time series length)=%s\n\tdim[2] (feature count)=%s' % \
+                        (lst_analyses[ndx_i], np_feature_set.shape[0], np_feature_set.shape[1], np_feature_set.shape[2]))
+        logging.debug   ("Building model - feature set %s\n\tInput dimensions: %s %s %s", \
+                         lst_analyses[ndx_i], np_feature_set.shape[0], np_feature_set.shape[1], np_feature_set.shape[2])        
+
+        #create and retain for model definition an input tensor for each technical analysis
+        kf_feature_sets.append(Input(shape=(np_feature_set.shape[1], np_feature_set.shape[2], ), dtype='float32', name=str_name))
+        print('\tkf_input shape %s' % tf.shape(kf_feature_sets[ndx_i]))
+
+        #create the layers used to model each technical analysis
+        kf_input_ndx_i = LSTM(256, activation=ACTIVATION, use_bias=USE_BIAS, dropout=DROPOUT)(kf_feature_sets[ndx_i])
+        kf_input_ndx_i = Dense(256, activation=ACTIVATION)(kf_input_ndx_i)
+        kf_input_ndx_i = Dense(256, activation=ACTIVATION)(kf_input_ndx_i)
+        kf_input_ndx_i = Dense(256, activation=ACTIVATION)(kf_input_ndx_i)
+
+        #identify the output of each individual technical analysis
+        kf_feature_set_output = Dense(output_dim=CLASSIFICATION_COUNT)(kf_input_ndx_i)
+        kf_feature_set_outputs.append(kf_feature_set_output)        
+
+        #create outputs that can be used to assess the individual technical analysis         
+        kf_feature_set_solo_output = Dense(name=str_solo_out, output_dim=CLASSIFICATION_COUNT)(kf_feature_set_output)        
+        kf_feature_set_solo_outputs.append(kf_feature_set_solo_output)        
+
+        ndx_i += 1
+    
+    '''
+    Create a model to take the feature set assessments and create a composite assessment
+    '''        
+    #combine all technical analysis assessments for a composite assessment
+    kf_composite = Concatenate(axis=-1)(kf_feature_set_outputs[:])
+    
+    #create the layers used to analyze the composite of all technical analysis 
+    kf_composite = Dense(256, activation=ACTIVATION)(kf_composite)
+    kf_composite = Dense(256, activation=ACTIVATION)(kf_composite)
+    kf_composite = Dense(256, activation=ACTIVATION)(kf_composite)
+    kf_composite = Dense(256, activation=ACTIVATION)(kf_composite)
+    kf_composite = Dense(256, activation=ACTIVATION)(kf_composite)
+    
+    #create the composite output layer
+    kf_composite = Dense(output_dim=CLASSIFICATION_COUNT, name="composite_output")(kf_composite)
+    
+    #create list of outputs
+    lst_outputs = []
+    lst_outputs.append(kf_composite)
+    for solo_output in kf_feature_set_solo_outputs:
+        lst_outputs.append(solo_output)
+    
+    k_model = Model(inputs=kf_feature_sets, outputs=lst_outputs)
+    k_model.compile(loss=COMPILATION_LOSS, optimizer=COMPILATION_OPTIMIZER, metrics=COMPILATION_METRICS)
+
+    logging.info('<==== ==============================================')
+    logging.info('<==== build_rnn_lstm_model')
+    logging.info('<==== ==============================================')
+    return k_model
+
+def build_bsh_classification_model(lst_analyses, np_input) :
+    logging.info('====> ==============================================')
+    logging.info('====> build_bsh_classification_model: Building model, analyses %s', lst_analyses)
+    logging.info('====> inputs=%s', len(np_input))
+    logging.info('====> ==============================================')
+    
+    start = time.time()
+    '''
+    Alternative model architectures
+    '''
+    k_model = build_rnn_lstm_model(lst_analyses, np_input)
+    #k_model = build_cnn_model(lst_analyses, np_input)
+    #k_model = build_mlp_model(lst_analyses, np_input)
+    logging.info ("Time to compile: %s", time.time() - start)
+
+    logging.info('<==== ==============================================')
+    logging.info('<==== build_bsh_classification_model')
+    logging.info('<==== ==============================================')
+    return k_model
 
 def calculate_single_bsh_flag(current_price, future_price):
     '''
@@ -246,17 +369,17 @@ def categorize_prediction_risks(technical_analysis_names, predicted_data, true_d
                     )
         
         f_out.write ('\n' + str_prediction_counts)   
-        f_out.write ('\n' + str_prediction_range)   
+        #f_out.write ('\n' + str_prediction_range)   
         f_out.write ('\n' + str_correct_prediction)
         f_out.write ('\n' + str_lost_opprtunities)
         f_out.write ('\n' + str_financial_loss)
         logging.info(str_prediction_counts)
-        logging.info(str_prediction_range)
+        #logging.info(str_prediction_range)
         logging.info(str_correct_prediction)
         logging.info(str_lost_opprtunities)
         logging.info(str_financial_loss)
         print       (str_prediction_counts)
-        print       (str_prediction_range)
+        #print       (str_prediction_range)
         print       (str_correct_prediction)
         print       (str_lost_opprtunities)
         print       (str_financial_loss)

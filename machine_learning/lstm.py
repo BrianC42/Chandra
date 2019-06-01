@@ -8,30 +8,25 @@ import warnings
 import logging
 import numpy as np
 import pandas as pd
-import tensorflow as tf
 
 from configuration_constants import BATCH_SIZE
 from configuration_constants import EPOCHS
-from configuration_constants import ACTIVATION
-from configuration_constants import USE_BIAS
-from configuration_constants import DROPOUT
 from configuration_constants import ANALYSIS
 from configuration_constants import CLASSIFICATION_COUNT
 from configuration_constants import VALIDATION_SPLIT
 from configuration_constants import VERBOSE
 
 from numpy import NAN
+
+from keras.utils import print_summary
+from keras.utils import plot_model
+
 from quandl_library import fetch_timeseries_data
 from quandl_library import get_ini_data
-from time_series_data import series_to_supervised
-from keras.layers.core import Dense
-from keras.layers.recurrent import LSTM
-from keras.layers import Input
-from keras.layers import Concatenate
-from keras.models import Model
-from keras.utils import plot_model
-from keras.utils import print_summary
 
+from time_series_data import series_to_supervised
+
+from buy_sell_hold import build_bsh_classification_model
 from buy_sell_hold import calculate_single_bsh_flag
 from buy_sell_hold import calculate_sample_bsh_flag
 from percentage_change import calculate_single_pct_change
@@ -618,77 +613,24 @@ def build_model(lst_analyses, np_input):
     logging.info('====> inputs=%s', len(np_input))
     logging.info('====> ==============================================')
 
-    start = time.time()
+    if (ANALYSIS == 'pct_change') :
+        dummy = 0
+    elif (ANALYSIS == 'buy_sell_hold') :
+        '''
+        TBD
+        '''
+        model = build_bsh_classification_model(lst_analyses, np_input)
+    else :
+        print ('Analysis model is not specified')
 
-    kf_feature_sets = []
-    kf_feature_set_outputs = []
-    kf_feature_set_solo_outputs = []
-    ndx_i = 0
-    for np_feature_set in np_input:
-        str_name = "{0}_input".format(lst_analyses[ndx_i])
-        str_solo_out  = "{0}_output".format(lst_analyses[ndx_i])
-        print           ('Building model - %s\n\tdim[0] (samples)=%s,\n\tdim[1] (time series length)=%s\n\tdim[2] (feature count)=%s' % \
-                        (lst_analyses[ndx_i], np_feature_set.shape[0], np_feature_set.shape[1], np_feature_set.shape[2]))
-        logging.debug   ("Building model - feature set %s\n\tInput dimensions: %s %s %s", \
-                         lst_analyses[ndx_i], np_feature_set.shape[0], np_feature_set.shape[1], np_feature_set.shape[2])        
-
-        #create and retain for model definition an input tensor for each technical analysis
-        kf_feature_sets.append(Input(shape=(np_feature_set.shape[1], np_feature_set.shape[2], ), dtype='float32', name=str_name))
-        print('\tkf_input shape %s' % tf.shape(kf_feature_sets[ndx_i]))
-
-        #create the layers used to model each technical analysis
-        kf_input_ndx_i = LSTM(256, activation=ACTIVATION, use_bias=USE_BIAS, dropout=DROPOUT)(kf_feature_sets[ndx_i])
-        kf_input_ndx_i = Dense(256, activation=ACTIVATION)(kf_input_ndx_i)
-        kf_input_ndx_i = Dense(256, activation=ACTIVATION)(kf_input_ndx_i)
-        kf_input_ndx_i = Dense(256, activation=ACTIVATION)(kf_input_ndx_i)
-
-        #identify the output of each individual technical analysis
-        kf_feature_set_output = Dense(output_dim=CLASSIFICATION_COUNT)(kf_input_ndx_i)
-        kf_feature_set_outputs.append(kf_feature_set_output)        
-
-        #create outputs that can be used to assess the individual technical analysis         
-        kf_feature_set_solo_output = Dense(name=str_solo_out, output_dim=CLASSIFICATION_COUNT)(kf_feature_set_output)        
-        kf_feature_set_solo_outputs.append(kf_feature_set_solo_output)        
-
-        ndx_i += 1
-    
-    '''
-    Create a model to take the feature set assessments and create a composite assessment
-    '''        
-    #combine all technical analysis assessments for a composite assessment
-    kf_composite = Concatenate(axis=-1)(kf_feature_set_outputs[:])
-    
-    #create the layers used to analyze the composite of all technical analysis 
-    kf_composite = Dense(256, activation=ACTIVATION)(kf_composite)
-    kf_composite = Dense(256, activation=ACTIVATION)(kf_composite)
-    kf_composite = Dense(256, activation=ACTIVATION)(kf_composite)
-    kf_composite = Dense(256, activation=ACTIVATION)(kf_composite)
-    kf_composite = Dense(256, activation=ACTIVATION)(kf_composite)
-    
-    #create the composite output layer
-    '''
-    kf_composite = Dense(output_dim=1, name="composite_output")(kf_composite)
-    '''
-    kf_composite = Dense(output_dim=CLASSIFICATION_COUNT, name="composite_output")(kf_composite)
-    
-    #create list of outputs
-    lst_outputs = []
-    lst_outputs.append(kf_composite)
-    for solo_output in kf_feature_set_solo_outputs:
-        lst_outputs.append(solo_output)
-    
-    k_model = Model(inputs=kf_feature_sets, outputs=lst_outputs)
-    k_model.compile(loss="mse", optimizer="rmsprop", metrics=['accuracy'])
-    logging.info ("Time to compile: %s", time.time() - start)
-    
     # 2 visualizations of the model
-    save_model_plot(k_model)
-    print_summary(k_model)
-    
+    save_model_plot(model)
+    print_summary(model)
+
     logging.info('<---- ----------------------------------------------')
     logging.info('<---- build_model')
     logging.info('<---- ----------------------------------------------')
-    return k_model
+    return model
 
 def train_lstm(model, x_train, y_train):
     logging.info('')
