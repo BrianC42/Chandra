@@ -22,14 +22,15 @@ Which analysis approach to use:
     Value prediction:  pct_change
 data sources to use as samples to train, evaluate and use for predictions
         for testing the following options are frequently used
-            "aapl", "arnc", "ba", "c", "cat", "dd", "f", "ge", "jnj", "ko", "hpq", "dis", "ibm", "ip", "mcd", "mo", "mrk", "mro", "pg", "t", "utx", "xom"
-            "hsc", "msft", "gntx", "csfl", "vrnt", "intc", "hsbc", "xlnx", "amgn", "f", "gm", "c"
+            "hsc", "msft", "gntx", "csfl", "vrnt", "intc", "xlnx", "amgn", "f", "gm", "c"
             "bios", "cfg", "chl",  "ddd", "gild",  "m",  "mygn",  "nvda",  "wmt",  "xxii",  "c"
             "aapl", "arnc", "ba", "c"
             "f"
+            "all"
+            "all", 50000
 '''
 ANALYSIS = 'buy_sell_hold'
-TICKERS = ["aapl"]
+TICKERS = ["limit", 50000]
 RESULT_DRIVERS   = ["adj_low", "adj_high", "adj_open", "adj_close", "adj_volume", "BB_Lower", "BB_Upper", "SMA20",   "OBV",     "AccumulationDistribution", "momentum", "MACD_Sell", "MACD_Buy"]
 FEATURE_TYPE     = ['numeric', 'numeric',  'numeric', 'numeric',    'numeric',    'numeric',   'numeric', 'numeric', 'numeric', 'numeric',                  'numeric',  'boolean',   'boolean']
 FORECAST_FEATURE = [False, True, False, False, False, False, False, False, False, False, False, False, False]
@@ -40,21 +41,24 @@ FORECAST_LENGTH = 30
 Keras control and configuration values
 
 Recurrent layer parameter
-    Activation choices: relu tanh softmax
+    Activation choices: relu tanh softmax sigmoid
     Use_bias: True False
     dropout: floating point number 0.0
+    loss: sparse_categorical_crossentropy mse binary_crossentropy
+    optimizer: adam SGD RMSprop Adagrad Adadelta Adamax Nadam  
+    metrics: accuracy
 '''
-ACTIVATION = 'softmax'
 USE_BIAS = True
 DROPOUT = 0.25
 #Model training
-BATCH_SIZE = 1024
-EPOCHS = 5
+BATCH_SIZE = 32
+EPOCHS = 10
 VALIDATION_SPLIT = 0.05
-VERBOSE = 1
-COMPILATION_LOSS = "mse"
-COMPILATION_OPTIMIZER = "rmsprop"
-COMPILATION_METRICS = ['accuracy']
+VERBOSE = 2                         # Integer. 0, 1, or 2. Verbosity mode. 0 = silent, 1 = progress bar, 2 = one line per epoch
+COMPILATION_LOSS = "binary_crossentropy"            # mse binary_crossentropy
+COMPILATION_METRICS = ['accuracy']  # accuracy
+ACTIVATION = 'softmax'              # relu tanh softmax sigmoid
+OPTIMIZER = 'adam'                  # adam SGD RMSprop Adagrad Adadelta Adamax Nadam
 
 '''
 Output thresholds for characterization of results

@@ -7,6 +7,14 @@ Code specific to building, training, evaluating and using a model capable of ret
     Buy (1): data is indicating an increase in price >2% in the coming 30 days
     Hold (0) data is indicating the price will remain within 2% of the current price for the coming 30 days
     Sell (-1): data is indicating an decrease in price >2% in the coming 30 days
+    
+Classification architecture approaches 
+    Machine Learning - use
+        Dense, Activation, Dropout
+    Convolutional Neural Network (CNN)
+        Convolution1D, MaxPooling1D, MaxPooling1D, Dropout, Flatten, Dense, Activation
+    Recurrent Neural Networks (RNN)
+        LSTM, Dense, Activation
 '''
 import time
 import logging
@@ -15,12 +23,15 @@ import matplotlib.pyplot as plt
 import tensorflow as tf
 
 from keras.layers.core import Dense
+from keras.layers.core import Flatten
 from keras.layers.recurrent import LSTM
 from keras.layers import Input
+#from keras import optimizers
 from keras.layers import Concatenate
 from keras.models import Model
 
 from configuration_constants import ACTIVATION
+from configuration_constants import OPTIMIZER
 from configuration_constants import USE_BIAS
 from configuration_constants import DROPOUT
 from configuration_constants import BUY_INDICATION_THRESHOLD
@@ -31,21 +42,33 @@ from configuration_constants import SELL_INDEX
 from configuration_constants import CLASSIFICATION_COUNT
 from configuration_constants import CLASSIFICATION_ID
 from configuration_constants import COMPILATION_LOSS
-from configuration_constants import COMPILATION_OPTIMIZER
 from configuration_constants import COMPILATION_METRICS
 
-def build_mlp_model(lst_analyses, np_input) :
-    logging.info('====> ==============================================')
-    logging.info('====> build_mlp_model: Building model, analyses %s', lst_analyses)
-    logging.info('====> inputs=%s', len(np_input))
-    logging.info('====> ==============================================')
+def prepare_inputs(lst_analyses, np_input) :
+    logging.info ('====> ==============================================')
+    logging.info ('====> prepare_inputs:')
+    logging.info ('====> ==============================================')
 
-    k_model = 1
+    kf_feature_sets = []
+    kf_feature_set_outputs = []
+    kf_feature_set_solo_outputs = []
+    ndx_i = 0
+    for np_feature_set in np_input:
+        str_name = "{0}_input".format(lst_analyses[ndx_i])
+        print           ('Building model - %s\n\tdim[0] (samples)=%s,\n\tdim[1] (time series length)=%s\n\tdim[2] (feature count)=%s' % \
+                        (lst_analyses[ndx_i], np_feature_set.shape[0], np_feature_set.shape[1], np_feature_set.shape[2]))
+        logging.debug   ("Building model - feature set %s\n\tInput dimensions: %s %s %s", \
+                         lst_analyses[ndx_i], np_feature_set.shape[0], np_feature_set.shape[1], np_feature_set.shape[2])        
+
+        #create and retain for model definition an input tensor for each technical analysis
+        kf_feature_sets.append(Input(shape=(np_feature_set.shape[1], np_feature_set.shape[2], ), dtype='float32', name=str_name))
+        print('\tkf_input shape %s' % tf.shape(kf_feature_sets[ndx_i]))
+        ndx_i += 1
     
     logging.info('<==== ==============================================')
-    logging.info('<==== build_mlp_model')
+    logging.info('<==== prepare_inputs')
     logging.info('<==== ==============================================')
-    return k_model
+    return kf_feature_sets, kf_feature_set_outputs, kf_feature_set_solo_outputs
 
 def build_cnn_model(lst_analyses, np_input) :
     logging.info('====> ==============================================')
@@ -53,14 +76,144 @@ def build_cnn_model(lst_analyses, np_input) :
     logging.info('====> inputs=%s', len(np_input))
     logging.info('====> ==============================================')
 
-    k_model = 1
+    kf_feature_sets = []
+    kf_feature_set_outputs = []
+    kf_feature_set_solo_outputs = []
+    ndx_i = 0
+    for np_feature_set in np_input:
+        str_name = "{0}_input".format(lst_analyses[ndx_i])
+        str_solo_out  = "{0}_output".format(lst_analyses[ndx_i])
+        print           ('Building model - %s\n\tdim[0] (samples)=%s,\n\tdim[1] (time series length)=%s\n\tdim[2] (feature count)=%s' % \
+                        (lst_analyses[ndx_i], np_feature_set.shape[0], np_feature_set.shape[1], np_feature_set.shape[2]))
+        logging.debug   ("Building model - feature set %s\n\tInput dimensions: %s %s %s", \
+                         lst_analyses[ndx_i], np_feature_set.shape[0], np_feature_set.shape[1], np_feature_set.shape[2])        
+
+        #create and retain for model definition an input tensor for each technical analysis
+        kf_feature_sets.append(Input(shape=(np_feature_set.shape[1], np_feature_set.shape[2], ), dtype='float32', name=str_name))
+        print('\tkf_input shape %s' % tf.shape(kf_feature_sets[ndx_i]))
+
+        #create the layers used to model each technical analysis
+        kf_input_ndx_i = LSTM(256, activation=ACTIVATION, use_bias=USE_BIAS, dropout=DROPOUT)(kf_feature_sets[ndx_i])
+        kf_input_ndx_i = Dense(256, activation=ACTIVATION)(kf_input_ndx_i)
+        kf_input_ndx_i = Dense(256, activation=ACTIVATION)(kf_input_ndx_i)
+        kf_input_ndx_i = Dense(256, activation=ACTIVATION)(kf_input_ndx_i)
+
+        #identify the output of each individual technical analysis
+        kf_feature_set_output = Dense(output_dim=CLASSIFICATION_COUNT)(kf_input_ndx_i)
+        kf_feature_set_outputs.append(kf_feature_set_output)        
+
+        #create outputs that can be used to assess the individual technical analysis         
+        kf_feature_set_solo_output = Dense(name=str_solo_out, output_dim=CLASSIFICATION_COUNT)(kf_feature_set_output)        
+        kf_feature_set_solo_outputs.append(kf_feature_set_solo_output)        
+
+        ndx_i += 1
+    
+    '''
+    Create a model to take the feature set assessments and create a composite assessment
+    '''        
+    #combine all technical analysis assessments for a composite assessment
+    kf_composite = Concatenate(axis=-1)(kf_feature_set_outputs[:])
+    
+    #create the layers used to analyze the composite of all technical analysis 
+    kf_composite = Dense(256, activation=ACTIVATION)(kf_composite)
+    kf_composite = Dense(256, activation=ACTIVATION)(kf_composite)
+    kf_composite = Dense(256, activation=ACTIVATION)(kf_composite)
+    kf_composite = Dense(256, activation=ACTIVATION)(kf_composite)
+    kf_composite = Dense(256, activation=ACTIVATION)(kf_composite)
+    
+    #create the composite output layer
+    kf_composite = Dense(output_dim=CLASSIFICATION_COUNT, name="composite_output")(kf_composite)
+    
+    #create list of outputs
+    lst_outputs = []
+    lst_outputs.append(kf_composite)
+    for solo_output in kf_feature_set_solo_outputs:
+        lst_outputs.append(solo_output)
+    
+    k_model = Model(inputs=kf_feature_sets, outputs=lst_outputs)
+    k_model.compile(loss=COMPILATION_LOSS, optimizer=OPTIMIZER, metrics=COMPILATION_METRICS)
     
     logging.info('<==== ==============================================')
     logging.info('<==== build_cnn_model')
     logging.info('<==== ==============================================')
     return k_model
 
+def build_mlp_model(lst_analyses, np_input) :
+    '''
+    Keras Core Neural Network
+    Inputs:
+    2 dimensional data
+        Samples consisting of
+            Feature set values
+    Outputs:
+        Composite and individual feature set classifications
+    '''
+    logging.info('====> ==============================================')
+    logging.info('====> build_mlp_model: Building model, analyses %s', lst_analyses)
+    logging.info('====> inputs=%s', len(np_input))
+    logging.info('====> ==============================================')
+
+    kf_feature_sets, kf_feature_set_outputs, kf_feature_set_solo_outputs = prepare_inputs(lst_analyses, np_input)
+    for ndx_i in range (0, len(np_input)) :
+        #flatten the 2D time series / feature value data
+        kf_input_ndx_i = Flatten()(kf_feature_sets[ndx_i])        
+        
+        #create the layers used to model each technical analysis
+        kf_input_ndx_i = Dense(500, activation=None)(kf_input_ndx_i)
+        kf_input_ndx_i = Dense(500, activation=None)(kf_input_ndx_i)
+        kf_input_ndx_i = Dense(250, activation=None)(kf_input_ndx_i)
+
+        #identify the output of each individual technical analysis
+        str_solo_out  = "{0}_output".format(lst_analyses[ndx_i])
+        kf_feature_set_output = Dense(120)(kf_input_ndx_i)
+        #kf_feature_set_output = Dense(output_dim=CLASSIFICATION_COUNT)(kf_input_ndx_i)
+        kf_feature_set_outputs.append(kf_feature_set_output)        
+
+        #create outputs that can be used to assess the individual technical analysis         
+        kf_feature_set_solo_output = Dense(name=str_solo_out, output_dim=CLASSIFICATION_COUNT, \
+                                           activation=ACTIVATION)(kf_feature_set_output)        
+        kf_feature_set_solo_outputs.append(kf_feature_set_solo_output)        
+    
+    '''
+    Create a model to take the feature set assessments and create a composite assessment
+    '''        
+    #combine all technical analysis assessments for a composite assessment
+    kf_composite = Concatenate(axis=-1)(kf_feature_set_outputs[:])
+    
+    #create the layers used to analyze the composite of all technical analysis 
+    kf_composite = Dense(500, activation=None)(kf_composite)
+    kf_composite = Dense(500, activation=None)(kf_composite)
+    kf_composite = Dense(250, activation=None)(kf_composite)
+    
+    #create the composite output layer
+    kf_composite = Dense(output_dim=CLASSIFICATION_COUNT, name="composite_output", \
+                         activation=ACTIVATION)(kf_composite)
+    
+    #create list of outputs
+    lst_outputs = []
+    lst_outputs.append(kf_composite)
+    for solo_output in kf_feature_set_solo_outputs:
+        lst_outputs.append(solo_output)
+    
+    k_model = Model(inputs=kf_feature_sets, outputs=lst_outputs)
+    k_model.compile(loss=COMPILATION_LOSS, optimizer=OPTIMIZER, metrics=COMPILATION_METRICS)
+    
+    logging.info('<==== ==============================================')
+    logging.info('<==== build_mlp_model')
+    logging.info('<==== ==============================================')
+    return k_model
+
 def build_rnn_lstm_model(lst_analyses, np_input) :
+    '''
+    Keras Recurrent Neural Network
+    Inputs:
+    3 dimensional data
+        Samples consisting of
+            Time Series of
+                Feature set values
+    Outputs:
+        Composite and individual feature set classifications
+    '''
     logging.info('====> ==============================================')
     logging.info('====> build_rnn_lstm_model: Building model, analyses %s', lst_analyses)
     logging.info('====> inputs=%s', len(np_input))
@@ -121,7 +274,7 @@ def build_rnn_lstm_model(lst_analyses, np_input) :
         lst_outputs.append(solo_output)
     
     k_model = Model(inputs=kf_feature_sets, outputs=lst_outputs)
-    k_model.compile(loss=COMPILATION_LOSS, optimizer=COMPILATION_OPTIMIZER, metrics=COMPILATION_METRICS)
+    k_model.compile(loss=COMPILATION_LOSS, optimizer=OPTIMIZER, metrics=COMPILATION_METRICS)
 
     logging.info('<==== ==============================================')
     logging.info('<==== build_rnn_lstm_model')
@@ -138,9 +291,9 @@ def build_bsh_classification_model(lst_analyses, np_input) :
     '''
     Alternative model architectures
     '''
-    k_model = build_rnn_lstm_model(lst_analyses, np_input)
+    #k_model = build_rnn_lstm_model(lst_analyses, np_input)
     #k_model = build_cnn_model(lst_analyses, np_input)
-    #k_model = build_mlp_model(lst_analyses, np_input)
+    k_model = build_mlp_model(lst_analyses, np_input)
     logging.info ("Time to compile: %s", time.time() - start)
 
     logging.info('<==== ==============================================')
@@ -174,6 +327,44 @@ def calculate_sample_bsh_flag(sample_single_flags):
         bsh_classification[HOLD_INDEX] = CLASSIFICATION_ID
     
     return bsh_classification
+
+def balance_bsh_classifications(training_data, actual_classifications) :
+    logging.info('====> ==============================================')
+    logging.info('====> balance_bsh_classifications: original training data shape %s,classification shape %s', \
+                 training_data.shape, actual_classifications.shape)
+    logging.info('====> ==============================================')
+    
+    np_counts = np.zeros([CLASSIFICATION_COUNT], dtype=int)
+    np_classification_count = np.zeros([CLASSIFICATION_COUNT])
+    
+    '''
+    Assess the accuracy of each output of the prediction for each possible classification
+    '''
+    for ndx_classification in range (0, CLASSIFICATION_COUNT) :
+        # Count actual buy, sell and hold indications
+        np_counts[ndx_classification] = np.count_nonzero(actual_classifications[:, ndx_classification])
+        
+    bsh_count_min = np_counts[np.argmin(np_counts)]    
+    np_balanced_training_data   = np.empty([bsh_count_min * CLASSIFICATION_COUNT, training_data.shape[1], training_data.shape[2]])
+    np_balanced_classifications = np.empty([bsh_count_min * CLASSIFICATION_COUNT, actual_classifications.shape[1]])
+    
+    ndx_balanced_sample = 0
+    for ndx_sample in range (0, training_data.shape[0]) :
+        i_classification = np.argmax(actual_classifications[ndx_sample])
+        
+        if np_classification_count[i_classification] < bsh_count_min :
+            np_balanced_training_data[ndx_balanced_sample, :, :] = training_data[ndx_sample, :, :]
+            np_balanced_classifications[ndx_balanced_sample, :] = actual_classifications[ndx_sample, :]
+            np_classification_count[i_classification] += 1
+            ndx_balanced_sample += 1
+    
+    logging.info('<==== ==============================================')
+    logging.info('<==== classification counts: %s, least classifica+tion index: %d', np_counts, bsh_count_min)
+    logging.info('<==== balance_bsh_classifications: balanced training data shape %s,classification shape %s', \
+                 np_balanced_training_data.shape, np_balanced_classifications.shape)
+    logging.info('<==== balance_bsh_classifications')
+    logging.info('<==== ==============================================')    
+    return np_balanced_training_data, np_balanced_classifications
 
 def plot_bsh_results(technical_analysis_names, predicted_data, true_data, np_diff) :
     logging.info ('')
@@ -216,7 +407,7 @@ def plot_bsh_result_distribution(technical_analysis_names, predicted_data, true_
     plt.show()
     
     return
-
+    
 def categorize_prediction_risks(technical_analysis_names, predicted_data, true_data, f_out) :
     '''
     Generate a report to demonstrate the accuracy of the composite and technical analysis by comparing the counts of
@@ -344,45 +535,47 @@ def categorize_prediction_risks(technical_analysis_names, predicted_data, true_d
             f_out.write (str_analysis)      
             print       (str_analysis)
             logging.info(str_analysis)
-            
-        str_prediction_range = '\tPrediction values range from\t{:f} to {:f}'.format( \
-                    min(predicted_data[:, ndx_predicted, BUY_INDEX]), max(predicted_data[:, ndx_predicted, BUY_INDEX]))
-        str_prediction_counts = '\tPredicted\t\t\tbuys:\t\t{:.0f}\t\tholds:\t\t{:.0f}\t\tsells:\t\t{:.0f}'.format( \
-                    np_predictions_classification[ndx_predicted, BUY_INDEX], \
-                    np_predictions_classification[ndx_predicted, HOLD_INDEX], \
-                    np_predictions_classification[ndx_predicted, SELL_INDEX] \
-                    )
-        str_correct_prediction = '\tCorrect predictions:\t\tBuy\t\t{:.0f}\t{:.2%}\tHold\t\t{:.0f}\t{:.2%}\tSell\t\t{:.0f}\t{:.2%}'.format( \
-                    np_characterization[ndx_predicted, BUY_INDEX, BUY_INDEX], np_characterization_percentage[ndx_predicted, BUY_INDEX, BUY_INDEX], \
-                    np_characterization[ndx_predicted, HOLD_INDEX, HOLD_INDEX], np_characterization_percentage[ndx_predicted, HOLD_INDEX, HOLD_INDEX], \
-                    np_characterization[ndx_predicted, SELL_INDEX, SELL_INDEX], np_characterization_percentage[ndx_predicted, SELL_INDEX, SELL_INDEX] \
-                    )
-        str_lost_opprtunities = '\tLost opportunities:\t\thold as sell\t{:.0f}\t{:.2%}\tbuy as hold\t{:.0f}\t{:.2%}\tbuy as sell\t{:.0f}\t{:.2%}'.format( \
+        str_l1 = '\t\t\t\t\t\t\t\tPredictions'
+        str_l2 = '\t\t\t\t|\tBuy\t\t|\tSell\t\t|\tHold'
+        str_l3 = '\tA-------------------------------------------------------------------------------------------------'
+        str_l4 = '\tc\tBuy\t{:.0f}\t|\t{:.0f}\t{:.2%}\t|\t{:.0f}\t{:.2%}\t|\t{:.0f}\t{:.2%}'.format( np_counts[BUY_INDEX], \
+                    np_characterization[ndx_predicted, BUY_INDEX, BUY_INDEX] , np_characterization_percentage[ndx_predicted, BUY_INDEX, BUY_INDEX], \
+                    np_characterization[ndx_predicted, SELL_INDEX, BUY_INDEX], np_characterization_percentage[ndx_predicted, SELL_INDEX, BUY_INDEX], \
+                    np_characterization[ndx_predicted, HOLD_INDEX, BUY_INDEX], np_characterization_percentage[ndx_predicted, HOLD_INDEX, BUY_INDEX] )
+        str_l6 = '\tt-------------------------------------------------------------------------------------------------'
+        str_l7 = '\tu\tSell\t{:.0f}\t|\t{:.0f}\t{:.2%}\t|\t{:.0f}\t{:.2%}\t|\t{:.0f}\t{:.2%}'.format( np_counts[SELL_INDEX], \
+                    np_characterization[ndx_predicted, BUY_INDEX, SELL_INDEX] , np_characterization_percentage[ndx_predicted, BUY_INDEX, SELL_INDEX], \
+                    np_characterization[ndx_predicted, SELL_INDEX, SELL_INDEX], np_characterization_percentage[ndx_predicted, SELL_INDEX, SELL_INDEX], \
+                    np_characterization[ndx_predicted, HOLD_INDEX, SELL_INDEX], np_characterization_percentage[ndx_predicted, HOLD_INDEX, SELL_INDEX] )
+        str_l9 = '\ta-------------------------------------------------------------------------------------------------'
+        str_l10 = '\tl\tHold\t{:.0f}\t|\t{:.0f}\t{:.2%}\t|\t{:.0f}\t{:.2%}\t|\t{:.0f}\t{:.2%}'.format( np_counts[HOLD_INDEX], \
+                    np_characterization[ndx_predicted, BUY_INDEX, HOLD_INDEX] , np_characterization_percentage[ndx_predicted, BUY_INDEX, HOLD_INDEX], \
                     np_characterization[ndx_predicted, SELL_INDEX, HOLD_INDEX], np_characterization_percentage[ndx_predicted, SELL_INDEX, HOLD_INDEX], \
-                    np_characterization[ndx_predicted, HOLD_INDEX, BUY_INDEX], np_characterization_percentage[ndx_predicted, HOLD_INDEX, BUY_INDEX], \
-                    np_characterization[ndx_predicted, SELL_INDEX, BUY_INDEX], np_characterization_percentage[ndx_predicted, SELL_INDEX, BUY_INDEX] \
-                    )
-        str_financial_loss = '\tFinancial loss if acted on:\tsell as hold\t{:.0f}\t{:.2%}\tsell as buy\t{:.0f}\t{:.2%}\thold as buy\t{:.0f}\t{:.2%}'.format( \
-                    np_characterization[ndx_predicted, HOLD_INDEX, SELL_INDEX], np_characterization_percentage[ndx_predicted, HOLD_INDEX, SELL_INDEX], \
-                    np_characterization[ndx_predicted, BUY_INDEX, SELL_INDEX], np_characterization_percentage[ndx_predicted, BUY_INDEX, BUY_INDEX], \
-                    np_characterization[ndx_predicted, BUY_INDEX, HOLD_INDEX], np_characterization_percentage[ndx_predicted, BUY_INDEX, HOLD_INDEX] \
-                    )
-        
-        f_out.write ('\n' + str_prediction_counts)   
-        #f_out.write ('\n' + str_prediction_range)   
-        f_out.write ('\n' + str_correct_prediction)
-        f_out.write ('\n' + str_lost_opprtunities)
-        f_out.write ('\n' + str_financial_loss)
-        logging.info(str_prediction_counts)
-        #logging.info(str_prediction_range)
-        logging.info(str_correct_prediction)
-        logging.info(str_lost_opprtunities)
-        logging.info(str_financial_loss)
-        print       (str_prediction_counts)
-        #print       (str_prediction_range)
-        print       (str_correct_prediction)
-        print       (str_lost_opprtunities)
-        print       (str_financial_loss)
+                    np_characterization[ndx_predicted, HOLD_INDEX, HOLD_INDEX], np_characterization_percentage[ndx_predicted, HOLD_INDEX, HOLD_INDEX] )
+        f_out.write ('\n' + str_l1)
+        f_out.write ('\n' + str_l2)
+        f_out.write ('\n' + str_l3)
+        f_out.write ('\n' + str_l4)
+        f_out.write ('\n' + str_l6)
+        f_out.write ('\n' + str_l7)
+        f_out.write ('\n' + str_l9)
+        f_out.write ('\n' + str_l10)
+        logging.info(str_l1)
+        logging.info(str_l2)
+        logging.info(str_l3)
+        logging.info(str_l4)
+        logging.info(str_l6)
+        logging.info(str_l7)
+        logging.info(str_l9)
+        logging.info(str_l10)
+        print       (str_l1)
+        print       (str_l2)
+        print       (str_l3)
+        print       (str_l4)
+        print       (str_l6)
+        print       (str_l7)
+        print       (str_l9)
+        print       (str_l10)
 
     return
 

@@ -4,10 +4,13 @@ Created on Jan 31, 2018
 @author: Brian
 '''
 import time
+import os
+import re
 import warnings
 import logging
 import numpy as np
 import pandas as pd
+import pickle
 
 from configuration_constants import BATCH_SIZE
 from configuration_constants import EPOCHS
@@ -23,12 +26,15 @@ from keras.utils import plot_model
 
 from quandl_library import fetch_timeseries_data
 from quandl_library import get_ini_data
+from quandl_library import get_devdata_dir
 
 from time_series_data import series_to_supervised
 
 from buy_sell_hold import build_bsh_classification_model
 from buy_sell_hold import calculate_single_bsh_flag
 from buy_sell_hold import calculate_sample_bsh_flag
+from buy_sell_hold import balance_bsh_classifications
+
 from percentage_change import calculate_single_pct_change
 from percentage_change import calculate_sample_pct_change
 
@@ -292,13 +298,6 @@ from percentage_change import calculate_sample_pct_change
             Maximum
             Concatenate
             Dot
-            add
-            subtract
-            multiply
-            average
-            maximum
-            concatenate
-            dot
         Advanced activation layer types
             LeakyReLU
             PReLU
@@ -327,6 +326,72 @@ from percentage_change import calculate_sample_pct_change
 '''
 
 warnings.filterwarnings("ignore")
+
+def pickle_dump_training_data (lst_analyses, x_train, y_train, x_test, y_test) :
+    
+    ml_config = get_ini_data('DEVDATA')
+    training_dir = ml_config['dir']
+    logging.info('Writing data files to %s',  training_dir)
+    
+    lst_analyses_file = training_dir + "\\lst_analyses.pickle"    
+    lst_analyses_out = open(lst_analyses_file, "wb")
+    pickle.dump(lst_analyses, lst_analyses_out)
+
+    y_train_file = training_dir + "\\y_train.pickle"
+    y_train_out = open(y_train_file, "wb")
+    pickle.dump(y_train, y_train_out)
+
+    y_test_file = training_dir + "\\y_test.pickle"
+    y_test_out = open(y_test_file, "wb")
+    pickle.dump(y_test, y_test_out)
+
+    i_ndx = 0
+    for analysis in lst_analyses:  
+        x_train_file = training_dir + "\\x_train_" + analysis + ".npz"
+        x_train_out = open(x_train_file, "wb")
+        pickle.dump(x_train[i_ndx], x_train_out)
+
+        x_test_file = training_dir + "\\x_test_" + analysis + ".npz"
+        x_test_out = open(x_test_file, "wb")
+        pickle.dump(x_test[i_ndx], x_test_out)
+        
+        i_ndx += 1
+
+    return
+
+def pickle_load_training_data ():
+    
+    ml_config = get_ini_data('DEVDATA')
+    training_dir = ml_config['dir']
+    logging.info('Reading data files from %s',  training_dir)
+    
+    lst_analyses_file = training_dir + "\\lst_analyses.pickle"    
+    lst_analyses_in = open(lst_analyses_file, "rb")
+    lst_analyses = pickle.load(lst_analyses_in)
+
+    y_train_file = training_dir + "\\y_train.pickle"
+    y_train_in = open(y_train_file, "rb")
+    y_train = pickle.load(y_train_in)
+
+    y_test_file = training_dir + "\\y_test.pickle"
+    y_test_in = open(y_test_file, "rb")
+    y_test = pickle.load(y_test_in)
+
+    i_ndx = 0
+    x_train = list()
+    x_test = list()
+    for analysis in lst_analyses:   
+        x_train_file = training_dir + "\\x_train_" + analysis + ".npz"
+        x_train_in = open(x_train_file, "rb")
+        x_train.append(pickle.load(x_train_in))
+
+        x_test_file = training_dir + "\\x_test_" + analysis + ".npz"
+        x_test_in = open(x_test_file, "rb")
+        x_test.append(pickle.load(x_test_in))
+        
+        i_ndx += 1
+
+    return lst_analyses, x_train, y_train, x_test, y_test
 
 def get_lstm_config():
     lstm_config_data = get_ini_data['LSTM']
@@ -387,7 +452,33 @@ def prepare_ts_lstm(tickers, result_drivers, forecast_feature, feature_type, tim
     '''
     Load raw data
     '''
+    if (len(tickers) <= 2) :
+        if ((tickers[0] == "all") or (tickers[0] == "limit")):
+            if (tickers[0] == "limit") :
+                sample_limit = tickers[1]
+                print("\tLimiting samples to %d time series" % sample_limit)
+            else:
+                sample_limit = 0
+            print("\tLoading ALL symbols.")
+            data_dir = get_devdata_dir() + "\\symbols\\"
+            file_names = [fn for fn in os.listdir(data_dir) \
+                          if re.search('enriched.csv', fn)]
+            tickers = []
+            for name in file_names :
+                tickers.append(name.replace('_enriched.csv', ''))
+    '''            
+    if (tickers == ["all"]):
+        print("\tLoading ALL symbols.")
+        data_dir = get_devdata_dir() + "\\symbols\\"
+        file_names = [fn for fn in os.listdir(data_dir) \
+                      if re.search('enriched.csv', fn)]
+        tickers = []
+        for name in file_names :
+            tickers.append(name.replace('_enriched.csv', ''))
+    '''        
+
     for ndx_symbol in range(0, len(tickers)) :
+        print("\tLoading data for %s" % tickers[ndx_symbol])
         df_symbol = fetch_timeseries_data(result_drivers, tickers[ndx_symbol], source)
         logging.info ("df_symbol data shape: %s, %s samples of drivers\n%s", df_symbol.shape, df_symbol.shape[0], df_symbol.shape[1])
         for ndx_feature_value in range(0, feature_count) :
@@ -420,6 +511,10 @@ def prepare_ts_lstm(tickers, result_drivers, forecast_feature, feature_type, tim
         else :
             df_n = series_to_supervised(df_symbol, time_steps, forecast_steps)
             df_data = pd.concat([df_data, df_n])
+            
+        if ((sample_limit > 0) and (len(df_data) > sample_limit)) :
+            print("\tsample target reached: %d samples" % len(df_data))
+            break
         
     step1 = time.time()
     '''
@@ -441,17 +536,20 @@ def prepare_ts_lstm(tickers, result_drivers, forecast_feature, feature_type, tim
     *** Specific to the analysis being performed ***
     '''
     step2 = time.time()
-    #print ("\tCalculating forecast y-axis characteristic value")
+    print ("\tCalculating forecast y-axis characteristic values")
     logging.debug('')
     for ndx_feature_value in range(0, feature_count) :
         if forecast_feature[ndx_feature_value] :
             for ndx_feature in range(time_steps, time_steps+forecast_steps) :        
                 for ndx_time_series_sample in range(0, samples) :
                     if (ANALYSIS == 'pct_change') :
+                        '''
+                        Calculate % change of the for each time period forecast feature value compared to the current value
+                        '''
                         np_prediction[ndx_time_series_sample, ndx_feature-time_steps] = calculate_single_pct_change()
                     elif (ANALYSIS == 'buy_sell_hold') :
                         '''
-                        Calculate % change of the for each time period forecast feature value compared to the current value
+                        Calculate buy, sell or hold classification for each future time period
                         '''
                         np_prediction[ndx_time_series_sample, ndx_feature-time_steps] = \
                             calculate_single_bsh_flag(np_data[ndx_time_series_sample, time_steps-1, ndx_feature_value], \
@@ -464,8 +562,14 @@ def prepare_ts_lstm(tickers, result_drivers, forecast_feature, feature_type, tim
             logging.debug('Generated prediction values the model can forecast\n%s', np_prediction[:, :])
     
     '''
+    Shuffle data
+    '''
+    np.random.shuffle(np_data)
+
+    '''
     *** Specific to the analysis being performed ***
     '''
+    print ("\tPreparing for %s analysis" % ANALYSIS)
     logging.debug('')
     np_forecast = np.zeros([samples, CLASSIFICATION_COUNT])
     for ndx_time_series_sample in range(0, samples) :
@@ -488,7 +592,7 @@ def prepare_ts_lstm(tickers, result_drivers, forecast_feature, feature_type, tim
         N.B. boolean fields have been normalized by conversion above
     '''
     step3 = time.time()
-    #print ("\tNormalizing data")
+    print ("\tNormalizing data - min/max")
     logging.debug('')
     np_max = np.zeros([samples, feature_count])
     np_min = np.zeros([samples, feature_count])
@@ -516,6 +620,7 @@ def prepare_ts_lstm(tickers, result_drivers, forecast_feature, feature_type, tim
                             '''
                             np_min[ndx_time_series_sample, ndx_feature_value] = np_data[ndx_time_series_sample, ndx_feature, ndx_feature_value]
 
+    print ("\tNormalizing data - scale")
     for ndx_feature_value in range(0, feature_count) :
         if (feature_type[ndx_feature_value] == 'boolean') :
             logging.debug("Feature %s, %s is boolean and already normalized", \
@@ -539,11 +644,26 @@ def prepare_ts_lstm(tickers, result_drivers, forecast_feature, feature_type, tim
                           ndx_feature_value, result_drivers[ndx_feature_value], type(np_data[0, 0, ndx_feature_value]))
             logging.debug('\n%s', np_data[: , : time_steps , ndx_feature_value] )
 
+    '''
+    Balance data for training
+    '''
+    print ("\tBalancing samples")
+    if (ANALYSIS == 'pct_change') :
+        i_dummy = 1 #TBD
+    elif (ANALYSIS == 'buy_sell_hold') :
+        '''
+         Ensure there are the same number of actual buy, sells and hold classifications
+        '''
+        np_data, np_forecast = balance_bsh_classifications(np_data, np_forecast)                
+    else :
+        print ('Analysis model is not specified')
+    
+
     step4 = time.time()
     '''
-    Shuffle data and split into test and training portions
+    Split data into test and training portions
     '''
-    np.random.shuffle(np_data)
+    print ("\tPreparing training and testing samples")
     row = round(0.1 * np_data.shape[0])
     x_test  = np_data    [        :int(row), :time_steps , : ]
     x_train = np_data    [int(row):        , :time_steps , : ]
@@ -583,28 +703,21 @@ def prepare_ts_lstm(tickers, result_drivers, forecast_feature, feature_type, tim
    
     end = time.time()
 
-    ndx_i = 0    
-    for np_model in list_x_test:
-        logging.debug('lst_technical_analysis %s, shape %s', lst_technical_analysis[ndx_i], list_x_train[ndx_i].shape)
-        logging.info ('\nAnalyzing ndx_model \n\tdim[0] (samples)=%s,\n\tdim[1] (time series length)=%s\n\tdim[2] (feature count)=%s\n' % \
-                     (np_model.shape[0], np_model.shape[1], np_model.shape[2]))
-        logging.debug('%s data:\n%s', lst_technical_analysis[ndx_i], list_x_train[ndx_i])
-        ndx_i += 1
-
-    logging.info ("\tCreating time series took %s" % (step1 - start))
-    logging.info ("\tStructuring 3D data took %s" % (step2 - step1))
-    logging.info ("\tCalculating forecast y-axis characteristic value took %s" % (step3 - step2))
-    logging.info ("\tNormalization took %s" % (step4 - step3))
-    logging.info ("\tCreating test and training data took %s" % (end - step4))
-
     logging.info ('<---------------------------------------------------')
     logging.info ('<---- Including the following technical analyses:\n\t%s' % lst_technical_analysis)
-    logging.info ('<---- prepare_ts_lstm shapes: \nx_test %s\nx_train %s\ny_test %s\ny_train %s', \
+    logging.info ('<---- train and test shapes: \nx_test %s\nx_train %s\ny_test %s\ny_train %s', \
                  x_test.shape, x_train.shape, y_test.shape, y_train.shape)
-    logging.debug('\nx_test\n%s\nx_train\n%s\ny_test\n%s\ny_train\n%s', \
-                 x_test, x_train, y_test, y_train)
-    logging.info ('<---------------------------------------------------')
-    
+    for ndx_i in range (0, len(list_x_train)) :
+        logging.debug('<---- lst_technical_analysis %s', lst_technical_analysis[ndx_i])
+        logging.debug('<---- \ttraining data shape %s', list_x_train[ndx_i].shape)
+        logging.debug('<---- \ttesting data shape %s', list_x_test[ndx_i].shape)
+        logging.debug('<---- %s training data:\n%s', lst_technical_analysis[ndx_i], list_x_train[ndx_i])
+    logging.info ("<---- \tCreating time series took %s" % (step1 - start))
+    logging.info ("<---- \tStructuring 3D data took %s" % (step2 - step1))
+    logging.info ("<---- \tCalculating forecast y-axis characteristic value took %s" % (step3 - step2))
+    logging.info ("<---- \tNormalization took %s" % (step4 - step3))
+    logging.info ("<---- \tCreating test and training data took %s" % (end - step4))
+    logging.info ('<---------------------------------------------------')    
     return [lst_technical_analysis, list_x_train, y_train, list_x_test, y_test]
 
 def build_model(lst_analyses, np_input):
@@ -617,7 +730,7 @@ def build_model(lst_analyses, np_input):
         dummy = 0
     elif (ANALYSIS == 'buy_sell_hold') :
         '''
-        TBD
+        Classification prediction of buy, sell or hold
         '''
         model = build_bsh_classification_model(lst_analyses, np_input)
     else :
@@ -649,7 +762,9 @@ def train_lstm(model, x_train, y_train):
         lst_y.append(y_train)
     lst_y.append(y_train)
         
-    model.fit(x=lst_x, y=lst_y, shuffle=True, batch_size=BATCH_SIZE, nb_epoch=EPOCHS, validation_split=VALIDATION_SPLIT, verbose=VERBOSE)
+    model.fit(x=lst_x, y=lst_y, shuffle=True, \
+              batch_size=BATCH_SIZE, nb_epoch=EPOCHS, validation_split=VALIDATION_SPLIT, \
+              verbose=VERBOSE)
         
     logging.info('<---- ----------------------------------------------')
     logging.info('<---- train_lstm:')
@@ -672,10 +787,10 @@ def evaluate_model(model, x_data, y_data):
     lst_y.append(y_data)
 
     score = model.evaluate(x=lst_x, y=lst_y, verbose=0)    
-    print ("\tevaluate_model: Test loss=%s, Test accuracy=%s" % (score[0], score[1]))
+    print ("\tevaluate_model: Test loss=%0.2f, Test accuracy=%0.2f" % (score[0], score[1]))
 
     logging.info('<---- ----------------------------------------------')
-    logging.info('<---- evaluate_model: Test loss=%s, Test accuracy=%s', score[0], score[1])
+    logging.info('<---- evaluate_model: Test loss=%0.2f, Test accuracy=%0.2f', score[0], score[1])
     logging.info('<---- ----------------------------------------------')
     return
 

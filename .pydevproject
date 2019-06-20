@@ -9,5 +9,8 @@
 <path>/${PROJECT_DIR_NAME}/technical_analysis</path>
 <path>/${PROJECT_DIR_NAME}/utility</path>
 <path>/${PROJECT_DIR_NAME}/unit_test</path>
+<path>/${PROJECT_DIR_NAME}/processes/single</path>
+<path>/${PROJECT_DIR_NAME}/processes/multiprocess</path>
+<path>/${PROJECT_DIR_NAME}/td_ameritrade</path>
 </pydev_pathproperty>
 </pydev_project>

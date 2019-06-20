@@ -26,6 +26,9 @@ from lstm import prepare_ts_lstm
 from lstm import train_lstm
 from lstm import evaluate_model
 from lstm import save_model
+from lstm import pickle_dump_training_data
+from lstm import pickle_load_training_data
+
 from buy_sell_hold import bsh_results_multiple
 from percentage_change import pct_change_multiple
 
@@ -46,17 +49,19 @@ if __name__ == '__main__':
     output_file = lstm_config_data['result']
     f_out = open(output_file, 'w')
     
+    '''
     str_symbols = ''
     for ndx_symbol in range (0, len(TICKERS)) :
         str_symbols += TICKERS[ndx_symbol]
         str_symbols += ' '
+    '''
     str_drivers = ''
     for ndx_driver in range (0, len(RESULT_DRIVERS)) :
-        str_drivers += RESULT_DRIVERS[ndx_symbol]
+        str_drivers += RESULT_DRIVERS[ndx_driver]
         str_drivers += ' '
     
     f_out.write('\nTraining a model to provide buy, sell or hold recommendations')
-    f_out.write('\nUsing symbols\n\t' + str_symbols + '\nfor training and testing')
+    #f_out.write('\nUsing symbols\n\t' + str_symbols + '\nfor training and testing')
     f_out.write('\nUsing\n\t' + str_drivers + '\nsample data points')
     f_out.write('\nUsing a time series of {:.0f} periods and a time window the next {:.0f} time periods'.format(ANALASIS_SAMPLE_LENGTH, FORECAST_LENGTH))
     f_out.write('\nKeras parameters: Activation = ' + ACTIVATION + ', Batch Size = {:.0f}, Epochs = {:.0f}\n'.format(BATCH_SIZE, EPOCHS))
@@ -67,9 +72,13 @@ if __name__ == '__main__':
     ======================================================================= '''
     step1 = time.time()
     print ('\nStep 1 - Load and prepare the data for analysis')
+    '''
     lst_analyses, x_train, y_train, x_test, y_test = prepare_ts_lstm(TICKERS, RESULT_DRIVERS, FORECAST_FEATURE, FEATURE_TYPE, \
                                                                      ANALASIS_SAMPLE_LENGTH, FORECAST_LENGTH, \
                                                                      source="local", analysis=ANALYSIS)
+    pickle_dump_training_data (lst_analyses, x_train, y_train, x_test, y_test)
+    '''
+    lst_analyses, x_train, y_train, x_test, y_test = pickle_load_training_data()
     
     ''' ................... Step 2 - Build Model ............................
     ========================================================================= '''
@@ -97,11 +106,11 @@ if __name__ == '__main__':
     save_model(model)  
     end = time.time()
     print ("")
-    print ("\tStep 1 Load and prepare the data for analysis took %s" % (step2 - step1)) 
-    print ("\tStep 2 Build Model took %s" % (step3 - step2)) 
-    print ("\tStep 3 Train the model took %s" % (step4 - step3)) 
-    print ("\tStep 4 Evaluate the model! took %s" % (step5 - step4)) 
-    print ("\tStep 5 Visualize accuracy, clean up and archive! took %s" % (end - step5))
+    print ("\tStep 1 took %.1f secs to Load and prepare the data for analysis" % (step2 - step1)) 
+    print ("\tStep 2 took %.1f secs to Build Model" % (step3 - step2)) 
+    print ("\tStep 3 took %.1f secs to Train the model" % (step4 - step3)) 
+    print ("\tStep 4 took %.1f secs to Evaluate the model" % (step5 - step4)) 
+    print ("\tStep 5 took %.1f secs to Visualize accuracy, clean up and archive" % (end - step5))
     
     if (ANALYSIS == 'pct_change') :
         pct_change_multiple()

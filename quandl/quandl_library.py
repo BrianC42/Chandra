@@ -4,6 +4,7 @@ Created on Jan 31, 2018
 @author: Brian
 '''
 import os
+import re
 import datetime
 import configparser
 import quandl
@@ -196,7 +197,6 @@ def read_enhanced_symbol_data(ticker):
     logging.debug('<==== ==============================================')
     logging.info ('<==== read_enhanced_symbol_data end')
     logging.debug('<==== ==============================================')
-    
     return (df_data)
 
 def read_symbol_historical_data(ticker):
