@@ -22,14 +22,16 @@ import numpy as np
 import matplotlib.pyplot as plt
 import tensorflow as tf
 
+from keras.models import Model
+from keras.layers import Input
+from keras.layers import Concatenate
 from keras.layers.core import Dense
 from keras.layers.core import Flatten
 from keras.layers.recurrent import LSTM
-from keras.layers import Input
+from keras.layers.convolutional import Conv1D
 #from keras import optimizers
-from keras.layers import Concatenate
-from keras.models import Model
 
+from configuration_constants import ML_APPROACH
 from configuration_constants import ACTIVATION
 from configuration_constants import OPTIMIZER
 from configuration_constants import USE_BIAS
@@ -71,58 +73,72 @@ def prepare_inputs(lst_analyses, np_input) :
     return kf_feature_sets, kf_feature_set_outputs, kf_feature_set_solo_outputs
 
 def build_cnn_model(lst_analyses, np_input) :
+    '''
+    Keras Convolutional Neural Network
+        keras.layers.Conv1D(
+            filters, 
+            kernel_size, 
+            strides=1, 
+            padding='valid', 
+            data_format='channels_last', 
+            dilation_rate=1, 
+            activation=None, 
+            use_bias=True, 
+            kernel_initializer='glorot_uniform', 
+            bias_initializer='zeros', 
+            kernel_regularizer=None, 
+            bias_regularizer=None, 
+            activity_regularizer=None, 
+            kernel_constraint=None, 
+            bias_constraint=None)
+    Inputs:
+    2 dimensional data
+        Samples consisting of
+            Feature set values
+    Outputs:
+        Composite and individual feature set classifications
+    '''
     logging.info('====> ==============================================')
     logging.info('====> build_cnn_model: Building model, analyses %s', lst_analyses)
     logging.info('====> inputs=%s', len(np_input))
     logging.info('====> ==============================================')
 
-    kf_feature_sets = []
-    kf_feature_set_outputs = []
-    kf_feature_set_solo_outputs = []
-    ndx_i = 0
-    for np_feature_set in np_input:
-        str_name = "{0}_input".format(lst_analyses[ndx_i])
-        str_solo_out  = "{0}_output".format(lst_analyses[ndx_i])
-        print           ('Building model - %s\n\tdim[0] (samples)=%s,\n\tdim[1] (time series length)=%s\n\tdim[2] (feature count)=%s' % \
-                        (lst_analyses[ndx_i], np_feature_set.shape[0], np_feature_set.shape[1], np_feature_set.shape[2]))
-        logging.debug   ("Building model - feature set %s\n\tInput dimensions: %s %s %s", \
-                         lst_analyses[ndx_i], np_feature_set.shape[0], np_feature_set.shape[1], np_feature_set.shape[2])        
+    kf_feature_sets, kf_feature_set_outputs, kf_feature_set_solo_outputs = prepare_inputs(lst_analyses, np_input)
 
-        #create and retain for model definition an input tensor for each technical analysis
-        kf_feature_sets.append(Input(shape=(np_feature_set.shape[1], np_feature_set.shape[2], ), dtype='float32', name=str_name))
-        print('\tkf_input shape %s' % tf.shape(kf_feature_sets[ndx_i]))
-
-        #create the layers used to model each technical analysis
-        kf_input_ndx_i = LSTM(256, activation=ACTIVATION, use_bias=USE_BIAS, dropout=DROPOUT)(kf_feature_sets[ndx_i])
-        kf_input_ndx_i = Dense(256, activation=ACTIVATION)(kf_input_ndx_i)
-        kf_input_ndx_i = Dense(256, activation=ACTIVATION)(kf_input_ndx_i)
-        kf_input_ndx_i = Dense(256, activation=ACTIVATION)(kf_input_ndx_i)
+    #create the layers used to model each technical analysis
+    for ndx_i in range (0, len(np_input)) :
+        #Add a convolutional layer
+        kf_input_ndx_i = Conv1D(filters=10, kernel_size=1)(kf_feature_sets[ndx_i])        
+        #flatten the 2D time series / feature value data
+        kf_input_ndx_i = Flatten()(kf_input_ndx_i)               
+        
+        kf_input_ndx_i = Dense(256, activation=None)(kf_input_ndx_i)
+        kf_input_ndx_i = Dense(256, activation=None)(kf_input_ndx_i)
+        kf_input_ndx_i = Dense(256, activation=None)(kf_input_ndx_i)
 
         #identify the output of each individual technical analysis
         kf_feature_set_output = Dense(output_dim=CLASSIFICATION_COUNT)(kf_input_ndx_i)
         kf_feature_set_outputs.append(kf_feature_set_output)        
 
         #create outputs that can be used to assess the individual technical analysis         
-        kf_feature_set_solo_output = Dense(name=str_solo_out, output_dim=CLASSIFICATION_COUNT)(kf_feature_set_output)        
+        #identify the output of each individual technical analysis
+        str_solo_out  = "{0}_output".format(lst_analyses[ndx_i])
+        kf_feature_set_solo_output = Dense(name=str_solo_out, output_dim=CLASSIFICATION_COUNT, \
+                                           activation=ACTIVATION)(kf_feature_set_output)        
         kf_feature_set_solo_outputs.append(kf_feature_set_solo_output)        
 
         ndx_i += 1
     
-    '''
-    Create a model to take the feature set assessments and create a composite assessment
-    '''        
     #combine all technical analysis assessments for a composite assessment
     kf_composite = Concatenate(axis=-1)(kf_feature_set_outputs[:])
     
     #create the layers used to analyze the composite of all technical analysis 
-    kf_composite = Dense(256, activation=ACTIVATION)(kf_composite)
-    kf_composite = Dense(256, activation=ACTIVATION)(kf_composite)
-    kf_composite = Dense(256, activation=ACTIVATION)(kf_composite)
-    kf_composite = Dense(256, activation=ACTIVATION)(kf_composite)
-    kf_composite = Dense(256, activation=ACTIVATION)(kf_composite)
+    kf_composite = Dense(256, activation=None)(kf_composite)
+    kf_composite = Dense(256, activation=None)(kf_composite)
     
     #create the composite output layer
-    kf_composite = Dense(output_dim=CLASSIFICATION_COUNT, name="composite_output")(kf_composite)
+    kf_composite = Dense(output_dim=CLASSIFICATION_COUNT, name="composite_output", \
+                         activation=ACTIVATION)(kf_composite)
     
     #create list of outputs
     lst_outputs = []
@@ -154,6 +170,7 @@ def build_mlp_model(lst_analyses, np_input) :
     logging.info('====> ==============================================')
 
     kf_feature_sets, kf_feature_set_outputs, kf_feature_set_solo_outputs = prepare_inputs(lst_analyses, np_input)
+    
     for ndx_i in range (0, len(np_input)) :
         #flatten the 2D time series / feature value data
         kf_input_ndx_i = Flatten()(kf_feature_sets[ndx_i])        
@@ -291,9 +308,12 @@ def build_bsh_classification_model(lst_analyses, np_input) :
     '''
     Alternative model architectures
     '''
-    #k_model = build_rnn_lstm_model(lst_analyses, np_input)
-    #k_model = build_cnn_model(lst_analyses, np_input)
-    k_model = build_mlp_model(lst_analyses, np_input)
+    if (ML_APPROACH == 'core') :
+        k_model = build_mlp_model(lst_analyses, np_input)
+    elif (ML_APPROACH == 'recurrent') :
+        k_model = build_rnn_lstm_model(lst_analyses, np_input)
+    elif (ML_APPROACH == 'convolutional') :
+        k_model = build_cnn_model(lst_analyses, np_input)
     logging.info ("Time to compile: %s", time.time() - start)
 
     logging.info('<==== ==============================================')

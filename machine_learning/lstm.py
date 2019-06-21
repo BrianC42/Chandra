@@ -542,12 +542,12 @@ def prepare_ts_lstm(tickers, result_drivers, forecast_feature, feature_type, tim
         if forecast_feature[ndx_feature_value] :
             for ndx_feature in range(time_steps, time_steps+forecast_steps) :        
                 for ndx_time_series_sample in range(0, samples) :
-                    if (ANALYSIS == 'pct_change') :
+                    if (ANALYSIS == 'value') :
                         '''
                         Calculate % change of the for each time period forecast feature value compared to the current value
                         '''
                         np_prediction[ndx_time_series_sample, ndx_feature-time_steps] = calculate_single_pct_change()
-                    elif (ANALYSIS == 'buy_sell_hold') :
+                    elif (ANALYSIS == 'classification') :
                         '''
                         Calculate buy, sell or hold classification for each future time period
                         '''
@@ -573,9 +573,9 @@ def prepare_ts_lstm(tickers, result_drivers, forecast_feature, feature_type, tim
     logging.debug('')
     np_forecast = np.zeros([samples, CLASSIFICATION_COUNT])
     for ndx_time_series_sample in range(0, samples) :
-        if (ANALYSIS == 'pct_change') :
+        if (ANALYSIS == 'value') :
             np_forecast[ndx_time_series_sample] = calculate_sample_pct_change()
-        elif (ANALYSIS == 'buy_sell_hold') :
+        elif (ANALYSIS == 'classification') :
             '''
             Find the buy, sell or hold classification for each sample
             '''
@@ -648,9 +648,9 @@ def prepare_ts_lstm(tickers, result_drivers, forecast_feature, feature_type, tim
     Balance data for training
     '''
     print ("\tBalancing samples")
-    if (ANALYSIS == 'pct_change') :
+    if (ANALYSIS == 'value') :
         i_dummy = 1 #TBD
-    elif (ANALYSIS == 'buy_sell_hold') :
+    elif (ANALYSIS == 'classification') :
         '''
          Ensure there are the same number of actual buy, sells and hold classifications
         '''
@@ -726,9 +726,9 @@ def build_model(lst_analyses, np_input):
     logging.info('====> inputs=%s', len(np_input))
     logging.info('====> ==============================================')
 
-    if (ANALYSIS == 'pct_change') :
+    if (ANALYSIS == 'value') :
         dummy = 0
-    elif (ANALYSIS == 'buy_sell_hold') :
+    elif (ANALYSIS == 'classification') :
         '''
         Classification prediction of buy, sell or hold
         '''

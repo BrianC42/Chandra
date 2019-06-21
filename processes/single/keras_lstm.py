@@ -112,9 +112,9 @@ if __name__ == '__main__':
     print ("\tStep 4 took %.1f secs to Evaluate the model" % (step5 - step4)) 
     print ("\tStep 5 took %.1f secs to Visualize accuracy, clean up and archive" % (end - step5))
     
-    if (ANALYSIS == 'pct_change') :
+    if (ANALYSIS == 'value') :
         pct_change_multiple()
-    elif (ANALYSIS == 'buy_sell_hold') :
+    elif (ANALYSIS == 'classification') :
         bsh_results_multiple(lst_analyses, predictions, y_test, f_out)
     else :
         print ('Analysis model is not specified')
