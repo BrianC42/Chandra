@@ -12,6 +12,7 @@ import numpy as np
 import pandas as pd
 import pickle
 
+from configuration_constants import BALANCE_CLASSES
 from configuration_constants import BATCH_SIZE
 from configuration_constants import EPOCHS
 from configuration_constants import ANALYSIS
@@ -39,125 +40,6 @@ from percentage_change import calculate_single_pct_change
 from percentage_change import calculate_sample_pct_change
 
 '''
-    Sequential model
-        Attributes
-            model.layers
-    Model class API
-        Attributes
-            model.layers
-            model.inputs
-            model.outputs
-            
-        Methods (for both sequential and class API)
-            compile
-                loss
-                    mean_squared_error
-                    mean_absolute_error
-                    mean_absolute_percentage_error
-                    mean_squared_logarithmic_error
-                    squared_hinge
-                    hinge
-                    categorical_hinge
-                    logcosh
-                    categorical_crossentropy
-                    sparse_categorical_crossentropy
-                    binary_crossentropy
-                    kullback_leibler_divergence
-                    poisson
-                    cosine_proximity
-    
-                optimizer
-                    SGD
-                    RMSprop
-                    Adagrad
-                    Adadelta
-                    Adam
-                    Adamax
-                    Nadam
-                    TFOptimizer
-        
-                metrics
-                    binary_accuracy
-                    categorical_accuracy
-                    sparse_categorical_accuracy
-                    top_k_categorical_accuracy
-                    spares_top_k_categorical_accuracy
-
-            fit(self, 
-            x=None,
-                Numpy array of training data (if the model has a single input), or list of Numpy arrays 
-                (if the model has multiple inputs). If input layers in the model are named, you can also pass 
-                a dictionary mapping input names to Numpy arrays. x can be None (default) if feeding from 
-                framework-native tensors (e.g. TensorFlow data tensors).
-            y=None, 
-                Numpy array of target (label) data (if the model has a single output), or list of Numpy arrays 
-                (if the model has multiple outputs). If output layers in the model are named, you can also 
-                pass a dictionary mapping output names to Numpy arrays. y can be None (default) if feeding 
-                from framework-native tensors (e.g. TensorFlow data tensors).
-            batch_size=None, 
-                Integer or None. Number of samples per gradient update. If unspecified, batch_size will default to 32.
-            epochs=1, 
-                Integer. Number of epochs to train the model. An epoch is an iteration over the entire x and y data 
-                provided. Note that in conjunction with initial_epoch, epochs is to be understood as "final epoch". 
-                The model is not trained for a number of iterations given by epochs, but merely until the epoch of 
-                index epochs is reached.
-            verbose=1, 
-                Integer. 0, 1, or 2. Verbosity mode. 0 = silent, 1 = progress bar, 2 = one line per epoch.
-            callbacks=None, 
-                List of keras.callbacks.Callback instances. List of callbacks to apply during training. See callbacks
-            validation_split=0.0, 
-                Float between 0 and 1. Fraction of the training data to be used as validation data. 
-                The model will set apart this fraction of the training data, will not train on it, and will 
-                evaluate the loss and any model metrics on this data at the end of each epoch. 
-                The validation data is selected from the last samples in the x and y data provided, before shuffling.
-            validation_data=None, 
-                tuple (x_val, y_val) or tuple (x_val, y_val, val_sample_weights) on which to evaluate the loss and any model 
-                metrics at the end of each epoch. The model will not be trained on this data. 
-                validation_data will override validation_split.
-            shuffle=True, 
-                Boolean (whether to shuffle the training data before each epoch) or str (for 'batch'). 'batch' is a special 
-                option for dealing with the limitations of HDF5 data; it shuffles in batch-sized chunks. Has no effect 
-                when steps_per_epoch is not None.
-            class_weight=None, 
-                Optional dictionary mapping class indices (integers) to a weight (float) value, used for weighting the loss 
-                function (during training only). This can be useful to tell the model to "pay more attention" to samples 
-                from an under-represented class.
-            sample_weight=None, 
-                Optional Numpy array of weights for the training samples, used for weighting the loss function (during training only). 
-                You can either pass a flat (1D) Numpy array with the same length as the input samples 
-                (1:1 mapping between weights and samples), or in the case of temporal data, you can pass a 2D array 
-                with shape (samples, sequence_length), to apply a different weight to every timestep of every sample. 
-                In this case you should make sure to specify sample_weight_mode="temporal" in compile().
-            initial_epoch=0, 
-                Integer. Epoch at which to start training (useful for resuming a previous training run).
-            steps_per_epoch=None, 
-                Integer or None. Total number of steps (batches of samples) before declaring one epoch finished and 
-                starting the next epoch. When training with input tensors such as TensorFlow data tensors, 
-                the default None is equal to the number of samples in your dataset divided by the batch size, 
-                or 1 if that cannot be determined.
-            validation_steps=None
-                Only relevant if steps_per_epoch is specified. Total number of steps (batches of samples) 
-                to validate before stopping.
-            )            
-            
-            evaluate
-            predict
-            train_on_batch
-            test_on_batch
-            predict_on_batch
-            fit_generator
-            evaluate_generator
-            predict_generator
-            get_layer
-            
-    You can create a Sequential model by passing a list of layer instances to the constructor:
-    model = Sequential([
-        Dense(32, input_shape=(784,)),
-        Activation('relu'),
-        Dense(10),
-        Activation('softmax'),
-        ])
-    
     Layers
         Methods
             get_weights
@@ -169,17 +51,6 @@ from percentage_change import calculate_sample_pct_change
             output_shape or get_output_shape_at
         Core layer types
             Dense(
-                units, 
-                activation=None, 
-                use_bias=True, 
-                kernel_initializer='glorot_uniform', 
-                bias_initializer='zeros', 
-                kernel_regularizer=None, 
-                bias_regularizer=None, 
-                activity_regularizer=None, 
-                kernel_constraint=None, 
-                bias_constraint=None)
-                )
                 Dense implements the operation: output = activation(dot(input, kernel) + bias) 
                 where  
                     activation is the element-wise activation function passed as the activation argument, 
@@ -222,65 +93,9 @@ from percentage_change import calculate_sample_pct_change
             LocallyConnected2D
         Recurrent layer types - RNN is the base class for recurrent layers
             RNN(
-                cell, 
-                return_sequences=False, 
-                return_state=False, 
-                go_backwards=False, 
-                stateful=False, 
-                unroll=False
-                )
-                cell: A RNN cell instance. A RNN cell is a class that has:
-                    a call(input_at_t, states_at_t) method, returning (output_at_t, states_at_t_plus_1). 
-                        The call method of the cell can also take the optional argument constants, see section 
-                        "Note on passing external constants" below.
-                    a state_size attribute. This can be a single integer (single state) in which case it is 
-                        the size of the recurrent state (which should be the same as the size of the cell output). 
-                        This can also be a list/tuple of integers (one size per state). In this case, the first 
-                        entry (state_size[0]) should be the same as the size of the cell output. It is also 
-                        possible for  cell to be a list of RNN cell instances, in which cases the cells get 
-                        stacked on after the other in the RNN, implementing an efficient stacked RNN.
-                return_sequences: Boolean. Whether to return the last output. in the output sequence, or the full sequence.
-                return_state: Boolean. Whether to return the last state in addition to the output.
-                go_backwards: Boolean (default False). If True, process the input sequence backwards and 
-                    return the reversed sequence.
-                stateful: Boolean (default False). If True, the last state for each sample at index i in a 
-                    batch will be used as initial state for the sample of index i in the following batch.
-                unroll: Boolean (default False). If True, the network will be unrolled, else a symbolic 
-                    loop will be used. Unrolling can speed-up a RNN, although it tends to be more 
-                    memory-intensive. Unrolling is only suitable for short sequences.
-                input_dim: dimensionality of the input (integer). This argument (or alternatively, 
-                    the keyword argument  input_shape) is required when using this layer as the first layer in a model.
-                input_length: Length of input sequences, to be specified when it is constant. This argument 
-                    is required if you are going to connect Flatten then Dense layers upstream (without it, 
-                    the shape of the dense outputs cannot be computed). Note that if the recurrent layer is 
-                    not the first layer in your model, you would need to specify the input length at the level 
-                    of the first layer (e.g. via the input_shape argument)
             SimpleRNN
             GRU
             LSTM(
-                units, 
-                activation='tanh', 
-                recurrent_activation='hard_sigmoid', 
-                use_bias=True, 
-                kernel_initializer='glorot_uniform', 
-                recurrent_initializer='orthogonal', 
-                bias_initializer='zeros', 
-                unit_forget_bias=True, 
-                kernel_regularizer=None, 
-                recurrent_regularizer=None, 
-                bias_regularizer=None, 
-                activity_regularizer=None, 
-                kernel_constraint=None, 
-                recurrent_constraint=None, 
-                bias_constraint=None, 
-                dropout=0.0, 
-                recurrent_dropout=0.0, 
-                implementation=1, 
-                return_sequences=False, 
-                return_state=False, 
-                go_backwards=False, 
-                stateful=False, 
-                unroll=False)
             ConvLSTM2D
             SimpleRNNCell
             GRUCell
@@ -310,19 +125,6 @@ from percentage_change import calculate_sample_pct_change
             GaussianNoise
             GaussianDropout
             AlphaDropout
-        
-    Acivations
-        softmax
-        elu
-        selu
-        softplus - 
-        softsign - 
-        relu     - Rectified Linear Unit - output = input if >0 otherwise 0
-        tanh     - Limit output to the range -1 <= output <= +1
-        sigmoid  - limit output to the range 0 <= output <= +1
-        hard_sigmoid
-        linear
-        
 '''
 
 warnings.filterwarnings("ignore")
@@ -478,7 +280,6 @@ def prepare_ts_lstm(tickers, result_drivers, forecast_feature, feature_type, tim
     '''        
 
     for ndx_symbol in range(0, len(tickers)) :
-        print("\tLoading data for %s" % tickers[ndx_symbol])
         df_symbol = fetch_timeseries_data(result_drivers, tickers[ndx_symbol], source)
         logging.info ("df_symbol data shape: %s, %s samples of drivers\n%s", df_symbol.shape, df_symbol.shape[0], df_symbol.shape[1])
         for ndx_feature_value in range(0, feature_count) :
@@ -515,6 +316,9 @@ def prepare_ts_lstm(tickers, result_drivers, forecast_feature, feature_type, tim
         if ((sample_limit > 0) and (len(df_data) > sample_limit)) :
             print("\tsample target reached: %d samples" % len(df_data))
             break
+        else :
+            print("\tLoaded data for %s, currently %s samples" % (tickers[ndx_symbol], len(df_data)))
+
         
     step1 = time.time()
     '''
@@ -647,18 +451,18 @@ def prepare_ts_lstm(tickers, result_drivers, forecast_feature, feature_type, tim
     '''
     Balance data for training
     '''
-    print ("\tBalancing samples")
-    if (ANALYSIS == 'value') :
-        i_dummy = 1 #TBD
-    elif (ANALYSIS == 'classification') :
-        '''
-         Ensure there are the same number of actual buy, sells and hold classifications
-        '''
-        np_data, np_forecast = balance_bsh_classifications(np_data, np_forecast)                
-    else :
-        print ('Analysis model is not specified')
-    
-
+    if BALANCE_CLASSES :
+        print ("\tBalancing samples")
+        if (ANALYSIS == 'value') :
+            i_dummy = 1 #TBD
+        elif (ANALYSIS == 'classification') :
+            '''
+            Ensure there are the same number of actual buy, sells and hold classifications
+            '''
+            np_data, np_forecast = balance_bsh_classifications(np_data, np_forecast)                
+        else :
+            print ('Analysis model is not specified')
+            
     step4 = time.time()
     '''
     Split data into test and training portions
@@ -720,7 +524,7 @@ def prepare_ts_lstm(tickers, result_drivers, forecast_feature, feature_type, tim
     logging.info ('<---------------------------------------------------')    
     return [lst_technical_analysis, list_x_train, y_train, list_x_test, y_test]
 
-def build_model(lst_analyses, np_input):
+def build_model(lst_analyses, np_input, f_out):
     logging.info('====> ==============================================')
     logging.info('====> build_model: Building model, analyses %s', lst_analyses)
     logging.info('====> inputs=%s', len(np_input))
@@ -729,9 +533,7 @@ def build_model(lst_analyses, np_input):
     if (ANALYSIS == 'value') :
         dummy = 0
     elif (ANALYSIS == 'classification') :
-        '''
-        Classification prediction of buy, sell or hold
-        '''
+        #Classification prediction of buy, sell or hold
         model = build_bsh_classification_model(lst_analyses, np_input)
     else :
         print ('Analysis model is not specified')
@@ -745,15 +547,12 @@ def build_model(lst_analyses, np_input):
     logging.info('<---- ----------------------------------------------')
     return model
 
-def train_lstm(model, x_train, y_train):
+def train_lstm(model, x_train, y_train, f_out):
     logging.info('')
     logging.info('====> ==============================================')
-    logging.info("====> train_lstm: Fitting model using training data inputs: x=%s and y=%s", \
-                 len(x_train), y_train.shape)
+    logging.info("====> train_lstm: Fitting model using training data inputs: x=%s and y=%s", len(x_train), y_train.shape)
     logging.info('====> ==============================================')
-
-    print('train_lstm: Fitting model using training data: len(x)=%s and y=%s' % \
-                 (len(x_train), y_train.shape))
+    print('train_lstm: Fitting model using training data: len(x)=%s and y=%s' % (len(x_train), y_train.shape))
     
     lst_x = []
     lst_y = []
@@ -762,16 +561,53 @@ def train_lstm(model, x_train, y_train):
         lst_y.append(y_train)
     lst_y.append(y_train)
         
-    model.fit(x=lst_x, y=lst_y, shuffle=True, \
-              batch_size=BATCH_SIZE, nb_epoch=EPOCHS, validation_split=VALIDATION_SPLIT, \
-              verbose=VERBOSE)
+    '''
+    x:                 Numpy array of training data (if the model has a single input), or list of Numpy arrays (if the model has multiple inputs). 
+                        If input layers in the model are named, you can also pass a dictionary mapping input names to Numpy arrays.  
+                        x can be None (default) if feeding from framework-native tensors (e.g. TensorFlow data tensors).
+    y:                 Numpy array of target (label) data (if the model has a single output), or list of Numpy arrays (if the model has multiple outputs). 
+                        If output layers in the model are named, you can also pass a dictionary mapping output names to Numpy arrays.  
+                        y can be None (default) if feeding from framework-native tensors (e.g. TensorFlow data tensors).
+    batch_size:        Integer or None. Number of samples per gradient update. If unspecified, batch_size will default to 32.
+    epochs:            Integer. Number of epochs to train the model. An epoch is an iteration over the entire x and y data provided. 
+                        Note that in conjunction with initial_epoch,  epochs is to be understood as "final epoch". 
+                        The model is not trained for a number of iterations given by epochs, but merely until the epoch of index epochs is reached.
+    verbose:           Integer. 0, 1, or 2. Verbosity mode. 0 = silent, 1 = progress bar, 2 = one line per epoch.
+    callbacks:         List of keras.callbacks.Callback instances. List of callbacks to apply during training and validation (if ). See callbacks.
+    validation_split:  Float between 0 and 1. Fraction of the training data to be used as validation data. 
+                        The model will set apart this fraction of the training data, will not train on it, 
+                        and will evaluate the loss and any model metrics on this data at the end of each epoch. 
+                        The validation data is selected from the last samples in the x and y data provided, before shuffling.
+    validation_data:   tuple (x_val, y_val) or tuple  (x_val, y_val, val_sample_weights) on which to evaluate the loss and any model metrics 
+                        at the end of each epoch. The model will not be trained on this data.  validation_data will override validation_split.
+    shuffle:           Boolean (whether to shuffle the training data before each epoch) or str (for 'batch'). 'batch' is a special option for 
+                        dealing with the limitations of HDF5 data; it shuffles in batch-sized chunks. Has no effect when steps_per_epoch is not None.
+    class_weight:      Optional dictionary mapping class indices (integers) to a weight (float) value, used for weighting the loss function (during training only). 
+                        This can be useful to tell the model to "pay more attention" to samples from an under-represented class.
+    sample_weight:     Optional Numpy array of weights for the training samples, used for weighting the loss function (during training only). 
+                        You can either pass a flat (1D) Numpy array with the same length as the input samples (1:1 mapping between weights and samples), 
+                        or in the case of temporal data, you can pass a 2D array with shape  (samples, sequence_length), 
+                        to apply a different weight to every timestep of every sample. In this case you should make sure to specify 
+                        sample_weight_mode="temporal" in compile().
+    initial_epoch:     Integer. Epoch at which to start training (useful for resuming a previous training run).
+    steps_per_epoch:   Integer or None. Total number of steps (batches of samples) before declaring one epoch finished and starting the next epoch. 
+                        When training with input tensors such as TensorFlow data tensors, the default None is equal to the number of samples 
+                        in your dataset divided by the batch size, or 1 if that cannot be determined.
+    validation_steps:  Only relevant if steps_per_epoch is specified. Total number of steps (batches of samples) to validate before stopping.
+    validation_freq:   Only relevant if validation data is provided. Integer or list/tuple/set. If an integer, specifies how many training epochs 
+                        to run before a new validation run is performed, e.g.  validation_freq=2 runs validation every 2 epochs. 
+                        If a list, tuple, or set, specifies the epochs on which to run validation, e.g. validation_freq=[1, 2, 10] runs 
+                        validation at the end of the 1st, 2nd, and 10th epochs.
+    '''
+    model.fit(x=lst_x, y=lst_y, shuffle=True, batch_size=BATCH_SIZE, nb_epoch=EPOCHS, validation_split=VALIDATION_SPLIT, verbose=VERBOSE)
+    f_out.write('\nTraining based on {:d} samples'.format(x_train[0].shape[0]))
         
     logging.info('<---- ----------------------------------------------')
     logging.info('<---- train_lstm:')
     logging.info('<---- ----------------------------------------------')
     return
 
-def evaluate_model(model, x_data, y_data):
+def evaluate_model(model, x_data, y_data, f_out):
     logging.info ('')
     logging.info ('====> ==============================================')
     logging.info ('====> evaluate_model')
@@ -788,6 +624,8 @@ def evaluate_model(model, x_data, y_data):
 
     score = model.evaluate(x=lst_x, y=lst_y, verbose=0)    
     print ("\tevaluate_model: Test loss=%0.2f, Test accuracy=%0.2f" % (score[0], score[1]))
+    f_out.write('\nEvaluation based on {:d} samples'.format(x_data[0].shape[0]))
+    f_out.write('\nEvaluation loss {:0.2f} - accuracy {:0.2f}'.format(score[0], score[1]))
 
     logging.info('<---- ----------------------------------------------')
     logging.info('<---- evaluate_model: Test loss=%0.2f, Test accuracy=%0.2f', score[0], score[1])
@@ -803,7 +641,7 @@ def predict_sequences_single(model, df_data):
 
     return prediction
 
-def predict_sequences_multiple(model, df_data, lst_analyses):
+def predict_sequences_multiple(model, df_data, lst_analyses, f_out):
     '''
     *** Specific to the analysis being performed ***
     Find the maximum adj_high for each time period sample
@@ -819,9 +657,11 @@ def predict_sequences_multiple(model, df_data, lst_analyses):
     logging.info ('====> ==============================================')
     logging.info ('====> predict_sequences_multiple: %s technical analysis feature sets', len(df_data))
     print        ('\tpredicting %s technical analysis feature sets plus a composite prediction' % (len(df_data)))
+    f_out.write  ('\npredicting {:d} technical analysis feature sets plus a composite prediction'.format(len(df_data)))
     for ndx_i in range(0, len(df_data)) :
         logging.info ('%s technical analysis includes %s features', lst_analyses[ndx_i], df_data[ndx_i].shape[2])
         print        ('\t\t%s technical analysis includes %s features' % (lst_analyses[ndx_i], df_data[ndx_i].shape[2]))
+        f_out.write  ('\n{:s} technical analysis includes {:d} features'.format(lst_analyses[ndx_i], df_data[ndx_i].shape[2]))
     print        ('\t%s predictions, each based on %s historical time steps' % (df_data[0].shape[0], df_data[0].shape[1]))
     logging.info ('====> ==============================================')
         

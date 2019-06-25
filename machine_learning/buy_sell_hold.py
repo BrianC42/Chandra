@@ -22,6 +22,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import tensorflow as tf
 
+from keras import backend as K
 from keras.models import Model
 from keras.layers import Input
 from keras.layers import Concatenate
@@ -45,6 +46,9 @@ from configuration_constants import CLASSIFICATION_COUNT
 from configuration_constants import CLASSIFICATION_ID
 from configuration_constants import COMPILATION_LOSS
 from configuration_constants import COMPILATION_METRICS
+from configuration_constants import LOSS_WEIGHTS
+
+from keras.layers.pooling import MaxPooling1D
 
 def prepare_inputs(lst_analyses, np_input) :
     logging.info ('====> ==============================================')
@@ -71,6 +75,72 @@ def prepare_inputs(lst_analyses, np_input) :
     logging.info('<==== prepare_inputs')
     logging.info('<==== ==============================================')
     return kf_feature_sets, kf_feature_set_outputs, kf_feature_set_solo_outputs
+
+def combine_compile_model (analysis_counts, kf_feature_set_outputs, lst_analyses, kf_feature_set_solo_outputs, kf_feature_sets):
+    logging.info('====> ==============================================')
+    logging.info('====> combine_compile_model: ')
+    logging.info('====> ==============================================')
+
+    # append common elements to each technical analysis
+    for ndx_i in range (0, analysis_counts) :
+        #start with the model specific layers already prepared
+        kf_layer = kf_feature_set_outputs[ndx_i]
+        #deepen the network
+        kf_layer = Dense(256, activation=ACTIVATION)(kf_layer)
+        kf_layer = Dense(256, activation=ACTIVATION)(kf_layer)
+        #identify the output of each individual technical analysis
+        kf_feature_set_outputs[ndx_i] = Dense(120, activation=ACTIVATION)(kf_layer)
+        #kf_feature_set_outputs.append(kf_feature_set_output)        
+        #create outputs that can be used to assess the individual technical analysis         
+        str_solo_out  = "{0}_output".format(lst_analyses[ndx_i])
+        kf_feature_set_solo_output = Dense(name=str_solo_out, output_dim=CLASSIFICATION_COUNT, activation='softmax')(kf_feature_set_outputs[ndx_i])        
+        kf_feature_set_solo_outputs.append(kf_feature_set_solo_output)        
+        ndx_i += 1
+
+    #combine all technical analysis assessments for a composite assessment
+    kf_composite = Concatenate(axis=-1)(kf_feature_set_outputs[:])
+    #create the layers used to analyze the composite
+    kf_composite = Dense(256, activation=ACTIVATION)(kf_composite)
+    kf_composite = Dense(256, activation=ACTIVATION)(kf_composite)
+    #create the composite output layer
+    kf_composite = Dense(output_dim=CLASSIFICATION_COUNT, activation='softmax', name="composite_output")(kf_composite)
+    
+    #create list of outputs
+    lst_outputs = []
+    lst_outputs.append(kf_composite)
+    for solo_output in kf_feature_set_solo_outputs:
+        lst_outputs.append(solo_output)
+    
+    k_model = Model(inputs=kf_feature_sets, outputs=lst_outputs)
+    '''
+    optimizer:            String (name of optimizer) or optimizer instance. See optimizers.
+    loss:                 String (name of objective function) or objective function. See losses. 
+                            If the model has multiple outputs, you can use a different loss on each output by passing a dictionary or a list of losses. 
+                            The loss value that will be minimized by the model will then be the sum of all individual losses.
+    metrics:              List of metrics to be evaluated by the model during training and testing. Typically you will use metrics=['accuracy']. 
+                            To specify different metrics for different outputs of a multi-output model, you could also pass a dictionary, such as 
+                            metrics={'output_a': 'accuracy'}.
+    loss_weights:         Optional list or dictionary specifying scalar coefficients (Python floats) to weight the loss contributions of 
+                            different model outputs. The loss value that will be minimized by the model will then be the weighted sum of all 
+                            individual losses, weighted by the loss_weights coefficients. If a list, it is expected to have a 1:1 mapping to the 
+                            model's outputs. If a tensor, it is expected to map output names (strings) to scalar coefficients.
+    sample_weight_mode:   If you need to do timestep-wise sample weighting (2D weights), set this to "temporal".  None defaults to sample-wise weights (1D). 
+                            If the model has multiple outputs, you can use a different  sample_weight_mode on each output by passing a dictionary 
+                            or a list of modes.
+    weighted_metrics:     List of metrics to be evaluated and weighted by sample_weight or class_weight during training and testing.
+    target_tensors:       By default, Keras will create placeholders for the model's target, which will be fed with the target data during training. 
+                            If instead you would like to use your own target tensors (in turn, Keras will not expect external Numpy data for these 
+                            targets at training time), you can specify them via the target_tensors argument. It can be a single tensor 
+                            (for a single-output model), a list of tensors, or a dict mapping output names to target tensors.
+    **kwargs:             When using the Theano/CNTK backends, these arguments are passed into K.function. When using the TensorFlow backend, 
+                            these arguments are passed into tf.Session.run.    '''
+    k_model.compile(optimizer=OPTIMIZER, loss=COMPILATION_LOSS, metrics=COMPILATION_METRICS, loss_weights=LOSS_WEIGHTS, \
+                    sample_weight_mode=None, weighted_metrics=None, target_tensors=None)
+
+    logging.info('<==== ==============================================')
+    logging.info('<==== combine_compile_model')
+    logging.info('<==== ==============================================')
+    return k_model
 
 def build_cnn_model(lst_analyses, np_input) :
     '''
@@ -104,50 +174,24 @@ def build_cnn_model(lst_analyses, np_input) :
     logging.info('====> ==============================================')
 
     kf_feature_sets, kf_feature_set_outputs, kf_feature_set_solo_outputs = prepare_inputs(lst_analyses, np_input)
-
     #create the layers used to model each technical analysis
     for ndx_i in range (0, len(np_input)) :
-        #Add a convolutional layer
-        kf_input_ndx_i = Conv1D(filters=10, kernel_size=1)(kf_feature_sets[ndx_i])        
-        #flatten the 2D time series / feature value data
-        kf_input_ndx_i = Flatten()(kf_input_ndx_i)               
+        #Add a pair of convolutional layers
+        kf_layer = Conv1D(filters=120, kernel_size=30, activation=ACTIVATION)(kf_feature_sets[ndx_i])        
+        kf_layer = Conv1D(filters=120, kernel_size=30, activation=ACTIVATION)(kf_layer)
+        kf_layer = MaxPooling1D(pool_size=2, strides=None, padding='valid')(kf_layer)
         
-        kf_input_ndx_i = Dense(256, activation=None)(kf_input_ndx_i)
-        kf_input_ndx_i = Dense(256, activation=None)(kf_input_ndx_i)
-        kf_input_ndx_i = Dense(256, activation=None)(kf_input_ndx_i)
-
-        #identify the output of each individual technical analysis
-        kf_feature_set_output = Dense(output_dim=CLASSIFICATION_COUNT)(kf_input_ndx_i)
-        kf_feature_set_outputs.append(kf_feature_set_output)        
-
-        #create outputs that can be used to assess the individual technical analysis         
-        #identify the output of each individual technical analysis
-        str_solo_out  = "{0}_output".format(lst_analyses[ndx_i])
-        kf_feature_set_solo_output = Dense(name=str_solo_out, output_dim=CLASSIFICATION_COUNT, \
-                                           activation=ACTIVATION)(kf_feature_set_output)        
-        kf_feature_set_solo_outputs.append(kf_feature_set_solo_output)        
-
+        #Add a second pair of convolutional layers
+        kf_layer = Conv1D(filters=30, kernel_size=5, activation=ACTIVATION)(kf_layer)        
+        kf_layer = Conv1D(filters=30, kernel_size=5, activation=ACTIVATION)(kf_layer)
+        kf_layer = MaxPooling1D(pool_size=5, strides=None, padding='valid')(kf_layer)
+        
+        #flatten the 2D time series / feature value data for dense layer processing
+        kf_layer = Flatten()(kf_layer)               
+        kf_feature_set_outputs.append(kf_layer)        
         ndx_i += 1
-    
-    #combine all technical analysis assessments for a composite assessment
-    kf_composite = Concatenate(axis=-1)(kf_feature_set_outputs[:])
-    
-    #create the layers used to analyze the composite of all technical analysis 
-    kf_composite = Dense(256, activation=None)(kf_composite)
-    kf_composite = Dense(256, activation=None)(kf_composite)
-    
-    #create the composite output layer
-    kf_composite = Dense(output_dim=CLASSIFICATION_COUNT, name="composite_output", \
-                         activation=ACTIVATION)(kf_composite)
-    
-    #create list of outputs
-    lst_outputs = []
-    lst_outputs.append(kf_composite)
-    for solo_output in kf_feature_set_solo_outputs:
-        lst_outputs.append(solo_output)
-    
-    k_model = Model(inputs=kf_feature_sets, outputs=lst_outputs)
-    k_model.compile(loss=COMPILATION_LOSS, optimizer=OPTIMIZER, metrics=COMPILATION_METRICS)
+        
+    k_model = combine_compile_model (len(np_input), kf_feature_set_outputs, lst_analyses, kf_feature_set_solo_outputs, kf_feature_sets)
     
     logging.info('<==== ==============================================')
     logging.info('<==== build_cnn_model')
@@ -160,7 +204,7 @@ def build_mlp_model(lst_analyses, np_input) :
     Inputs:
     2 dimensional data
         Samples consisting of
-            Feature set values
+        Feature set values
     Outputs:
         Composite and individual feature set classifications
     '''
@@ -170,50 +214,12 @@ def build_mlp_model(lst_analyses, np_input) :
     logging.info('====> ==============================================')
 
     kf_feature_sets, kf_feature_set_outputs, kf_feature_set_solo_outputs = prepare_inputs(lst_analyses, np_input)
-    
+    #create the layers used to model each technical analysis
     for ndx_i in range (0, len(np_input)) :
-        #flatten the 2D time series / feature value data
-        kf_input_ndx_i = Flatten()(kf_feature_sets[ndx_i])        
-        
-        #create the layers used to model each technical analysis
-        kf_input_ndx_i = Dense(500, activation=None)(kf_input_ndx_i)
-        kf_input_ndx_i = Dense(500, activation=None)(kf_input_ndx_i)
-        kf_input_ndx_i = Dense(250, activation=None)(kf_input_ndx_i)
-
-        #identify the output of each individual technical analysis
-        str_solo_out  = "{0}_output".format(lst_analyses[ndx_i])
-        kf_feature_set_output = Dense(120)(kf_input_ndx_i)
-        #kf_feature_set_output = Dense(output_dim=CLASSIFICATION_COUNT)(kf_input_ndx_i)
-        kf_feature_set_outputs.append(kf_feature_set_output)        
-
-        #create outputs that can be used to assess the individual technical analysis         
-        kf_feature_set_solo_output = Dense(name=str_solo_out, output_dim=CLASSIFICATION_COUNT, \
-                                           activation=ACTIVATION)(kf_feature_set_output)        
-        kf_feature_set_solo_outputs.append(kf_feature_set_solo_output)        
-    
-    '''
-    Create a model to take the feature set assessments and create a composite assessment
-    '''        
-    #combine all technical analysis assessments for a composite assessment
-    kf_composite = Concatenate(axis=-1)(kf_feature_set_outputs[:])
-    
-    #create the layers used to analyze the composite of all technical analysis 
-    kf_composite = Dense(500, activation=None)(kf_composite)
-    kf_composite = Dense(500, activation=None)(kf_composite)
-    kf_composite = Dense(250, activation=None)(kf_composite)
-    
-    #create the composite output layer
-    kf_composite = Dense(output_dim=CLASSIFICATION_COUNT, name="composite_output", \
-                         activation=ACTIVATION)(kf_composite)
-    
-    #create list of outputs
-    lst_outputs = []
-    lst_outputs.append(kf_composite)
-    for solo_output in kf_feature_set_solo_outputs:
-        lst_outputs.append(solo_output)
-    
-    k_model = Model(inputs=kf_feature_sets, outputs=lst_outputs)
-    k_model.compile(loss=COMPILATION_LOSS, optimizer=OPTIMIZER, metrics=COMPILATION_METRICS)
+        #flatten the 2D time series / feature value data for dense layer processing
+        kf_layer = Flatten()(kf_feature_sets[ndx_i])
+        kf_feature_set_outputs.append(kf_layer)        
+    k_model = combine_compile_model (len(np_input), kf_feature_set_outputs, lst_analyses, kf_feature_set_solo_outputs, kf_feature_sets)
     
     logging.info('<==== ==============================================')
     logging.info('<==== build_mlp_model')
@@ -236,62 +242,13 @@ def build_rnn_lstm_model(lst_analyses, np_input) :
     logging.info('====> inputs=%s', len(np_input))
     logging.info('====> ==============================================')
 
-    kf_feature_sets = []
-    kf_feature_set_outputs = []
-    kf_feature_set_solo_outputs = []
-    ndx_i = 0
-    for np_feature_set in np_input:
-        str_name = "{0}_input".format(lst_analyses[ndx_i])
-        str_solo_out  = "{0}_output".format(lst_analyses[ndx_i])
-        print           ('Building model - %s\n\tdim[0] (samples)=%s,\n\tdim[1] (time series length)=%s\n\tdim[2] (feature count)=%s' % \
-                        (lst_analyses[ndx_i], np_feature_set.shape[0], np_feature_set.shape[1], np_feature_set.shape[2]))
-        logging.debug   ("Building model - feature set %s\n\tInput dimensions: %s %s %s", \
-                         lst_analyses[ndx_i], np_feature_set.shape[0], np_feature_set.shape[1], np_feature_set.shape[2])        
-
-        #create and retain for model definition an input tensor for each technical analysis
-        kf_feature_sets.append(Input(shape=(np_feature_set.shape[1], np_feature_set.shape[2], ), dtype='float32', name=str_name))
-        print('\tkf_input shape %s' % tf.shape(kf_feature_sets[ndx_i]))
-
+    kf_feature_sets, kf_feature_set_outputs, kf_feature_set_solo_outputs = prepare_inputs(lst_analyses, np_input)
+    #create the layers used to model each technical analysis
+    for ndx_i in range (0, len(np_input)) :
         #create the layers used to model each technical analysis
-        kf_input_ndx_i = LSTM(256, activation=ACTIVATION, use_bias=USE_BIAS, dropout=DROPOUT)(kf_feature_sets[ndx_i])
-        kf_input_ndx_i = Dense(256, activation=ACTIVATION)(kf_input_ndx_i)
-        kf_input_ndx_i = Dense(256, activation=ACTIVATION)(kf_input_ndx_i)
-        kf_input_ndx_i = Dense(256, activation=ACTIVATION)(kf_input_ndx_i)
-
-        #identify the output of each individual technical analysis
-        kf_feature_set_output = Dense(output_dim=CLASSIFICATION_COUNT)(kf_input_ndx_i)
-        kf_feature_set_outputs.append(kf_feature_set_output)        
-
-        #create outputs that can be used to assess the individual technical analysis         
-        kf_feature_set_solo_output = Dense(name=str_solo_out, output_dim=CLASSIFICATION_COUNT)(kf_feature_set_output)        
-        kf_feature_set_solo_outputs.append(kf_feature_set_solo_output)        
-
-        ndx_i += 1
-    
-    '''
-    Create a model to take the feature set assessments and create a composite assessment
-    '''        
-    #combine all technical analysis assessments for a composite assessment
-    kf_composite = Concatenate(axis=-1)(kf_feature_set_outputs[:])
-    
-    #create the layers used to analyze the composite of all technical analysis 
-    kf_composite = Dense(256, activation=ACTIVATION)(kf_composite)
-    kf_composite = Dense(256, activation=ACTIVATION)(kf_composite)
-    kf_composite = Dense(256, activation=ACTIVATION)(kf_composite)
-    kf_composite = Dense(256, activation=ACTIVATION)(kf_composite)
-    kf_composite = Dense(256, activation=ACTIVATION)(kf_composite)
-    
-    #create the composite output layer
-    kf_composite = Dense(output_dim=CLASSIFICATION_COUNT, name="composite_output")(kf_composite)
-    
-    #create list of outputs
-    lst_outputs = []
-    lst_outputs.append(kf_composite)
-    for solo_output in kf_feature_set_solo_outputs:
-        lst_outputs.append(solo_output)
-    
-    k_model = Model(inputs=kf_feature_sets, outputs=lst_outputs)
-    k_model.compile(loss=COMPILATION_LOSS, optimizer=OPTIMIZER, metrics=COMPILATION_METRICS)
+        kf_layer = LSTM(256, activation=ACTIVATION, use_bias=USE_BIAS, dropout=DROPOUT)(kf_feature_sets[ndx_i])
+        kf_feature_set_outputs.append(kf_layer)        
+    k_model = combine_compile_model (len(np_input), kf_feature_set_outputs, lst_analyses, kf_feature_set_solo_outputs, kf_feature_sets)
 
     logging.info('<==== ==============================================')
     logging.info('<==== build_rnn_lstm_model')
@@ -555,7 +512,7 @@ def categorize_prediction_risks(technical_analysis_names, predicted_data, true_d
             f_out.write (str_analysis)      
             print       (str_analysis)
             logging.info(str_analysis)
-        str_l1 = '\t\t\t\t\t\t\t\tPredictions'
+        str_l1 = '\t\t\t\t\t\t\tPredictions'
         str_l2 = '\t\t\t\t|\tBuy\t\t|\tSell\t\t|\tHold'
         str_l3 = '\tA-------------------------------------------------------------------------------------------------'
         str_l4 = '\tc\tBuy\t{:.0f}\t|\t{:.0f}\t{:.2%}\t|\t{:.0f}\t{:.2%}\t|\t{:.0f}\t{:.2%}'.format( np_counts[BUY_INDEX], \

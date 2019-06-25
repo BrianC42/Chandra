@@ -4,6 +4,7 @@ Created on Jan 31, 2018
 @author: Brian
 '''
 import logging
+import datetime as dt
 import time
 
 from quandl_library import get_ini_data
@@ -11,9 +12,14 @@ from configuration_constants import TICKERS
 from configuration_constants import ANALASIS_SAMPLE_LENGTH
 from configuration_constants import FORECAST_LENGTH
 from configuration_constants import ACTIVATION
+from configuration_constants import COMPILATION_LOSS
+from configuration_constants import LOSS_WEIGHTS
+from configuration_constants import COMPILATION_METRICS
+from configuration_constants import OPTIMIZER
 from configuration_constants import BATCH_SIZE
 from configuration_constants import EPOCHS
 from configuration_constants import ANALYSIS
+from configuration_constants import ML_APPROACH
 from configuration_constants import RESULT_DRIVERS
 from configuration_constants import FEATURE_TYPE
 from configuration_constants import FORECAST_FEATURE
@@ -36,6 +42,7 @@ if __name__ == '__main__':
     print ("Good morning Dr. Chandra. I am ready for my first lesson.\n")
     
     start = time.time()
+    now = dt.datetime.now()
     
     lstm_config_data = get_ini_data("LSTM")
     log_file = lstm_config_data['log']
@@ -47,6 +54,9 @@ if __name__ == '__main__':
     logger.info('Keras LSTM model for stock market prediction')
     
     output_file = lstm_config_data['result']
+    output_file = output_file + '{:s} {:s} {:4d} {:0>2d} {:2d} {:0>2d} {:0>2d} {:0>2d}'.format(ANALYSIS, ML_APPROACH, \
+                                                                                       now.year, now.month, now.day, \
+                                                                                       now.hour, now.minute, now.second) + '.txt'
     f_out = open(output_file, 'w')
     
     '''
@@ -60,13 +70,13 @@ if __name__ == '__main__':
         str_drivers += RESULT_DRIVERS[ndx_driver]
         str_drivers += ' '
     
-    f_out.write('\nTraining a model to provide buy, sell or hold recommendations')
-    #f_out.write('\nUsing symbols\n\t' + str_symbols + '\nfor training and testing')
     f_out.write('\nUsing\n\t' + str_drivers + '\nsample data points')
     f_out.write('\nUsing a time series of {:.0f} periods and a time window the next {:.0f} time periods'.format(ANALASIS_SAMPLE_LENGTH, FORECAST_LENGTH))
-    f_out.write('\nKeras parameters: Activation = ' + ACTIVATION + ', Batch Size = {:.0f}, Epochs = {:.0f}\n'.format(BATCH_SIZE, EPOCHS))
-    
-    f_out.write(ANALYSIS)
+    f_out.write('\nKeras parameters: Activation = ' + ACTIVATION + ', Batch Size = {:.0f}, Epochs = {:.0f}'.format(BATCH_SIZE, EPOCHS))
+    f_out.write('\nKeras compilation parameters: Loss = ' + COMPILATION_LOSS + ' + Optimizer = ' + OPTIMIZER)
+    f_out.write('\nOutput loss weights: {:.1f} {:.1f} {:.1f} {:.1f} {:.1f} {:.1f}'.format(LOSS_WEIGHTS[0], LOSS_WEIGHTS[1], LOSS_WEIGHTS[2], \
+                                                                                          LOSS_WEIGHTS[3], LOSS_WEIGHTS[4], LOSS_WEIGHTS[5]))
+    f_out.write('\n' + ANALYSIS)
 
     ''' .......... Step 1 - Load and prepare data .........................
     ======================================================================= '''
@@ -84,25 +94,25 @@ if __name__ == '__main__':
     ========================================================================= '''
     step2 = time.time()
     print ('\nStep 2 - Build Model')
-    model = build_model(lst_analyses, x_train)
+    model = build_model(lst_analyses, x_train, f_out)
     
     ''' ...................... Step 3 - Train the model .....................
     ========================================================================= '''
     step3 = time.time()
     print( "\nStep 3 - Train the model")
-    train_lstm(model, x_train, y_train)
+    train_lstm(model, x_train, y_train, f_out)
     
     ''' .................... Step 4 - Evaluate the model! ...............
     ===================================================================== '''
     step4 = time.time()
     print ("\nStep 4 - Evaluate the model!")
-    evaluate_model(model, x_test, y_test)
+    evaluate_model(model, x_test, y_test, f_out)
     
     ''' .................... Step 5 - clean up, archive and visualize accuracy! ...............
     =========================================================================================== '''
     step5 = time.time()
     print ("\nStep 5 - clean up, archive and visualize accuracy!")
-    predictions = predict_sequences_multiple(model, x_test, lst_analyses)
+    predictions = predict_sequences_multiple(model, x_test, lst_analyses, f_out)
     save_model(model)  
     end = time.time()
     print ("")
