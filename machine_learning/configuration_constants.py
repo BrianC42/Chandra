@@ -29,7 +29,8 @@ data sources to use as samples to train, evaluate and use for predictions
             "all"
             "all", 50000
 '''
-TICKERS = ["limit", 750000]
+#TICKERS = ["limit", 750000]
+TICKERS = ["aapl"]
 RESULT_DRIVERS   = ["adj_low", "adj_high", "adj_open", "adj_close", "adj_volume", "BB_Lower", "BB_Upper", "SMA20",   "OBV",     "AccumulationDistribution", "momentum", "MACD_Sell", "MACD_Buy"]
 FEATURE_TYPE     = ['numeric', 'numeric',  'numeric', 'numeric',    'numeric',    'numeric',   'numeric', 'numeric', 'numeric', 'numeric',                  'numeric',  'boolean',   'boolean']
 FORECAST_FEATURE = [False, True, False, False, False, False, False, False, False, False, False, False, False]
@@ -65,14 +66,14 @@ kullback_leibler_divergence
 poisson
 cosine_proximity
 '''
-LOSS_WEIGHTS = [1.0, 0.25, 0.25, 0.25, 0.25, 0.25] # use to emphasize different outputs
+LOSS_WEIGHTS = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0] # use to emphasize different outputs
 COMPILATION_METRICS = ['accuracy']            # loss funcion or accuracy - can also be a tuple ['a', 'b']
 '''
-                    binary_accuracy
-                    categorical_accuracy
-                    sparse_categorical_accuracy
-                    top_k_categorical_accuracy
-                    spares_top_k_categorical_accuracy
+binary_accuracy
+categorical_accuracy
+sparse_categorical_accuracy
+top_k_categorical_accuracy
+spares_top_k_categorical_accuracy
 '''
 ACTIVATION = 'relu'
 '''
@@ -103,7 +104,7 @@ DROPOUT = 0.25
 VALIDATION_SPLIT = 0.05
 #Model training
 BATCH_SIZE = 32
-EPOCHS = 5
+EPOCHS = 50
 VERBOSE = 2                                   # Integer. 0, 1, or 2. Verbosity mode. 0 = silent, 1 = progress bar, 2 = one line per epoch
 
 '''

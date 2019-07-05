@@ -13,4 +13,7 @@
 <path>/${PROJECT_DIR_NAME}/processes/multiprocess</path>
 <path>/${PROJECT_DIR_NAME}/td_ameritrade</path>
 </pydev_pathproperty>
+<pydev_pathproperty name="org.python.pydev.PROJECT_EXTERNAL_SOURCE_PATH">
+<path>C:\Users\Brian\Documents\GitHub\mpl_finance</path>
+</pydev_pathproperty>
 </pydev_project>

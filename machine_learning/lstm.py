@@ -5,10 +5,13 @@ Created on Jan 31, 2018
 '''
 import time
 import os
+import sys
 import re
 import warnings
 import logging
 import numpy as np
+import numpy.ma as ma
+import matplotlib.colors as colors
 import pandas as pd
 import pickle
 
@@ -230,6 +233,95 @@ def save_model_plot(model):
 
     return
 
+def prepare_3D_cube(df_data, feature_count, forecast_feature, time_steps, forecast_steps):
+    '''
+    Convert 2D data frame into 3D Numpy array for data processing by LSTM
+    np_data[ 
+        Dim1: time series samples
+        Dim2: feature time series
+        Dim3: features
+        ]
+    '''
+    samples = df_data.shape[0]
+    np_data = np.empty([samples, time_steps+forecast_steps, feature_count])
+    np_prediction = np.empty([samples, forecast_steps])
+    logging.debug("convert 2D flat data frame of shape: %s to 3D numpy array of shape %s",  df_data.shape, np_data.shape)
+    for ndx_feature in range(0, feature_count) :
+        np_data[ : , : , ndx_feature] = df_data.iloc[:, np.r_[   ndx_feature : df_data.shape[1] : feature_count]]
+
+    print ("\tCalculating forecast y-axis characteristic values")
+    logging.debug('')
+    for ndx_feature_value in range(0, feature_count) :
+        if forecast_feature[ndx_feature_value] :
+            for ndx_feature in range(time_steps, time_steps+forecast_steps) :        
+                for ndx_time_series_sample in range(0, samples) :
+                    #************************** Specific to the analysis being performed ************************
+                    if (ANALYSIS == 'value') :
+                        #Calculate % change of the for each time period forecast feature value compared to the current value
+                        np_prediction[ndx_time_series_sample, ndx_feature-time_steps] = calculate_single_pct_change()
+                    elif (ANALYSIS == 'classification') :
+                        #Calculate buy, sell or hold classification for each future time period
+                        np_prediction[ndx_time_series_sample, ndx_feature-time_steps] = \
+                            calculate_single_bsh_flag(np_data[ndx_time_series_sample, time_steps-1, ndx_feature_value], \
+                                                      np_data[ndx_time_series_sample, ndx_feature, ndx_feature_value]  )
+                    else :
+                        print ('Analysis model is not specified')
+            logging.debug('Using feature %s as feature to forecast, np_data feature forecast:', ndx_feature_value)
+            logging.debug('Current value of forecast feature:\n%s', np_data[: , time_steps-1, ndx_feature_value])
+            logging.debug('Future values\n%s', np_data[: , time_steps : , ndx_feature_value])
+            logging.debug('Generated prediction values the model can forecast\n%s', np_prediction[:, :])
+
+    return np_data, np_prediction
+
+def normalize_data(np_data, samples, feature_count, feature_type, result_drivers, feature_groups, time_steps, forecast_steps):
+    '''
+    normalise the data in each row
+        each data point for all historical data points is reduced to 0<=data<=+1
+        1. Find the maximum value for each feature in each time series sample
+        2. Normalize each feature value by dividing each value by the maximum value for that time series sample
+        N.B. boolean fields have been normalized by conversion above
+    '''
+    print ("\tNormalizing data - min/max")
+    logging.debug('')
+    #np_max = np.zeros([samples, feature_count])
+    #np_min = np.full([samples, feature_count], float(sys.maxsize))
+    np_max = np.zeros([samples, len(feature_groups)])
+    np_min = np.full([samples, len(feature_groups)], float(sys.maxsize))
+             
+    fgroup = 0
+    for fgroup_list in feature_groups:
+        for feature in fgroup_list:
+            for ndx_sample in range(0, samples) :
+                for ndx_time_step in range(0, time_steps+forecast_steps) :            
+                    if (feature_type[feature] == 'boolean') :
+                        break
+                    else : # normalize all numeric features
+                        if (np_data[ndx_sample, ndx_time_step, feature] > np_max[ndx_sample, fgroup]) :
+                            np_max[ndx_sample, fgroup] = np_data[ndx_sample, ndx_time_step, feature]
+                        if (np_data[ndx_sample, ndx_time_step, feature] < np_min[ndx_sample, fgroup]) :
+                            np_min[ndx_sample, fgroup] = np_data[ndx_sample, ndx_time_step, feature]
+        fgroup += 1
+
+    print ("\tNormalizing data - scale")
+    fgroup = 0
+    for fgroup_list in feature_groups:
+        for feature in fgroup_list:
+            for ndx_sample in range(0, samples) :
+                #norm = colors.Normalize(np_min[ndx_sample, fgroup], np_max[ndx_sample, fgroup])
+                for ndx_time_step in range(0, time_steps+forecast_steps) :        
+                    if (feature_type[feature] == 'boolean') :
+                        break
+                    else :
+                        val = np_data[ndx_sample, ndx_time_step, feature]
+                        min_val = np_min[ndx_sample, fgroup]
+                        max_val = np_max[ndx_sample, fgroup]
+                        norm = (val - min_val) / (max_val - min_val)
+                        #i = norm(np_data[ndx_sample, ndx_time_step, feature])
+                        np_data[ndx_sample, ndx_time_step, feature] = norm
+        fgroup += 1
+                            
+    return np_data
+
 def prepare_ts_lstm(tickers, result_drivers, forecast_feature, feature_type, time_steps, forecast_steps, source='', analysis=''):
     logging.info('')
     logging.info('====> ==============================================')
@@ -241,19 +333,11 @@ def prepare_ts_lstm(tickers, result_drivers, forecast_feature, feature_type, tim
     logging.info('====> ==============================================')
     print ("\tAccessing %s time steps, with %s time step future values for\n\t\t%s" % (time_steps, forecast_steps, tickers))
     print ("\tPreparing time series samples of \n\t\t%s" % result_drivers)    
-    '''
-    Prepare time series data for presentation to an LSTM model from the Keras library
-    seq_len - the number of elements from the time series for ?
-    
-    Returns training (90%) and test (10) sets
-    '''
-    start = time.time()
 
+    start = time.time()
     feature_count = len(result_drivers)
 
-    '''
-    Load raw data
-    '''
+    #Prepare the list of symbols to process
     if (len(tickers) <= 2) :
         if ((tickers[0] == "all") or (tickers[0] == "limit")):
             if (tickers[0] == "limit") :
@@ -268,28 +352,15 @@ def prepare_ts_lstm(tickers, result_drivers, forecast_feature, feature_type, tim
             tickers = []
             for name in file_names :
                 tickers.append(name.replace('_enriched.csv', ''))
-    '''            
-    if (tickers == ["all"]):
-        print("\tLoading ALL symbols.")
-        data_dir = get_devdata_dir() + "\\symbols\\"
-        file_names = [fn for fn in os.listdir(data_dir) \
-                      if re.search('enriched.csv', fn)]
-        tickers = []
-        for name in file_names :
-            tickers.append(name.replace('_enriched.csv', ''))
-    '''        
 
+    #Load raw data
     for ndx_symbol in range(0, len(tickers)) :
         df_symbol = fetch_timeseries_data(result_drivers, tickers[ndx_symbol], source)
         logging.info ("df_symbol data shape: %s, %s samples of drivers\n%s", df_symbol.shape, df_symbol.shape[0], df_symbol.shape[1])
         for ndx_feature_value in range(0, feature_count) :
             logging.debug("result_drivers %s: head %s ... tail %s", \
                           result_drivers[ndx_feature_value], df_symbol[ :3, ndx_feature_value], df_symbol[ -3: , ndx_feature_value])
-            '''
-            Convert any boolean data to numeric
-            false = 0
-            true = 1
-            '''
+            #Convert any boolean data to numeric
             if (feature_type[ndx_feature_value] == 'boolean') :
                 logging.debug("Converting symbol %s, %s from boolean: %s data points", \
                               ndx_feature_value, result_drivers[ndx_feature_value], df_symbol.shape[0])
@@ -300,13 +371,7 @@ def prepare_ts_lstm(tickers, result_drivers, forecast_feature, feature_type, tim
                         df_symbol[ndx_sample, ndx_feature_value] = 0
                 logging.debug("to %s ... %s", df_symbol[ :3, ndx_feature_value], df_symbol[ -3: , ndx_feature_value])
     
-        '''
-        Flatten data to a data frame where each row includes the 
-        historical data driving the result - 
-        time_steps examples of result_drivers data points
-        result - 
-        forecast_steps of data points (same data as drivers)
-        '''
+        #Flatten data to a data frame where each row includes the historical data driving the result - 
         if (ndx_symbol == 0) :
             df_data = series_to_supervised(df_symbol, time_steps, forecast_steps)
         else :
@@ -318,155 +383,41 @@ def prepare_ts_lstm(tickers, result_drivers, forecast_feature, feature_type, tim
             break
         else :
             print("\tLoaded data for %s, currently %s samples" % (tickers[ndx_symbol], len(df_data)))
-
         
     step1 = time.time()
-    '''
-    Convert 2D data frame into 3D Numpy array for data processing by LSTM
-    np_data[ 
-        Dim1: time series samples
-        Dim2: feature time series
-        Dim3: features
-        ]
-    '''
     samples = df_data.shape[0]
-    np_data = np.empty([samples, time_steps+forecast_steps, feature_count])
-    np_prediction = np.empty([samples, forecast_steps])
-    logging.debug("convert 2D flat data frame of shape: %s to 3D numpy array of shape %s",  df_data.shape, np_data.shape)
-    for ndx_feature_value in range(0, feature_count) :
-        np_data[ : , : , ndx_feature_value] = df_data.iloc[:, np.r_[   ndx_feature_value : df_data.shape[1] : feature_count]]
-    
-    '''
-    *** Specific to the analysis being performed ***
-    '''
+    np_data, np_prediction = prepare_3D_cube(df_data, feature_count, forecast_feature, time_steps, forecast_steps)
     step2 = time.time()
-    print ("\tCalculating forecast y-axis characteristic values")
-    logging.debug('')
-    for ndx_feature_value in range(0, feature_count) :
-        if forecast_feature[ndx_feature_value] :
-            for ndx_feature in range(time_steps, time_steps+forecast_steps) :        
-                for ndx_time_series_sample in range(0, samples) :
-                    if (ANALYSIS == 'value') :
-                        '''
-                        Calculate % change of the for each time period forecast feature value compared to the current value
-                        '''
-                        np_prediction[ndx_time_series_sample, ndx_feature-time_steps] = calculate_single_pct_change()
-                    elif (ANALYSIS == 'classification') :
-                        '''
-                        Calculate buy, sell or hold classification for each future time period
-                        '''
-                        np_prediction[ndx_time_series_sample, ndx_feature-time_steps] = \
-                            calculate_single_bsh_flag(np_data[ndx_time_series_sample, time_steps-1, ndx_feature_value], \
-                                                      np_data[ndx_time_series_sample, ndx_feature, ndx_feature_value]  )
-                    else :
-                        print ('Analysis model is not specified')
-            logging.debug('Using feature %s as feature to forecast, np_data feature forecast:', ndx_feature_value)
-            logging.debug('Current value of forecast feature:\n%s', np_data[: , time_steps-1, ndx_feature_value])
-            logging.debug('Future values\n%s', np_data[: , time_steps : , ndx_feature_value])
-            logging.debug('Generated prediction values the model can forecast\n%s', np_prediction[:, :])
     
-    '''
-    Shuffle data
-    '''
-    np.random.shuffle(np_data)
+    np.random.shuffle(np_data) #Shuffle data
 
-    '''
-    *** Specific to the analysis being performed ***
-    '''
     print ("\tPreparing for %s analysis" % ANALYSIS)
-    logging.debug('')
+    #Prepare the supervision result
     np_forecast = np.zeros([samples, CLASSIFICATION_COUNT])
+    #****************************** Specific to the analysis being performed *********************************
     for ndx_time_series_sample in range(0, samples) :
         if (ANALYSIS == 'value') :
             np_forecast[ndx_time_series_sample] = calculate_sample_pct_change()
         elif (ANALYSIS == 'classification') :
-            '''
-            Find the buy, sell or hold classification for each sample
-            '''
+            #Find the buy, sell or hold classification for each sample
             np_forecast[ndx_time_series_sample, :] = calculate_sample_bsh_flag(np_prediction[ndx_time_series_sample, :])                
         else :
             print ('Analysis model is not specified')
     logging.debug('\nforecast shape %s and values\n%s', np_forecast.shape, np_forecast)
 
-    '''
-    normalise the data in each row
-        each data point for all historical data points is reduced to 0<=data<=+1
-        1. Find the maximum value for each feature in each time series sample
-        2. Normalize each feature value by dividing each value by the maximum value for that time series sample
-        N.B. boolean fields have been normalized by conversion above
-    '''
-    step3 = time.time()
-    print ("\tNormalizing data - min/max")
-    logging.debug('')
-    np_max = np.zeros([samples, feature_count])
-    np_min = np.zeros([samples, feature_count])
-    for ndx_feature_value in range(0, feature_count) : # normalize all numeric features
-        if (feature_type[ndx_feature_value] == 'boolean') :
-            logging.debug("Feature %s, %s is boolean and does not require normalizing", \
-                          ndx_feature_value, result_drivers[ndx_feature_value])
-        else :
-            for ndx_feature in range(0, time_steps+forecast_steps) : # normalize only the time steps before the forecast time steps
-                for ndx_time_series_sample in range(0, samples) : # normalize all time periods
-                    if (np_data[ndx_time_series_sample, ndx_feature, ndx_feature_value] > np_max[ndx_time_series_sample, ndx_feature_value]) :
-                        '''
-                        logging.debug('New maximum %s, %s, %s was %s will be %s', \
-                                  ndx_time_series_sample , ndx_feature, ndx_feature_value, \
-                                  np_max[ndx_time_series_sample, ndx_feature_value], \
-                                  np_data[ndx_time_series_sample, ndx_feature, ndx_feature_value])
-                        '''
-                        np_max[ndx_time_series_sample, ndx_feature_value] = np_data[ndx_time_series_sample, ndx_feature, ndx_feature_value]
-                        if (np_data[ndx_time_series_sample, ndx_feature, ndx_feature_value] < np_min[ndx_time_series_sample, ndx_feature_value]) :
-                            '''
-                            logging.debug('New maximum %s, %s, %s was %s will be %s', \
-                                ndx_time_series_sample , ndx_feature, ndx_feature_value, \
-                                np_max[ndx_time_series_sample, ndx_feature_value], \
-                                np_data[ndx_time_series_sample, ndx_feature, ndx_feature_value])
-                            '''
-                            np_min[ndx_time_series_sample, ndx_feature_value] = np_data[ndx_time_series_sample, ndx_feature, ndx_feature_value]
-
-    print ("\tNormalizing data - scale")
-    for ndx_feature_value in range(0, feature_count) :
-        if (feature_type[ndx_feature_value] == 'boolean') :
-            logging.debug("Feature %s, %s is boolean and already normalized", \
-                          ndx_feature_value, result_drivers[ndx_feature_value])
-        else :
-            for ndx_feature in range(0, time_steps+forecast_steps) :        
-                for ndx_time_series_sample in range(0, samples) :
-                    if np_min[ndx_time_series_sample, ndx_feature_value] <= 0 :                    
-                        np_data[ndx_time_series_sample, ndx_feature, ndx_feature_value] += abs(np_min[ndx_time_series_sample, ndx_feature_value])
-                        np_max[ndx_time_series_sample, ndx_feature_value] += abs(np_min[ndx_time_series_sample, ndx_feature_value])
-                        if (np_max[ndx_time_series_sample, ndx_feature_value] == 0) :
-                            #
-                            np_data[ndx_time_series_sample, ndx_feature, ndx_feature_value] = 0
-                        else :
-                            np_data[ndx_time_series_sample, ndx_feature, ndx_feature_value] = \
-                                np_data[ndx_time_series_sample, ndx_feature, ndx_feature_value] / \
-                                np_max[ndx_time_series_sample, ndx_feature_value]
-                    if np_data[ndx_time_series_sample, ndx_feature, ndx_feature_value] == NAN :
-                            logging.debug('NaN: %s %s %s', ndx_time_series_sample, ndx_feature, ndx_feature_value) 
-            logging.debug('normalized np_data feature values (0.0 to 1.0): %s, %s type: %s', \
-                          ndx_feature_value, result_drivers[ndx_feature_value], type(np_data[0, 0, ndx_feature_value]))
-            logging.debug('\n%s', np_data[: , : time_steps , ndx_feature_value] )
-
-    '''
-    Balance data for training
-    '''
+    #Balance data for training
     if BALANCE_CLASSES :
         print ("\tBalancing samples")
         if (ANALYSIS == 'value') :
             i_dummy = 1 #TBD
         elif (ANALYSIS == 'classification') :
-            '''
-            Ensure there are the same number of actual buy, sells and hold classifications
-            '''
+            #Ensure there are the same number of actual buy, sells and hold classifications
             np_data, np_forecast = balance_bsh_classifications(np_data, np_forecast)                
         else :
             print ('Analysis model is not specified')
             
-    step4 = time.time()
-    '''
-    Split data into test and training portions
-    '''
+    step3 = time.time()
+    #Split data into test and training portions
     print ("\tPreparing training and testing samples")
     row = round(0.1 * np_data.shape[0])
     x_test  = np_data    [        :int(row), :time_steps , : ]
@@ -481,29 +432,61 @@ def prepare_ts_lstm(tickers, result_drivers, forecast_feature, feature_type, tim
     #Use list_x_test[0] on a model to learn to forecast based on "adj_low", "adj_high", "adj_open", "adj_close", "adj_volume"
     lst_technical_analysis.append('Market_Activity')
     list_x_test.append (x_test [:, :, :5])
+    list_x_test[len(list_x_test-1)] = normalize_data(list_x_test[len(list_x_test-1)], x_test.shape[0], x_test.shape[2], \
+                                                     feature_type[:5], result_drivers, \
+                                                     time_steps, forecast_steps)
     list_x_train.append(x_train[:, :, :5])
+    list_x_train[len(list_x_train-1)] = normalize_data(list_x_train[len(list_x_train-1)], x_train.shape[0], x_train.shape[2], \
+                                                       feature_type[:5], result_drivers[:5], \
+                                                       time_steps, forecast_steps)
     
     #Use list_x_test[1] on a model to learn to forecast based on "BB_Lower", "BB_Upper"
     lst_technical_analysis.append('Bollinger_bands')
     list_x_test.append (x_test [:, :, 5:7])
+    list_x_test[len(list_x_test-1)] = normalize_data(list_x_test[len(list_x_test-1)], x_test.shape[0], x_test.shape[2], \
+                                                     feature_type[5:7], result_drivers[5:7], \
+                                                     time_steps, forecast_steps)
     list_x_train.append(x_train[:, :, 5:7])
+    list_x_train[len(list_x_train-1)] = normalize_data(list_x_train[len(list_x_train-1)], x_train.shape[0], x_train.shape[2], \
+                                                       feature_type[5:7], result_drivers[5:7], \
+                                                       time_steps, forecast_steps)
     
     #Use list_x_test[2] on a model to learn to forecast based on "AccumulationDistribution"
     lst_technical_analysis.append('AccumulationDistribution')
     list_x_test.append (x_test [:, :, 9:10])
+    list_x_test[len(list_x_test-1)] = normalize_data(list_x_test[len(list_x_test-1)], x_test.shape[0], x_test.shape[2], \
+                                                     feature_type[9:10], result_drivers[9:10], \
+                                                     time_steps, forecast_steps)
     list_x_train.append(x_train[:, :, 9:10])
+    list_x_train[len(list_x_train-1)] = normalize_data(list_x_train[len(list_x_train-1)], x_train.shape[0], x_train.shape[2], \
+                                                       feature_type[9:10], result_drivers[9:10], \
+                                                       time_steps, forecast_steps)
     
     #Use list_x_test[3] on a model to learn to forecast based on "MACD_Sell"
     lst_technical_analysis.append('MACD_Sell')
     list_x_test.append (x_test [:, :, 10:12])
+    list_x_test[len(list_x_test-1)] = normalize_data(list_x_test[len(list_x_test-1)], x_test.shape[0], x_test.shape[2], \
+                                                     feature_type[10:12], result_drivers[10:12], \
+                                                     time_steps, forecast_steps)
     list_x_train.append(x_train[:, :, 10:12])
+    list_x_train[len(list_x_train-1)] = normalize_data(list_x_train[len(list_x_train-1)], x_train.shape[0], x_train.shape[2], \
+                                                       feature_type[10:12], result_drivers[10:12], \
+                                                       time_steps, forecast_steps)
     
     #Use list_x_test[3] on a model to learn to forecast based on "MACD_Buy"
     lst_technical_analysis.append('MACD_Buy')
     list_x_test.append (x_test [:, :, 12:13])
+    list_x_test[len(list_x_test-1)] = normalize_data(list_x_test[len(list_x_test-1)], x_test.shape[0], x_test.shape[2], \
+                                                     feature_type[12:13], result_drivers[12:13], \
+                                                     time_steps, forecast_steps)
     list_x_train.append(x_train[:, :, 12:13])
+    list_x_train[len(list_x_train-1)] = normalize_data(list_x_train[len(list_x_train-1)], x_train.shape[0], x_train.shape[2], \
+                                                       feature_type[12:13], result_drivers[12:13], \
+                                                       time_steps, forecast_steps)
     
     #Use list_x_test[3] on a model to learn to forecast based on "AccumulationDistribution"
+    
+    step4 = time.time()
    
     end = time.time()
 
