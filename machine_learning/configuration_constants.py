@@ -27,16 +27,41 @@ data sources to use as samples to train, evaluate and use for predictions
             "aapl", "arnc", "ba", "c"
             "f"
             "all"
-            "all", 50000
+            "limit", 50000
 '''
-#TICKERS = ["limit", 750000]
-TICKERS = ["aapl"]
+GENERATE_DATA = False
+PLOT_DATA = False   # Interactive and display controls
+TICKERS = ["limit", 2000000]
+#TICKERS = ["aapl", "arnc", "ba", "c"]
+ANALASIS_SAMPLE_LENGTH = 30 # historical time steps to use for prediction
+FORECAST_LENGTH = 30 # future time steps to forecast 
 RESULT_DRIVERS   = ["adj_low", "adj_high", "adj_open", "adj_close", "adj_volume", "BB_Lower", "BB_Upper", "SMA20",   "OBV",     "AccumulationDistribution", "momentum", "MACD_Sell", "MACD_Buy"]
 FEATURE_TYPE     = ['numeric', 'numeric',  'numeric', 'numeric',    'numeric',    'numeric',   'numeric', 'numeric', 'numeric', 'numeric',                  'numeric',  'boolean',   'boolean']
 FORECAST_FEATURE = [False, True, False, False, False, False, False, False, False, False, False, False, False]
-ANALASIS_SAMPLE_LENGTH = 120
-FORECAST_LENGTH = 30
-BALANCE_CLASSES = False #Use the same number of samples of each class for training
+
+'''
+Data analysis and interpretation controls
+Output thresholds for characterization of results
+'''
+PREDICTION_BUY_THRESHOLD = 0.4
+PREDICTION_SELL_THRESHOLD = -0.4
+BUY_INDICATION_THRESHOLD = 1.2 #classification threshold for buy (future price / current price)
+SELL_INDICATION_THRESHOLD = 0.8 #classification threshold for sell (future price / current price)
+PREDICTION_PROBABILITY_THRESHOLD = 0.9
+
+'''
+Values used to identify classification
+    ..._INDICATION - value
+    ..._INDEX - array index for storage of value
+'''
+SELL_INDEX = 0
+HOLD_INDEX = 1
+BUY_INDEX = 2
+CLASSIFICATION_COUNT = 3
+BUY_INDICATION = 1.0
+HOLD_INDICATION = 0.0
+SELL_INDICATION = -1.0
+CLASSIFICATION_ID = 1.0
 
 '''
 Keras control and configuration values
@@ -47,9 +72,30 @@ Keras control and configuration values
     optimizer: adam SGD RMSprop Adagrad Adadelta Adamax Nadam  
     metrics: accuracy
 '''
+#[1.0, 1.0, 1.0, 1.0, 1.0, 1.0] - all equal
+#[1.0, 0.1, 0.1, 0.1, 0.1, 0.1] - focus on combined result
+#[0.1, 1.0, 0.1, 0.1, 0.1, 0.1] - focus on market activity
+#[1.0, 1.0, 0.1, 0.1, 0.1, 0.1] - focus on combined result and  market activity
+#[0.1, 0.1, 0.1, 0.1, 0.1, 1.0] - focus on MACD
+#[0.75, 0.1, 0.1, 0.5, 0.25, 0.25]
+LOSS_WEIGHTS = [1.0, 1.0, 0.01, 0.01, 1.0, 1.0] # use to emphasize different outputs
+DENSE_REGULARIZATION = False
+REGULARIZATION_VALUE = 0.0
+DROPOUT = False
+DROPOUT_RATE = 0.2
+LAYER_NODES = 1500
+USE_BIAS = True
+VALIDATION_SPLIT = 0.05
+#Model training
+BATCH_SIZE = 256
+EPOCHS = 10
+VERBOSE = 2                                   # Integer. 0, 1, or 2. Verbosity mode. 0 = silent, 1 = progress bar, 2 = one line per epoch
+BALANCE_CLASSES = True # Use the same number of samples of each class for training
+ANALYSIS_LAYER_COUNT = 6 # number of Dense layers for each technical analysis
+COMPOSITE_LAYER_COUNT = 3 # number of Dense layers for the composite analysis
 ANALYSIS    = 'classification'                # classification    value
-ML_APPROACH = 'convolutional'                 # core recurrent convolutional
-COMPILATION_LOSS = "binary_crossentropy"
+ML_APPROACH = 'core'                 # core recurrent convolutional
+COMPILATION_LOSS = 'binary_crossentropy'
 '''
 mean_squared_error
 mean_absolute_error
@@ -66,9 +112,10 @@ kullback_leibler_divergence
 poisson
 cosine_proximity
 '''
-LOSS_WEIGHTS = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0] # use to emphasize different outputs
-COMPILATION_METRICS = ['accuracy']            # loss funcion or accuracy - can also be a tuple ['a', 'b']
+
+COMPILATION_METRICS = ['accuracy', 'binary_crossentropy']            # loss function or accuracy - can also be a tuple ['a', 'b']
 '''
+accuracy
 binary_accuracy
 categorical_accuracy
 sparse_categorical_accuracy
@@ -76,8 +123,8 @@ top_k_categorical_accuracy
 spares_top_k_categorical_accuracy
 '''
 ACTIVATION = 'relu'
-'''
-softmax
+''' 
+softmax 
 elu
 selu
 softplus - 
@@ -88,7 +135,7 @@ sigmoid  - limit output to the range 0 <= output <= +1
 hard_sigmoid
 linear
 '''
-OPTIMIZER = 'adam'                            # adam SGD RMSprop Adagrad Adadelta Adamax Nadam
+OPTIMIZER = 'Adam'                            # adam SGD RMSprop Adagrad Adadelta Adamax Nadam
 '''
 SGD
 RMSprop
@@ -99,33 +146,4 @@ Adamax
 Nadam
 TFOptimizer
 '''
-USE_BIAS = True
-DROPOUT = 0.25
-VALIDATION_SPLIT = 0.05
-#Model training
-BATCH_SIZE = 32
-EPOCHS = 50
-VERBOSE = 2                                   # Integer. 0, 1, or 2. Verbosity mode. 0 = silent, 1 = progress bar, 2 = one line per epoch
-
-'''
-Output thresholds for characterization of results
-'''
-PREDICTION_BUY_THRESHOLD = 0.4
-PREDICTION_SELL_THRESHOLD = -0.4
-BUY_INDICATION_THRESHOLD = 1.2
-SELL_INDICATION_THRESHOLD = 0.8
-
-'''
-Values used to identify classification
-    ..._INDICATION - value
-    ..._INDEX - array index for storage of value
-'''
-CLASSIFICATION_COUNT = 3
-CLASSIFICATION_ID = 1.0
-BUY_INDICATION = 1.0
-BUY_INDEX = 2
-HOLD_INDICATION = 0.0
-HOLD_INDEX = 1
-SELL_INDICATION = -1.0
-SELL_INDEX = 0
 

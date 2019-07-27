@@ -423,6 +423,12 @@ if __name__ == '__main__':
     print ("Good morning Dr. Chandra. I am ready to verify that you have prepared my training data correctly.\n")
     print ("Using %s as example" % TICKERS)
     
+    feature_count = len(RESULT_DRIVERS)
+    forecast_feature = FORECAST_FEATURE
+    time_steps = ANALASIS_SAMPLE_LENGTH
+    forecast_steps = FORECAST_LENGTH
+    print ("Result Driver: %s" % RESULT_DRIVERS)
+    
     start = time.time()
     now = dt.datetime.now()
     
@@ -435,13 +441,6 @@ if __name__ == '__main__':
     log_fmt = logging.Formatter('%(asctime)s - %(name)s - %levelname - %(messages)s')
     logger.info('Plot data at all stages of preparation')
     
-    feature_count = len(RESULT_DRIVERS)
-    forecast_feature = FORECAST_FEATURE
-    time_steps = ANALASIS_SAMPLE_LENGTH
-    forecast_steps = FORECAST_LENGTH
-    print ("Result Driver: %s" % RESULT_DRIVERS)
-    
-    fig, axes = plt.subplots(nrows=4, ncols=5, figsize=(9, 4), constrained_layout=True)
     ts_length = ANALASIS_SAMPLE_LENGTH + FORECAST_LENGTH
     
     #Load raw data from file and plot 1st and last sample
@@ -450,9 +449,15 @@ if __name__ == '__main__':
     print ("Samples: %s" % df_data.shape[0])  
       
     #Convert raw data to time series dataframe
+    time_steps = ANALASIS_SAMPLE_LENGTH
+    forecast_steps = FORECAST_LENGTH
     df_data_supervised = series_to_supervised(df_data, time_steps, forecast_steps)
+    
     #Prepare 3D Numpy data cube from 2D dataframe    
     np_data_3D, np_prediction = prepare_3D_cube(df_data_supervised, feature_count, forecast_feature, time_steps, forecast_steps)
+
+    fig, axes = plt.subplots(nrows=4, ncols=5, figsize=(9, 4), constrained_layout=True)
+
     #Normalize the data as required for machine learning
     np_data_normalized = np.copy(np_data_3D[:, :, :5])
     feature_groups = [[0, 1, 2, 3],[4]]

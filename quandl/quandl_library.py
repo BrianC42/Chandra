@@ -184,16 +184,16 @@ def save_symbol_historical_data(ticker, df_data):
 
 def read_enhanced_symbol_data(ticker):
     logging.debug('====> ==============================================')
-    logging.info ('====> read_enhanced_symbol_data start')
+    logging.info ('====> read_enhanced_symbol_data start(ticker=%s)', ticker)
     logging.debug('====> ==============================================')
     
     input_file = get_devdata_dir() + "\\symbols\\" + ticker + "_enriched.csv"
     df_data = pd.read_csv(input_file)
     df_data = df_data.set_index('date')
 
-    logging.debug("ticker %s, shape %s - data file: %s", ticker, df_data.shape, input_file)
-    logging.debug("data head:\n%s", df_data.head(5))
-    logging.debug("data tail:\n%s", df_data.tail(5))
+    #logging.debug("ticker %s, shape %s - data file: %s", ticker, df_data.shape, input_file)
+    #logging.debug("data head:\n%s", df_data.head(5))
+    #logging.debug("data tail:\n%s", df_data.tail(5))
     logging.debug('<==== ==============================================')
     logging.info ('<==== read_enhanced_symbol_data end')
     logging.debug('<==== ==============================================')

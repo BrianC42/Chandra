@@ -25,6 +25,8 @@ from configuration_constants import FEATURE_TYPE
 from configuration_constants import FORECAST_FEATURE
 from configuration_constants import LOGGING_LEVEL
 from configuration_constants import LOGGING_FORMAT
+from configuration_constants import GENERATE_DATA
+from configuration_constants import PLOT_DATA
 
 from lstm import build_model
 from lstm import predict_sequences_multiple
@@ -36,6 +38,8 @@ from lstm import pickle_dump_training_data
 from lstm import pickle_load_training_data
 
 from buy_sell_hold import bsh_results_multiple
+from buy_sell_hold import plot_bsh_results
+
 from percentage_change import pct_change_multiple
 
 if __name__ == '__main__':
@@ -59,12 +63,6 @@ if __name__ == '__main__':
                                                                                        now.hour, now.minute, now.second) + '.txt'
     f_out = open(output_file, 'w')
     
-    '''
-    str_symbols = ''
-    for ndx_symbol in range (0, len(TICKERS)) :
-        str_symbols += TICKERS[ndx_symbol]
-        str_symbols += ' '
-    '''
     str_drivers = ''
     for ndx_driver in range (0, len(RESULT_DRIVERS)) :
         str_drivers += RESULT_DRIVERS[ndx_driver]
@@ -82,13 +80,15 @@ if __name__ == '__main__':
     ======================================================================= '''
     step1 = time.time()
     print ('\nStep 1 - Load and prepare the data for analysis')
-    '''
-    lst_analyses, x_train, y_train, x_test, y_test = prepare_ts_lstm(TICKERS, RESULT_DRIVERS, FORECAST_FEATURE, FEATURE_TYPE, \
-                                                                     ANALASIS_SAMPLE_LENGTH, FORECAST_LENGTH, \
-                                                                     source="local", analysis=ANALYSIS)
-    pickle_dump_training_data (lst_analyses, x_train, y_train, x_test, y_test)
-    '''
+    if GENERATE_DATA :
+        lst_analyses, x_train, y_train, x_test, y_test = prepare_ts_lstm(TICKERS, RESULT_DRIVERS, FORECAST_FEATURE, FEATURE_TYPE, \
+                                                                         ANALASIS_SAMPLE_LENGTH, FORECAST_LENGTH, \
+                                                                         source="local", analysis=ANALYSIS)
+        pickle_dump_training_data (lst_analyses, x_train, y_train, x_test, y_test)
     lst_analyses, x_train, y_train, x_test, y_test = pickle_load_training_data()
+    
+    if PLOT_DATA :
+        plot_bsh_results(lst_analyses, x_train, y_train, x_test, y_test)
     
     ''' ................... Step 2 - Build Model ............................
     ========================================================================= '''

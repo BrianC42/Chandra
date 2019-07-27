@@ -35,12 +35,15 @@ from quandl_library import get_devdata_dir
 from time_series_data import series_to_supervised
 
 from buy_sell_hold import build_bsh_classification_model
-from buy_sell_hold import calculate_single_bsh_flag
 from buy_sell_hold import calculate_sample_bsh_flag
+from buy_sell_hold import calculate_single_bsh_flag
 from buy_sell_hold import balance_bsh_classifications
+from buy_sell_hold import bsh_data_check
 
 from percentage_change import calculate_single_pct_change
 from percentage_change import calculate_sample_pct_change
+from percentage_change import balance_pct_change
+from percentage_change import calculate_single_actual_pct_change
 
 '''
     Layers
@@ -258,7 +261,7 @@ def prepare_3D_cube(df_data, feature_count, forecast_feature, time_steps, foreca
                     #************************** Specific to the analysis being performed ************************
                     if (ANALYSIS == 'value') :
                         #Calculate % change of the for each time period forecast feature value compared to the current value
-                        np_prediction[ndx_time_series_sample, ndx_feature-time_steps] = calculate_single_pct_change()
+                        np_prediction[ndx_time_series_sample, ndx_feature-time_steps] = calculate_single_actual_pct_change()
                     elif (ANALYSIS == 'classification') :
                         #Calculate buy, sell or hold classification for each future time period
                         np_prediction[ndx_time_series_sample, ndx_feature-time_steps] = \
@@ -292,7 +295,7 @@ def normalize_data(np_data, samples, feature_count, feature_type, result_drivers
     for fgroup_list in feature_groups:
         for feature in fgroup_list:
             for ndx_sample in range(0, samples) :
-                for ndx_time_step in range(0, time_steps+forecast_steps) :            
+                for ndx_time_step in range(0, time_steps) :            
                     if (feature_type[feature] == 'boolean') :
                         break
                     else : # normalize all numeric features
@@ -308,7 +311,7 @@ def normalize_data(np_data, samples, feature_count, feature_type, result_drivers
         for feature in fgroup_list:
             for ndx_sample in range(0, samples) :
                 #norm = colors.Normalize(np_min[ndx_sample, fgroup], np_max[ndx_sample, fgroup])
-                for ndx_time_step in range(0, time_steps+forecast_steps) :        
+                for ndx_time_step in range(0, time_steps) :        
                     if (feature_type[feature] == 'boolean') :
                         break
                     else :
@@ -338,13 +341,12 @@ def prepare_ts_lstm(tickers, result_drivers, forecast_feature, feature_type, tim
     feature_count = len(result_drivers)
 
     #Prepare the list of symbols to process
+    sample_limit = 0
     if (len(tickers) <= 2) :
         if ((tickers[0] == "all") or (tickers[0] == "limit")):
             if (tickers[0] == "limit") :
                 sample_limit = tickers[1]
                 print("\tLimiting samples to %d time series" % sample_limit)
-            else:
-                sample_limit = 0
             print("\tLoading ALL symbols.")
             data_dir = get_devdata_dir() + "\\symbols\\"
             file_names = [fn for fn in os.listdir(data_dir) \
@@ -409,7 +411,7 @@ def prepare_ts_lstm(tickers, result_drivers, forecast_feature, feature_type, tim
     if BALANCE_CLASSES :
         print ("\tBalancing samples")
         if (ANALYSIS == 'value') :
-            i_dummy = 1 #TBD
+            np_data, np_forecast = balance_pct_change(np_data, np_forecast) # balance the training y-axis values to improve training
         elif (ANALYSIS == 'classification') :
             #Ensure there are the same number of actual buy, sells and hold classifications
             np_data, np_forecast = balance_bsh_classifications(np_data, np_forecast)                
@@ -420,10 +422,14 @@ def prepare_ts_lstm(tickers, result_drivers, forecast_feature, feature_type, tim
     #Split data into test and training portions
     print ("\tPreparing training and testing samples")
     row = round(0.1 * np_data.shape[0])
-    x_test  = np_data    [        :int(row), :time_steps , : ]
-    x_train = np_data    [int(row):        , :time_steps , : ]
-    y_test  = np_forecast[        :int(row), :]
-    y_train = np_forecast[int(row):        , :]
+    x_test  = np.copy(np_data    [        :int(row), :time_steps , : ])
+    x_train = np.copy(np_data    [int(row):        , :time_steps , : ])
+    y_test  = np.copy(np_forecast[        :int(row), :])
+    y_train = np.copy(np_forecast[int(row):        , :])
+
+    bsh_classification = [0, 0, 0]
+    for ndx_class in range (0, CLASSIFICATION_COUNT): 
+        bsh_classification[ndx_class] = np.count_nonzero(np_forecast[:, ndx_class])
 
     list_x_test  = list([])
     list_x_train = list([])
@@ -431,58 +437,78 @@ def prepare_ts_lstm(tickers, result_drivers, forecast_feature, feature_type, tim
     
     #Use list_x_test[0] on a model to learn to forecast based on "adj_low", "adj_high", "adj_open", "adj_close", "adj_volume"
     lst_technical_analysis.append('Market_Activity')
-    list_x_test.append (x_test [:, :, :5])
-    list_x_test[len(list_x_test-1)] = normalize_data(list_x_test[len(list_x_test-1)], x_test.shape[0], x_test.shape[2], \
-                                                     feature_type[:5], result_drivers, \
-                                                     time_steps, forecast_steps)
-    list_x_train.append(x_train[:, :, :5])
-    list_x_train[len(list_x_train-1)] = normalize_data(list_x_train[len(list_x_train-1)], x_train.shape[0], x_train.shape[2], \
-                                                       feature_type[:5], result_drivers[:5], \
-                                                       time_steps, forecast_steps)
+    feature_count = 5
+    feature_groups = [[0, 1, 2, 3],[4]] #How the sub-set of features are grouped - 2 groups 4 and 1
+    np_normalized = np.copy(x_test [:, :, :5])
+    np_normalized = normalize_data(np_normalized, np_normalized.shape[0], \
+                                    feature_count, feature_type[:5], result_drivers[:5], feature_groups, \
+                                    time_steps, forecast_steps)
+    list_x_test.append (np_normalized)
+    np_normalized = np.copy(x_train [:, :, :5])
+    np_normalized = normalize_data(np_normalized, np_normalized.shape[0], \
+                                    feature_count, feature_type[:5], result_drivers[:5], feature_groups, \
+                                    time_steps, forecast_steps)
+    list_x_train.append (np_normalized)
     
     #Use list_x_test[1] on a model to learn to forecast based on "BB_Lower", "BB_Upper"
     lst_technical_analysis.append('Bollinger_bands')
-    list_x_test.append (x_test [:, :, 5:7])
-    list_x_test[len(list_x_test-1)] = normalize_data(list_x_test[len(list_x_test-1)], x_test.shape[0], x_test.shape[2], \
-                                                     feature_type[5:7], result_drivers[5:7], \
-                                                     time_steps, forecast_steps)
-    list_x_train.append(x_train[:, :, 5:7])
-    list_x_train[len(list_x_train-1)] = normalize_data(list_x_train[len(list_x_train-1)], x_train.shape[0], x_train.shape[2], \
-                                                       feature_type[5:7], result_drivers[5:7], \
-                                                       time_steps, forecast_steps)
+    feature_count = 2
+    feature_groups = [[0, 1]] #How the sub-set of features are grouped - 1 group, 2 features
+    np_normalized = np.copy(x_test [:, :, 5:7])
+    np_normalized = normalize_data(np_normalized, np_normalized.shape[0], \
+                                    feature_count, feature_type[5:7], result_drivers[5:7], feature_groups, \
+                                    time_steps, forecast_steps)
+    list_x_test.append (np_normalized)
+    np_normalized = np.copy(x_train [:, :, 5:7])
+    np_normalized = normalize_data(np_normalized, np_normalized.shape[0], \
+                                    feature_count, feature_type[5:7], result_drivers[5:7], feature_groups, \
+                                    time_steps, forecast_steps)
+    list_x_train.append (np_normalized)
     
     #Use list_x_test[2] on a model to learn to forecast based on "AccumulationDistribution"
     lst_technical_analysis.append('AccumulationDistribution')
-    list_x_test.append (x_test [:, :, 9:10])
-    list_x_test[len(list_x_test-1)] = normalize_data(list_x_test[len(list_x_test-1)], x_test.shape[0], x_test.shape[2], \
-                                                     feature_type[9:10], result_drivers[9:10], \
-                                                     time_steps, forecast_steps)
-    list_x_train.append(x_train[:, :, 9:10])
-    list_x_train[len(list_x_train-1)] = normalize_data(list_x_train[len(list_x_train-1)], x_train.shape[0], x_train.shape[2], \
-                                                       feature_type[9:10], result_drivers[9:10], \
-                                                       time_steps, forecast_steps)
+    feature_count = 1
+    feature_groups = [[0]] #How the sub-set of features are grouped - 1 group, 1 feature
+    np_normalized = np.copy(x_test [:, :, 9:10])
+    np_normalized = normalize_data(np_normalized, np_normalized.shape[0], \
+                                    feature_count, feature_type[9:10], result_drivers[9:10], feature_groups, \
+                                    time_steps, forecast_steps)
+    list_x_test.append (np_normalized)
+    np_normalized = np.copy(x_train [:, :, 9:10])
+    np_normalized = normalize_data(np_normalized, np_normalized.shape[0], \
+                                    feature_count, feature_type[9:10], result_drivers[9:10], feature_groups, \
+                                    time_steps, forecast_steps)
+    list_x_train.append (np_normalized)
     
     #Use list_x_test[3] on a model to learn to forecast based on "MACD_Sell"
     lst_technical_analysis.append('MACD_Sell')
-    list_x_test.append (x_test [:, :, 10:12])
-    list_x_test[len(list_x_test-1)] = normalize_data(list_x_test[len(list_x_test-1)], x_test.shape[0], x_test.shape[2], \
-                                                     feature_type[10:12], result_drivers[10:12], \
-                                                     time_steps, forecast_steps)
-    list_x_train.append(x_train[:, :, 10:12])
-    list_x_train[len(list_x_train-1)] = normalize_data(list_x_train[len(list_x_train-1)], x_train.shape[0], x_train.shape[2], \
-                                                       feature_type[10:12], result_drivers[10:12], \
-                                                       time_steps, forecast_steps)
+    feature_count = 2
+    feature_groups = [[0, 1]] #How the sub-set of features are grouped - 1 group 2 features
+    np_normalized = np.copy(x_test [:, :, 10:12])
+    np_normalized = normalize_data(np_normalized, np_normalized.shape[0], \
+                                    feature_count, feature_type[10:12], result_drivers[10:12], feature_groups, \
+                                    time_steps, forecast_steps)
+    list_x_test.append (np_normalized)
+    np_normalized = np.copy(x_train [:, :, 10:12])
+    np_normalized = normalize_data(np_normalized, np_normalized.shape[0], \
+                                    feature_count, feature_type[10:12], result_drivers[10:12], feature_groups, \
+                                    time_steps, forecast_steps)
+    list_x_train.append (np_normalized)
     
     #Use list_x_test[3] on a model to learn to forecast based on "MACD_Buy"
     lst_technical_analysis.append('MACD_Buy')
-    list_x_test.append (x_test [:, :, 12:13])
-    list_x_test[len(list_x_test-1)] = normalize_data(list_x_test[len(list_x_test-1)], x_test.shape[0], x_test.shape[2], \
-                                                     feature_type[12:13], result_drivers[12:13], \
-                                                     time_steps, forecast_steps)
-    list_x_train.append(x_train[:, :, 12:13])
-    list_x_train[len(list_x_train-1)] = normalize_data(list_x_train[len(list_x_train-1)], x_train.shape[0], x_train.shape[2], \
-                                                       feature_type[12:13], result_drivers[12:13], \
-                                                       time_steps, forecast_steps)
+    feature_count = 2
+    feature_groups = [[0, 2]] #How the sub-set of features are grouped - 1 group, 2 features
+    np_normalized = np.copy(x_test [:, :, 10:13])
+    np_normalized = normalize_data(np_normalized, np_normalized.shape[0], \
+                                    feature_count, feature_type[10:13], result_drivers[10:13], feature_groups, \
+                                    time_steps, forecast_steps)
+    list_x_test.append (np_normalized)
+    np_normalized = np.copy(x_train [:, :, 10:13])
+    np_normalized = normalize_data(np_normalized, np_normalized.shape[0], \
+                                    feature_count, feature_type[10:13], result_drivers[10:13], feature_groups, \
+                                    time_steps, forecast_steps)
+    list_x_train.append (np_normalized)
     
     #Use list_x_test[3] on a model to learn to forecast based on "AccumulationDistribution"
     
@@ -494,6 +520,7 @@ def prepare_ts_lstm(tickers, result_drivers, forecast_feature, feature_type, tim
     logging.info ('<---- Including the following technical analyses:\n\t%s' % lst_technical_analysis)
     logging.info ('<---- train and test shapes: \nx_test %s\nx_train %s\ny_test %s\ny_train %s', \
                  x_test.shape, x_train.shape, y_test.shape, y_train.shape)
+    logging.info ('<---- training samples classification counts %s' % bsh_classification)
     for ndx_i in range (0, len(list_x_train)) :
         logging.debug('<---- lst_technical_analysis %s', lst_technical_analysis[ndx_i])
         logging.debug('<---- \ttraining data shape %s', list_x_train[ndx_i].shape)
@@ -543,6 +570,14 @@ def train_lstm(model, x_train, y_train, f_out):
         lst_x.append(x_train[ndx_i])
         lst_y.append(y_train)
     lst_y.append(y_train)
+
+    if (ANALYSIS == 'value') :
+        dummy = 0
+    elif (ANALYSIS == 'classification') :
+        #Classification prediction of buy, sell or hold
+        bsh_data_check(lst_x, lst_y, f_out)
+    else :
+        print ('Analysis model is not specified')
         
     '''
     x:                 Numpy array of training data (if the model has a single input), or list of Numpy arrays (if the model has multiple inputs). 
