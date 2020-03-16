@@ -50,3 +50,6 @@ def calculate_single_pct_change(current_price, future_price):
     bsh_change = future_price / current_price
 
     return bsh_change
+
+def pct_change_multiple():
+    return

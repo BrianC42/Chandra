@@ -88,13 +88,13 @@ USE_BIAS = True
 VALIDATION_SPLIT = 0.05
 #Model training
 BATCH_SIZE = 256
-EPOCHS = 10
+EPOCHS = 3
 VERBOSE = 2                                   # Integer. 0, 1, or 2. Verbosity mode. 0 = silent, 1 = progress bar, 2 = one line per epoch
 BALANCE_CLASSES = True # Use the same number of samples of each class for training
 ANALYSIS_LAYER_COUNT = 6 # number of Dense layers for each technical analysis
 COMPOSITE_LAYER_COUNT = 3 # number of Dense layers for the composite analysis
 ANALYSIS    = 'classification'                # classification    value
-ML_APPROACH = 'core'                 # core recurrent convolutional
+ML_APPROACH = 'recurrent'                 # core recurrent convolutional
 COMPILATION_LOSS = 'binary_crossentropy'
 '''
 mean_squared_error

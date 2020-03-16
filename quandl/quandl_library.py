@@ -19,7 +19,7 @@ def get_devdata_dir():
     return devdata_dir
 
 def get_ini_data(csection):
-    config_file = os.getenv('localappdata') + "\\AI Projects\\data.ini"
+    config_file = os.getenv('localappdata') + "\\Development\\data.ini"
     config = configparser.ConfigParser()
     config.read(config_file)
     config.sections()
