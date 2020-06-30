@@ -1,0 +1,6 @@
+{
+"logFile" : "d:\\brian\\AI Projects\\quandl_log.txt",
+"outputFile" : "d:\\brian\\AI Projects\\quandl_output",
+"loggingLevel" : "debug",
+"loggingFormat" : "%(asctime)s: %(levelname)s: %(message)s"
+}

@@ -10,7 +10,7 @@ from tda_api_library import tda_price_history
 from tda_api_library import tda_symbol_lookup
 
 if __name__ == '__main__':
-    print ("Good morning Dr. Chandra\n")
+    print ("Good morning Dr. chandra\n")
     
     print ("tda source", tda_data("source"))
     print ("tda version", tda_data("version"))

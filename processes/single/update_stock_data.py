@@ -3,65 +3,126 @@ Created on Jan 31, 2018
 
 @author: Brian
 '''
-import datetime
+import os
+import re
+import configparser
+import datetime as dt
+import time
+import json
+import logging
+import quandl
+
+#from quandl_library import update_quandl_eod_data
+from tda_api_library import update_tda_eod_data
+
+def get_ini_data(csection):
+    config_file = os.getenv('localappdata') + "\\Development\\data.ini"
+    config = configparser.ConfigParser()
+    config.read(config_file)
+    config.sections()
+    ini_data = config[csection]
+    return ini_data
+
+def get_devdata_dir():
+    logging.info('get_devdata_dir')
+    devdata = get_ini_data('DEVDATA')
+    devdata_dir = devdata['dir']
+    return devdata_dir
+
+def get_quandl_key():
+    logging.info('get_quandl_key')
+    quandl_data = get_ini_data("QUANDL")
+    quandl.ApiConfig.api_key = quandl_data['key']
+    return (quandl_data['key'])
+
+def get_list_of_tickers():
+    logging.info('get_list_of_tickers')
+    df_tickers = ["AAPL"]
+    return(df_tickers)
+
+def save_list_of_tickers(df_tickers):
+    logging.info('save_list_of_tickers')
+    output_file = get_devdata_dir() + "\\TickerMetadata.csv"
+    logging.debug ("Creating a file containing the list of the tickers processed ...", output_file, df_tickers)
+    df_tickers.to_csv(output_file)
+    return
+
+def read_config_json(json_file) :
+    print ("reading configuration details from ", json_file)
+    
+    json_f = open(json_file, "rb")
+    json_config = json.load(json_f)
+    json_f.close
+    
+    return (json_config)
 
 def update_stock_data():
-    from quandl_library import get_list_of_tickers
-    from quandl_library import save_list_of_tickers
-    from quandl_library import update_eod_data
-    from quandl_library import read_symbol_historical_data
-    from quandl_library import save_last_quandl_update
-    from quandl_library import quandl_data_last_updated
+    logger.debug('update_stock_data ---->')
     
-    df_new_data = update_eod_data() #get delta from Quandl
-    print ("New data\n%s\n has a shape %s" % (df_new_data, df_new_data.shape))
     df_tickers = get_list_of_tickers()
-    print("df_tickers\n%s ..." % df_tickers.head(3))
-    dt_Q_date = datetime.datetime.strptime(quandl_data_last_updated(), '%Y-%m-%d')
-    print("Quandl date was last updated %s" % dt_Q_date)
-    dt_today = datetime.datetime.today()
-    print("Today is %s" % dt_today)
+    update_tda_eod_data(df_tickers)
     
-    
-    for ticker, row in df_tickers.iterrows():
-        #print ("Ticker %s" % index)
-        df_ticker_data = read_symbol_historical_data(ticker)
-        #print ("Update_Stock_Data(): \n%s\n%s " % (df_ticker_data.head(1), df_ticker_data.tail(1)))
-        first_date = df_ticker_data.iloc[0].name # data is indexed by date string
-        row['First date'] = first_date
-
-        num_rows = df_ticker_data.shape[0]
-        last_date = df_ticker_data.iloc[num_rows - 1].name
-        row['Last date'] = first_date
-        
-        dt_1st_date = datetime.datetime.strptime(first_date, '%Y-%m-%d')
-        dt_last_date = datetime.datetime.strptime(last_date, '%Y-%m-%d')
-        
-        if dt_Q_date == dt_last_date:
-            #symbol was actively traded when data was last updated
-            #print("Ticker %s, oldest data %s, most recent data %s, Status %s" % (ticker, first_date, last_date, row['Status']))
-            print ("Ticker %s, 1st %s, last %s, delta %s" % \
-                   (ticker, dt_1st_date, dt_last_date, dt_Q_date - dt_last_date))
-            row['Status'] = "active"
-        else:
-            #symbol was inactive when data last updated
-            print("Ticker %s is no longer active" % ticker)
-            row['Status'] = "inactive"
-        
-        '''
-        print("Ticker meta-data:\n%s" % row)
-        df_tickers[ticker] = row
-        ndx += 1
-        if ndx >= 10:
-            break
-        '''
-                
-    save_list_of_tickers(df_tickers)
-    save_last_quandl_update() #Update timestamp of last update from Quandl
-
+    logger.debug('<---- update_stock_data')
     return
 
 if __name__ == '__main__':
     print ("Affirmative, Dave. I read you\n")
-    update_stock_data()
+    '''
+    Prepare the run time environment
+    '''
+    start = time.time()
+    now = dt.datetime.now()
+    
+    # Get external initialization details
+    app_data = get_ini_data("TDAMERITRADE")
+    json_config = read_config_json(app_data['config'])
+    tda_api_key = app_data['apikey']
+
+    try:    
+        log_file = json_config['logFile']
+        if json_config['loggingLevel'] == "debug":
+            logging.basicConfig(filename=log_file, level=logging.DEBUG, format=json_config['loggingFormat'])
+        elif json_config['loggingLevel'] == "info":
+            logging.basicConfig(filename=log_file, level=logging.INFO, format=json_config['loggingFormat'])
+        else:
+            logging.basicConfig(filename=log_file, level=logging.WARNING, format=json_config['loggingFormat'])
+            
+        output_file = json_config['outputFile']
+        output_file = output_file + ' {:4d} {:0>2d} {:0>2d} {:0>2d} {:0>2d} {:0>2d}'.format(now.year, now.month, now.day, \
+                                                                                       now.hour, now.minute, now.second) + '.txt'
+        f_out = open(output_file, 'w')    
+        
+        # global parameters
+        #logging.debug("Global parameters")
+    
+    except Exception:
+        print("\nAn exception occurred - log file details are missing from json configuration")
+        
+    print ("Logging to", log_file)
+    logger = logging.getLogger('chandra_logger')
+    log_fmt = logging.Formatter('%(asctime)s - %(name)s - %levelname - %(messages)s')
+    logger.info('Updating stock data')
+
+    '''
+        Update end of day stock prices from Quandl
+        Premium service requiring a monthly fee
+    
+    try:
+        quandl_key = get_quandl_key()
+        update_stock_data(quandl_key)
+    except Exception:
+        print("\nUnable to set quandl API key")
+    '''
+    
+    '''
+        Update end of day stock prices from TD Ameritrade
+    '''
+    df_symbols = get_list_of_tickers()
+    update_tda_eod_data(df_symbols, tda_api_key)
+    
+    '''
+    clean up and prepare to exit
+    '''
+    f_out.close()
+
     print ("\nDave, this conversation can serve no purpose anymore. Goodbye")

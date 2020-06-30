@@ -1,0 +1,197 @@
+{
+"logFile" : "d:\\brian\\AI Projects\\chandra_log.txt",
+"outputFile" : "d:\\brian\\AI Projects\\chandra_output",
+"loggingLevel" : "debug",
+"loggingFormat" : "%(asctime)s: %(levelname)s: %(message)s",
+"dataSources" : [
+	{	"srcType" : "localFileAAPL",
+		"fileType" : "csv",
+		"fileDetails" : "d:\\brian\\AI Projects\\Quandl\\symbols\\aapl.csv",
+		"dataElements" : ["date","adj_open","adj_close","adj_high","adj_low"]
+	},
+	{	"srcType" : "localFileGE",
+		"fileType" : "csv",
+		"fileDetails" : "d:\\brian\\AI Projects\\Quandl\\symbols\\ge.csv",
+		"dataElements" : ["date","adj_close"]
+	},
+	{	"srcType" : "API"
+	}
+],
+"processNodes" : [
+	{	"processName" : "inputAAPL",
+		"inputType" : "localFile",
+		"inputFlows" : ["localFileAAPL"],
+		"processType" : "readcsv",
+		"outputFlow" : ["inputOHLC"]
+	},
+	{	"processName" : "inputGE",
+		"inputType" : "localFile",
+		"inputFlows" : ["localFileGE"],
+		"processType" : "readcsv",
+		"outputFlow" : ["inputMACD"]
+	},
+	{	"processName" : "calcMACD",
+		"inputType" : "dataFlow",
+		"inputFlows" : ["a", "b", "c"],
+		"processType" : "calcMACD",
+		"outputFlow" : ["d"]
+	},
+	{	"processName" : "calcBollingerBands",
+		"inputType" : "dataFlow",
+		"inputFlows" : ["a", "b", "c"],
+		"processType" : "calcBollingerBands",
+		"outputFlow" : ["d"]
+	},
+	{	"processName" : "calcOnBalanceVolume",
+		"inputType" : "dataFlow",
+		"inputFlows" : ["a", "b", "c"],
+		"processType" : "calcOnBalanceVolume",
+		"outputFlow" : ["d"]
+	},
+	{	"processName" : "LSTM_OBV",
+		"inputType" : "dataFlow",
+		"inputFlows" : ["a", "b", "c"],
+		"processType" : "KerasLSTM",
+		"outputFlow" : ["d"]
+	},
+	{	"processName" : "LSTM_OHLC",
+		"inputType" : "dataFlow",
+		"inputFlows" : ["a", "b", "c"],
+		"processType" : "KerasLSTM",
+		"outputFlow" : ["d"]
+	},
+	{	"processName" : "LSTM_BB",
+		"inputType" : "dataFlow",
+		"inputFlows" : ["a", "b", "c"],
+		"processType" : "KerasLSTM",
+		"outputFlow" : ["d"]
+	},
+	{	"processName" : "dense_MACD",
+		"inputType" : "dataFlow",
+		"inputFlows" : ["a", "b", "c"],
+		"processType" : "KerasDense",
+		"outputFlow" : ["d"]
+	},
+	{	"processName" : "summary",
+		"inputType" : "dataFlow",
+		"inputFlows" : ["a", "b", "c"],
+		"processType" : "KerasDense",
+		"outputFlow" : ["d"]
+	}
+],
+"dataFlows" : [
+	{	"flowName" : "inputMACD",
+		"flowFrom" : "inputGE",
+		"flowTo" : "calcMACD",
+		"timeSequence" : false
+	},
+	{	"flowName" : "inputOHLC",
+		"flowFrom" : "inputAAPL",
+		"flowTo" : "LSTM_OHLC",
+		"timeSequence" : true
+	},
+	{	"flowName" : "inputBB",
+		"flowFrom" : "inputGE",
+		"flowTo" : "calcBollingerBands",
+		"timeSequence" : false
+	},
+	{	"flowName" : "inputOBV",
+		"flowFrom" : "calcBollingerBands",
+		"flowTo" : "LSTM_BB",
+		"timeSequence" : false
+	},
+	{	"flowName" : "inputOBV",
+		"flowFrom" : "inputGE",
+		"flowTo" : "calcOnBalanceVolume",
+		"timeSequence" : false
+	},
+	{	"flowName" : "LSTM_OHLC",
+		"flowFrom" : "LSTM_OHLC",
+		"flowTo" : "summary",
+		"timeSequence" : true
+	},
+	{	"flowName" : "LSTM_BB",
+		"flowFrom" : "LSTM_BB",
+		"flowTo" : "summary",
+		"timeSequence" : true
+	},
+	{	"flowName" : "LSTM_OBV",
+		"flowFrom" : "calcOnBalanceVolume",
+		"flowTo" : "LSTM_OBV",
+		"timeSequence" : true
+	},
+	{	"flowName" : "summaryOBV",
+		"flowFrom" : "LSTM_OBV",
+		"flowTo" : "summary",
+		"timeSequence" : true
+	},
+	{	"flowName" : "denseMACD",
+		"flowFrom" : "calcMACD",
+		"flowTo" : "dense_MACD"
+	},
+	{	"flowName" : "MACD",
+		"flowFrom" : "dense_MACD",
+		"flowTo" : "summary"
+	}
+],
+"analysisResults" : [
+	{	"resultName" : "MACD",
+		"resultNode" : "LSTM_OHLC"
+	},
+	{	"resultName" : "BollingerBands",
+		"resultNode" : "LSTM_BB"
+	},
+	{	"resultName" : "Summary",
+		"resultNode" : "summary"
+	}
+],
+"symbols" : ["AAPL", "c", "ge"] ,
+"inputNodes": [
+	{	"nodeName" : "pricing", 
+		"nodeType" : "LSTM",
+		"dataElements" : ["closingPrice","Low"] ,
+		"timeSequence" : false,
+		"timeSteps" : 30,
+		"outputName" : "pricing",
+		"lossWeights" : [1.0, 1.0, 0.01, 0.01, 1.0, 1.0],
+		"denseRegularation" : false,
+		"regularationValue" : 0.0,
+		"dropout" : false,
+		"dropoutRate" : 0.2,
+		"layerNodes" : 1500,
+		"useBias" : true,
+		"validationSplit" : 0.05,
+		"batchSize" : 256,
+		"epochs" : 3,
+		"verbose" : 2,
+		"balanceClasses" : true,
+		"analysis" : "classification",
+		"compilationLoss" : "binary_crossentropy",
+		"compilationMetrics" : ["accuracy", "binary_crossentropy"],
+		"activation" : "relu",
+		"optimizer" : "adam"
+	}, 
+	{	"nodeName" : "volume", 
+		"nodeType" : "dense", 
+		"dataElements" : ["volume"] ,
+		"timeSequence" : false,
+		"outputName" : "volume"
+	},
+	{	"nodeName" : "MACD", 
+		"nodeType" : "dense", 
+		"dataElements" : ["MACD"] ,
+		"timeSequence" : false,
+		"layerNodes" : 1000,
+		"outputName" : "MACD Output"
+	}
+],
+"internalNodes": [
+	{"nodeName" : "stream1", 					"nodeType" : "dense", "outputName" : "stream1Out", "inputs" : ["pricing", "volume"]},
+	{"outputName" : "stream2Out",				"nodeType" : "dense", "inputs" : ["MACD"], 		"nodeName" : "stream2"},
+	{"inputs" : ["stream1Out", "stream2Out"], 	"nodeType" : "dense", "nodeName" : "stream3",  	"outputName" : "conclusion"}
+],
+"outputs" : [
+	"stream1Out", 
+	"conclusion"
+]
+}

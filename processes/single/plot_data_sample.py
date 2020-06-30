@@ -420,7 +420,7 @@ def MACD_Buy(axis, x_train):
     return bplot
 
 if __name__ == '__main__':
-    print ("Good morning Dr. Chandra. I am ready to verify that you have prepared my training data correctly.\n")
+    print ("Good morning Dr. chandra. I am ready to verify that you have prepared my training data correctly.\n")
     print ("Using %s as example" % TICKERS)
     
     feature_count = len(RESULT_DRIVERS)

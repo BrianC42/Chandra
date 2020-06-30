@@ -43,7 +43,7 @@ from buy_sell_hold import plot_bsh_results
 from percentage_change import pct_change_multiple
 
 if __name__ == '__main__':
-    print ("Good morning Dr. Chandra. I am ready for my first lesson.\n")
+    print ("Good morning Dr. chandra. I am ready for my first lesson.\n")
     
     start = time.time()
     now = dt.datetime.now()

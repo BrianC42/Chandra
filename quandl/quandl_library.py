@@ -3,35 +3,12 @@ Created on Jan 31, 2018
 
 @author: Brian
 '''
-import os
-import re
 import datetime
-import configparser
 import quandl
 import logging
 import pandas as pd
+
 from numpy.distutils.fcompiler import none
-
-def get_devdata_dir():
-    logging.info('get_devdata_dir')
-    devdata = get_ini_data('DEVDATA')
-    devdata_dir = devdata['dir']
-    return devdata_dir
-
-def get_ini_data(csection):
-    config_file = os.getenv('localappdata') + "\\Development\\data.ini"
-    config = configparser.ConfigParser()
-    config.read(config_file)
-    config.sections()
-    ini_data = config[csection]
-    return ini_data
-
-def get_quandl_key():
-    logging.info('get_quandl_key')
-    quandl_data = get_ini_data("QUANDL")
-    quandl.ApiConfig.api_key = quandl_data['key']
-    
-    return (quandl)
 
 def ticker_status_dict():
     logging.info('ticker_status_dict')
@@ -58,39 +35,24 @@ def quandl_data_dict():
     
     return(QColsDict)
 
-def update_eod_data():
+def update_quandl_eod_data(quandl_key, tickers):
     logging.info('update_eod_data')
-    '''
-    https://www.quandl.com/api/v3/datatables/WIKI/PRICES/delta.json?api_key=XXX
-    
-    The latest_full_data corresponds to a full dump of the data in the table at the time specified. 
-    In the above example this equals 2016-09-04T18h37m34.
+    print("\ntickers %s" % tickers)
+    logging.info('Updating tickers %s', tickers)
 
-    files is a list of the delta files. WIKI has a file for insertions, 
-    updates and deletions created every day. One or more of the delta files can be empty 
-    if no changes have been made to the table. 
-    from gives the time when the previous set of delta files were created. 
-    to corresponds to the time when the current delta files were created. 
-    This means that the delta files contain the changes that happened to the table 
-    between the from and to times.
+    for ticker in tickers:
+        try:
+            print("\nTicker: %s" % ticker)
+            start_date = "2017-12-21"
+            end_date = "2017-12-28"
+            quandl.ApiConfig.api_key = quandl_key
+            q_data = quandl.get('EOD/'+ticker, start_date=start_date, end_date=end_date, paginate=True)
+            print(q_data)
+        except:
+            logging.info('Error attempting to retrieve quandl data for %s', ticker)
+            print("Error attempting to retrieve quandl data for %s" % ticker)
 
-    We currently store a history of up to seven delta files when available. 
-    The latest_full_data file will always be present and can be used at any time to sync 
-    your database if you have missed several delta updates.
-    '''
-
-    #print("Retrieving end of day market data")
-    data = [[1,2,3,"A",5,6,7,8,9,10,11,12,13,14],[14,13,12,11,10,9,8,7,6,5,"Z",3,2,1]]
-    df_data = pd.DataFrame(data)
-
-    '''
-    df_data = quandl.get_table("WIKI/PRICES",ticker=ticker, \
-                               paginate=True, \
-                               qopts={'columns':{field_of_interest}})
-    '''
-    logging.debug ("New data\n%s\n%s\nhas a shape %s", df_data.head(2), df_data.tail(2),df_data.shape)
-
-    return(df_data)
+    return()
 
 def fetch_timeseries_data(field_of_interest,symbol,source):  
     logging.info('fetch_timeseries_data')
@@ -111,23 +73,6 @@ def fetch_timeseries_data(field_of_interest,symbol,source):
                   symbol, field_of_interest, len(data))
     
     return (data)
-
-def get_list_of_tickers():
-    logging.info('get_list_of_tickers')
-    import_file = get_devdata_dir() + "\\TickerMetadata.csv"
-    df_tickers = pd.read_csv(import_file)
-    df_tickers = df_tickers.set_index('ticker')
-    logging.debug ("Tickers", df_tickers)
-    
-    return(df_tickers)
-
-def save_list_of_tickers(df_tickers):
-    logging.info('save_list_of_tickers')
-    output_file = get_devdata_dir() + "\\TickerMetadata.csv"
-    logging.debug ("Creating a file containing the list of the tickers processed ...", output_file, df_tickers)
-    df_tickers.to_csv(output_file)
-    
-    return
 
 def quandl_data_last_updated():
     logging.info('quandl_data_last_updated')

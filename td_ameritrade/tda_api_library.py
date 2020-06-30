@@ -1,120 +1,84 @@
-from quandl_library import get_ini_data
-from tda_price_history import tda_price_history_data
-import urllib.request
+'''
+Created on Jan 31, 2018
 
-def tda_data(key):
-    devdata = get_ini_data('TDA_API')
-    key_data = devdata[key]
-    return key_data
+@author: Brian
+'''
+import logging
+import time
+import requests
+import json
 
-def tda_login():
-    print ("\nLogging into TD Ameritrade")
-    
-    source = tda_data("source")
-    version = tda_data("version")
-    url="https://apis.tdameritrade.com/apps/300/LogIn?source=" + source + "&version=" + version
-    print ("URL:", url)
-    
-    user = tda_data("userid")
-    pwd = tda_data("password")
-    values={'userid':user,'password':pwd, 'source':source, 'version':version, '':'0%0A%0A%0A%0A'}
-    print ("payload:", values)
-    
-    data = urllib.parse.urlencode(values)
-    data = data.encode('utf-8')
-    
-    headers={}
-    headers['Content-type'] = 'application/x-www-form-urlencoded'
-    
-    req = urllib.request.Request(url, data=data, headers=headers)
-    HTTP_resp = urllib.request.urlopen(req)
-    print ('login response', HTTP_resp.status, HTTP_resp.reason, "\n", HTTP_resp.read())
-    
-    keep_alive = 55
-    
-    return keep_alive 
 
-def tda_logout():
-    print ("\nLogging out from TD Ameritrade")
-    
-    source = tda_data("source")
-    url="https://apis.tdameritrade.com/apps/100/LogOut?source=" + source
-    HTTP_resp = urllib.request.urlopen(url)
-    print ('logout response', HTTP_resp.read())
-
+def tda_get_access_token():
+    logging.debug('tda_get_access_token ---->\n %s')
+    token = "9NaYTaDGU0q24g1Sq5X8I3p583O71CvimYee6omMN8CmpmF3oWq2ARf1zxulmBDbDMF/IOL+cbTL467NKQ1ZN4feqKLmRYXKjymSsI98z2M4VZSL+QH1xgQg2Cg07Qm2taZypAKbBO35RpUNe8hIQu4fRrgnNekHeP19pGFUbVGUKv9YFRYbFMvZeswNWTIvH+sU7wBxBUvpfAIaUMnu9HjW+XoHCcRfImW0iLGMvTJO0uDKM5QDlULuZY4WgC+5kT79iCwGTAvcGAsr+2Cfpt5DfEgtoIywlNxyEOlEsxCSTLvGMxjfgA5YhAqVMP0Rp3D5D685gj1yASuXvTA1Icgk573FrZ0jXJYhYgM1qlhZZ1llKDBbTbdFISQPUOfUjN/Oi5n640Dy7ofDB/gFJkqlek3eX1ch/rF/hXmf/oSYQ1LJnPouQ5EpqR4g03v5zv3snoNSYrQ/AUmNcFFjmJbCaZkgkDgVSq3MBXpUM+tVD9erzTWUnsVv4t+vkD20bqoOMZadejdN3X8KsODSYntuok0MRDqruWIjU4RDN+xlq2W9FScg2T2AZScmreq/bgSM6tm1O8N3irjKPyHvqvfBA/zr6EaMNK6Sa100MQuG4LYrgoVi/JHHvlkkFLqzyLThlrZvrbMFa6SLGNFnEVjcEwHtjnTQnLEua/EvOispCvXTlf35oMCHOcSLzQ0/V/r2ywpTsHQTlyaMbEHARDBr05vWoJ3V4UUCJDrcMpNY0534Dg4qBKlLguEGKmhdr/MErO/KiKAdwuaUsLJssXjxMTS6gzAW1XiKe0XePoBJC5a4ZJn4km0UNySR+cVU0ZhliIcKjU3+M6S9BO5P8VadCW2vcnuiapPIZf3NpOggLbsGWRysUUsHZIG2btoFBIQ8AefArf727CGxrigWQJ1cH+TpPNkkO+yafJLePVltk4OMC70rZsAO0EKsiPntjO6UtRSmxBrZd32H1lsdk9HN/3ObUhrBxXhHYp2y3xIfWJLS19oVaAE6xabH6jhI2+OyvcfmR8FXB3uNXwYvvFDcslJQmv7T+uDhHSxJvVFtW/EqBF64IN+nDA8H1Ui15VJAlYyRBlMUnX74gZfw2yTGlu9PyIR0NLb389JWQQ7zNjpEMnwoWHyHXoLN2vXlpiEKxZjxPDWz+NSqw5kFcuI34aLH97LUPCcNcc3wMy8dMKlU7OhcDia7JFOkrnORW/7FKlZXkIfWR4fkvX6GnVzS8kfZylc+212FD3x19z9sWBHDJACbC00B75E"
+    logging.debug('<---- tda_get_access_token')
+    return token
+        
 def tda_symbol_lookup(match):
-    '''
-    ===========================================================================================
-    https://apis.tdameritrade.com/apps/100/SymbolLookup?source=<#sourceID#>&matchstring=some search string
-    
-    <amtd>
-        <result>FAIL</result> 
-        <error>Source parameter is required.</error> 
-    </amtd>
-
-    <amtd>
-        <result>FAIL</result> 
-        <error>Error -- No Symbol entered.</error> 
-    </amtd>
-    ===========================================================================================
-    '''
-    print ("\nSymbol lookup for:", match)
-    
-    source = tda_data("source")
-    url="https://apis.tdameritrade.com/apps/100/SymbolLookup?source=" + source + "&matchstring=" + match
-    print ("URL:", url)
-    HTTP_resp = urllib.request.urlopen(url)
-    print ('logout response', HTTP_resp.read())
-    
+    logging.debug('tda_symbol_lookup ---->\n %s')
     found = True
     symbol = "C"
-
+    logging.debug('<---- tda_symbol_lookup')
     return found, symbol
 
-def tda_price_history(symbol, intervaltype="DAILY", periodtype="MONTH", intervalduration=1, idtype="SYMBOL"):    
+def tda_read_watch_list():
+    return
+
+def     update_tda_eod_data(df_symbols, tda_api_key):
+    logging.debug('update_tda_eod_data ---->\n %s' % df_symbols)
+    print ("\nPrice history update for:", df_symbols)
+    
     '''
-    ===========================================================================================
-    https://apis.tdameritrade.com/apps/100/PriceHistory?source=XXXX&requestvalue=X&intervaltype=DAILY&
-        periodtype=MONTH&intervalduration=1&requestidentifiertype=SYMBOL
-        
-    Reurns binary data
-    
-    PriceHistory Response
-    Field               Type        Length         Description
-                                    (8 bit bytes)
-    Symbol Count        Integer     4              Number of symbols for which data is being returned. The subsequent sections are repeated this many times
- 
-    REPEATING SYMBOL DATA
-    Symbol Length       Short       2              Length of the Symbol field
-    Symbol              String      Variable       The symbol for which the historical data is returned
-    Error Code          Byte        1              0=OK, 1=ERROR
-    Error Length        Short       2              Only returned if Error Code=1. Length of the Error string
-    Error Text          String      variable       Only returned if Error Code=1. The string describing the error
-    Bar Count           Integer     4              # of chart bars; only if error code=0
-    REPEATING PRICE DATA
-    close               Float       4
-    high                Float       4
-    low                 Float       4
-    open                Float       4
-    volume              Float       4              in 100's
-    timestamp Long                  8              time in milliseconds from 00:00:00 UTC on January 1, 1970
-    END OF REPEATING PRICE DATA
-    Terminator          Bytes       2              0xFF, 0XFF
-    END OF REPEATING SYMBOL DATA
- 
-    ===========================================================================================
+    TDA tokens are valid for 30 minutes
     '''
-    print ("\nPrice history lookup for:", symbol)
+    tda_token_valid = False
     
-    source = tda_data("source")
-    url="https://apis.tdameritrade.com/apps/100/PriceHistory?source=" + source + "&requestvalue=" + symbol + "&intervaltype=DAILY&periodtype=MONTH&intervalduration=1&requestidentifiertype=SYMBOL"
-    print ("URL:", url)
-    HTTP_resp = urllib.request.urlopen(url)
-    data = bytearray(HTTP_resp.read())
-    #data = HTTP_resp.read()
-    print ('Price history lookup response\n', data)
+    for symbol in df_symbols:
+        if not tda_token_valid:
+            print("need a new token")
+            tda_token = tda_get_access_token()
+            tda_token_valid = True
+            tda_token_time = time.time()
+            
+        url = 'https://api.tdameritrade.com/v1/marketdata/AAPL/pricehistory'
+        apikey = tda_api_key
+        periodType = 'month'
+        period = '1'
+        frequencyType = 'daily'
+        frequency = '1'
+        protocolVersion = 'HTTP/1.1'
+        params = {'apikey' : apikey,
+                  'periodType' : periodType,
+                  'period' : period,
+                  'frequencyType' : frequencyType,
+                  'frequency' : frequency
+                  }
+        response = requests.get(url, params=params)
+           
+        if response.ok:
+            price_history_data = response.content
+            price_history = json.loads(response.text)
+            empty = price_history["empty"]
+            tda_symbol = price_history["symbol"]
+            if not empty:
+                candles = price_history["candles"]
+                for candle in candles:
+                    open = candle["open"]
+                    close = candle["close"]
+                    high = candle["high"]
+                    low = candle["low"]
+                    volume = candle["volume"]
+                    datetime = candle["datetime"]
+            else:
+                print("Data for %s was empty" % tda_symbol)
+                logging.info("Data for %s was empty" % tda_symbol)
+        else:
+            print("Unable to get EOD data for %s, response code=%s" % symbol, response.status_code)
+            logging.info("Unable to get EOD data for %s, response code=%s" % symbol, response.status_code)
+            
+        if time.time() - tda_token_time > 25*60 :
+            tda_token_valid = False
     
-    history = tda_price_history_data()
-    history.unpack(data)
-    
-    return history
+    logging.debug('<---- update_tda_eod_data')
+    return
