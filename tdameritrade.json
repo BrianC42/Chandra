@@ -2,5 +2,6 @@
 "logFile" : "d:\\brian\\AI Projects\\Update_EOD_log.txt",
 "outputFile" : "d:\\brian\\AI Projects\\Update_EOD_output",
 "loggingLevel" : "debug",
-"loggingFormat" : "%(asctime)s: %(levelname)s: %(message)s"
+"loggingFormat" : "%(asctime)s: %(levelname)s: %(message)s",
+"tokenAttributes" : "d:\\brian\\AI Projects\\tda_local.json"
 }

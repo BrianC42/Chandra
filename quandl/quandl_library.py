@@ -10,6 +10,25 @@ import pandas as pd
 
 from numpy.distutils.fcompiler import none
 
+def get_devdata_dir():
+    logging.info('get_devdata_dir')
+    devdata = get_ini_data('DEVDATA')
+    devdata_dir = devdata['dir']
+    return devdata_dir
+
+def get_quandl_key():
+    logging.info('get_quandl_key')
+    quandl_data = get_ini_data("QUANDL")
+    quandl.ApiConfig.api_key = quandl_data['key']
+    return (quandl_data['key'])
+
+def save_list_of_tickers(df_tickers):
+    logging.info('save_list_of_tickers')
+    output_file = get_devdata_dir() + "\\TickerMetadata.csv"
+    logging.debug ("Creating a file containing the list of the tickers processed ...", output_file, df_tickers)
+    df_tickers.to_csv(output_file)
+    return
+
 def ticker_status_dict():
     logging.info('ticker_status_dict')
     StatusDict = dict(inactive=-1, unknown=0, active=1)

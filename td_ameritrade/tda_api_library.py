@@ -3,82 +3,147 @@ Created on Jan 31, 2018
 
 @author: Brian
 '''
+import os
 import logging
 import time
 import requests
 import json
+import pandas as pd
 
+def tda_get_authentication_details(auth_file):
+    logging.debug('tda_get_authentication_details ---->')
 
-def tda_get_access_token():
-    logging.debug('tda_get_access_token ---->\n %s')
-    token = "9NaYTaDGU0q24g1Sq5X8I3p583O71CvimYee6omMN8CmpmF3oWq2ARf1zxulmBDbDMF/IOL+cbTL467NKQ1ZN4feqKLmRYXKjymSsI98z2M4VZSL+QH1xgQg2Cg07Qm2taZypAKbBO35RpUNe8hIQu4fRrgnNekHeP19pGFUbVGUKv9YFRYbFMvZeswNWTIvH+sU7wBxBUvpfAIaUMnu9HjW+XoHCcRfImW0iLGMvTJO0uDKM5QDlULuZY4WgC+5kT79iCwGTAvcGAsr+2Cfpt5DfEgtoIywlNxyEOlEsxCSTLvGMxjfgA5YhAqVMP0Rp3D5D685gj1yASuXvTA1Icgk573FrZ0jXJYhYgM1qlhZZ1llKDBbTbdFISQPUOfUjN/Oi5n640Dy7ofDB/gFJkqlek3eX1ch/rF/hXmf/oSYQ1LJnPouQ5EpqR4g03v5zv3snoNSYrQ/AUmNcFFjmJbCaZkgkDgVSq3MBXpUM+tVD9erzTWUnsVv4t+vkD20bqoOMZadejdN3X8KsODSYntuok0MRDqruWIjU4RDN+xlq2W9FScg2T2AZScmreq/bgSM6tm1O8N3irjKPyHvqvfBA/zr6EaMNK6Sa100MQuG4LYrgoVi/JHHvlkkFLqzyLThlrZvrbMFa6SLGNFnEVjcEwHtjnTQnLEua/EvOispCvXTlf35oMCHOcSLzQ0/V/r2ywpTsHQTlyaMbEHARDBr05vWoJ3V4UUCJDrcMpNY0534Dg4qBKlLguEGKmhdr/MErO/KiKAdwuaUsLJssXjxMTS6gzAW1XiKe0XePoBJC5a4ZJn4km0UNySR+cVU0ZhliIcKjU3+M6S9BO5P8VadCW2vcnuiapPIZf3NpOggLbsGWRysUUsHZIG2btoFBIQ8AefArf727CGxrigWQJ1cH+TpPNkkO+yafJLePVltk4OMC70rZsAO0EKsiPntjO6UtRSmxBrZd32H1lsdk9HN/3ObUhrBxXhHYp2y3xIfWJLS19oVaAE6xabH6jhI2+OyvcfmR8FXB3uNXwYvvFDcslJQmv7T+uDhHSxJvVFtW/EqBF64IN+nDA8H1Ui15VJAlYyRBlMUnX74gZfw2yTGlu9PyIR0NLb389JWQQ7zNjpEMnwoWHyHXoLN2vXlpiEKxZjxPDWz+NSqw5kFcuI34aLH97LUPCcNcc3wMy8dMKlU7OhcDia7JFOkrnORW/7FKlZXkIfWR4fkvX6GnVzS8kfZylc+212FD3x19z9sWBHDJACbC00B75E"
-    logging.debug('<---- tda_get_access_token')
-    return token
-        
-def tda_symbol_lookup(match):
-    logging.debug('tda_symbol_lookup ---->\n %s')
-    found = True
-    symbol = "C"
-    logging.debug('<---- tda_symbol_lookup')
-    return found, symbol
+    json_f = open(auth_file, "rb")
+    json_auth = json.load(json_f)
+    json_f.close
+    
+    logging.debug('<---- tda_get_authentication_details')
+    return json_auth
 
-def tda_read_watch_list():
+def tda_update_authentication_details(json_authentication):
+    logging.debug('tda_update_authentication_details ---->\n')
+    
+    json_f = open('d:\\brian\\AI Projects\\tda_local.json', "w")
+    json.dump(json_authentication, json_f, indent=0)
+    json_f.close
+    
+    logging.debug('<---- tda_update_authentication_details')
     return
 
-def     update_tda_eod_data(df_symbols, tda_api_key):
-    logging.debug('update_tda_eod_data ---->\n %s' % df_symbols)
-    print ("\nPrice history update for:", df_symbols)
-    
-    '''
-    TDA tokens are valid for 30 minutes
-    '''
-    tda_token_valid = False
-    
-    for symbol in df_symbols:
-        if not tda_token_valid:
-            print("need a new token")
-            tda_token = tda_get_access_token()
-            tda_token_valid = True
-            tda_token_time = time.time()
-            
-        url = 'https://api.tdameritrade.com/v1/marketdata/AAPL/pricehistory'
-        apikey = tda_api_key
-        periodType = 'month'
-        period = '1'
-        frequencyType = 'daily'
-        frequency = '1'
-        protocolVersion = 'HTTP/1.1'
-        params = {'apikey' : apikey,
-                  'periodType' : periodType,
-                  'period' : period,
-                  'frequencyType' : frequencyType,
-                  'frequency' : frequency
-                  }
-        response = requests.get(url, params=params)
-           
+def tda_get_access_token(json_authentication):
+    logging.debug('tda_get_access_token ---->\n')
+
+    if time.time() > (json_authentication['tokenObtained'] + json_authentication['expiresIn']):
+        url = 'https://api.tdameritrade.com/v1/oauth2/token'
+        params = {'grant_type' : 'refresh_token', 'refresh_token' : json_authentication['refreshToken'], 'access_type' : '', 'code' : '', 'client_id' : json_authentication['apikey'], 'redirect_uri' : json_authentication['redirectUri']}
+        response = requests.post(url, data=params)       
         if response.ok:
-            price_history_data = response.content
-            price_history = json.loads(response.text)
-            empty = price_history["empty"]
-            tda_symbol = price_history["symbol"]
-            if not empty:
-                candles = price_history["candles"]
-                for candle in candles:
-                    open = candle["open"]
-                    close = candle["close"]
-                    high = candle["high"]
-                    low = candle["low"]
-                    volume = candle["volume"]
-                    datetime = candle["datetime"]
-            else:
-                print("Data for %s was empty" % tda_symbol)
-                logging.info("Data for %s was empty" % tda_symbol)
+            Authorization_details = json.loads(response.text)
+            json_authentication["currentToken"] = Authorization_details["access_token"]
+            json_authentication["scope"] = Authorization_details["scope"]
+            json_authentication["tokenObtained"] = time.time()
+            json_authentication["expiresIn"] = Authorization_details["expires_in"]
+            json_authentication["token_type"] = Authorization_details["token_type"]
+            tda_update_authentication_details(json_authentication)
         else:
-            print("Unable to get EOD data for %s, response code=%s" % symbol, response.status_code)
-            logging.info("Unable to get EOD data for %s, response code=%s" % symbol, response.status_code)
+            logging.info("Authorization request response not OK, response code=%s, reason %s, %s" % (response.status_code, response.reason, response.text))
+            json_authentication["currentToken"] = ""
+            json_authentication["scope"] = ""
+            json_authentication["tokenObtained"] = 0.0
+            json_authentication["expiresIn"] = 0.0
+            json_authentication["token_type"] = ""
             
-        if time.time() - tda_token_time > 25*60 :
-            tda_token_valid = False
+    logging.debug('<---- tda_get_access_token')
+    return json_authentication["currentToken"]
+        
+def tda_read_watch_lists(json_authentication):
+    logging.debug('tda_read_watch_lists ---->\n %s')
     
+    #"watchLists" : ["Combined Holding","Stock Information","Stock Information 2"]
+    currentToken = tda_get_access_token(json_authentication)    
+    url = 'https://api.tdameritrade.com/v1/accounts/' + json_authentication["account"] + '/watchlists'
+    apikey = 'Bearer ' + currentToken
+    headers = {'Authorization' : apikey}
+    response = requests.get(url, headers=headers)
+    if response.ok:
+        print("Watchlists retrieved")
+        symbol_list = []
+        tda_watch_lists_json = json.loads(response.text)
+        for list_details in tda_watch_lists_json:
+            list_name = list_details["name"]
+            listItems = list_details["watchlistItems"]
+            for itemDetails in listItems:
+                instrument = itemDetails["instrument"]
+                symbol = instrument["symbol"]
+                if list_name in json_authentication["watchLists"]:
+                    symbol_list.append(symbol)
+        logging.info("Symbols, %s" % symbol_list)
+    else:
+        print("Unable to get watch list data, response code=%s, reason %s, %s" % (response.status_code, response.reason, response.text))
+        logging.info("Unable to get watch list data, response code=%s, reason %s, %s" % (response.status_code, response.reason, response.text))
+            
+    logging.debug('<---- tda_read_watch_lists')
+    return symbol_list
+
+def update_tda_eod_data(authentication_parameters):
+    logging.debug('update_tda_eod_data ---->')
+    
+    eod_data_dir = 'd:\\brian\\AI Projects\\tda\\market_data\\'
+    json_authentication = tda_get_authentication_details(authentication_parameters)
+    for symbol in tda_read_watch_lists(json_authentication):
+        tda_get_access_token(json_authentication)    
+        eod_file = eod_data_dir + symbol + '.csv'
+        url = 'https://api.tdameritrade.com/v1/marketdata/' + symbol + '/pricehistory'
+        if os.path.isfile(eod_file):
+            df_eod = pd.read_csv(eod_data_dir + symbol + '.csv')
+            f_last_date = float(df_eod.at[df_eod.shape[0]-1,'DateTime'])
+            now = time.time()
+            print("Now - %s, %s, %s" % (now, time.ctime(now), '{:.0f}'.format(now*1000)))
+            print("Last datetime - %s, %s, %s" % (f_last_date, time.ctime(f_last_date/1000), '{:.0f}'.format(f_last_date)))
+            eod_count = df_eod.shape[0]
+            headers = {'Authorization' : 'Bearer ' + json_authentication["currentToken"]}
+            params = {'apikey' : json_authentication["apikey"], \
+                      'periodType' : 'month', 'frequencyType' : 'daily', 'frequency' : '1', \
+                      'endDate' : '{:.0f}'.format(now*1000), 'startDate' : '{:.0f}'.format(f_last_date)}
+            response = requests.get(url, headers=headers, params=params)
+            if response.ok:
+                print("Incremental price history received")
+                price_history = json.loads(response.text)
+                tda_symbol = price_history["symbol"]
+                if not price_history["empty"]:
+                    candles = price_history["candles"]
+                    for candle in candles:
+                        df_eod.loc[eod_count] = [candle["datetime"], candle["open"], candle["high"], candle["low"], candle["close"], candle["volume"]]
+                        eod_count += 1
+                    df_eod.drop_duplicates(inplace=True)
+                else:
+                    print("Incremental EOD data for %s was empty" % tda_symbol)
+                    logging.info("Data for %s was empty" % tda_symbol)
+            else:
+                print("Unable to get incremental EOD data for %s, response code=%s" % symbol, response.status_code)
+                logging.info("Unable to get incremental EOD data for %s, response code=%s" % symbol, response.status_code)            
+        else:
+            df_eod = pd.DataFrame(columns=['DateTime', 'Open', 'High', 'Low', 'Close', 'Volume'])
+            eod_count = 0
+            params = {'apikey' : json_authentication["apikey"], 'periodType' : 'year', 'period' : '20', 'frequencyType' : 'daily', 'frequency' : '1'}
+            response = requests.get(url, params=params)
+            if response.ok:
+                price_history = json.loads(response.text)
+                tda_symbol = price_history["symbol"]
+                if not price_history["empty"]:
+                    candles = price_history["candles"]
+                    for candle in candles:
+                        df_eod.loc[eod_count] = [candle["datetime"], candle["open"], candle["high"], candle["low"], candle["close"], candle["volume"]]
+                        eod_count += 1
+                else:
+                    print("Data for %s was empty" % tda_symbol)
+                    logging.info("Data for %s was empty" % tda_symbol)
+            else:
+                print("Unable to get EOD data for %s, response code=%s" % symbol, response.status_code)
+                logging.info("Unable to get EOD data for %s, response code=%s" % symbol, response.status_code)            
+        df_eod.to_csv(eod_file, index=False)
+        print ("\nEOD data for %s\n%s" % (symbol, df_eod))
+        logging.info("nEOD data for %s\n%s" % (symbol, df_eod))
+
     logging.debug('<---- update_tda_eod_data')
     return
