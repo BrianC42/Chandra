@@ -4,31 +4,45 @@ Created on Jan 31, 2018
 @author: Brian
 '''
 import os
-import configparser
 import datetime as dt
 import time
-import json
 import logging
-import quandl
+import pandas as pd
 
+from configuration import get_ini_data
+from configuration import read_config_json
 from tda_api_library import update_tda_eod_data
+from macd import macd
+from on_balance_volume import on_balance_volume
 
-def get_ini_data(csection):
-    config_file = os.getenv('localappdata') + "\\Development\\data.ini"
-    config = configparser.ConfigParser()
-    config.read(config_file)
-    config.sections()
-    ini_data = config[csection]
-    return ini_data
-
-def read_config_json(json_file) :
-    print ("reading configuration details from ", json_file)
-    
-    json_f = open(json_file, "rb")
-    json_config = json.load(json_f)
-    json_f.close
-    
-    return (json_config)
+def technical_analysis(json_config, data_dir, analysis_dir):
+    logger.info('technical_analysis ---->')
+    '''
+    Prepare and update technical analysis based on TDA market data
+    df_data = macd  (df_data[:], value_label="adj_close", \
+                    short_interval=12, short_data='EMA12',\
+                    long_interval=26, long_data='EMA26', \
+                    date_label="date", \
+                    prediction_interval=30)
+    df_data = on_balance_volume(df_data[:])
+    df_data = accumulation_distribution(df_data[:])
+    df_data = bollinger_bands(df_data[:], value_label="adj_close", sma_interval=20, sma_label='SMA20')
+    '''
+    for filename in os.listdir(data_dir):
+        print("File: %s" % filename)
+        df_data = pd.read_csv(data_dir + "//" + filename)
+        print("EOD data for %s\n%s" % (filename, df_data))
+        df_data = macd(df_data[:], value_label="Close", \
+                       short_interval=12, short_data='EMA12',\
+                       long_interval=26, long_data='EMA26', \
+                       #date_label="date", \
+                       prediction_interval=json_config['MACDfuture'])
+        df_data = on_balance_volume(df_data[:], value_label='Close', volume_lable='Volume')
+        df_data.drop(['Open', 'High', 'Low', 'Close', 'Volume', 'MACD_Sell', 'MACD_Buy'], axis=1, inplace=True)
+        df_data.to_csv(analysis_dir + "//" + filename, index=False)
+        print("Analytic data for %s\n%s" % (filename, df_data))
+    logger.info('<---- technical_analysis')
+    return
 
 if __name__ == '__main__':
     print ("Affirmative, Dave. I read you\n")
@@ -67,7 +81,8 @@ if __name__ == '__main__':
     log_fmt = logging.Formatter('%(asctime)s - %(name)s - %levelname - %(messages)s')
     logger.info('Updating stock data')
 
-    update_tda_eod_data(app_data['authentication'])
+    #update_tda_eod_data(app_data['authentication'])
+    technical_analysis(json_config, app_data['eod_data'], app_data['market_analysis_data'])
     
     '''
     clean up and prepare to exit

@@ -61,7 +61,7 @@ Day nine OBV = 76,600 + 23,000 = 99,600
 Day 10 OBV = 99,600 - 27,500 = 72,100
 
 '''
-def add_obv_fields(df_data):
+def add_obv_fields(df_data, colnum=0):
     '''
     Only one additional field is added to the digest
         OBV field: 
@@ -69,27 +69,34 @@ def add_obv_fields(df_data):
         Other fields
             N/A 
     '''
-    df_data.insert(loc=0, column='OBV', value=int(0))
+    df_data.insert(loc=colnum, column='OBV', value=int(0))
 
     return (df_data)
 
-def on_balance_volume(df_data=None):
-    # print ("on_balance_volume")
-    add_obv_fields(df_data)
+def on_balance_volume(df_data=None, value_label=None, volume_lable=None):
+    obv_colnum = 0
+    add_obv_fields(df_data, obv_colnum)
+    print("columns %s" % df_data.columns)
+    
+    i_ndx = 0
+    for col in df_data.columns:
+        if col == 'Close':            
+            value_col = i_ndx
+        if col == 'Volume':
+            vol_col = i_ndx
+        i_ndx += 1
     
     idx = 1
     while idx < len(df_data):
-        if df_data.ix[idx, 'adj_close'] == df_data.ix[idx-1, 'adj_close']:
+        if df_data.iat[idx, value_col] == df_data.iat[idx-1, value_col]:
             # no price change
-            df_data.ix[idx, 'OBV'] = int(df_data.ix[idx-1, 'OBV'])
-            
-        elif df_data.ix[idx, 'adj_close'] > df_data.ix[idx-1, 'adj_close']:
+            df_data.iat[idx, obv_colnum] = int(df_data.iat[idx-1, obv_colnum])
+        elif df_data.iat[idx, value_col] > df_data.iat[idx-1, value_col]:
             # price increase
-            df_data.ix[idx, 'OBV'] = int(df_data.ix[idx-1, 'OBV'] + df_data.ix[idx, 'adj_volume'])
-            
+            df_data.iat[idx, obv_colnum] = int(df_data.iat[idx-1, obv_colnum] + df_data.iat[idx, vol_col])
         else:
             # price decrease
-            df_data.ix[idx, 'OBV'] = int(df_data.ix[idx-1, 'OBV'] - df_data.ix[idx, 'adj_volume'])
+            df_data.iat[idx, obv_colnum] = int(df_data.iat[idx-1, obv_colnum] - df_data.iat[idx, vol_col])
             
         idx += 1
     

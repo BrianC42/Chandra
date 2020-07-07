@@ -6,22 +6,14 @@ Created on March 23, 2020
 import logging
 import datetime as dt
 import time
-import json
 import networkx as nx
 import matplotlib.pyplot as plt
 
+from configuration import get_ini_data
+from configuration import read_config_json
 from assemble_model import build_model
 from configuration_graph import build_configuration_graph
 from load_prepare_data import load_and_prepare_data
-
-def read_config_json(json_file) :
-    print ("reading configuration details from ", json_file)
-    
-    json_f = open(json_file, "rb")
-    json_config = json.load(json_f)
-    json_f.close
-    
-    return (json_config)
 
 if __name__ == '__main__':
     print ("Good morning Dr. Chandra. I am ready for my next lesson.\n")

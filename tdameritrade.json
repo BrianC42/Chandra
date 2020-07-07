@@ -3,5 +3,6 @@
 "outputFile" : "d:\\brian\\AI Projects\\Update_EOD_output",
 "loggingLevel" : "debug",
 "loggingFormat" : "%(asctime)s: %(levelname)s: %(message)s",
-"tokenAttributes" : "d:\\brian\\AI Projects\\tda_local.json"
+"tokenAttributes" : "d:\\brian\\AI Projects\\tda_local.json",
+"MACDfuture" : "10"
 }

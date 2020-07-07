@@ -5,7 +5,7 @@ Created on Jan 31, 2018
 '''
 import pandas as pd
 import sys
-from quandl_library import get_ini_data
+from configuration import get_ini_data
 
 sys.path.append("../Technical_Analysis/")
 

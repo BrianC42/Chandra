@@ -54,7 +54,6 @@ def add_macd_fields(df_data, short_data=None, long_data=None):
             MACD_Buy, 
             MACD_Sell, 
             MACD_flag, 
-            30day_chg
         Other fields
             momentum' 
     '''
@@ -63,7 +62,6 @@ def add_macd_fields(df_data, short_data=None, long_data=None):
     df_data.insert(loc=0, column='MACD_Buy', value=False)
     df_data.insert(loc=0, column='MACD_Sell', value=False)
     df_data.insert(loc=0, column='MACD_flag', value=NaN)
-    df_data.insert(loc=0, column='30day_chg', value=NaN)
     df_data.insert(loc=0, column='momentum', value=NaN)
 
     return (df_data)
@@ -82,7 +80,6 @@ def add_macd_profile_fields(df_data, short_data=None, mid_data=None, long_data=N
     df_data.insert(loc=0, column=mid_data, value=NaN)
     df_data.insert(loc=0, column=short_data, value=NaN)
     df_data.insert(loc=0, column=long_data, value=NaN)
-    #df_data.insert(loc=0, column='30day_chg', value=NaN)
     df_data.insert(loc=0, column='momentum', value=NaN)
     df_data.insert(loc=0, column='MACD_flag', value=NaN)
 
@@ -123,25 +120,25 @@ def macd(df_src=None, \
     EMA_momentum = 0.0
     
     while idx < len(df_src):
-        EMA_momentum = df_src.ix[idx, "EMA12"] - df_src.ix[idx, "EMA26"]
-        df_src.ix[idx,'momentum'] = EMA_momentum
-        df_src.ix[idx, 'MACD_flag'] = MACD_flags.get('neutral')
+        EMA_momentum = df_src.loc[idx, "EMA12"] - df_src.loc[idx, "EMA26"]
+        df_src.loc[idx,'momentum'] = EMA_momentum
+        df_src.loc[idx, 'MACD_flag'] = MACD_flags.get('neutral')
 
 
-        if df_src.ix[idx, 'EMA12'] < df_src.ix[idx, 'EMA26']:
-            if df_src.ix[idx-1, 'EMA12'] >= df_src.ix[idx-1, 'EMA26']:
+        if df_src.loc[idx, 'EMA12'] < df_src.loc[idx, 'EMA26']:
+            if df_src.loc[idx-1, 'EMA12'] >= df_src.loc[idx-1, 'EMA26']:
                 ### Downward crossover
-                df_src.ix[idx, 'MACD_Sell'] = True
-                df_src.ix[idx, 'MACD_flag'] = MACD_flags.get('sell')
+                df_src.loc[idx, 'MACD_Sell'] = True
+                df_src.loc[idx, 'MACD_flag'] = MACD_flags.get('sell')
                     
-        if df_src.ix[idx, 'EMA12'] > df_src.ix[idx, 'EMA26']:
-            if df_src.ix[idx-1, 'EMA12'] <= df_src.ix[idx-1, 'EMA26']:
+        if df_src.loc[idx, 'EMA12'] > df_src.loc[idx, 'EMA26']:
+            if df_src.loc[idx-1, 'EMA12'] <= df_src.loc[idx-1, 'EMA26']:
                 ### Upward crossover
-                df_src.ix[idx, 'MACD_Buy'] = True
-                df_src.ix[idx, 'MACD_flag'] = MACD_flags.get('buy')
+                df_src.loc[idx, 'MACD_Buy'] = True
+                df_src.loc[idx, 'MACD_flag'] = MACD_flags.get('buy')
                 
-        if idx + prediction_interval < len(df_src):
-            df_src.ix[idx, 'MACD_future_chg'] = (df_src.ix[idx + prediction_interval, value_label] - df_src.ix[idx, value_label]) / df_src.ix[idx, value_label]
+        if idx + int(prediction_interval) < len(df_src):
+            df_src.loc[idx, 'MACD_future_chg'] = (df_src.loc[idx + int(prediction_interval), value_label] - df_src.loc[idx, value_label]) / df_src.loc[idx, value_label]
                     
         idx += 1
     
