@@ -96,32 +96,39 @@ def update_tda_eod_data(authentication_parameters):
         url = 'https://api.tdameritrade.com/v1/marketdata/' + symbol + '/pricehistory'
         if os.path.isfile(eod_file):
             df_eod = pd.read_csv(eod_data_dir + symbol + '.csv')
-            f_last_date = float(df_eod.at[df_eod.shape[0]-1,'DateTime'])
-            now = time.time()
-            print("Now - %s, %s, %s" % (now, time.ctime(now), '{:.0f}'.format(now*1000)))
-            print("Last datetime - %s, %s, %s" % (f_last_date, time.ctime(f_last_date/1000), '{:.0f}'.format(f_last_date)))
-            eod_count = df_eod.shape[0]
-            headers = {'Authorization' : 'Bearer ' + json_authentication["currentToken"]}
-            params = {'apikey' : json_authentication["apikey"], \
-                      'periodType' : 'month', 'frequencyType' : 'daily', 'frequency' : '1', \
-                      'endDate' : '{:.0f}'.format(now*1000), 'startDate' : '{:.0f}'.format(f_last_date)}
-            response = requests.get(url, headers=headers, params=params)
-            if response.ok:
-                print("Incremental price history received")
-                price_history = json.loads(response.text)
-                tda_symbol = price_history["symbol"]
-                if not price_history["empty"]:
-                    candles = price_history["candles"]
-                    for candle in candles:
-                        df_eod.loc[eod_count] = [candle["datetime"], candle["open"], candle["high"], candle["low"], candle["close"], candle["volume"]]
-                        eod_count += 1
-                    df_eod.drop_duplicates(inplace=True)
-                else:
-                    print("Incremental EOD data for %s was empty" % tda_symbol)
-                    logging.info("Data for %s was empty" % tda_symbol)
+            i_ndx = 0
+            for col in df_eod.columns:
+                if col == 'DateTime':            
+                    dtime_col = i_ndx
+                i_ndx += 1
+            eod_rows = df_eod.shape[0]
+            if eod_rows > 0:
+                f_last_date = float(df_eod.iat[eod_rows-1,dtime_col])
+                now = time.time()
+                print("Now - %s, %s, %s" % (now, time.ctime(now), '{:.0f}'.format(now*1000)))
+                print("Last datetime - %s, %s, %s" % (f_last_date, time.ctime(f_last_date/1000), '{:.0f}'.format(f_last_date)))
+                eod_count = df_eod.shape[0]
+                headers = {'Authorization' : 'Bearer ' + json_authentication["currentToken"]}
+                params = {'apikey' : json_authentication["apikey"], \
+                          'periodType' : 'month', 'frequencyType' : 'daily', 'frequency' : '1', \
+                          'endDate' : '{:.0f}'.format(now*1000), 'startDate' : '{:.0f}'.format(f_last_date)}
+                response = requests.get(url, headers=headers, params=params)
+                if response.ok:
+                    print("Incremental price history received")
+                    price_history = json.loads(response.text)
+                    tda_symbol = price_history["symbol"]
+                    if not price_history["empty"]:
+                        candles = price_history["candles"]
+                        for candle in candles:
+                            df_eod.loc[eod_count] = [candle["datetime"], candle["open"], candle["high"], candle["low"], candle["close"], candle["volume"]]
+                            eod_count += 1
+                            df_eod.drop_duplicates(inplace=True)
+                    else:
+                        print("Incremental EOD data for %s was empty" % tda_symbol)
+                        logging.info("Data for %s was empty" % tda_symbol)
             else:
-                print("Unable to get incremental EOD data for %s, response code=%s" % symbol, response.status_code)
-                logging.info("Unable to get incremental EOD data for %s, response code=%s" % symbol, response.status_code)            
+                print("Unable to get incremental EOD data for %s, response code=%s" % (symbol, response.status_code))
+                logging.info("Unable to get incremental EOD data for %s, response code=%s" % (symbol, response.status_code))            
         else:
             df_eod = pd.DataFrame(columns=['DateTime', 'Open', 'High', 'Low', 'Close', 'Volume'])
             eod_count = 0
@@ -139,8 +146,8 @@ def update_tda_eod_data(authentication_parameters):
                     print("Data for %s was empty" % tda_symbol)
                     logging.info("Data for %s was empty" % tda_symbol)
             else:
-                print("Unable to get EOD data for %s, response code=%s" % symbol, response.status_code)
-                logging.info("Unable to get EOD data for %s, response code=%s" % symbol, response.status_code)            
+                print("Unable to get EOD data for %s, response code=%s" % (symbol, response.status_code))
+                logging.info("Unable to get EOD data for %s, response code=%s" % (symbol, response.status_code))            
         df_eod.to_csv(eod_file, index=False)
         print ("\nEOD data for %s\n%s" % (symbol, df_eod))
         logging.info("nEOD data for %s\n%s" % (symbol, df_eod))

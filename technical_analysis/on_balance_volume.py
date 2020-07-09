@@ -76,7 +76,6 @@ def add_obv_fields(df_data, colnum=0):
 def on_balance_volume(df_data=None, value_label=None, volume_lable=None):
     obv_colnum = 0
     add_obv_fields(df_data, obv_colnum)
-    print("columns %s" % df_data.columns)
     
     i_ndx = 0
     for col in df_data.columns:

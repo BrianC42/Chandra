@@ -12,10 +12,14 @@ import pandas as pd
 from configuration import get_ini_data
 from configuration import read_config_json
 from tda_api_library import update_tda_eod_data
+from tda_api_library import tda_get_authentication_details
+from tda_api_library import tda_get_access_token
+from tda_api_library import tda_read_watch_lists
 from macd import macd
 from on_balance_volume import on_balance_volume
+from bollinger_bands import bollinger_bands
 
-def technical_analysis(json_config, data_dir, analysis_dir):
+def technical_analysis(json_config, authentication_parameters, data_dir, analysis_dir):
     logger.info('technical_analysis ---->')
     '''
     Prepare and update technical analysis based on TDA market data
@@ -27,20 +31,25 @@ def technical_analysis(json_config, data_dir, analysis_dir):
     df_data = on_balance_volume(df_data[:])
     df_data = accumulation_distribution(df_data[:])
     df_data = bollinger_bands(df_data[:], value_label="adj_close", sma_interval=20, sma_label='SMA20')
+    
     '''
-    for filename in os.listdir(data_dir):
-        print("File: %s" % filename)
-        df_data = pd.read_csv(data_dir + "//" + filename)
-        print("EOD data for %s\n%s" % (filename, df_data))
-        df_data = macd(df_data[:], value_label="Close", \
-                       short_interval=12, short_data='EMA12',\
-                       long_interval=26, long_data='EMA26', \
-                       #date_label="date", \
-                       prediction_interval=json_config['MACDfuture'])
-        df_data = on_balance_volume(df_data[:], value_label='Close', volume_lable='Volume')
-        df_data.drop(['Open', 'High', 'Low', 'Close', 'Volume', 'MACD_Sell', 'MACD_Buy'], axis=1, inplace=True)
-        df_data.to_csv(analysis_dir + "//" + filename, index=False)
-        print("Analytic data for %s\n%s" % (filename, df_data))
+    json_authentication = tda_get_authentication_details(authentication_parameters)
+    for symbol in tda_read_watch_lists(json_authentication):
+        filename = data_dir + '\\' + symbol + '.csv'
+        if os.path.isfile(filename):
+            print("File: %s" % filename)
+            df_data = pd.read_csv(filename)
+            print("EOD data for %s\n%s" % (filename, df_data))
+            df_data = macd(df_data[:], value_label="Close", \
+                           short_interval=12, short_data='EMA12',\
+                           long_interval=26, long_data='EMA26', \
+                           #date_label="date", \
+                           prediction_interval=json_config['MACDfuture'])
+            df_data = on_balance_volume(df_data[:], value_label='Close', volume_lable='Volume')
+            df_data = bollinger_bands(df_data[:], value_label="Close", sma_interval=20, sma_label='SMA20')
+            #df_data.drop(['Open', 'High', 'Low', 'Close', 'Volume', 'MACD_Sell', 'MACD_Buy'], axis=1, inplace=True)
+            df_data.to_csv(analysis_dir + "\\" + symbol + '.csv', index=False)
+            print("Analytic data for %s\n%s" % (filename, df_data))
     logger.info('<---- technical_analysis')
     return
 
@@ -82,7 +91,7 @@ if __name__ == '__main__':
     logger.info('Updating stock data')
 
     #update_tda_eod_data(app_data['authentication'])
-    technical_analysis(json_config, app_data['eod_data'], app_data['market_analysis_data'])
+    technical_analysis(json_config, app_data['authentication'], app_data['eod_data'], app_data['market_analysis_data'])
     
     '''
     clean up and prepare to exit
