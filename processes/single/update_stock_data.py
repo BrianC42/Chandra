@@ -13,7 +13,6 @@ from configuration import get_ini_data
 from configuration import read_config_json
 from tda_api_library import update_tda_eod_data
 from tda_api_library import tda_get_authentication_details
-from tda_api_library import tda_get_access_token
 from tda_api_library import tda_read_watch_lists
 from macd import macd
 from on_balance_volume import on_balance_volume
@@ -23,15 +22,7 @@ def technical_analysis(json_config, authentication_parameters, data_dir, analysi
     logger.info('technical_analysis ---->')
     '''
     Prepare and update technical analysis based on TDA market data
-    df_data = macd  (df_data[:], value_label="adj_close", \
-                    short_interval=12, short_data='EMA12',\
-                    long_interval=26, long_data='EMA26', \
-                    date_label="date", \
-                    prediction_interval=30)
-    df_data = on_balance_volume(df_data[:])
     df_data = accumulation_distribution(df_data[:])
-    df_data = bollinger_bands(df_data[:], value_label="adj_close", sma_interval=20, sma_label='SMA20')
-    
     '''
     json_authentication = tda_get_authentication_details(authentication_parameters)
     for symbol in tda_read_watch_lists(json_authentication):
@@ -90,7 +81,7 @@ if __name__ == '__main__':
     log_fmt = logging.Formatter('%(asctime)s - %(name)s - %levelname - %(messages)s')
     logger.info('Updating stock data')
 
-    #update_tda_eod_data(app_data['authentication'])
+    update_tda_eod_data(app_data['authentication'])
     technical_analysis(json_config, app_data['authentication'], app_data['eod_data'], app_data['market_analysis_data'])
     
     '''

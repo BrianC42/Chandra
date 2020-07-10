@@ -122,7 +122,7 @@ def update_tda_eod_data(authentication_parameters):
                         for candle in candles:
                             df_eod.loc[eod_count] = [candle["datetime"], candle["open"], candle["high"], candle["low"], candle["close"], candle["volume"]]
                             eod_count += 1
-                            df_eod.drop_duplicates(inplace=True)
+                            df_eod.drop_duplicates(subset=['DateTime'], keep='last', inplace=True)
                     else:
                         print("Incremental EOD data for %s was empty" % tda_symbol)
                         logging.info("Data for %s was empty" % tda_symbol)
