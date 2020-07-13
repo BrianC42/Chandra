@@ -48,14 +48,19 @@ def return_macd_ind():
     return (MACD_ind)
 
 def add_macd_fields(df_data, short_data=None, long_data=None, str_prediction=None):
+    '''
     df_data.insert(loc=0, column=short_data, value=NaN)
     df_data.insert(loc=0, column=long_data, value=NaN)
+    '''
     df_data.insert(loc=0, column='MACD_Buy', value=False)
     df_data.insert(loc=0, column='MACD_Sell', value=False)
     df_data.insert(loc=0, column='MACD_flag', value=NaN)
-    df_data.insert(loc=0, column='momentum', value=NaN)
+    df_data.insert(loc=0, column='MACD', value=NaN)
+    df_data.insert(loc=0, column='MACD_Signal', value=NaN)
+    '''
     df_data.insert(loc=0, column=str_prediction, value=NaN)
     #df_data.insert(loc=0, column='MACD_future_chg', value=NaN)
+    '''
     return (df_data)
 
 def macd(df_src=None, \
@@ -70,8 +75,10 @@ def macd(df_src=None, \
     str_prediction = prediction_interval + ' day change'
     add_macd_fields(df_src, short_data, long_data, str_prediction)
     MACD_flags = return_macd_flags()
+    '''
     df_src = exponential_moving_average(df_src[:], value_label, date_label, short_interval, short_data)
     df_src = exponential_moving_average(df_src[:], value_label, date_label, long_interval, long_data)    
+    '''
     '''
     Upward cross: short duration EMA changes from less than to greater than long duration EMA
                     compared to previous difference
@@ -83,21 +90,28 @@ def macd(df_src=None, \
     idx = 1 ### EMA calculation forces 1st entries to be equal, will always show as crossover on 2nd row
     EMA_momentum = 0.0    
     while idx < len(df_src):
+        df_src.at[idx,'MACD'] = df_src.at[idx, "EMA12"] - df_src.at[idx, "EMA26"]
+        '''
         EMA_momentum = df_src.loc[idx, "EMA12"] - df_src.loc[idx, "EMA26"]
-        df_src.loc[idx,'momentum'] = EMA_momentum
-        df_src.loc[idx, 'MACD_flag'] = MACD_flags.get('neutral')
-        if df_src.loc[idx, 'EMA12'] < df_src.loc[idx, 'EMA26']:
-            if df_src.loc[idx-1, 'EMA12'] >= df_src.loc[idx-1, 'EMA26']:
+        df_src.loc[idx,'MACD'] = EMA_momentum
+        '''
+        idx += 1
+    df_src = exponential_moving_average(df_src[:], 'MACD', date_label, 9, 'MACD_Signal')    
+    idx = 1 ### EMA calculation forces 1st entries to be equal, will always show as crossover on 2nd row
+    while idx < len(df_src):
+        df_src.at[idx, 'MACD_flag'] = MACD_flags.get('neutral')
+        if df_src.at[idx, 'MACD'] < df_src.at[idx, 'MACD_Signal']:
+            if df_src.at[idx-1, 'MACD'] >= df_src.at[idx-1, 'MACD_Signal']:
                 ### Downward crossover
-                df_src.loc[idx, 'MACD_Sell'] = True
-                df_src.loc[idx, 'MACD_flag'] = MACD_flags.get('sell')
-        if df_src.loc[idx, 'EMA12'] > df_src.loc[idx, 'EMA26']:
-            if df_src.loc[idx-1, 'EMA12'] <= df_src.loc[idx-1, 'EMA26']:
+                df_src.at[idx, 'MACD_Sell'] = True
+                df_src.at[idx, 'MACD_flag'] = MACD_flags.get('sell')
+        if df_src.at[idx, 'MACD'] > df_src.at[idx, 'MACD_Signal']:
+            if df_src.at[idx-1, 'MACD'] <= df_src.at[idx-1, 'MACD_Signal']:
                 ### Upward crossover
-                df_src.loc[idx, 'MACD_Buy'] = True
-                df_src.loc[idx, 'MACD_flag'] = MACD_flags.get('buy')                
+                df_src.at[idx, 'MACD_Buy'] = True
+                df_src.at[idx, 'MACD_flag'] = MACD_flags.get('buy')                
         if idx + int(prediction_interval) < len(df_src):
-            df_src.loc[idx, str_prediction] = (df_src.loc[idx + int(prediction_interval), value_label] - df_src.loc[idx, value_label]) / df_src.loc[idx, value_label]                    
+            df_src.at[idx, str_prediction] = (df_src.at[idx + int(prediction_interval), value_label] - df_src.at[idx, value_label]) / df_src.at[idx, value_label]                    
         idx += 1
     
     return df_src

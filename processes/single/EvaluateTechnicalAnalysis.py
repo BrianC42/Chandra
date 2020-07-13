@@ -24,6 +24,7 @@ def present_evaluation(f_out, eval_results):
     return
 
 def find_sample_index(eval_results, data_point):
+    cat_range = 'Neutral'
     if not np.isnan(data_point):
         for cat_range in eval_results:
             cat_max = eval_results.at['Range Max', cat_range]
@@ -32,38 +33,79 @@ def find_sample_index(eval_results, data_point):
                 break
     return cat_range
 
+def add_results_index(df_results, ndx_label):
+    zero_data = [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
+    result_cols = df_results.columns
+    expanded_results = pd.DataFrame(data = zero_data, index=[ndx_label], columns=result_cols)
+    return expanded_results
+
+def combination1(f_out, df_data, eval_results):
+    result_index = 'combination1'
+    if not result_index in eval_results.index:
+        combo_results = add_results_index(eval_results, result_index)
+        eval_results = eval_results.append(combo_results)
+        
+    rows = df_data.iterrows()
+    for nrow in rows:
+        if nrow[1]['MACD_Buy'] == True:
+            if not np.isnan(nrow[1]['MACD']) and \
+                nrow[1]['MACD'] > 0.0 and \
+                nrow[1]['Close'] > nrow[1]['SMA20']:
+                cat_str = find_sample_index(eval_results, nrow[1]['10 day change'])
+                eval_results.at[result_index, cat_str] += 1
+    return eval_results
+
+def sample_count(f_out, df_data, eval_results):
+    result_index = 'Samples'
+    if not result_index in eval_results.index:
+        combo_results = add_results_index(eval_results, result_index)
+        eval_results = eval_results.append(combo_results)
+        
+    rows = df_data.iterrows()
+    for nrow in rows:
+        if True:
+            cat_str = find_sample_index(eval_results, nrow[1]['10 day change'])
+            eval_results.at[result_index, cat_str] += 1
+    return eval_results
+
 def on_balance_volume(f_out, df_data, eval_results):
     result_index = 'OBV'
-    result_cols = eval_results.columns
     if not result_index in eval_results.index:
-        zero_data = [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
-        OBV_results = pd.DataFrame(data = zero_data, index=[result_index], columns=result_cols)
+        OBV_results = add_results_index(eval_results, result_index)
         eval_results = eval_results.append(OBV_results)
+        
+    rows = df_data.iterrows()
+    for nrow in rows:
+        if nrow[1]['OBV'] > 0:
+            cat_str = find_sample_index(eval_results, nrow[1]['10 day change'])
+            eval_results.at[result_index, cat_str] += 1
     return eval_results
 
 def bollinger_bands(f_out, df_data, eval_results):
     result_index = 'Bollinger Bands'
-    result_cols = eval_results.columns
     if not result_index in eval_results.index:
-        zero_data = [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
-        BB_results = pd.DataFrame(data = zero_data, index=[result_index], columns=result_cols)
+        BB_results = add_results_index(eval_results, result_index)
         eval_results = eval_results.append(BB_results)
+        
+    rows = df_data.iterrows()
+    for nrow in rows:
+        if nrow[1]['Close'] < nrow[1]['SMA20']:
+            cat_str = find_sample_index(eval_results, nrow[1]['10 day change'])
+            eval_results.at[result_index, cat_str] += 1
     return eval_results
 
 def macd_positive_cross(f_out, df_data, eval_results):
     result_index = 'MACD Positive Cross'
-    result_cols = eval_results.columns
     if not result_index in eval_results.index:
-        zero_data = [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
-        MACD_results = pd.DataFrame(data=zero_data, index=[result_index], columns=result_cols)
+        MACD_results = add_results_index(eval_results, result_index)
         eval_results = eval_results.append(MACD_results)
-    data_rows = df_data.shape[0]
-    if data_rows > 0:
-        for data_row in df_data.itertuples():
-            if data_row[8] == True:
-                if not np.isnan(data_row[5]):
-                    cat_str = find_sample_index(eval_results, data_row[5])
-                    eval_results.at[result_index, cat_str] += 1
+        
+    rows = df_data.iterrows()
+    for nrow in rows:
+        if nrow[1]['MACD_Buy'] == True:
+            if not np.isnan(nrow[1]['MACD']):
+                cat_str = find_sample_index(eval_results, nrow[1]['10 day change'])
+                eval_results.at[result_index, cat_str] += 1
     return eval_results
 
 def evaluate_technical_analysis(f_out, authentication_parameters, analysis_dir):
@@ -78,9 +120,13 @@ def evaluate_technical_analysis(f_out, authentication_parameters, analysis_dir):
         if os.path.isfile(filename):
             #print("File: %s" % filename)
             df_data = pd.read_csv(filename)
+            eval_results = sample_count(f_out, df_data, eval_results)
+            '''
             eval_results = macd_positive_cross(f_out, df_data, eval_results)
             eval_results = bollinger_bands(f_out, df_data, eval_results)
             eval_results = on_balance_volume(f_out, df_data, eval_results)
+            '''
+            eval_results = combination1(f_out, df_data, eval_results)
     present_evaluation(f_out, eval_results)
     logger.info('<---- evaluate_technical_analysis')
     return

@@ -14,6 +14,8 @@ from configuration import read_config_json
 from tda_api_library import update_tda_eod_data
 from tda_api_library import tda_get_authentication_details
 from tda_api_library import tda_read_watch_lists
+from tda_derivative_data import add_trending_data
+from tda_derivative_data import add_change_data
 from macd import macd
 from on_balance_volume import on_balance_volume
 from bollinger_bands import bollinger_bands
@@ -31,6 +33,8 @@ def technical_analysis(json_config, authentication_parameters, data_dir, analysi
             print("File: %s" % filename)
             df_data = pd.read_csv(filename)
             print("EOD data for %s\n%s" % (filename, df_data))
+            df_data = add_trending_data(df_data)
+            df_data = add_change_data(df_data)
             df_data = macd(df_data[:], value_label="Close", \
                            short_interval=12, short_data='EMA12',\
                            long_interval=26, long_data='EMA26', \
@@ -81,7 +85,7 @@ if __name__ == '__main__':
     log_fmt = logging.Formatter('%(asctime)s - %(name)s - %levelname - %(messages)s')
     logger.info('Updating stock data')
 
-    update_tda_eod_data(app_data['authentication'])
+    #update_tda_eod_data(app_data['authentication'])
     technical_analysis(json_config, app_data['authentication'], app_data['eod_data'], app_data['market_analysis_data'])
     
     '''

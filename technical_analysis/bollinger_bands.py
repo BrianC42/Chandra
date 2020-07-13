@@ -31,7 +31,6 @@ def add_bb_fields(df_data, sma_label):
             BB_Upper
             BB_Lower
     '''
-    df_data.insert(loc=0, column=sma_label, value=NaN)
     df_data.insert(loc=0, column='BB_Upper', value=NaN)
     df_data.insert(loc=0, column='BB_Lower', value=NaN)
 
@@ -42,23 +41,16 @@ def bollinger_bands(df_data=None, \
                     sma_interval=None, \
                     sma_label=None):
     
-    #data_points = len(df_data)
-    #print ("bollinger_bands:", data_points, "data points", value_label, sma_interval, sma_label)
-    
-    df_data = add_bb_fields(df_data, sma_label)
-    df_data = simple_moving_average(df_data[:], value_label, sma_interval, sma_label)
+    #df_data = add_bb_fields(df_data, sma_label)
     
     ds_std_dev = df_data[value_label]
     ds_value = df_data[value_label]
-    #print (ds_std_dev.head(sma_interval), ds_std_dev.tail(sma_interval))
     ds_std_dev = ds_std_dev.rolling(window=sma_interval, min_periods=1).std()
-    #print (ds_std_dev.head(sma_interval), ds_std_dev.tail(sma_interval))
+    '''
     df_data['BB_Upper'] = ds_value + (ds_std_dev * 2) 
     df_data['BB_Lower'] = ds_value - (ds_std_dev * 2)
+    '''
+    df_data.insert(0, 'BB_Upper', ds_value + (ds_std_dev * 2))
+    df_data.insert(0, 'BB_Lower', ds_value - (ds_std_dev * 2))
 
-    '''
-    print ("\nbollinger_bands df_data head\n",df_data[:].head(sma_interval), \
-           "\n\nand tail ...\n", df_data[:].tail(sma_interval))
-    '''
-    
     return df_data
