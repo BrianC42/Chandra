@@ -43,9 +43,9 @@ def add_acc_dist_fields(df_data):
     return (df_data)
 
 def accumulation_distribution(df_data=None):
-    # print ("accumulation_distribution")
     add_acc_dist_fields(df_data)
     
+    '''
     idx = 1
     while idx < len(df_data):
         # 1. Money Flow Multiplier = [(close  -  low) - (high - close)] /(high - low)
@@ -62,5 +62,6 @@ def accumulation_distribution(df_data=None):
         df_data.ix[idx, 'AccumulationDistribution'] = df_data.ix[idx-1, 'AccumulationDistribution'] + mfv
         
         idx += 1
+    '''
 
     return df_data

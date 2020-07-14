@@ -41,7 +41,11 @@ to use the ADX as a way to time an entry on a market that is already confirmed t
 in a particular direction.
 
 '''
+def add_adi_fields(df_data):
+    df_data.insert(loc=0, column='Average Directional Index', value=0.0)
+    return df_data
 
-def average_directional_index(df_src=None):
-    # print ("average_directional_index")
-    return df_src
+def average_directional_index(df_data=None):
+    add_adi_fields(df_data)
+    
+    return df_data

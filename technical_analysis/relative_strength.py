@@ -31,7 +31,12 @@ For example, in the case of the Ford/GM relative strength at 0.28, a pairs trade
 a long position in Ford and short GM if he or she felt the pair would move back toward its historical range.
 
 '''
+def add_relative_strength(df_data=None):
+    df_data.insert(loc=0, column='Relative Strength', value=0.0)
+    
+    return df_data
 
-def relative_strength(df_src=None):
-    # print ("relative_strength")
-    return df_src
+def relative_strength(df_data=None):
+    add_relative_strength(df_data)
+    
+    return df_data

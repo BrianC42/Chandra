@@ -20,36 +20,11 @@ used for both the middle band and the calculation of standard deviation.
 
 '''
 
-from moving_average import simple_moving_average
-from numpy import NaN
-
-def add_bb_fields(df_data, sma_label):
-    '''
-    Only one additional field is added to the digest
-        Bollinger band fields: 
-            Simple Moving Average
-            BB_Upper
-            BB_Lower
-    '''
-    df_data.insert(loc=0, column='BB_Upper', value=NaN)
-    df_data.insert(loc=0, column='BB_Lower', value=NaN)
-
-    return (df_data)
-
-def bollinger_bands(df_data=None, \
-                    value_label=None, \
-                    sma_interval=None, \
-                    sma_label=None):
-    
-    #df_data = add_bb_fields(df_data, sma_label)
+def bollinger_bands(df_data=None, value_label=None, sma_interval=None):
     
     ds_std_dev = df_data[value_label]
     ds_value = df_data[value_label]
     ds_std_dev = ds_std_dev.rolling(window=sma_interval, min_periods=1).std()
-    '''
-    df_data['BB_Upper'] = ds_value + (ds_std_dev * 2) 
-    df_data['BB_Lower'] = ds_value - (ds_std_dev * 2)
-    '''
     df_data.insert(0, 'BB_Upper', ds_value + (ds_std_dev * 2))
     df_data.insert(0, 'BB_Lower', ds_value - (ds_std_dev * 2))
 

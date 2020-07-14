@@ -19,6 +19,11 @@ from tda_derivative_data import add_change_data
 from macd import macd
 from on_balance_volume import on_balance_volume
 from bollinger_bands import bollinger_bands
+from accumulation_distribution import accumulation_distribution
+from aroon_indicator import aroon_indicator
+from average_directional_index import average_directional_index
+from stochastic_oscillator import stochastic_oscillator
+from relative_strength import relative_strength
 
 def technical_analysis(json_config, authentication_parameters, data_dir, analysis_dir):
     logger.info('technical_analysis ---->')
@@ -35,13 +40,14 @@ def technical_analysis(json_config, authentication_parameters, data_dir, analysi
             print("EOD data for %s\n%s" % (filename, df_data))
             df_data = add_trending_data(df_data)
             df_data = add_change_data(df_data)
-            df_data = macd(df_data[:], value_label="Close", \
-                           short_interval=12, short_data='EMA12',\
-                           long_interval=26, long_data='EMA26', \
-                           #date_label="date", \
-                           prediction_interval=json_config['MACDfuture'])
+            df_data = macd(df_data[:], value_label="Close")
             df_data = on_balance_volume(df_data[:], value_label='Close', volume_lable='Volume')
-            df_data = bollinger_bands(df_data[:], value_label="Close", sma_interval=20, sma_label='SMA20')
+            df_data = bollinger_bands(df_data[:], value_label="Close", sma_interval=20)
+            df_data = accumulation_distribution(df_data)
+            df_data = aroon_indicator(df_data)
+            df_data = average_directional_index(df_data)
+            df_data = stochastic_oscillator(df_data)
+            df_data = relative_strength(df_data)
             #df_data.drop(['Open', 'High', 'Low', 'Close', 'Volume', 'MACD_Sell', 'MACD_Buy'], axis=1, inplace=True)
             df_data.to_csv(analysis_dir + "\\" + symbol + '.csv', index=False)
             print("Analytic data for %s\n%s" % (filename, df_data))
@@ -85,7 +91,7 @@ if __name__ == '__main__':
     log_fmt = logging.Formatter('%(asctime)s - %(name)s - %levelname - %(messages)s')
     logger.info('Updating stock data')
 
-    #update_tda_eod_data(app_data['authentication'])
+    update_tda_eod_data(app_data['authentication'])
     technical_analysis(json_config, app_data['authentication'], app_data['eod_data'], app_data['market_analysis_data'])
     
     '''

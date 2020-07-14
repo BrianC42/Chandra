@@ -90,7 +90,17 @@ def update_tda_eod_data(authentication_parameters):
     
     eod_data_dir = 'd:\\brian\\AI Projects\\tda\\market_data\\'
     json_authentication = tda_get_authentication_details(authentication_parameters)
+    tda_throttle_time = time.time()
+    tda_throttle_count = 0
     for symbol in tda_read_watch_lists(json_authentication):
+        if tda_throttle_count < 110:
+            tda_throttle_count += 1
+        else:
+            now = time.time()
+            if now - tda_throttle_time < 60:
+                time.sleep(now - tda_throttle_time)
+            tda_throttle_count = 0
+            tda_throttle_time = time.time()
         tda_get_access_token(json_authentication)    
         eod_file = eod_data_dir + symbol + '.csv'
         url = 'https://api.tdameritrade.com/v1/marketdata/' + symbol + '/pricehistory'

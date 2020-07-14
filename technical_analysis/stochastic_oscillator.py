@@ -46,7 +46,11 @@ However, the levels are adjustable to fit security characteristics and analytica
 above 80 indicate a security is trading near the top of its high-low range; readings below 20 
 indicate the security is trading near the bottom of its high-low range.
 '''
+def add_stochastic_oscillator_fields(df_data=None):
+    df_data.insert(loc=0, column='Stochastic Oscillator', value=0.0)
+    return df_data
 
-def stochastic_oscillator(df_src=None):
-    # print ("stochastic_oscillator")
-    return df_src
+def stochastic_oscillator(df_data=None):
+    add_stochastic_oscillator_fields(df_data)
+    
+    return df_data

@@ -16,7 +16,7 @@ def simple_moving_average(df_data, value_label=None, \
 
 def exponential_moving_average(df_data, value_label=None, \
         date_label=None, interval=None, \
-        EMA_data_label=None):    
+        EMA_data_label=None):
     '''
     print ("\nEMA:...\ndf_data length:", len(df_data), \
         "\ndate label: ", date_label, \

@@ -56,7 +56,27 @@ def combination1(f_out, df_data, eval_results):
     return eval_results
 
 def sample_count(f_out, df_data, eval_results):
-    result_index = 'Samples'
+    r1_index = 'Samples 1 day'
+    r5_index = 'Samples 5 day'
+    r10_index = 'Samples 10 day'
+    r20_index = 'Samples 20 day'
+    if not r1_index in eval_results.index:
+        eval_results = eval_results.append(add_results_index(eval_results, r1_index))
+        eval_results = eval_results.append(add_results_index(eval_results, r5_index))
+        eval_results = eval_results.append(add_results_index(eval_results, r10_index))
+        eval_results = eval_results.append(add_results_index(eval_results, r20_index))
+        
+    rows = df_data.iterrows()
+    for nrow in rows:
+        if True:
+            eval_results.at[r1_index, find_sample_index(eval_results, nrow[1]['1 day change'])] += 1
+            eval_results.at[r5_index, find_sample_index(eval_results, nrow[1]['5 day change'])] += 1
+            eval_results.at[r10_index, find_sample_index(eval_results, nrow[1]['10 day change'])] += 1
+            eval_results.at[r20_index, find_sample_index(eval_results, nrow[1]['20 day change'])] += 1
+    return eval_results
+
+def accumulation_distribution(f_out, df_data, eval_results):
+    result_index = 'Accumulation Distribution'
     if not result_index in eval_results.index:
         combo_results = add_results_index(eval_results, result_index)
         eval_results = eval_results.append(combo_results)
@@ -65,6 +85,58 @@ def sample_count(f_out, df_data, eval_results):
     for nrow in rows:
         if True:
             cat_str = find_sample_index(eval_results, nrow[1]['10 day change'])
+            eval_results.at[result_index, cat_str] += 1
+    return eval_results
+
+def aroon_indicator(f_out, df_data, eval_results):
+    result_index = 'Aroon Indicator'
+    if not result_index in eval_results.index:
+        combo_results = add_results_index(eval_results, result_index)
+        eval_results = eval_results.append(combo_results)
+        
+    rows = df_data.iterrows()
+    for nrow in rows:
+        if True:
+            cat_str = find_sample_index(eval_results, nrow[1]['20 day change'])
+            eval_results.at[result_index, cat_str] += 1
+    return eval_results
+
+def average_directional_index(f_out, df_data, eval_results):
+    result_index = 'Average Directional Index'
+    if not result_index in eval_results.index:
+        combo_results = add_results_index(eval_results, result_index)
+        eval_results = eval_results.append(combo_results)
+        
+    rows = df_data.iterrows()
+    for nrow in rows:
+        if True:
+            cat_str = find_sample_index(eval_results, nrow[1]['10 day change'])
+            eval_results.at[result_index, cat_str] += 1
+    return eval_results
+
+def stochastic_oscillator(f_out, df_data, eval_results):
+    result_index = 'Stochastic Oscillator'
+    if not result_index in eval_results.index:
+        combo_results = add_results_index(eval_results, result_index)
+        eval_results = eval_results.append(combo_results)
+        
+    rows = df_data.iterrows()
+    for nrow in rows:
+        if True:
+            cat_str = find_sample_index(eval_results, nrow[1]['5 day change'])
+            eval_results.at[result_index, cat_str] += 1
+    return eval_results
+
+def relative_strength(f_out, df_data, eval_results):
+    result_index = 'Relative Strength'
+    if not result_index in eval_results.index:
+        combo_results = add_results_index(eval_results, result_index)
+        eval_results = eval_results.append(combo_results)
+        
+    rows = df_data.iterrows()
+    for nrow in rows:
+        if True:
+            cat_str = find_sample_index(eval_results, nrow[1]['1 day change'])
             eval_results.at[result_index, cat_str] += 1
     return eval_results
 
@@ -95,23 +167,32 @@ def bollinger_bands(f_out, df_data, eval_results):
     return eval_results
 
 def macd_positive_cross(f_out, df_data, eval_results):
-    result_index = 'MACD Positive Cross'
-    if not result_index in eval_results.index:
-        MACD_results = add_results_index(eval_results, result_index)
-        eval_results = eval_results.append(MACD_results)
+    r1_index = 'MACD Positive Cross - 1 day'
+    r5_index = 'MACD Positive Cross - 5 day'
+    r10_index = 'MACD Positive Cross - 10 day'
+    r20_index = 'MACD Positive Cross - 20 day'
+    if not r10_index in eval_results.index:
+        #MACD_results = add_results_index(eval_results, r10_index)
+        eval_results = eval_results.append(add_results_index(eval_results, r1_index))
+        eval_results = eval_results.append(add_results_index(eval_results, r5_index))
+        eval_results = eval_results.append(add_results_index(eval_results, r10_index))
+        eval_results = eval_results.append(add_results_index(eval_results, r20_index))
         
     rows = df_data.iterrows()
     for nrow in rows:
         if nrow[1]['MACD_Buy'] == True:
             if not np.isnan(nrow[1]['MACD']):
-                cat_str = find_sample_index(eval_results, nrow[1]['10 day change'])
-                eval_results.at[result_index, cat_str] += 1
+                #cat_str = find_sample_index(eval_results, nrow[1]['10 day change'])
+                eval_results.at[r1_index, find_sample_index(eval_results, nrow[1]['1 day change'])] += 1
+                eval_results.at[r5_index, find_sample_index(eval_results, nrow[1]['5 day change'])] += 1
+                eval_results.at[r10_index, find_sample_index(eval_results, nrow[1]['10 day change'])] += 1
+                eval_results.at[r20_index, find_sample_index(eval_results, nrow[1]['20 day change'])] += 1
     return eval_results
 
 def evaluate_technical_analysis(f_out, authentication_parameters, analysis_dir):
     logger.info('evaluate_technical_analysis ---->')
     json_authentication = tda_get_authentication_details(authentication_parameters)
-    eval_results = pd.DataFrame([[-1000.0, -1.0, -0.5, -0.2, -0.1,  -0.05, -0.01, 0.01, 0.05, 0.1, 0.2, 0.5, 1.0], \
+    eval_results = pd.DataFrame([[-1000.0, -1.0, -0.5, -0.2, -0.1,  -0.05, -0.01, 0.01, 0.05, 0.1, 0.2, 0.5,    1.0], \
                                  [-   1.0, -0.5, -0.2, -0.1, -0.05, -0.01,  0.01, 0.05, 0.1,  0.2, 0.5, 1.0, 1000.0]], \
                                 index=['Range Min', 'Range Max'], \
                                 columns=['Neg', '-5', '-4', '=3', '-2', '-1', 'Neutral', '1', '2', '3', '4', '5', 'Pos'])
@@ -121,11 +202,14 @@ def evaluate_technical_analysis(f_out, authentication_parameters, analysis_dir):
             #print("File: %s" % filename)
             df_data = pd.read_csv(filename)
             eval_results = sample_count(f_out, df_data, eval_results)
-            '''
             eval_results = macd_positive_cross(f_out, df_data, eval_results)
             eval_results = bollinger_bands(f_out, df_data, eval_results)
             eval_results = on_balance_volume(f_out, df_data, eval_results)
-            '''
+            eval_results = relative_strength(f_out, df_data, eval_results)
+            eval_results = stochastic_oscillator(f_out, df_data, eval_results)
+            eval_results = average_directional_index(f_out, df_data, eval_results)
+            eval_results = aroon_indicator(f_out, df_data, eval_results)
+            eval_results = accumulation_distribution(f_out, df_data, eval_results)
             eval_results = combination1(f_out, df_data, eval_results)
     present_evaluation(f_out, eval_results)
     logger.info('<---- evaluate_technical_analysis')

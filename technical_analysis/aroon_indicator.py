@@ -22,6 +22,11 @@ This indicator is very similar to the directional movement index (DMI) that was 
 Welles Wilder, which is also a very popular indicator used to measure the strength of a given trend.
 
 '''
-def aroon_indicator(df_src=None):
-    # print("aroon_indicator")
-    return df_src
+def add_aroon_fields(df_data=None):
+    df_data.insert(loc=0, column='Aroon Indicator', value=0.0)
+    return df_data
+
+def aroon_indicator(df_data=None):
+    add_aroon_fields(df_data)
+
+    return df_data
