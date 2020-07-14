@@ -31,12 +31,48 @@ For example, in the case of the Ford/GM relative strength at 0.28, a pairs trade
 a long position in Ford and short GM if he or she felt the pair would move back toward its historical range.
 
 '''
+import os
+import pandas as pd
+from numpy import NaN
+
+from moving_average import simple_moving_average
+
 def add_relative_strength(df_data=None):
     df_data.insert(loc=0, column='Relative Strength', value=0.0)
-    
+    df_data.insert(loc=0, column='RS SMA20', value=NaN)
     return df_data
 
-def relative_strength(df_data=None):
+def relative_strength(df_data=None, value_label=None, relative_to=None):
     add_relative_strength(df_data)
     
+    if os.path.isfile(relative_to):
+        print("File: %s" % relative_to)
+        df_comp = pd.read_csv(relative_to)
+        data_ndx = 1
+        comp_ndx = 1
+        while data_ndx < len(df_data):
+            matched = False
+            if comp_ndx < len(df_comp):
+                if df_data.at[data_ndx, 'DateTime'] == df_comp.at[comp_ndx + 1, 'DateTime']:
+                    comp_ndx += 1
+                    matched = True
+            if not matched:
+                comp_ndx = 1
+                while comp_ndx < len(df_comp):
+                    if df_data.at[data_ndx, 'DateTime'] == df_comp.at[comp_ndx, 'DateTime']:
+                        matched = True
+                        break
+                    comp_ndx += 1
+            if matched:
+                comp = df_data.at[data_ndx, value_label] / df_comp.at[comp_ndx, value_label]
+                df_data.at[data_ndx, 'Relative Strength'] = comp
+            '''
+            print("data date: %s value %s\ncomp date: %s value: %s\nRelative strength: %s" % \
+                  (df_data.at[data_ndx, 'DateTime'], df_data.at[data_ndx, value_label], \
+                   df_comp.at[comp_ndx, 'DateTime'], df_comp.at[comp_ndx, value_label], \
+                   comp))
+            '''
+            data_ndx += 1
+    df_data = simple_moving_average(df_data[:], value_label="Relative Strength", avg_interval=20, SMA_data_label='RS SMA20')
+
     return df_data

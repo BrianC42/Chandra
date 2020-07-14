@@ -88,10 +88,6 @@ def macd(df_src=None, value_label=None):
                 ### Upward crossover
                 df_src.at[idx, 'MACD_Buy'] = True
                 df_src.at[idx, 'MACD_flag'] = MACD_flags.get('buy')   
-        '''
-        if idx + int(prediction_interval) < len(df_src):
-            df_src.at[idx, str_prediction] = (df_src.at[idx + int(prediction_interval), value_label] - df_src.at[idx, value_label]) / df_src.at[idx, value_label] 
-        '''
         idx += 1
     
     return df_src

@@ -47,7 +47,7 @@ def technical_analysis(json_config, authentication_parameters, data_dir, analysi
             df_data = aroon_indicator(df_data)
             df_data = average_directional_index(df_data)
             df_data = stochastic_oscillator(df_data)
-            df_data = relative_strength(df_data)
+            df_data = relative_strength(df_data, value_label="Close", relative_to=data_dir + '\\$spx.x.csv')
             #df_data.drop(['Open', 'High', 'Low', 'Close', 'Volume', 'MACD_Sell', 'MACD_Buy'], axis=1, inplace=True)
             df_data.to_csv(analysis_dir + "\\" + symbol + '.csv', index=False)
             print("Analytic data for %s\n%s" % (filename, df_data))
@@ -91,7 +91,7 @@ if __name__ == '__main__':
     log_fmt = logging.Formatter('%(asctime)s - %(name)s - %levelname - %(messages)s')
     logger.info('Updating stock data')
 
-    update_tda_eod_data(app_data['authentication'])
+    #update_tda_eod_data(app_data['authentication'])
     technical_analysis(json_config, app_data['authentication'], app_data['eod_data'], app_data['market_analysis_data'])
     
     '''

@@ -39,8 +39,8 @@ def add_results_index(df_results, ndx_label):
     expanded_results = pd.DataFrame(data = zero_data, index=[ndx_label], columns=result_cols)
     return expanded_results
 
-def combination1(f_out, df_data, eval_results):
-    result_index = 'combination1'
+def combinations(f_out, df_data, eval_results):
+    result_index = 'combination1 MACD<0.25+Close>SMA20, 10 day'
     if not result_index in eval_results.index:
         combo_results = add_results_index(eval_results, result_index)
         eval_results = eval_results.append(combo_results)
@@ -49,17 +49,17 @@ def combination1(f_out, df_data, eval_results):
     for nrow in rows:
         if nrow[1]['MACD_Buy'] == True:
             if not np.isnan(nrow[1]['MACD']) and \
-                nrow[1]['MACD'] > 0.0 and \
+                nrow[1]['MACD'] < 0.25 and \
                 nrow[1]['Close'] > nrow[1]['SMA20']:
                 cat_str = find_sample_index(eval_results, nrow[1]['10 day change'])
                 eval_results.at[result_index, cat_str] += 1
     return eval_results
 
 def sample_count(f_out, df_data, eval_results):
-    r1_index = 'Samples 1 day'
-    r5_index = 'Samples 5 day'
-    r10_index = 'Samples 10 day'
-    r20_index = 'Samples 20 day'
+    r1_index = 'Baseline 1 day'
+    r5_index = 'Baseline 5 day'
+    r10_index = 'Baseline 10 day'
+    r20_index = 'Baseline 20 day'
     if not r1_index in eval_results.index:
         eval_results = eval_results.append(add_results_index(eval_results, r1_index))
         eval_results = eval_results.append(add_results_index(eval_results, r5_index))
@@ -76,7 +76,7 @@ def sample_count(f_out, df_data, eval_results):
     return eval_results
 
 def accumulation_distribution(f_out, df_data, eval_results):
-    result_index = 'Accumulation Distribution'
+    result_index = 'Accumulation Distribution, TBD'
     if not result_index in eval_results.index:
         combo_results = add_results_index(eval_results, result_index)
         eval_results = eval_results.append(combo_results)
@@ -89,7 +89,7 @@ def accumulation_distribution(f_out, df_data, eval_results):
     return eval_results
 
 def aroon_indicator(f_out, df_data, eval_results):
-    result_index = 'Aroon Indicator'
+    result_index = 'Aroon Indicator, TBD'
     if not result_index in eval_results.index:
         combo_results = add_results_index(eval_results, result_index)
         eval_results = eval_results.append(combo_results)
@@ -102,7 +102,7 @@ def aroon_indicator(f_out, df_data, eval_results):
     return eval_results
 
 def average_directional_index(f_out, df_data, eval_results):
-    result_index = 'Average Directional Index'
+    result_index = 'Average Directional Index, TBD'
     if not result_index in eval_results.index:
         combo_results = add_results_index(eval_results, result_index)
         eval_results = eval_results.append(combo_results)
@@ -115,7 +115,7 @@ def average_directional_index(f_out, df_data, eval_results):
     return eval_results
 
 def stochastic_oscillator(f_out, df_data, eval_results):
-    result_index = 'Stochastic Oscillator'
+    result_index = 'Stochastic Oscillator, TBD'
     if not result_index in eval_results.index:
         combo_results = add_results_index(eval_results, result_index)
         eval_results = eval_results.append(combo_results)
@@ -128,20 +128,27 @@ def stochastic_oscillator(f_out, df_data, eval_results):
     return eval_results
 
 def relative_strength(f_out, df_data, eval_results):
-    result_index = 'Relative Strength'
+    result_index = 'Relative Strength, RS<RS SMA20, 10 day'
+    rs_mean_index = 'Relative Strength, RS<RS mean, 10 day'
     if not result_index in eval_results.index:
         combo_results = add_results_index(eval_results, result_index)
         eval_results = eval_results.append(combo_results)
-        
+        combo_results = add_results_index(eval_results, rs_mean_index)
+        eval_results = eval_results.append(combo_results)
+
+    rs_mean = df_data.get('Relative Strength').mean()
     rows = df_data.iterrows()
     for nrow in rows:
-        if True:
-            cat_str = find_sample_index(eval_results, nrow[1]['1 day change'])
+        if nrow[1]['Relative Strength'] < nrow[1]['RS SMA20']:
+            cat_str = find_sample_index(eval_results, nrow[1]['10 day change'])
             eval_results.at[result_index, cat_str] += 1
+        if nrow[1]['Relative Strength'] < rs_mean:
+            cat_str = find_sample_index(eval_results, nrow[1]['10 day change'])
+            eval_results.at[rs_mean_index, cat_str] += 1
     return eval_results
 
 def on_balance_volume(f_out, df_data, eval_results):
-    result_index = 'OBV'
+    result_index = 'OBV, OBV>0, 10 day'
     if not result_index in eval_results.index:
         OBV_results = add_results_index(eval_results, result_index)
         eval_results = eval_results.append(OBV_results)
@@ -154,7 +161,7 @@ def on_balance_volume(f_out, df_data, eval_results):
     return eval_results
 
 def bollinger_bands(f_out, df_data, eval_results):
-    result_index = 'Bollinger Bands'
+    result_index = 'Bollinger Bands, Close<SMA20, 10 day'
     if not result_index in eval_results.index:
         BB_results = add_results_index(eval_results, result_index)
         eval_results = eval_results.append(BB_results)
@@ -195,7 +202,7 @@ def evaluate_technical_analysis(f_out, authentication_parameters, analysis_dir):
     eval_results = pd.DataFrame([[-1000.0, -1.0, -0.5, -0.2, -0.1,  -0.05, -0.01, 0.01, 0.05, 0.1, 0.2, 0.5,    1.0], \
                                  [-   1.0, -0.5, -0.2, -0.1, -0.05, -0.01,  0.01, 0.05, 0.1,  0.2, 0.5, 1.0, 1000.0]], \
                                 index=['Range Min', 'Range Max'], \
-                                columns=['Neg', '-5', '-4', '=3', '-2', '-1', 'Neutral', '1', '2', '3', '4', '5', 'Pos'])
+                                columns=['Neg', '-5', '-4', '-3', '-2', '-1', 'Neutral', '1', '2', '3', '4', '5', 'Pos'])
     for symbol in tda_read_watch_lists(json_authentication):
         filename = analysis_dir + '\\' + symbol + '.csv'
         if os.path.isfile(filename):
@@ -210,7 +217,7 @@ def evaluate_technical_analysis(f_out, authentication_parameters, analysis_dir):
             eval_results = average_directional_index(f_out, df_data, eval_results)
             eval_results = aroon_indicator(f_out, df_data, eval_results)
             eval_results = accumulation_distribution(f_out, df_data, eval_results)
-            eval_results = combination1(f_out, df_data, eval_results)
+            eval_results = combinations(f_out, df_data, eval_results)
     present_evaluation(f_out, eval_results)
     logger.info('<---- evaluate_technical_analysis')
     return
