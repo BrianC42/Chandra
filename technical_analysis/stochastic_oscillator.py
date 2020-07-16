@@ -46,11 +46,28 @@ However, the levels are adjustable to fit security characteristics and analytica
 above 80 indicate a security is trading near the top of its high-low range; readings below 20 
 indicate the security is trading near the bottom of its high-low range.
 '''
+from numpy import NaN
+
 def add_stochastic_oscillator_fields(df_data=None):
-    df_data.insert(loc=0, column='Stochastic Oscillator', value=0.0)
+    df_data.insert(loc=0, column='Stochastic Oscillator', value=NaN)
+    df_data.insert(loc=0, column='SO SMA3', value=NaN)
     return df_data
 
 def stochastic_oscillator(df_data=None):
     add_stochastic_oscillator_fields(df_data)
+    
+    data_ndx = 14
+    while data_ndx < len(df_data):
+        trading_range = df_data.at[data_ndx - 13, '14 day max'] - df_data.at[data_ndx - 13, '14 day min']
+        
+        if trading_range == 0:
+            df_data.at[data_ndx, 'Stochastic Oscillator'] = 0.0
+        else:
+            df_data.at[data_ndx, 'Stochastic Oscillator'] = 100 * (df_data.at[data_ndx, 'Close'] - df_data.at[data_ndx - 13, '14 day min']) / trading_range
+        if data_ndx >= 16:
+            df_data.at[data_ndx, 'SO SMA3'] = df_data.at[data_ndx-2, 'Stochastic Oscillator'] + \
+                                              df_data.at[data_ndx-1, 'Stochastic Oscillator'] + \
+                                              df_data.at[data_ndx, 'Stochastic Oscillator'] / 3
+        data_ndx += 1
     
     return df_data

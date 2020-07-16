@@ -46,7 +46,6 @@ def relative_strength(df_data=None, value_label=None, relative_to=None):
     add_relative_strength(df_data)
     
     if os.path.isfile(relative_to):
-        print("File: %s" % relative_to)
         df_comp = pd.read_csv(relative_to)
         data_ndx = 1
         comp_ndx = 1
@@ -64,13 +63,12 @@ def relative_strength(df_data=None, value_label=None, relative_to=None):
                         break
                     comp_ndx += 1
             if matched:
-                comp = df_data.at[data_ndx, value_label] / df_comp.at[comp_ndx, value_label]
-                df_data.at[data_ndx, 'Relative Strength'] = comp
+                df_data.at[data_ndx, 'Relative Strength'] = df_data.at[data_ndx, value_label] / df_comp.at[comp_ndx, value_label]
             '''
             print("data date: %s value %s\ncomp date: %s value: %s\nRelative strength: %s" % \
                   (df_data.at[data_ndx, 'DateTime'], df_data.at[data_ndx, value_label], \
                    df_comp.at[comp_ndx, 'DateTime'], df_comp.at[comp_ndx, value_label], \
-                   comp))
+                   df_data.at[data_ndx, value_label] / df_comp.at[comp_ndx, value_label]))
             '''
             data_ndx += 1
     df_data = simple_moving_average(df_data[:], value_label="Relative Strength", avg_interval=20, SMA_data_label='RS SMA20')

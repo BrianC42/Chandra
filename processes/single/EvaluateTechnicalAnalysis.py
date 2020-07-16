@@ -76,14 +76,14 @@ def sample_count(f_out, df_data, eval_results):
     return eval_results
 
 def accumulation_distribution(f_out, df_data, eval_results):
-    result_index = 'Accumulation Distribution, TBD'
+    result_index = 'Accumulation Distribution, AD>0, 10 day'
     if not result_index in eval_results.index:
         combo_results = add_results_index(eval_results, result_index)
         eval_results = eval_results.append(combo_results)
         
     rows = df_data.iterrows()
     for nrow in rows:
-        if True:
+        if nrow[1]['AccumulationDistribution'] > 0:
             cat_str = find_sample_index(eval_results, nrow[1]['10 day change'])
             eval_results.at[result_index, cat_str] += 1
     return eval_results
@@ -115,16 +115,26 @@ def average_directional_index(f_out, df_data, eval_results):
     return eval_results
 
 def stochastic_oscillator(f_out, df_data, eval_results):
-    result_index = 'Stochastic Oscillator, TBD'
-    if not result_index in eval_results.index:
-        combo_results = add_results_index(eval_results, result_index)
-        eval_results = eval_results.append(combo_results)
-        
+    so_index = 'Stochastic Oscillator, SI<20, 10 day'
+    cross_index = 'Stochastic Oscillator, SIcrossSO SMA3, 10 day'
+    if not so_index in eval_results.index:
+        eval_results = eval_results.append(add_results_index(eval_results, so_index))
+        eval_results = eval_results.append(add_results_index(eval_results, cross_index))
+
+    ndx = 0
     rows = df_data.iterrows()
     for nrow in rows:
-        if True:
-            cat_str = find_sample_index(eval_results, nrow[1]['5 day change'])
-            eval_results.at[result_index, cat_str] += 1
+        if ndx == 0:
+            prior = nrow
+        if nrow[1]['Stochastic Oscillator'] < 20:
+            cat_str = find_sample_index(eval_results, nrow[1]['10 day change'])
+            eval_results.at[so_index, cat_str] += 1
+        if (nrow[1]['Stochastic Oscillator'] >= nrow[1]['SO SMA3']) and \
+            (prior[1]['Stochastic Oscillator'] < prior[1]['SO SMA3']):
+            cat_str = find_sample_index(eval_results, nrow[1]['10 day change'])
+            eval_results.at[cross_index, cat_str] += 1
+        prior = nrow
+        ndx += 1
     return eval_results
 
 def relative_strength(f_out, df_data, eval_results):
@@ -203,10 +213,11 @@ def evaluate_technical_analysis(f_out, authentication_parameters, analysis_dir):
                                  [-   1.0, -0.5, -0.2, -0.1, -0.05, -0.01,  0.01, 0.05, 0.1,  0.2, 0.5, 1.0, 1000.0]], \
                                 index=['Range Min', 'Range Max'], \
                                 columns=['Neg', '-5', '-4', '-3', '-2', '-1', 'Neutral', '1', '2', '3', '4', '5', 'Pos'])
+    
     for symbol in tda_read_watch_lists(json_authentication):
         filename = analysis_dir + '\\' + symbol + '.csv'
         if os.path.isfile(filename):
-            #print("File: %s" % filename)
+            print("File: %s" % filename)
             df_data = pd.read_csv(filename)
             eval_results = sample_count(f_out, df_data, eval_results)
             eval_results = macd_positive_cross(f_out, df_data, eval_results)

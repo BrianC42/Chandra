@@ -37,7 +37,7 @@ def technical_analysis(json_config, authentication_parameters, data_dir, analysi
         if os.path.isfile(filename):
             print("File: %s" % filename)
             df_data = pd.read_csv(filename)
-            print("EOD data for %s\n%s" % (filename, df_data))
+            #print("EOD data for %s\n%s" % (filename, df_data))
             df_data = add_trending_data(df_data)
             df_data = add_change_data(df_data)
             df_data = macd(df_data[:], value_label="Close")
@@ -48,9 +48,8 @@ def technical_analysis(json_config, authentication_parameters, data_dir, analysi
             df_data = average_directional_index(df_data)
             df_data = stochastic_oscillator(df_data)
             df_data = relative_strength(df_data, value_label="Close", relative_to=data_dir + '\\$spx.x.csv')
-            #df_data.drop(['Open', 'High', 'Low', 'Close', 'Volume', 'MACD_Sell', 'MACD_Buy'], axis=1, inplace=True)
             df_data.to_csv(analysis_dir + "\\" + symbol + '.csv', index=False)
-            print("Analytic data for %s\n%s" % (filename, df_data))
+            #print("Analytic data for %s\n%s" % (filename, df_data))
     logger.info('<---- technical_analysis')
     return
 

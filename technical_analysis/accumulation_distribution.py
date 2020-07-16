@@ -33,11 +33,6 @@ Therefore, the indicator is different from other cumulative volume indicators, s
 
 '''
 def add_acc_dist_fields(df_data):
-    '''
-    Additional fields added to the digest are
-        accumulation distribution fields: 
-            AccumulationDistribution
-    '''
     df_data.insert(loc=0, column='AccumulationDistribution', value=0.0)
 
     return (df_data)
@@ -45,23 +40,20 @@ def add_acc_dist_fields(df_data):
 def accumulation_distribution(df_data=None):
     add_acc_dist_fields(df_data)
     
-    '''
-    idx = 1
-    while idx < len(df_data):
+    data_ndx = 1
+    while data_ndx < len(df_data):
         # 1. Money Flow Multiplier = [(close  -  low) - (high - close)] /(high - low)
-        p_range = df_data.ix[idx, 'adj_high'] - df_data.ix[idx, 'adj_low']
+        p_range = df_data.at[data_ndx, 'High'] - df_data.at[data_ndx, 'Low']
         if p_range == 0.0:
             mfm = 0.0
         else:
-            mfm = ((df_data.ix[idx, 'adj_close'] - df_data.ix[idx, 'adj_low']) - \
-                   (df_data.ix[idx, 'adj_high'] - df_data.ix[idx, 'adj_close'])) / \
+            mfm = ((df_data.at[data_ndx, 'Close'] - df_data.at[data_ndx, 'Low']) - \
+                   (df_data.at[data_ndx, 'High'] - df_data.at[data_ndx, 'Close'])) / \
                    (p_range)
         # 2. Money Flow Volume = Money Flow Multiplier x volume for the period
-        mfv = mfm * df_data.ix[idx, 'adj_volume']
+        mfv = mfm * df_data.at[data_ndx, 'Volume']
         # 3. Accumulation/Distribution= previous Accumulation/Distribution + current period's Money Flow Volume
-        df_data.ix[idx, 'AccumulationDistribution'] = df_data.ix[idx-1, 'AccumulationDistribution'] + mfv
-        
-        idx += 1
-    '''
+        df_data.at[data_ndx, 'AccumulationDistribution'] = df_data.at[data_ndx-1, 'AccumulationDistribution'] + mfv
+        data_ndx += 1
 
     return df_data
