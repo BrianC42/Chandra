@@ -35,11 +35,16 @@ def initialize_eval_results():
     return eval_results
 
 def add_evaluation_results(cumulative_evaluation, incremental_evaluation):
-    print("Evaluation rows %s, colums %s" % (cumulative_evaluation.shape[0], cumulative_evaluation.shape[1]))
-    incremental_index = 'a'
-    if incremental_index in cumulative_evaluation:
-        cumulative_evaluation.append(add_results_index(cumulative_evaluation, 'a'))
-    cumulative_evaluation = incremental_evaluation
+    dont_accumulate = initialize_eval_results()
+    dont_acc_ndx = dont_accumulate.index
+    cum_indices = cumulative_evaluation.index
+    inc_indices = incremental_evaluation.index
+    for ndx in inc_indices:
+        if not ndx in dont_acc_ndx:
+            if not ndx in cum_indices:
+                cumulative_evaluation = cumulative_evaluation.append(add_results_index(cumulative_evaluation, ndx))
+            for col_ndx in incremental_evaluation.columns:
+                cumulative_evaluation.at[ndx, col_ndx] = cumulative_evaluation.at[ndx, col_ndx] + incremental_evaluation.at[ndx, col_ndx]
     return cumulative_evaluation
 
 def sample_count(df_data, eval_results):
