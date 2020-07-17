@@ -1,23 +1,30 @@
 '''
-Created on Jul 15, 2020
+Created on Jul 16, 2020
 
 @author: Brian
 '''
-from multiprocessing import Process, Pipe
 import os
+from multiprocessing import Process, Pipe
 import datetime as dt
 import time
 import logging
+import pandas as pd
+import numpy as np
 
-from tda_derivative_data_child import tda_derivative_data_child
+import matplotlib
 
 from configuration import get_ini_data
 from configuration import read_config_json
-from tda_api_library import update_tda_eod_data
+
 from tda_api_library import tda_get_authentication_details
 from tda_api_library import tda_read_watch_lists
 
-def coordinate_child_processes(authentication_parameters, data_dir, analysis_dir):
+from EvaluateTechnicalAnalysisChild import EvaluateTechnicalAnalysisChild
+from technical_analysis_utilities import initialize_eval_results
+from technical_analysis_utilities import present_evaluation
+from technical_analysis_utilities import add_evaluation_results
+
+def coordinate_evaluation_child_processes(authentication_parameters, analysis_dir):
     core_count = os.cpu_count()
     #print ("Starting {:d} processes:".format(core_count) )
     c_send = []
@@ -28,7 +35,7 @@ def coordinate_child_processes(authentication_parameters, data_dir, analysis_dir
     while p_ndx < core_count:
         #print ("Starting pipe process", p_ndx)
         p_send, p_receive = Pipe()
-        worker = Process(target=tda_derivative_data_child, args=(p_receive,))
+        worker = Process(target=EvaluateTechnicalAnalysisChild, args=(p_receive,))
         worker.start()
         c_send.append(p_send)
         c_rcv.append(p_receive)
@@ -38,11 +45,10 @@ def coordinate_child_processes(authentication_parameters, data_dir, analysis_dir
     '''
     Reading historical data and have worker processes perform technical analyses
     '''
-    #print ("\nBeginning technical analysis ...")
+    print ("\nBeginning technical analysis ...")
     json_authentication = tda_get_authentication_details(authentication_parameters)
-    #for symbol in tda_read_watch_lists(json_authentication):
     symbol_list = tda_read_watch_lists(json_authentication)
-    
+    eval_results = initialize_eval_results()    
     idx = 0
     while idx < len(symbol_list):   
         '''================= Send slices to workers ================'''
@@ -50,7 +56,7 @@ def coordinate_child_processes(authentication_parameters, data_dir, analysis_dir
         p_active = 0
         while p_ndx < core_count and idx < len(symbol_list):
             symbol = symbol_list[idx]
-            c_send[p_ndx].send([data_dir, analysis_dir, symbol])
+            c_send[p_ndx].send([analysis_dir, symbol])
             p_ndx += 1
             idx += 1
         
@@ -58,7 +64,8 @@ def coordinate_child_processes(authentication_parameters, data_dir, analysis_dir
         p_active = p_ndx
         p_ndx = 0
         while p_ndx < p_active:
-            data_enh = c_send[p_ndx].recv()        
+            symbol_results = c_send[p_ndx].recv()
+            eval_results = add_evaluation_results(eval_results, symbol_results)
             #print ("Data from technical analysis worker: ...")
             p_ndx += 1
  
@@ -78,8 +85,9 @@ def coordinate_child_processes(authentication_parameters, data_dir, analysis_dir
         p_ndx += 1
 
     #print ("\nAll workers done")
-    return    
-    
+    present_evaluation(eval_results)
+    return 
+
 if __name__ == '__main__':
     print ("Affirmative, Dave. I read you\n")
     '''
@@ -116,8 +124,8 @@ if __name__ == '__main__':
     log_fmt = logging.Formatter('%(asctime)s - %(name)s - %levelname - %(messages)s')
     logger.info('Updating stock data')
 
-    update_tda_eod_data(app_data['authentication'])
-    coordinate_child_processes(app_data['authentication'], app_data['eod_data'], app_data['market_analysis_data'])
+    #update_tda_eod_data(app_data['authentication'])
+    coordinate_evaluation_child_processes(app_data['authentication'], app_data['market_analysis_data'])
     
     '''
     clean up and prepare to exit

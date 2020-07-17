@@ -48,6 +48,32 @@ indicate the security is trading near the bottom of its high-low range.
 '''
 from numpy import NaN
 
+from technical_analysis_utilities import add_results_index
+from technical_analysis_utilities import find_sample_index
+
+def eval_stochastic_oscillator(df_data, eval_results):
+    so_index = 'Stochastic Oscillator, SI<20, 10 day'
+    cross_index = 'Stochastic Oscillator, SIcrossSO SMA3, 10 day'
+    if not so_index in eval_results.index:
+        eval_results = eval_results.append(add_results_index(eval_results, so_index))
+        eval_results = eval_results.append(add_results_index(eval_results, cross_index))
+
+    ndx = 0
+    rows = df_data.iterrows()
+    for nrow in rows:
+        if ndx == 0:
+            prior = nrow
+        if nrow[1]['Stochastic Oscillator'] < 20:
+            cat_str = find_sample_index(eval_results, nrow[1]['10 day change'])
+            eval_results.at[so_index, cat_str] += 1
+        if (nrow[1]['Stochastic Oscillator'] >= nrow[1]['SO SMA3']) and \
+            (prior[1]['Stochastic Oscillator'] < prior[1]['SO SMA3']):
+            cat_str = find_sample_index(eval_results, nrow[1]['10 day change'])
+            eval_results.at[cross_index, cat_str] += 1
+        prior = nrow
+        ndx += 1
+    return eval_results
+
 def add_stochastic_oscillator_fields(df_data=None):
     df_data.insert(loc=0, column='Stochastic Oscillator', value=NaN)
     df_data.insert(loc=0, column='SO SMA3', value=NaN)

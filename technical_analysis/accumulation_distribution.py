@@ -32,6 +32,22 @@ upper portion of its daily range. High volume days can accentuate this character
 Therefore, the indicator is different from other cumulative volume indicators, such as On-Balance Volume (OBV). 
 
 '''
+from technical_analysis_utilities import add_results_index
+from technical_analysis_utilities import find_sample_index
+
+def eval_accumulation_distribution(df_data, eval_results):
+    result_index = 'Accumulation Distribution, AD>0, 10 day'
+    if not result_index in eval_results.index:
+        combo_results = add_results_index(eval_results, result_index)
+        eval_results = eval_results.append(combo_results)
+        
+    rows = df_data.iterrows()
+    for nrow in rows:
+        if nrow[1]['AccumulationDistribution'] > 0:
+            cat_str = find_sample_index(eval_results, nrow[1]['10 day change'])
+            eval_results.at[result_index, cat_str] += 1
+    return eval_results
+
 def add_acc_dist_fields(df_data):
     df_data.insert(loc=0, column='AccumulationDistribution', value=0.0)
 

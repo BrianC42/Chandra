@@ -61,14 +61,23 @@ Day nine OBV = 76,600 + 23,000 = 99,600
 Day 10 OBV = 99,600 - 27,500 = 72,100
 
 '''
+from technical_analysis_utilities import add_results_index
+from technical_analysis_utilities import find_sample_index
+
+def eval_on_balance_volume(df_data, eval_results):
+    result_index = 'OBV, OBV>0, 10 day'
+    if not result_index in eval_results.index:
+        OBV_results = add_results_index(eval_results, result_index)
+        eval_results = eval_results.append(OBV_results)
+        
+    rows = df_data.iterrows()
+    for nrow in rows:
+        if nrow[1]['OBV'] > 0:
+            cat_str = find_sample_index(eval_results, nrow[1]['10 day change'])
+            eval_results.at[result_index, cat_str] += 1
+    return eval_results
+
 def add_obv_fields(df_data, colnum=0):
-    '''
-    Only one additional field is added to the digest
-        OBV field: 
-            OBV
-        Other fields
-            N/A 
-    '''
     df_data.insert(loc=colnum, column='OBV', value=int(0))
 
     return (df_data)

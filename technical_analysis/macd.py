@@ -33,10 +33,13 @@ When the MACD is above zero, the short-term average is above the long-term avera
 The opposite is true when the MACD is below zero. As you can see from the chart above, the zero line often acts as an area of support and resistance for the indicator.
 
 '''
-#from Moving_Average import SMA
-from moving_average import exponential_moving_average
+import numpy as np
 from numpy import NaN
 import sys
+
+from moving_average import exponential_moving_average
+from technical_analysis_utilities import add_results_index
+from technical_analysis_utilities import find_sample_index
 
 def return_macd_flags():
     #MACD_flags = dict(buy='buy', sell='sell', neutral='neutral')
@@ -46,6 +49,29 @@ def return_macd_flags():
 def return_macd_ind():
     MACD_ind = dict(buy=1, sell=-1, neutral=0)
     return (MACD_ind)
+
+def eval_macd_positive_cross(df_data, eval_results):
+    r1_index = 'MACD Positive Cross - 1 day'
+    r5_index = 'MACD Positive Cross - 5 day'
+    r10_index = 'MACD Positive Cross - 10 day'
+    r20_index = 'MACD Positive Cross - 20 day'
+    if not r10_index in eval_results.index:
+        #MACD_results = add_results_index(eval_results, r10_index)
+        eval_results = eval_results.append(add_results_index(eval_results, r1_index))
+        eval_results = eval_results.append(add_results_index(eval_results, r5_index))
+        eval_results = eval_results.append(add_results_index(eval_results, r10_index))
+        eval_results = eval_results.append(add_results_index(eval_results, r20_index))
+        
+    rows = df_data.iterrows()
+    for nrow in rows:
+        if nrow[1]['MACD_Buy'] == True:
+            if not np.isnan(nrow[1]['MACD']):
+                #cat_str = find_sample_index(eval_results, nrow[1]['10 day change'])
+                eval_results.at[r1_index, find_sample_index(eval_results, nrow[1]['1 day change'])] += 1
+                eval_results.at[r5_index, find_sample_index(eval_results, nrow[1]['5 day change'])] += 1
+                eval_results.at[r10_index, find_sample_index(eval_results, nrow[1]['10 day change'])] += 1
+                eval_results.at[r20_index, find_sample_index(eval_results, nrow[1]['20 day change'])] += 1
+    return eval_results
 
 def add_macd_fields(df_data):
     df_data.insert(loc=0, column='MACD_Buy', value=False)

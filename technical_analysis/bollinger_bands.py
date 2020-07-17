@@ -19,6 +19,21 @@ Exponential moving averages are a common second choice. Usually the same period 
 used for both the middle band and the calculation of standard deviation.
 
 '''
+from technical_analysis_utilities import add_results_index
+from technical_analysis_utilities import find_sample_index
+
+def eval_bollinger_bands(df_data, eval_results):
+    result_index = 'Bollinger Bands, Close<SMA20, 10 day'
+    if not result_index in eval_results.index:
+        BB_results = add_results_index(eval_results, result_index)
+        eval_results = eval_results.append(BB_results)
+        
+    rows = df_data.iterrows()
+    for nrow in rows:
+        if nrow[1]['Close'] < nrow[1]['SMA20']:
+            cat_str = find_sample_index(eval_results, nrow[1]['10 day change'])
+            eval_results.at[result_index, cat_str] += 1
+    return eval_results
 
 def bollinger_bands(df_data=None, value_label=None, sma_interval=None):
     

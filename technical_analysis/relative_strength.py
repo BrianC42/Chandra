@@ -36,6 +36,28 @@ import pandas as pd
 from numpy import NaN
 
 from moving_average import simple_moving_average
+from technical_analysis_utilities import add_results_index
+from technical_analysis_utilities import find_sample_index
+
+def eval_relative_strength(df_data, eval_results):
+    result_index = 'Relative Strength, RS<RS SMA20, 10 day'
+    rs_mean_index = 'Relative Strength, RS<RS mean, 10 day'
+    if not result_index in eval_results.index:
+        combo_results = add_results_index(eval_results, result_index)
+        eval_results = eval_results.append(combo_results)
+        combo_results = add_results_index(eval_results, rs_mean_index)
+        eval_results = eval_results.append(combo_results)
+
+    rs_mean = df_data.get('Relative Strength').mean()
+    rows = df_data.iterrows()
+    for nrow in rows:
+        if nrow[1]['Relative Strength'] < nrow[1]['RS SMA20']:
+            cat_str = find_sample_index(eval_results, nrow[1]['10 day change'])
+            eval_results.at[result_index, cat_str] += 1
+        if nrow[1]['Relative Strength'] < rs_mean:
+            cat_str = find_sample_index(eval_results, nrow[1]['10 day change'])
+            eval_results.at[rs_mean_index, cat_str] += 1
+    return eval_results
 
 def add_relative_strength(df_data=None):
     df_data.insert(loc=0, column='Relative Strength', value=0.0)

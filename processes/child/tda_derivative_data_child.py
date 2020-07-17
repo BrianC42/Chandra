@@ -23,15 +23,17 @@ def tda_derivative_data_child(mpipe_feed):
         while True:
             '''================ Work on data as long as the manager has more
             ==============================================================='''
-            str_filenames = mpipe_feed.recv()
+            parameters = mpipe_feed.recv()
             
             '''================ Perform technical analysis ==================='''
-            data_in = str_filenames[0]
-            data_out = str_filenames[1]
-            #print("Worker process reading: %s and creating: %s" % (data_in, data_out))
-            if os.path.isfile(data_in):
+            file_in = parameters[0] + '\\' + parameters[2] + '.csv'
+            file_out = parameters[1] + '\\' + parameters[2] + '.csv'
+            if os.path.isfile(file_in):
+                #print ("Passing data to worker%s: in %s\nout %s" % (p_ndx, filename, file_out))
+                print("Processing data for %s" % parameters[2])
+                #print("Worker process reading: %s and creating: %s" % (data_in, data_out))
                 #print("File: %s" % data_in)
-                df_data = pd.read_csv(data_in)
+                df_data = pd.read_csv(file_in)
                 #print("EOD data for %s\n%s" % (filename, df_data))
                 df_data = add_trending_data(df_data)
                 df_data = add_change_data(df_data)
@@ -43,7 +45,7 @@ def tda_derivative_data_child(mpipe_feed):
                 df_data = average_directional_index(df_data)
                 df_data = stochastic_oscillator(df_data)
                 df_data = relative_strength(df_data, value_label="Close", relative_to='d:\\brian\AI Projects\\tda\market_data\\$spx.x.csv')
-                df_data.to_csv(data_out, index=False)
+                df_data.to_csv(file_out, index=False)
 
             '''================ Return processed data ====================='''
             mpipe_feed.send(1)
