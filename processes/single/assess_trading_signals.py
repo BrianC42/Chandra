@@ -31,8 +31,10 @@ def assess_trading_signals(f_out, json_config, authentication_parameters, analys
             df_data = pd.read_csv(filename)
             guidance = df_data = trade_on_macd(symbol, df_data[:])
             if guidance[0]:
-                print("Guidance: %s" % guidance)
-                f_out.write("%s %s %s %s %s\n" % (guidance[1], guidance[2], guidance[3], guidance[4], guidance[5]))
+                report = '{:s}, {:s}, {:>8s}, {:>8.2f}, {:s}'.format \
+                        (guidance[3], guidance[2], guidance[1], guidance[5], guidance[4])
+                print(report)
+                f_out.write(report + "\n")
                 
     logger.info('<---- technical_analysis')
     return

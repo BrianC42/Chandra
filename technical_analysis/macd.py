@@ -74,10 +74,10 @@ def trade_on_macd(symbol, df_data):
                 if df_data.at[day3, 'MACD_Signal'] > 0:
                     trade = True
                     close = df_data.at[day3, 'Close']
-                    trigger_status = "Recommend buy for 10 days, target = 100% gain"
+                    trigger_status = "Recommend buy for 10 days target = 100% gain"
             
     guidance = [trade, symbol, \
-                'MACD positive cross confirmed by 2 days positive signal', \
+                'MACD condition 1', \
                 trigger_date, trigger_status, close]
     return guidance
 
