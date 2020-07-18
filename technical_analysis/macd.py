@@ -33,9 +33,11 @@ When the MACD is above zero, the short-term average is above the long-term avera
 The opposite is true when the MACD is below zero. As you can see from the chart above, the zero line often acts as an area of support and resistance for the indicator.
 
 '''
-import numpy as np
+import pandas as pd
 from numpy import NaN
 import sys
+
+from tda_api_library import format_tda_datetime
 
 from moving_average import exponential_moving_average
 from technical_analysis_utilities import add_results_index
@@ -50,27 +52,50 @@ def return_macd_ind():
     MACD_ind = dict(buy=1, sell=-1, neutral=0)
     return (MACD_ind)
 
+def trade_on_macd(symbol, df_data):
+    day1 = df_data.shape[0]-3
+    day2 = df_data.shape[0]-2
+    day3 = df_data.shape[0]-1
+    trigger_status = ""
+    trade = False
+    trigger_date = ""
+    close = 0.0
+    if day1 >= 0:
+        trigger_date = format_tda_datetime(df_data.at[day3, 'DateTime'])
+        if df_data.at[day3, 'MACD_Buy'] == True:
+            trade = True
+            trigger_status = "Potential recommendation in 2 trading days"
+        if df_data.at[day2, 'MACD_Buy'] == True:
+            if df_data.at[day3, 'MACD_Signal'] > 0:
+                trade = True
+                trigger_status = "Potential recommendation on next trading day"
+        if df_data.at[day1, 'MACD_Buy'] == True:
+            if df_data.at[day2, 'MACD_Signal'] > 0:
+                if df_data.at[day3, 'MACD_Signal'] > 0:
+                    trade = True
+                    close = df_data.at[day3, 'Close']
+                    trigger_status = "Recommend buy for 10 days, target = 100% gain"
+            
+    guidance = [trade, symbol, \
+                'MACD positive cross confirmed by 2 days positive signal', \
+                trigger_date, trigger_status, close]
+    return guidance
+
 def eval_macd_positive_cross(df_data, eval_results):
-    r1_index = 'MACD Positive Cross - 1 day'
-    r5_index = 'MACD Positive Cross - 5 day'
-    r10_index = 'MACD Positive Cross - 10 day'
-    r20_index = 'MACD Positive Cross - 20 day'
-    if not r10_index in eval_results.index:
-        #MACD_results = add_results_index(eval_results, r10_index)
-        eval_results = eval_results.append(add_results_index(eval_results, r1_index))
-        eval_results = eval_results.append(add_results_index(eval_results, r5_index))
-        eval_results = eval_results.append(add_results_index(eval_results, r10_index))
-        eval_results = eval_results.append(add_results_index(eval_results, r20_index))
-        
-    rows = df_data.iterrows()
-    for nrow in rows:
-        if nrow[1]['MACD_Buy'] == True:
-            if not np.isnan(nrow[1]['MACD']):
-                #cat_str = find_sample_index(eval_results, nrow[1]['10 day change'])
-                eval_results.at[r1_index, find_sample_index(eval_results, nrow[1]['1 day change'])] += 1
-                eval_results.at[r5_index, find_sample_index(eval_results, nrow[1]['5 day change'])] += 1
-                eval_results.at[r10_index, find_sample_index(eval_results, nrow[1]['10 day change'])] += 1
-                eval_results.at[r20_index, find_sample_index(eval_results, nrow[1]['20 day change'])] += 1
+    index_1 = 'MACD confirmed positive Cross - 10 day max'
+    if not index_1 in eval_results.index:
+        eval_results = eval_results.append(add_results_index(eval_results, index_1))
+
+    ndx = 0
+    df_priors = pd.DataFrame()
+    while ndx < df_data.shape[0]:
+        df_priors = df_priors.append(df_data.iloc[[ndx]])
+        if ndx >= 10 and ndx < (df_data.shape[0] - 1):
+            if df_priors.at[ndx-1, 'MACD_Buy'] == True and \
+                df_data.at[ndx, 'MACD_Signal'] > 0 and \
+                df_data.at[ndx+1, 'MACD_Signal'] > 0:
+                eval_results.at[index_1, find_sample_index(eval_results, df_data.at[ndx, '10 day max'])] += 1
+        ndx += 1
     return eval_results
 
 def add_macd_fields(df_data):

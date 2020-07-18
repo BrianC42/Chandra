@@ -52,7 +52,7 @@ def eval_average_directional_index(df_data, eval_results):
         
     rows = df_data.iterrows()
     for nrow in rows:
-        if True:
+        if False:
             cat_str = find_sample_index(eval_results, nrow[1]['10 day change'])
             eval_results.at[result_index, cat_str] += 1
     return eval_results

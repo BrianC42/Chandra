@@ -10,6 +10,10 @@ import requests
 import json
 import pandas as pd
 
+def format_tda_datetime(tda_datetime):
+    str_dt = time.ctime(tda_datetime/1000)
+    return str_dt
+
 def tda_get_authentication_details(auth_file):
     logging.debug('tda_get_authentication_details ---->')
 
