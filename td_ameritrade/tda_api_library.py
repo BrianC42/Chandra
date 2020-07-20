@@ -5,13 +5,14 @@ Created on Jan 31, 2018
 '''
 import os
 import logging
+from datetime import date
 import time
 import requests
 import json
 import pandas as pd
 
 def format_tda_datetime(tda_datetime):
-    str_dt = time.ctime(tda_datetime/1000)
+    str_dt = date.fromtimestamp(tda_datetime/1000).strftime("%Y %m %d")
     return str_dt
 
 def tda_get_authentication_details(auth_file):
@@ -96,6 +97,7 @@ def update_tda_eod_data(authentication_parameters):
     json_authentication = tda_get_authentication_details(authentication_parameters)
     tda_throttle_time = time.time()
     tda_throttle_count = 0
+    print("Now - %s, %s" % (time.ctime(time.time()), '{:.0f}'.format(time.time()*1000)))
     for symbol in tda_read_watch_lists(json_authentication):
         if tda_throttle_count < 110:
             tda_throttle_count += 1
@@ -119,8 +121,6 @@ def update_tda_eod_data(authentication_parameters):
             if eod_rows > 0:
                 f_last_date = float(df_eod.iat[eod_rows-1,dtime_col])
                 now = time.time()
-                print("Now - %s, %s, %s" % (now, time.ctime(now), '{:.0f}'.format(now*1000)))
-                print("Last datetime - %s, %s, %s" % (f_last_date, time.ctime(f_last_date/1000), '{:.0f}'.format(f_last_date)))
                 eod_count = df_eod.shape[0]
                 headers = {'Authorization' : 'Bearer ' + json_authentication["currentToken"]}
                 params = {'apikey' : json_authentication["apikey"], \
@@ -128,7 +128,7 @@ def update_tda_eod_data(authentication_parameters):
                           'endDate' : '{:.0f}'.format(now*1000), 'startDate' : '{:.0f}'.format(f_last_date)}
                 response = requests.get(url, headers=headers, params=params)
                 if response.ok:
-                    print("Incremental price history received")
+                    print("%s - Last datetime - %s, %s" % (symbol, time.ctime(time.time()), '{:.0f}'.format(time.time()*1000)))
                     price_history = json.loads(response.text)
                     tda_symbol = price_history["symbol"]
                     if not price_history["empty"]:
@@ -136,7 +136,7 @@ def update_tda_eod_data(authentication_parameters):
                         for candle in candles:
                             df_eod.loc[eod_count] = [candle["datetime"], candle["open"], candle["high"], candle["low"], candle["close"], candle["volume"]]
                             eod_count += 1
-                            df_eod.drop_duplicates(subset=['DateTime'], keep='last', inplace=True)
+                            #df_eod.drop_duplicates(subset=['DateTime'], keep='last', inplace=True)
                     else:
                         print("Incremental EOD data for %s was empty" % tda_symbol)
                         logging.info("Data for %s was empty" % tda_symbol)
@@ -163,7 +163,7 @@ def update_tda_eod_data(authentication_parameters):
                 print("Unable to get EOD data for %s, response code=%s" % (symbol, response.status_code))
                 logging.info("Unable to get EOD data for %s, response code=%s" % (symbol, response.status_code))            
         df_eod.to_csv(eod_file, index=False)
-        print ("\nEOD data for %s\n%s" % (symbol, df_eod))
+        #print ("\nEOD data for %s\n%s" % (symbol, df_eod))
         logging.info("nEOD data for %s\n%s" % (symbol, df_eod))
 
     logging.debug('<---- update_tda_eod_data')
