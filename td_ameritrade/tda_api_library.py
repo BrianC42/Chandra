@@ -10,6 +10,7 @@ import time
 import requests
 import json
 import pandas as pd
+from _ast import Try
 
 def format_tda_datetime(tda_datetime):
     str_dt = date.fromtimestamp(tda_datetime/1000).strftime("%Y %m %d")
@@ -126,20 +127,27 @@ def update_tda_eod_data(authentication_parameters):
                 params = {'apikey' : json_authentication["apikey"], \
                           'periodType' : 'month', 'frequencyType' : 'daily', 'frequency' : '1', \
                           'endDate' : '{:.0f}'.format(now*1000), 'startDate' : '{:.0f}'.format(f_last_date)}
-                response = requests.get(url, headers=headers, params=params)
-                if response.ok:
-                    print("%s - Last datetime - %s, %s" % (symbol, time.ctime(time.time()), '{:.0f}'.format(time.time()*1000)))
-                    price_history = json.loads(response.text)
-                    tda_symbol = price_history["symbol"]
-                    if not price_history["empty"]:
-                        candles = price_history["candles"]
-                        for candle in candles:
-                            df_eod.loc[eod_count] = [candle["datetime"], candle["open"], candle["high"], candle["low"], candle["close"], candle["volume"]]
-                            eod_count += 1
-                            #df_eod.drop_duplicates(subset=['DateTime'], keep='last', inplace=True)
-                    else:
-                        print("Incremental EOD data for %s was empty" % tda_symbol)
-                        logging.info("Data for %s was empty" % tda_symbol)
+                retry_count = 0
+                retry = True
+                while retry == True and retry_count < 5:
+                    try:
+                        response = requests.get(url, headers=headers, params=params)
+                        if response.ok:
+                            print("%s - Last datetime - %s, %s" % (symbol, time.ctime(time.time()), '{:.0f}'.format(time.time()*1000)))
+                            price_history = json.loads(response.text)
+                            tda_symbol = price_history["symbol"]
+                            if not price_history["empty"]:
+                                candles = price_history["candles"]
+                                for candle in candles:
+                                    df_eod.loc[eod_count] = [candle["datetime"], candle["open"], candle["high"], candle["low"], candle["close"], candle["volume"]]
+                                    eod_count += 1
+                                    #df_eod.drop_duplicates(subset=['DateTime'], keep='last', inplace=True)
+                            else:
+                                print("Incremental EOD data for %s was empty" % tda_symbol)
+                                logging.info("Data for %s was empty" % tda_symbol)
+                            retry = False
+                    except:
+                        retry_count += 1
             else:
                 print("Unable to get incremental EOD data for %s, response code=%s" % (symbol, response.status_code))
                 logging.info("Unable to get incremental EOD data for %s, response code=%s" % (symbol, response.status_code))            

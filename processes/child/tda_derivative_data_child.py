@@ -39,7 +39,7 @@ def tda_derivative_data_child(mpipe_feed):
                 df_data = add_change_data(df_data)
                 df_data = macd(df_data[:], value_label="Close")
                 df_data = on_balance_volume(df_data[:], value_label='Close', volume_lable='Volume')
-                df_data = bollinger_bands(df_data[:], value_label="Close", sma_interval=20)
+                df_data = bollinger_bands(df_data[:], value_label="SMA20", sma_interval=20)
                 df_data = accumulation_distribution(df_data)
                 df_data = aroon_indicator(df_data)
                 df_data = average_directional_index(df_data)

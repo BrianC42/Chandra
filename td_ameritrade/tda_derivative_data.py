@@ -68,7 +68,7 @@ def add_change_data(df_data):
                     df_data.loc[idx, '14 day max'] = df_data.iloc[idx:idx+14].get('High').max()
                     df_data.loc[idx, '14 day min'] = df_data.iloc[idx:idx+14].get('Low').min()
                 if idx < len(df_data) - 20:
-                    df_data.loc[idx, '20 day change'] = (df_data.loc[idx + 20, "Close"] - closing_price) / closing_price                    
+                    df_data.loc[idx, '20 day change'] = (df_data.loc[idx + 20, "Close"] - closing_price) / closing_price
                     df_data.loc[idx, '20 day max'] = df_data.iloc[idx:idx + 20].get('High').max()
                     df_data.loc[idx, '20 day min'] = df_data.iloc[idx:idx + 20].get('Low').min()
             pass
