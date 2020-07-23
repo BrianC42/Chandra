@@ -11,6 +11,8 @@ from tda_api_library import format_tda_datetime
 def add_trending_data(df_data):
     df_data.insert(loc=0, column='EMA12', value=NaN)
     df_data = exponential_moving_average(df_data[:], value_label="Close", interval=12, EMA_data_label='EMA12')
+    df_data.insert(loc=0, column='EMA20', value=NaN)
+    df_data = exponential_moving_average(df_data[:], value_label="Close", interval=20, EMA_data_label='EMA20')
     df_data.insert(loc=0, column='EMA26', value=NaN)
     df_data = exponential_moving_average(df_data[:], value_label="Close", interval=26, EMA_data_label='EMA26')
     df_data.insert(loc=0, column='SMA20', value=NaN)

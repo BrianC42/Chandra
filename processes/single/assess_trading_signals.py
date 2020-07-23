@@ -16,6 +16,7 @@ from tda_api_library import tda_get_authentication_details
 from tda_api_library import tda_read_watch_lists
 
 from macd import trade_on_macd
+from bollinger_bands import trade_on_bb
 
 def assess_trading_signals(f_out, json_config, authentication_parameters, analysis_dir):
     logger.info('technical_analysis ---->')
@@ -29,7 +30,14 @@ def assess_trading_signals(f_out, json_config, authentication_parameters, analys
         if os.path.isfile(filename):
             #print("File: %s" % filename)
             df_data = pd.read_csv(filename)
-            guidance = df_data = trade_on_macd(symbol, df_data[:])
+            guidance = trade_on_macd(symbol, df_data[:])
+            if guidance[0]:
+                report = '{:s}, {:s}, {:>8s}, {:>8.2f}, {:s}'.format \
+                        (guidance[3], guidance[2], guidance[1], guidance[5], guidance[4])
+                print(report)
+                f_out.write(report + "\n")
+                
+            guidance = trade_on_bb(symbol, df_data)
             if guidance[0]:
                 report = '{:s}, {:s}, {:>8s}, {:>8.2f}, {:s}'.format \
                         (guidance[3], guidance[2], guidance[1], guidance[5], guidance[4])

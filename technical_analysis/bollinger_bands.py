@@ -21,8 +21,56 @@ used for both the middle band and the calculation of standard deviation.
 '''
 import pandas as pd
 
+from tda_api_library import format_tda_datetime
+
 from technical_analysis_utilities import add_results_index
 from technical_analysis_utilities import find_sample_index
+
+def trade_on_bb(symbol, df_data):
+    TREND = 100
+    NEAR = 0.2
+    REVERSAL_INDICATOR = 0.25
+    THRESHOLD = TREND * 0.75
+
+    trigger_status = ""
+    trade = False
+    trigger_date = ""
+    close = 0.0
+    
+    ds_volatility = df_data["BB_Upper"] - df_data["BB_Lower"]
+    ds_reversing = pd.Series(False for i in range(0, df_data.shape[0]))
+    ds_near_upper = pd.Series(0 for i in range(0, df_data.shape[0]))
+    ds_reversing = pd.Series(False for i in range(0, df_data.shape[0]))
+    ds_near_lower = pd.Series(0 for i in range(0, df_data.shape[0]))
+
+    if len(df_data) < TREND:
+        idx = 0
+    else:
+        idx = len(df_data) - TREND
+        
+    while idx < len(df_data):
+        if df_data.at[idx, "Close"] > df_data.at[idx, "BB_Upper"] - (ds_volatility[idx] * NEAR):
+            ds_near_upper[idx] = 1
+        
+        if df_data.at[idx, "Close"] < (df_data.at[idx, "SMA20"] + (ds_volatility[idx] * REVERSAL_INDICATOR)) and \
+            df_data.at[idx, "Close"] > (df_data.at[idx, "SMA20"] - (ds_volatility[idx] * REVERSAL_INDICATOR)):
+            ds_reversing.at[idx] = True
+        
+        if df_data.at[idx, "Close"] < df_data.at[idx, "BB_Lower"] + (ds_volatility[idx] * NEAR):
+            ds_near_lower.at[idx] = 1        
+        idx += 1        
+    
+    idx = df_data.shape[0] - 1
+    if idx > TREND and ds_reversing.at[idx]:
+        if ds_near_lower.loc[idx-TREND : idx].sum() > THRESHOLD:
+            trade = True
+            trigger_status = "90% probable decline in 20 days"
+            trigger_date = format_tda_datetime(df_data.at[df_data.shape[0], 'DateTime'])
+
+    guidance = [trade, symbol, \
+                'BB condition 1', \
+                trigger_date, trigger_status, close]
+    return guidance
 
 def eval_bollinger_bands(df_data, eval_results):
     r1_index = 'Bollinger Bands, Squeeze, 1 day'
@@ -39,23 +87,6 @@ def eval_bollinger_bands(df_data, eval_results):
         eval_results = eval_results.append(add_results_index(eval_results, trend_A_index))
         eval_results = eval_results.append(add_results_index(eval_results, trend_B_index))
 
-    '''
-    TREND = 100
-    NEAR = 0.2
-    REVERSAL_INDICATOR = 0.25
-    THRESHOLD = TREND * 0.75
-    Bollinger Bands, Reversal down, 20 day            0.0     0.0      6.0      6.0      12.00      35.00      94.00      32.00      22.00      9.0      3.0     0.0      0.0
-    Bollinger Bands, Reversal up, 20 day              0.0     0.0      3.0     11.0       2.00       1.00       1.00       1.00       0.00      0.0      0.0     0.0      0.0
-
-    TREND = 50
-    NEAR = 0.2
-    REVERSAL_INDICATOR = 0.25
-    THRESHOLD = TREND * 0.75
-    Range Min                                     -1000.0    -1.0     -0.5     -0.2      -0.10      -0.05      -0.01       0.01       0.05      0.1      0.2     0.5      1.0
-    Range Max                                        -1.0    -0.5     -0.2     -0.1      -0.05      -0.01       0.01       0.05       0.10      0.2      0.5     1.0   1000.0
-    Bollinger Bands, Reversal down, 20 day            0.0     4.0     74.0    233.0     469.00     803.00     882.00    1312.00     652.00    337.0    147.0     4.0      0.0
-    Bollinger Bands, Reversal up, 20 day              0.0     8.0     71.0    164.0     194.00     185.00     174.00     260.00     259.00    238.0    134.0    23.0      0.0
-    '''
     TREND = 100
     NEAR = 0.2
     REVERSAL_INDICATOR = 0.25
@@ -97,10 +128,10 @@ def eval_bollinger_bands(df_data, eval_results):
         idx += 1
     return eval_results
 
-def bollinger_bands(df_data=None, value_label=None, sma_interval=None):
+def bollinger_bands(df_data=None, value_label=None, ema_interval=None):
     ds_std_dev = df_data[value_label]
     ds_value = df_data[value_label]
-    ds_std_dev = ds_std_dev.rolling(window=sma_interval, min_periods=1).std()
+    ds_std_dev = ds_std_dev.rolling(window=ema_interval, min_periods=1).std()
     df_data.insert(0, 'BB_Upper', ds_value + (ds_std_dev * 2))
     df_data.insert(0, 'BB_Lower', ds_value - (ds_std_dev * 2))
 
