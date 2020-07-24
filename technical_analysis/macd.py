@@ -44,7 +44,6 @@ from technical_analysis_utilities import add_results_index
 from technical_analysis_utilities import find_sample_index
 
 def return_macd_flags():
-    #MACD_flags = dict(buy='buy', sell='sell', neutral='neutral')
     MACD_flags = dict(buy='1', sell='-1', neutral='0')
     return (MACD_flags)
 
@@ -52,7 +51,7 @@ def return_macd_ind():
     MACD_ind = dict(buy=1, sell=-1, neutral=0)
     return (MACD_ind)
 
-def trade_on_macd(symbol, df_data):
+def trade_on_macd(guidance, symbol, df_data):
     day1 = df_data.shape[0]-3
     day2 = df_data.shape[0]-2
     day3 = df_data.shape[0]-1
@@ -75,10 +74,9 @@ def trade_on_macd(symbol, df_data):
                     trade = True
                     close = df_data.at[day3, 'Close']
                     trigger_status = "Recommend buy for 10 days target = 100% gain"
-            
-    guidance = [trade, symbol, \
-                'MACD condition 1', \
-                trigger_date, trigger_status, close]
+    
+    if trade:
+        guidance = guidance.append([[trade, symbol, 'MACD condition 1', trigger_date, trigger_status, close]])
     return guidance
 
 def eval_macd_positive_cross(df_data, eval_results):

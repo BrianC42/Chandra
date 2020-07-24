@@ -20,29 +20,21 @@ from bollinger_bands import trade_on_bb
 
 def assess_trading_signals(f_out, json_config, authentication_parameters, analysis_dir):
     logger.info('technical_analysis ---->')
-    '''
-    Prepare and update technical analysis based on TDA market data
-    df_data = accumulation_distribution(df_data[:])
-    '''
+    guidance = pd.DataFrame()
+    
     json_authentication = tda_get_authentication_details(authentication_parameters)
     for symbol in tda_read_watch_lists(json_authentication):
         filename = analysis_dir + '\\' + symbol + '.csv'
         if os.path.isfile(filename):
             #print("File: %s" % filename)
             df_data = pd.read_csv(filename)
-            guidance = trade_on_macd(symbol, df_data[:])
-            if guidance[0]:
-                report = '{:s}, {:s}, {:>8s}, {:>8.2f}, {:s}'.format \
-                        (guidance[3], guidance[2], guidance[1], guidance[5], guidance[4])
-                print(report)
-                f_out.write(report + "\n")
-                
-            guidance = trade_on_bb(symbol, df_data)
-            if guidance[0]:
-                report = '{:s}, {:s}, {:>8s}, {:>8.2f}, {:s}'.format \
-                        (guidance[3], guidance[2], guidance[1], guidance[5], guidance[4])
-                print(report)
-                f_out.write(report + "\n")
+            guidance = trade_on_macd(guidance, symbol, df_data[:])
+            guidance = trade_on_bb(guidance, symbol, df_data[:])
+            
+    for trigger in guidance.itertuples():
+        report = '{:s}, {:>8s}, {:s}, {:>8.2f}, {:s}'.format(trigger[4], trigger[2], trigger[3], trigger[6], trigger[5])
+        print(report)
+        f_out.write(report + "\n")
                 
     logger.info('<---- technical_analysis')
     return

@@ -8,10 +8,6 @@ from multiprocessing import Process, Pipe
 import datetime as dt
 import time
 import logging
-import pandas as pd
-import numpy as np
-
-import matplotlib
 
 from configuration import get_ini_data
 from configuration import read_config_json
