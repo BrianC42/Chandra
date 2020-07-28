@@ -48,28 +48,55 @@ indicate the security is trading near the bottom of its high-low range.
 '''
 from numpy import NaN
 
+from tda_api_library import format_tda_datetime
+
 from technical_analysis_utilities import add_results_index
 from technical_analysis_utilities import find_sample_index
 
+def stochastic_oscillator_oversold(guidance, symbol, df_data):
+    OVERSOLD = 10
+
+    trigger_status = ""
+    trade = False
+    trigger_date = ""
+    close = 0.0
+        
+    # Oversold indicator
+    idx = len(df_data) - 1
+    if idx >= 0:
+        if df_data.at[idx, 'Stochastic Oscillator'] < OVERSOLD:
+            trade = True
+            close = df_data.at[idx, 'Close']
+            trigger_status = "probable upward price move coming"
+            trigger_date = format_tda_datetime(df_data.at[df_data.shape[0], 'DateTime'])
+
+    if trade:
+        guidance = guidance.append([[trade, symbol, 'SO Oversold', trigger_date, trigger_status, close]])
+    return guidance
+
+def trade_on_stochastic_oscillator(guidance, symbol, df_data):
+    guidance = stochastic_oscillator_oversold(guidance, symbol, df_data)
+    return guidance
+
 def eval_stochastic_oscillator(df_data, eval_results):
-    so_index = 'Stochastic Oscillator, SI<20, 10 day'
-    cross_index = 'Stochastic Oscillator, SIcrossSO SMA3, 10 day'
+    OVERSOLD = 10
+    
+    so_index = 'Stochastic Oscillator, oversold, 10 day'
+    so_reversal_index = 'Stochastic Oscillator, reversal, 10 day'
     if not so_index in eval_results.index:
         eval_results = eval_results.append(add_results_index(eval_results, so_index))
-        eval_results = eval_results.append(add_results_index(eval_results, cross_index))
+        eval_results = eval_results.append(add_results_index(eval_results, so_reversal_index))
 
     ndx = 0
     rows = df_data.iterrows()
     for nrow in rows:
         if ndx == 0:
             prior = nrow
-        if nrow[1]['Stochastic Oscillator'] < 20:
-            cat_str = find_sample_index(eval_results, nrow[1]['10 day change'])
-            eval_results.at[so_index, cat_str] += 1
+        if nrow[1]['Stochastic Oscillator'] < OVERSOLD:
+            eval_results.at[so_index, find_sample_index(eval_results, nrow[1]['10 day change'])] += 1
         if (nrow[1]['Stochastic Oscillator'] >= nrow[1]['SO SMA3']) and \
             (prior[1]['Stochastic Oscillator'] < prior[1]['SO SMA3']):
-            cat_str = find_sample_index(eval_results, nrow[1]['10 day change'])
-            eval_results.at[cross_index, cat_str] += 1
+            eval_results.at[so_reversal_index, find_sample_index(eval_results, nrow[1]['10 day change'])] += 1
         prior = nrow
         ndx += 1
     return eval_results

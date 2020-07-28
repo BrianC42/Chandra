@@ -36,14 +36,15 @@ def bb_oversold(guidance, symbol, df_data):
         
     # Oversold indicator
     idx = len(df_data) - 1
-    if idx >= 0:
+    if idx > 0:
         if df_data.loc[idx, "Close"] < df_data.loc[idx, "BB_Lower"] * (1 - OVERSOLD):
             trade = True
+            close = df_data.at[idx, 'Close']
             trigger_status = "85% chance of 1 day price move >1%"
-            trigger_date = format_tda_datetime(df_data.at[df_data.shape[0], 'DateTime'])
+            trigger_date = format_tda_datetime(df_data.at[idx, 'DateTime'])
 
     if trade:
-        guidance = guidance.append([[trade, symbol, 'BB Oversold', trigger_date, trigger_status, close]])
+        guidance = guidance.append([[trade, symbol, 'BB Oversold', trigger_date, trigger_status, df_data.at[idx, "Close"]]])
     return guidance
 
 def bb_signal_b(guidance, symbol, df_data):

@@ -17,6 +17,8 @@ from tda_api_library import tda_read_watch_lists
 
 from macd import trade_on_macd
 from bollinger_bands import trade_on_bb
+from stochastic_oscillator import trade_on_stochastic_oscillator
+from on_balance_volume import trade_on_obv
 
 def assess_trading_signals(f_out, json_config, authentication_parameters, analysis_dir):
     logger.info('technical_analysis ---->')
@@ -30,7 +32,9 @@ def assess_trading_signals(f_out, json_config, authentication_parameters, analys
             df_data = pd.read_csv(filename)
             guidance = trade_on_macd(guidance, symbol, df_data[:])
             guidance = trade_on_bb(guidance, symbol, df_data[:])
-            
+            guidance = trade_on_stochastic_oscillator(guidance, symbol, df_data)
+            guidance = trade_on_obv(guidance, symbol, df_data)
+
     for trigger in guidance.itertuples():
         report = '{:s}, {:>8s}, {:s}, {:>8.2f}, {:s}'.format(trigger[4], trigger[2], trigger[3], trigger[6], trigger[5])
         print(report)
