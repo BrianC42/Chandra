@@ -13,7 +13,7 @@ import pandas as pd
 from _ast import Try
 
 def format_tda_datetime(tda_datetime):
-    str_dt = date.fromtimestamp(tda_datetime/1000).strftime("%Y %m %d")
+    str_dt = date.fromtimestamp(tda_datetime/1000).strftime("%Y-%m-%d")
     return str_dt
 
 def tda_get_authentication_details(auth_file):

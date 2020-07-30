@@ -35,37 +35,87 @@ import os
 import pandas as pd
 from numpy import NaN
 
+from tda_api_library import format_tda_datetime
+
 from moving_average import simple_moving_average
 from technical_analysis_utilities import add_results_index
 from technical_analysis_utilities import find_sample_index
 
-def eval_relative_strength(df_data, eval_results):
-    result_index = 'Relative Strength, RS<RS SMA20, 10 day'
-    rs_mean_index = 'Relative Strength, RS<RS mean, 10 day'
-    if not result_index in eval_results.index:
-        combo_results = add_results_index(eval_results, result_index)
-        eval_results = eval_results.append(combo_results)
-        combo_results = add_results_index(eval_results, rs_mean_index)
-        eval_results = eval_results.append(combo_results)
+def trade_on_relative_strength(guidance, symbol, df_data):
+    RS1_BOUNDARY = 0.5
+    RS2_BOUNDARY = 0.2
+    RS3_BOUNDARY = 1.1
+    RS4_BOUNDARY = 1.9
 
-    rs_mean = df_data.get('Relative Strength').mean()
-    rows = df_data.iterrows()
-    for nrow in rows:
-        if nrow[1]['Relative Strength'] < nrow[1]['RS SMA20']:
-            cat_str = find_sample_index(eval_results, nrow[1]['10 day change'])
-            eval_results.at[result_index, cat_str] += 1
-        if nrow[1]['Relative Strength'] < rs_mean:
-            cat_str = find_sample_index(eval_results, nrow[1]['10 day change'])
-            eval_results.at[rs_mean_index, cat_str] += 1
+    trigger_status = ""
+    trade = False
+    trigger_date = ""
+    idx = df_data.shape[0] - 1
+
+    if idx >= 0:
+        if df_data.loc[idx, 'Relative Strength'] < df_data.loc[idx, 'RS SMA20'] * RS1_BOUNDARY:
+            trade = True
+            trigger_status = 'Relative Strength, RS1: < RS SMA20, 5/10 day'
+            trigger_date = format_tda_datetime(df_data.loc[idx, 'DateTime'])
+            guidance = guidance.append([[trade, symbol, 'RS', trigger_date, trigger_status, df_data.at[idx, "Close"]]])
+            
+        if idx > 220:
+            rs_mean = df_data.loc[idx-220:idx, 'Relative Strength'].mean()
+            if df_data.loc[idx, 'Relative Strength'] < rs_mean * RS2_BOUNDARY:
+                trade = True
+                trigger_status = 'Relative Strength, RS2: < RS mean, 5/10 day'
+                trigger_date = format_tda_datetime(df_data.loc[idx, 'DateTime'])
+                guidance = guidance.append([[trade, symbol, 'RS', trigger_date, trigger_status, df_data.at[idx, "Close"]]])
+
+    return guidance
+
+def eval_relative_strength(df_data, eval_results):
+    RS1_BOUNDARY = 0.6
+    RS2_BOUNDARY = 0.4
+    RS3_BOUNDARY = 1.1
+    RS4_BOUNDARY = 1.9
+    rs1_index = 'Relative Strength, RS1: < RS SMA20, 5 day'
+    rs2_index = 'Relative Strength, RS2: < RS mean, 5 day'
+    rs3_index = 'Relative Strength, RS3: > RS SMA20, 5 day'
+    rs4_index = 'Relative Strength, RS4: > RS mean, 5 day'
+    rs5_index = 'Relative Strength, RS5: < RS SMA20, 10 day'
+    rs6_index = 'Relative Strength, RS6: < RS mean, 10 day'
+    rs7_index = 'Relative Strength, RS7: > RS SMA20, 10 day'
+    rs8_index = 'Relative Strength, RS8: > RS mean, 10 day'
+    if not rs1_index in eval_results.index:
+        eval_results = eval_results.append(add_results_index(eval_results, rs1_index))
+        eval_results = eval_results.append(add_results_index(eval_results, rs2_index))
+        eval_results = eval_results.append(add_results_index(eval_results, rs3_index))
+        eval_results = eval_results.append(add_results_index(eval_results, rs4_index))
+        eval_results = eval_results.append(add_results_index(eval_results, rs5_index))
+        eval_results = eval_results.append(add_results_index(eval_results, rs6_index))
+        eval_results = eval_results.append(add_results_index(eval_results, rs7_index))
+        eval_results = eval_results.append(add_results_index(eval_results, rs8_index))
+
+    ndx = 0
+    while ndx < df_data.shape[0]:
+        if ndx > 220:
+            rs_mean = df_data.loc[ndx-220:ndx, 'Relative Strength'].mean()
+            if df_data.loc[ndx, 'Relative Strength'] < rs_mean * RS2_BOUNDARY:
+                eval_results.at[rs2_index, find_sample_index(eval_results, df_data.loc[ndx, '5 day change'])] += 1
+                eval_results.at[rs6_index, find_sample_index(eval_results, df_data.loc[ndx, '10 day change'])] += 1
+            if df_data.loc[ndx, 'Relative Strength'] > rs_mean * RS4_BOUNDARY:
+                eval_results.at[rs4_index, find_sample_index(eval_results, df_data.loc[ndx, '5 day change'])] += 1
+                eval_results.at[rs8_index, find_sample_index(eval_results, df_data.loc[ndx, '10 day change'])] += 1
+
+        if df_data.loc[ndx, 'Relative Strength'] < df_data.loc[ndx, 'RS SMA20'] * RS1_BOUNDARY:
+            eval_results.at[rs1_index, find_sample_index(eval_results, df_data.loc[ndx, '5 day change'])] += 1
+            eval_results.at[rs5_index, find_sample_index(eval_results, df_data.loc[ndx, '10 day change'])] += 1
+        if df_data.loc[ndx, 'Relative Strength'] > df_data.loc[ndx, 'RS SMA20'] * RS3_BOUNDARY:
+            eval_results.at[rs3_index, find_sample_index(eval_results, df_data.loc[ndx, '5 day change'])] += 1
+            eval_results.at[rs7_index, find_sample_index(eval_results, df_data.loc[ndx, '10 day change'])] += 1
+        ndx += 1
+        
     return eval_results
 
-def add_relative_strength(df_data=None):
+def relative_strength(df_data=None, value_label=None, relative_to=None):
     df_data.insert(loc=0, column='Relative Strength', value=0.0)
     df_data.insert(loc=0, column='RS SMA20', value=NaN)
-    return df_data
-
-def relative_strength(df_data=None, value_label=None, relative_to=None):
-    add_relative_strength(df_data)
     
     if os.path.isfile(relative_to):
         df_comp = pd.read_csv(relative_to)

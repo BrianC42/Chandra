@@ -57,11 +57,7 @@ def eval_average_directional_index(df_data, eval_results):
             eval_results.at[result_index, cat_str] += 1
     return eval_results
 
-def add_adi_fields(df_data):
-    df_data.insert(loc=0, column='Average Directional Index', value=0.0)
-    return df_data
-
 def average_directional_index(df_data=None):
-    add_adi_fields(df_data)
+    df_data.insert(loc=0, column='Average Directional Index', value=0.0)
     
     return df_data

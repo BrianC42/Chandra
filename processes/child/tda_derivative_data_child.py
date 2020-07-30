@@ -6,8 +6,9 @@ Created on Jul 15, 2020
 import os
 import pandas as pd
 
-from tda_derivative_data import add_trending_data
-from tda_derivative_data import add_change_data
+#from tda_derivative_data import add_trending_data
+#from tda_derivative_data import add_change_data
+from tda_derivative_data import add_derived_data
 from macd import macd
 from on_balance_volume import on_balance_volume
 from bollinger_bands import bollinger_bands
@@ -35,8 +36,9 @@ def tda_derivative_data_child(mpipe_feed):
                 #print("File: %s" % data_in)
                 df_data = pd.read_csv(file_in)
                 #print("EOD data for %s\n%s" % (filename, df_data))
-                df_data = add_trending_data(df_data)
-                df_data = add_change_data(df_data)
+                #df_data = add_trending_data(df_data)
+                #df_data = add_change_data(df_data)
+                df_data = add_derived_data(df_data)
                 df_data = macd(df_data[:], value_label="Close")
                 df_data = on_balance_volume(df_data[:], value_label='Close', volume_lable='Volume')
                 df_data = bollinger_bands(df_data[:], value_label="EMA20", ema_interval=20)

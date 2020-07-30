@@ -28,9 +28,11 @@ confirmed cross above the signal line before entering into a position to avoid g
 away from the longer-term moving average - it is a signal that the security is overbought and 
 will soon return to normal levels.
 
-Traders also watch for a move above or below the zero line because this signals the position of the short-term average relative to the long-term average. 
+Traders also watch for a move above or below the zero line because this signals the position of the 
+short-term average relative to the long-term average. 
 When the MACD is above zero, the short-term average is above the long-term average, which signals upward momentum. 
-The opposite is true when the MACD is below zero. As you can see from the chart above, the zero line often acts as an area of support and resistance for the indicator.
+The opposite is true when the MACD is below zero. As you can see from the chart above, 
+the zero line often acts as an area of support and resistance for the indicator.
 
 '''
 import pandas as pd
@@ -51,6 +53,9 @@ def return_macd_ind():
     MACD_ind = dict(buy=1, sell=-1, neutral=0)
     return (MACD_ind)
 
+def trade_on_crossovers(guidance, symbol, df_data):
+    return
+
 def trade_on_macd(guidance, symbol, df_data):
     day1 = df_data.shape[0]-3
     day2 = df_data.shape[0]-2
@@ -61,64 +66,92 @@ def trade_on_macd(guidance, symbol, df_data):
     close = 0.0
     if day1 >= 0:
         trigger_date = format_tda_datetime(df_data.at[day3, 'DateTime'])
+        '''
         if df_data.at[day3, 'MACD_Buy'] == True:
             trade = True
             trigger_status = "Potential recommendation in 2 trading days"
         if df_data.at[day2, 'MACD_Buy'] == True:
-            if df_data.at[day3, 'MACD_Signal'] > 0:
+            if df_data.at[day3, 'MACD'] > df_data.at[day3, 'MACD_Signal']:
                 trade = True
                 trigger_status = "Potential recommendation on next trading day"
-        if df_data.at[day1, 'MACD_Buy'] == True:
-            if df_data.at[day2, 'MACD_Signal'] > 0:
-                if df_data.at[day3, 'MACD_Signal'] > 0:
+        '''
+        if df_data.at[day1, 'MACD_Buy']:
+            if df_data.at[day2, 'MACD'] > df_data.at[day2, 'MACD_Signal']:
+                if df_data.at[day3, 'MACD'] > df_data.at[day3, 'MACD_Signal']:
                     trade = True
                     close = df_data.at[day3, 'Close']
-                    trigger_status = "Recommend buy for 10 days target = 100% gain"
+                    trigger_status = "confirmed positive Cross"
+                    guidance = guidance.append([[trade, symbol, 'MACD', trigger_date, trigger_status, close]])
     
-    if trade:
-        guidance = guidance.append([[trade, symbol, 'MACD condition 1', trigger_date, trigger_status, close]])
+        if df_data.at[day1, 'MACD_Sell']:
+            if df_data.at[day2, 'MACD'] < df_data.at[day2, 'MACD_Signal']:
+                if df_data.at[day3, 'MACD'] < df_data.at[day3, 'MACD_Signal']:
+                    trade = True
+                    close = df_data.at[day3, 'Close']
+                    trigger_status = "confirmed negative Cross"
+                    guidance = guidance.append([[trade, symbol, 'MACD', trigger_date, trigger_status, close]])
+    
     return guidance
 
 def eval_macd_positive_cross(df_data, eval_results):
+    DRAMATIC_RISE = 1.05
+    DRAMATIC_DECLINE = 0.95
+    UPWARD_DIVERGENCE = 1.1
+    DOWNWARD_DIVERGENCE = 0.9
+
     index_1 = 'MACD confirmed positive Cross - 10 day max'
+    index_2 = 'MACD confirmed negative Cross - 10 day max'
+    index_3 = 'MACD dramatic rise - 10 day max'
+    index_4 = 'MACD dramatic decline - 10 day max'
+    index_5 = 'MACD positive divergence - 10 day max'
+    index_6 = 'MACD negative divergence - 10 day max'
     if not index_1 in eval_results.index:
         eval_results = eval_results.append(add_results_index(eval_results, index_1))
+        eval_results = eval_results.append(add_results_index(eval_results, index_2))
+        eval_results = eval_results.append(add_results_index(eval_results, index_3))
+        eval_results = eval_results.append(add_results_index(eval_results, index_4))
+        eval_results = eval_results.append(add_results_index(eval_results, index_5))
+        eval_results = eval_results.append(add_results_index(eval_results, index_6))
 
-    ndx = 0
-    df_priors = pd.DataFrame()
-    while ndx < df_data.shape[0]:
-        df_priors = df_priors.append(df_data.iloc[[ndx]])
-        if ndx >= 10 and ndx < (df_data.shape[0] - 1):
-            if df_priors.at[ndx-1, 'MACD_Buy'] == True and \
-                df_data.at[ndx, 'MACD_Signal'] > 0 and \
-                df_data.at[ndx+1, 'MACD_Signal'] > 0:
-                eval_results.at[index_1, find_sample_index(eval_results, df_data.at[ndx, '10 day max'])] += 1
+    ndx = 10
+    while ndx < df_data.shape[0] - 1:
+        # confirmed crossovers
+        if  df_data.at[ndx-2, 'MACD_Buy'] and \
+            df_data.at[ndx-1, 'MACD'] > df_data.at[ndx-1, 'MACD_Signal'] and \
+            df_data.at[ndx, 'MACD'] > df_data.at[ndx, 'MACD_Signal']:
+            eval_results.at[index_1, find_sample_index(eval_results, df_data.at[ndx, '10 day max'])] += 1
+        if  df_data.at[ndx-2, 'MACD_Sell'] and \
+            df_data.at[ndx-1, 'MACD'] < df_data.at[ndx-1, 'MACD_Signal'] and \
+            df_data.at[ndx, 'MACD'] < df_data.at[ndx, 'MACD_Signal']:
+            eval_results.at[index_2, find_sample_index(eval_results, df_data.at[ndx, '10 day max'])] += 1
+
+        # dramatic rise and decline
+        if df_data.at[ndx, "EMA12"] > (df_data.at[ndx, "EMA26"] * DRAMATIC_RISE):
+            eval_results.at[index_3, find_sample_index(eval_results, df_data.at[ndx, '10 day max'])] += 1
+        if df_data.at[ndx, "EMA12"] < (df_data.at[ndx, "EMA26"] * DRAMATIC_DECLINE):
+            eval_results.at[index_4, find_sample_index(eval_results, df_data.at[ndx, '10 day max'])] += 1
+        
+        # divergence
+        if df_data.at[ndx, "Close"] > (df_data.at[ndx, "EMA12"] * UPWARD_DIVERGENCE):
+            eval_results.at[index_5, find_sample_index(eval_results, df_data.at[ndx, '10 day max'])] += 1
+        if df_data.at[ndx, "Close"] < (df_data.at[ndx, "EMA12"] * DOWNWARD_DIVERGENCE):
+            eval_results.at[index_6, find_sample_index(eval_results, df_data.at[ndx, '10 day max'])] += 1
+        
         ndx += 1
     return eval_results
-
-def add_macd_fields(df_data):
-    df_data.insert(loc=0, column='MACD_Buy', value=False)
-    df_data.insert(loc=0, column='MACD_Sell', value=False)
-    df_data.insert(loc=0, column='MACD_flag', value=NaN)
-    df_data.insert(loc=0, column='MACD', value=NaN)
-    df_data.insert(loc=0, column='MACD_Signal', value=NaN)
-    return (df_data)
 
 def macd(df_src=None, value_label=None):
         
     sys.path.append("../Utilities/")
 
     #str_prediction = prediction_interval + ' day change'
-    add_macd_fields(df_src)
+    df_src.insert(loc=0, column='MACD_Buy', value=False)
+    df_src.insert(loc=0, column='MACD_Sell', value=False)
+    df_src.insert(loc=0, column='MACD_flag', value=NaN)
+    df_src.insert(loc=0, column='MACD', value=NaN)
+    df_src.insert(loc=0, column='MACD_Signal', value=NaN)
+
     MACD_flags = return_macd_flags()
-    '''
-    Upward cross: short duration EMA changes from less than to greater than long duration EMA
-                    compared to previous difference
-                'MACD_Buy' = False
-    Downward cross: short duration EMA changes from greater than to less than long duration EMA
-                    compared to previous difference
-                'MACD_Sell' = True
-    '''
     idx = 1 ### EMA calculation forces 1st entries to be equal, will always show as crossover on 2nd row
     while idx < len(df_src):
         df_src.at[idx,'MACD'] = df_src.at[idx, "EMA12"] - df_src.at[idx, "EMA26"]
@@ -138,57 +171,5 @@ def macd(df_src=None, value_label=None):
                 df_src.at[idx, 'MACD_Buy'] = True
                 df_src.at[idx, 'MACD_flag'] = MACD_flags.get('buy')   
         idx += 1
-    
-    return df_src
-
-def add_macd_profile_fields(df_data, short_data=None, mid_data=None, long_data=None):
-    df_data.insert(loc=0, column=mid_data, value=NaN)
-    df_data.insert(loc=0, column=short_data, value=NaN)
-    df_data.insert(loc=0, column=long_data, value=NaN)
-    df_data.insert(loc=0, column='momentum', value=NaN)
-    df_data.insert(loc=0, column='MACD_flag', value=NaN)
-
-    return (df_data)
-
-def macd_profile(df_src=None, \
-         value_label=None, \
-         short_interval=None, short_data=None, \
-         mid_interval=None, mid_data=None, \
-         long_interval=None, long_data=None, \
-         date_label=None, \
-         prediction_interval=None):
         
-    sys.path.append("../Utilities/")
-
-    add_macd_profile_fields(df_src, short_data, mid_data, long_data)
-    MACD_flags = return_macd_ind()
-    df_src = exponential_moving_average(df_src[:], value_label, date_label, short_interval, short_data)
-    df_src = exponential_moving_average(df_src[:], value_label, date_label, mid_interval, mid_data)
-    df_src = exponential_moving_average(df_src[:], value_label, date_label, long_interval, long_data)
-    
-    '''
-    Upward cross: short duration EMA changes from less than to greater than long duration EMA
-                    compared to previous difference
-                'MACD_Buy' = False
-    Downward cross: short duration EMA changes from greater than to less than long duration EMA
-                    compared to previous difference
-                'MACD_Sell' = True
-    '''
-    idx = 1 ### EMA calculation forces 1st entries to be equal, will always show as crossover on 2nd row
-    EMA_momentum = 0.0
-    
-    while idx < len(df_src):
-        EMA_momentum = df_src.ix[idx, "EMA12"] - df_src.ix[idx, "EMA26"]
-        df_src.ix[idx,'momentum'] = EMA_momentum
-        df_src.ix[idx, 'MACD_flag'] = MACD_flags.get('neutral')
-
-
-        if df_src.ix[idx,'momentum'] < df_src.ix[idx, 'EMA9']:
-                df_src.ix[idx, 'MACD_flag'] = MACD_flags.get('sell')
-                    
-        if df_src.ix[idx,'momentum'] > df_src.ix[idx, 'EMA9']:
-                df_src.ix[idx, 'MACD_flag'] = MACD_flags.get('buy')
-                
-        idx += 1
-    
     return df_src

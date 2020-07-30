@@ -38,11 +38,7 @@ def eval_aroon_indicator(df_data, eval_results):
             eval_results.at[result_index, cat_str] += 1
     return eval_results
 
-def add_aroon_fields(df_data=None):
-    df_data.insert(loc=0, column='Aroon Indicator', value=0.0)
-    return df_data
-
 def aroon_indicator(df_data=None):
-    add_aroon_fields(df_data)
+    df_data.insert(loc=0, column='Aroon Indicator', value=0.0)
 
     return df_data

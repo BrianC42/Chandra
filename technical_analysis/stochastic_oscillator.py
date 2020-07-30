@@ -46,8 +46,6 @@ However, the levels are adjustable to fit security characteristics and analytica
 above 80 indicate a security is trading near the top of its high-low range; readings below 20 
 indicate the security is trading near the bottom of its high-low range.
 '''
-from numpy import NaN
-
 from tda_api_library import format_tda_datetime
 
 from technical_analysis_utilities import add_results_index
@@ -68,7 +66,7 @@ def stochastic_oscillator_oversold(guidance, symbol, df_data):
             trade = True
             close = df_data.at[idx, 'Close']
             trigger_status = "probable upward price move coming"
-            trigger_date = format_tda_datetime(df_data.at[df_data.shape[0], 'DateTime'])
+            trigger_date = format_tda_datetime(df_data.at[df_data.shape[0] - 1, 'DateTime'])
 
     if trade:
         guidance = guidance.append([[trade, symbol, 'SO Oversold', trigger_date, trigger_status, close]])
@@ -79,48 +77,55 @@ def trade_on_stochastic_oscillator(guidance, symbol, df_data):
     return guidance
 
 def eval_stochastic_oscillator(df_data, eval_results):
-    OVERSOLD = 10
+    OVERSOLD = 5
+    OVERBOUGHT = 95
     
-    so_index = 'Stochastic Oscillator, oversold, 10 day'
-    so_reversal_index = 'Stochastic Oscillator, reversal, 10 day'
-    if not so_index in eval_results.index:
-        eval_results = eval_results.append(add_results_index(eval_results, so_index))
-        eval_results = eval_results.append(add_results_index(eval_results, so_reversal_index))
+    so1_index = 'Stochastic Oscillator, oversold, 10 day'
+    so2_index = 'Stochastic Oscillator, reversal up, 10 day'
+    so3_index = 'Stochastic Oscillator, overbought, 10 day'
+    so4_index = 'Stochastic Oscillator, reversal down, 10 day'
+    if not so1_index in eval_results.index:
+        eval_results = eval_results.append(add_results_index(eval_results, so1_index))
+        eval_results = eval_results.append(add_results_index(eval_results, so2_index))
+        eval_results = eval_results.append(add_results_index(eval_results, so3_index))
+        eval_results = eval_results.append(add_results_index(eval_results, so4_index))
 
-    ndx = 0
-    rows = df_data.iterrows()
-    for nrow in rows:
-        if ndx == 0:
-            prior = nrow
-        if nrow[1]['Stochastic Oscillator'] < OVERSOLD:
-            eval_results.at[so_index, find_sample_index(eval_results, nrow[1]['10 day change'])] += 1
-        if (nrow[1]['Stochastic Oscillator'] >= nrow[1]['SO SMA3']) and \
-            (prior[1]['Stochastic Oscillator'] < prior[1]['SO SMA3']):
-            eval_results.at[so_reversal_index, find_sample_index(eval_results, nrow[1]['10 day change'])] += 1
-        prior = nrow
+    ndx = 1
+    while ndx < len(df_data):
+        if df_data.at[ndx, 'Stochastic Oscillator'] < OVERSOLD:
+            eval_results.at[so1_index, find_sample_index(eval_results, df_data.at[ndx, '10 day change'])] += 1
+            
+        if df_data.at[ndx, 'Stochastic Oscillator'] > OVERBOUGHT:
+            eval_results.at[so3_index, find_sample_index(eval_results, df_data.at[ndx, '10 day change'])] += 1
+            
+        if (df_data.at[ndx, 'Stochastic Oscillator'] >= df_data.at[ndx, 'SO SMA3']) and \
+            (df_data.at[ndx-1, 'Stochastic Oscillator'] < df_data.at[ndx-1, 'SO SMA3']):
+            eval_results.at[so2_index, find_sample_index(eval_results, df_data.at[ndx, '10 day change'])] += 1
+            
+        if (df_data.at[ndx, 'Stochastic Oscillator'] <= df_data.at[ndx, 'SO SMA3']) and \
+            (df_data.at[ndx-1, 'Stochastic Oscillator'] > df_data.at[ndx-1, 'SO SMA3']):
+            eval_results.at[so4_index, find_sample_index(eval_results, df_data.at[ndx, '10 day change'])] += 1
+            
         ndx += 1
     return eval_results
 
-def add_stochastic_oscillator_fields(df_data=None):
-    df_data.insert(loc=0, column='Stochastic Oscillator', value=NaN)
-    df_data.insert(loc=0, column='SO SMA3', value=NaN)
-    return df_data
-
 def stochastic_oscillator(df_data=None):
-    add_stochastic_oscillator_fields(df_data)
+    df_data.insert(loc=0, column='Stochastic Oscillator', value=0.0)
+    df_data.insert(loc=0, column='SO SMA3', value=0.0)
     
     data_ndx = 14
     while data_ndx < len(df_data):
-        trading_range = df_data.at[data_ndx - 13, '14 day max'] - df_data.at[data_ndx - 13, '14 day min']
+        trading_range = df_data.at[data_ndx - 14, '14 day max'] - df_data.at[data_ndx - 14, '14 day min']
         
-        if trading_range == 0:
+        if trading_range == 0.0:
             df_data.at[data_ndx, 'Stochastic Oscillator'] = 0.0
         else:
-            df_data.at[data_ndx, 'Stochastic Oscillator'] = 100 * (df_data.at[data_ndx, 'Close'] - df_data.at[data_ndx - 13, '14 day min']) / trading_range
+            df_data.at[data_ndx, 'Stochastic Oscillator'] = (100 * (df_data.at[data_ndx, 'Close'] - df_data.at[data_ndx - 14, '14 day min'])) / trading_range
+            
         if data_ndx >= 16:
-            df_data.at[data_ndx, 'SO SMA3'] = df_data.at[data_ndx-2, 'Stochastic Oscillator'] + \
+            df_data.at[data_ndx, 'SO SMA3'] = (df_data.at[data_ndx-2, 'Stochastic Oscillator'] + \
                                               df_data.at[data_ndx-1, 'Stochastic Oscillator'] + \
-                                              df_data.at[data_ndx, 'Stochastic Oscillator'] / 3
+                                              df_data.at[data_ndx, 'Stochastic Oscillator']) / 3
         data_ndx += 1
     
     return df_data
