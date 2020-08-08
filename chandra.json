@@ -1,5 +1,9 @@
 {
 "logFile" : "d:\\brian\\AI Projects\\chandra_log.txt",
+"analysislogFile" : "d:\\brian\\AI Projects\\AnalyzeSampleevaluationlog.txt",
+"analysisoutputFile" : "d:\\brian\\AI Projects\\AnalysisSampleevaluation.txt",
+"evaluateoutputFile" : "d:\\brian\\AI Projects\\Evaluation_output",
+"evaluatesegmentationfile" : "d:\\brian\\AI Projects\\segmentation.csv",
 "outputFile" : "d:\\brian\\AI Projects\\chandra_output",
 "loggingLevel" : "debug",
 "loggingFormat" : "%(asctime)s: %(levelname)s: %(message)s",

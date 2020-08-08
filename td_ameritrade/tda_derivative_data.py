@@ -18,6 +18,9 @@ def add_derived_data(df_data):
     df_data.insert(loc=0, column='20 day change', value=NaN)
     df_data.insert(loc=0, column='20 day max', value=NaN)
     df_data.insert(loc=0, column='20 day min', value=NaN)
+    df_data.insert(loc=0, column='40 day change', value=NaN)
+    df_data.insert(loc=0, column='40 day max', value=NaN)
+    df_data.insert(loc=0, column='40 day min', value=NaN)
     df_data.insert(loc=0, column='date', value="")
     df_data.insert(loc=0, column='month', value="")
     df_data.insert(loc=0, column='day', value="")
@@ -81,6 +84,10 @@ def add_derived_data(df_data):
                     df_data.loc[idx, '20 day change'] = (df_data.loc[idx + 20, "Close"] - closing_price) / closing_price
                     df_data.loc[idx, '20 day max'] = df_data.iloc[idx:idx + 20].get('High').max()
                     df_data.loc[idx, '20 day min'] = df_data.iloc[idx:idx + 20].get('Low').min()
+                if idx < len(df_data) - 40:
+                    df_data.loc[idx, '40 day change'] = (df_data.loc[idx + 40, "Close"] - closing_price) / closing_price
+                    df_data.loc[idx, '40 day max'] = df_data.iloc[idx:idx + 40].get('High').max()
+                    df_data.loc[idx, '40 day min'] = df_data.iloc[idx:idx + 40].get('Low').min()
             pass
         except:
             print("error")

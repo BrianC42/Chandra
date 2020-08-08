@@ -32,29 +32,42 @@ upper portion of its daily range. High volume days can accentuate this character
 Therefore, the indicator is different from other cumulative volume indicators, such as On-Balance Volume (OBV). 
 
 '''
-from technical_analysis_utilities import add_results_index
-from technical_analysis_utilities import find_sample_index
+from technical_analysis_utilities import increment_sample_counts
 
-def eval_accumulation_distribution(df_data, eval_results):
-    result_index = 'Accumulation Distribution, AD>0, 10 day'
-    if not result_index in eval_results.index:
-        combo_results = add_results_index(eval_results, result_index)
-        eval_results = eval_results.append(combo_results)
-        
-    rows = df_data.iterrows()
-    for nrow in rows:
-        if nrow[1]['AccumulationDistribution'] > 0:
-            cat_str = find_sample_index(eval_results, nrow[1]['10 day change'])
-            eval_results.at[result_index, cat_str] += 1
+TREND_LENGTH = 20
+
+def eval_accumulation_distribution(symbol, df_data, eval_results):
+    
+    ad1_index = ['Accumulation Distribution', 'positive divergence']
+    ad2_index = ['Accumulation Distribution', 'negative divergence']
+
+    ndx = TREND_LENGTH
+    while ndx < len(df_data):
+        if not df_data.at[ndx-TREND_LENGTH, 'AccumulationDistribution'] == 0.0:
+            ad_trend = (df_data.at[ndx, 'AccumulationDistribution'] - df_data.at[ndx-TREND_LENGTH, 'AccumulationDistribution']) / \
+                        df_data.at[ndx-TREND_LENGTH, 'AccumulationDistribution']
+        else:
+            ad_trend = 0.0
+            
+        if not df_data.at[ndx-TREND_LENGTH, 'Close'] == 0.0:
+            price_trend = (df_data.at[ndx, 'Close'] - df_data.at[ndx-TREND_LENGTH, 'Close']) / \
+                            df_data.at[ndx-TREND_LENGTH, 'Close']
+        else:
+            price_trend = 0.0
+
+        if price_trend > 0.0:
+            if ad_trend < 0.0:
+                eval_results = increment_sample_counts(symbol, eval_results, ad1_index, df_data.iloc[ndx, :]) 
+        else:
+            if ad_trend > 0.0:
+                eval_results = increment_sample_counts(symbol, eval_results, ad2_index, df_data.iloc[ndx, :]) 
+            
+        ndx += 1
+                
     return eval_results
 
-def add_acc_dist_fields(df_data):
-    df_data.insert(loc=0, column='AccumulationDistribution', value=0.0)
-
-    return (df_data)
-
 def accumulation_distribution(df_data=None):
-    add_acc_dist_fields(df_data)
+    df_data.insert(loc=0, column='AccumulationDistribution', value=0.0)
     
     data_ndx = 1
     while data_ndx < len(df_data):

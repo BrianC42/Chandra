@@ -42,8 +42,12 @@ import sys
 from tda_api_library import format_tda_datetime
 
 from moving_average import exponential_moving_average
-from technical_analysis_utilities import add_results_index
-from technical_analysis_utilities import find_sample_index
+from technical_analysis_utilities import increment_sample_counts
+
+DRAMATIC_RISE = 1.05
+DRAMATIC_DECLINE = 0.95
+UPWARD_DIVERGENCE = 1.1
+DOWNWARD_DIVERGENCE = 0.9
 
 def return_macd_flags():
     MACD_flags = dict(buy='1', sell='-1', neutral='0')
@@ -74,7 +78,6 @@ def trade_on_macd(guidance, symbol, df_data):
             if df_data.at[day3, 'MACD'] > df_data.at[day3, 'MACD_Signal']:
                 trade = True
                 trigger_status = "Potential recommendation on next trading day"
-        '''
         if df_data.at[day1, 'MACD_Buy']:
             if df_data.at[day2, 'MACD'] > df_data.at[day2, 'MACD_Signal']:
                 if df_data.at[day3, 'MACD'] > df_data.at[day3, 'MACD_Signal']:
@@ -90,28 +93,22 @@ def trade_on_macd(guidance, symbol, df_data):
                     close = df_data.at[day3, 'Close']
                     trigger_status = "confirmed negative Cross"
                     guidance = guidance.append([[trade, symbol, 'MACD', trigger_date, trigger_status, close]])
+        '''
+        if df_data.at[day3, "Close"] < (df_data.at[day3, "EMA12"] * DOWNWARD_DIVERGENCE):
+            trade = True
+            close = df_data.at[day3, 'Close']
+            trigger_status = "confirmed negative Divergence"
+            guidance = guidance.append([[trade, symbol, 'MACD', trigger_date, trigger_status, close]])
     
     return guidance
 
-def eval_macd_positive_cross(df_data, eval_results):
-    DRAMATIC_RISE = 1.05
-    DRAMATIC_DECLINE = 0.95
-    UPWARD_DIVERGENCE = 1.1
-    DOWNWARD_DIVERGENCE = 0.9
-
-    index_1 = 'MACD confirmed positive Cross - 10 day max'
-    index_2 = 'MACD confirmed negative Cross - 10 day max'
-    index_3 = 'MACD dramatic rise - 10 day max'
-    index_4 = 'MACD dramatic decline - 10 day max'
-    index_5 = 'MACD positive divergence - 10 day max'
-    index_6 = 'MACD negative divergence - 10 day max'
-    if not index_1 in eval_results.index:
-        eval_results = eval_results.append(add_results_index(eval_results, index_1))
-        eval_results = eval_results.append(add_results_index(eval_results, index_2))
-        eval_results = eval_results.append(add_results_index(eval_results, index_3))
-        eval_results = eval_results.append(add_results_index(eval_results, index_4))
-        eval_results = eval_results.append(add_results_index(eval_results, index_5))
-        eval_results = eval_results.append(add_results_index(eval_results, index_6))
+def eval_macd_positive_cross(symbol, df_data, eval_results):
+    index_1 = ['MACD', 'confirmed positive Cross']
+    index_2 = ['MACD', 'confirmed negative Cross']
+    index_3 = ['MACD', 'dramatic rise']
+    index_4 = ['MACD', 'dramatic decline']
+    index_5 = ['MACD', 'positive divergence']
+    index_6 = ['MACD', 'negative divergence']
 
     ndx = 10
     while ndx < df_data.shape[0] - 1:
@@ -119,29 +116,28 @@ def eval_macd_positive_cross(df_data, eval_results):
         if  df_data.at[ndx-2, 'MACD_Buy'] and \
             df_data.at[ndx-1, 'MACD'] > df_data.at[ndx-1, 'MACD_Signal'] and \
             df_data.at[ndx, 'MACD'] > df_data.at[ndx, 'MACD_Signal']:
-            eval_results.at[index_1, find_sample_index(eval_results, df_data.at[ndx, '10 day max'])] += 1
+            eval_results = increment_sample_counts(symbol, eval_results, index_1, df_data.iloc[ndx, :]) 
         if  df_data.at[ndx-2, 'MACD_Sell'] and \
             df_data.at[ndx-1, 'MACD'] < df_data.at[ndx-1, 'MACD_Signal'] and \
             df_data.at[ndx, 'MACD'] < df_data.at[ndx, 'MACD_Signal']:
-            eval_results.at[index_2, find_sample_index(eval_results, df_data.at[ndx, '10 day max'])] += 1
+            eval_results = increment_sample_counts(symbol, eval_results, index_2, df_data.iloc[ndx, :]) 
 
         # dramatic rise and decline
         if df_data.at[ndx, "EMA12"] > (df_data.at[ndx, "EMA26"] * DRAMATIC_RISE):
-            eval_results.at[index_3, find_sample_index(eval_results, df_data.at[ndx, '10 day max'])] += 1
+            eval_results = increment_sample_counts(symbol, eval_results, index_3, df_data.iloc[ndx, :]) 
         if df_data.at[ndx, "EMA12"] < (df_data.at[ndx, "EMA26"] * DRAMATIC_DECLINE):
-            eval_results.at[index_4, find_sample_index(eval_results, df_data.at[ndx, '10 day max'])] += 1
+            eval_results = increment_sample_counts(symbol, eval_results, index_4, df_data.iloc[ndx, :]) 
         
         # divergence
         if df_data.at[ndx, "Close"] > (df_data.at[ndx, "EMA12"] * UPWARD_DIVERGENCE):
-            eval_results.at[index_5, find_sample_index(eval_results, df_data.at[ndx, '10 day max'])] += 1
+            eval_results = increment_sample_counts(symbol, eval_results, index_5, df_data.iloc[ndx, :]) 
         if df_data.at[ndx, "Close"] < (df_data.at[ndx, "EMA12"] * DOWNWARD_DIVERGENCE):
-            eval_results.at[index_6, find_sample_index(eval_results, df_data.at[ndx, '10 day max'])] += 1
+            eval_results = increment_sample_counts(symbol, eval_results, index_6, df_data.iloc[ndx, :]) 
         
         ndx += 1
     return eval_results
 
 def macd(df_src=None, value_label=None):
-        
     sys.path.append("../Utilities/")
 
     #str_prediction = prediction_interval + ' day change'

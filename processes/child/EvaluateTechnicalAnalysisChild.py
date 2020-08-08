@@ -7,9 +7,6 @@ import os
 import pandas as pd
 
 from technical_analysis_utilities import initialize_eval_results
-from technical_analysis_utilities import add_results_index
-from technical_analysis_utilities import find_sample_index
-from technical_analysis_utilities import present_evaluation
 from technical_analysis_utilities import sample_count
 from technical_analysis_utilities import eval_combinations
 from macd import eval_macd_positive_cross
@@ -28,25 +25,43 @@ def EvaluateTechnicalAnalysisChild(pipe_in):
             '''================ Work on data as long as the manager has more
             ==============================================================='''
             p_list = pipe_in.recv()
-            #print("Worker instructions: %s" % p_list)
+            #print("Worker instructions: %s" % p_list)            
+            symbol = p_list[1]
             
             '''================ Perform technical analysis ==================='''
-            file_in = p_list[0] + '\\' + p_list[1] + '.csv'
+            file_in = p_list[0] + '\\' + symbol + '.csv'
             if os.path.isfile(file_in):
                 print("Evaluating %s" % file_in)
                 df_data = pd.read_csv(file_in)
                 eval_results = initialize_eval_results()
-                eval_results = sample_count(df_data, eval_results)
-                eval_results = eval_macd_positive_cross(df_data, eval_results)
-                eval_results = eval_bollinger_bands(df_data, eval_results)
-                eval_results = eval_on_balance_volume(df_data, eval_results)
-                eval_results = eval_relative_strength(df_data, eval_results)
-                eval_results = eval_stochastic_oscillator(df_data, eval_results)
-                eval_results = eval_average_directional_index(df_data, eval_results)
-                eval_results = eval_aroon_indicator(df_data, eval_results)
-                eval_results = eval_accumulation_distribution(df_data, eval_results)
-                eval_results = eval_combinations(df_data, eval_results)
+                eval_results = sample_count(symbol, df_data, eval_results)
+                eval_results = eval_macd_positive_cross(symbol, df_data, eval_results)
+                eval_results = eval_bollinger_bands(symbol, df_data, eval_results)
+                eval_results = eval_on_balance_volume(symbol, df_data, eval_results)
+                eval_results = eval_relative_strength(symbol, df_data, eval_results)
+                eval_results = eval_stochastic_oscillator(symbol, df_data, eval_results)
+                eval_results = eval_accumulation_distribution(symbol, df_data, eval_results)
+                eval_results = eval_combinations(symbol, df_data, eval_results)
+                eval_results = eval_average_directional_index(symbol, df_data, eval_results)
+                eval_results = eval_aroon_indicator(symbol, df_data, eval_results)
 
+            segmentation = p_list[2]
+            if os.path.isfile(segmentation):
+                #print("reading segmentation information from %s" % segmentation)
+                df_segmentation = pd.read_csv(segmentation)
+                df_segmentation = df_segmentation.set_index('Symbol')
+                if symbol in df_segmentation.index:
+                    classification = df_segmentation.loc[symbol, 'Classification']
+                    segment = df_segmentation.loc[symbol, 'Segment']
+                else:
+                    classification = ""
+                    segment = ""
+                ndx = 0
+                while ndx < eval_results.shape[0]:
+                    eval_results.at[ndx, 'segment'] = segment
+                    eval_results.at[ndx, 'classification'] = classification
+                    ndx += 1
+                    
             '''================ Return processed data ====================='''
             pipe_in.send(eval_results)
             

@@ -41,20 +41,16 @@ to use the ADX as a way to time an entry on a market that is already confirmed t
 in a particular direction.
 
 '''
-from technical_analysis_utilities import add_results_index
-from technical_analysis_utilities import find_sample_index
+from technical_analysis_utilities import increment_sample_counts
 
-def eval_average_directional_index(df_data, eval_results):
-    result_index = 'Average Directional Index, TBD'
-    if not result_index in eval_results.index:
-        combo_results = add_results_index(eval_results, result_index)
-        eval_results = eval_results.append(combo_results)
+def eval_average_directional_index(symbol, df_data, eval_results):
+    ADI_index = ['Average Directional Index', 'TBD']
         
-    rows = df_data.iterrows()
-    for nrow in rows:
-        if False:
-            cat_str = find_sample_index(eval_results, nrow[1]['10 day change'])
-            eval_results.at[result_index, cat_str] += 1
+    ndx = 0
+    while ndx < df_data.shape[0]:
+        eval_results = increment_sample_counts(symbol, eval_results, ADI_index, df_data.iloc[ndx, :]) 
+        ndx += 1
+
     return eval_results
 
 def average_directional_index(df_data=None):

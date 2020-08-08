@@ -17,15 +17,16 @@ from tda_api_library import tda_read_watch_lists
 
 from EvaluateTechnicalAnalysisChild import EvaluateTechnicalAnalysisChild
 from technical_analysis_utilities import initialize_eval_results
+from technical_analysis_utilities import add_analysis_results
 from technical_analysis_utilities import present_evaluation
-from technical_analysis_utilities import add_evaluation_results
 
-def coordinate_evaluation_child_processes(authentication_parameters, analysis_dir):
+def coordinate_evaluation_child_processes(authentication_parameters, analysis_dir, json_config):
     core_count = os.cpu_count()
     #print ("Starting {:d} processes:".format(core_count) )
     c_send = []
     c_rcv = []
     data_worker = []
+    segmentation = json_config['evaluatesegmentationfile']
     
     p_ndx = 0
     while p_ndx < core_count:
@@ -52,7 +53,7 @@ def coordinate_evaluation_child_processes(authentication_parameters, analysis_di
         p_active = 0
         while p_ndx < core_count and idx < len(symbol_list):
             symbol = symbol_list[idx]
-            c_send[p_ndx].send([analysis_dir, symbol])
+            c_send[p_ndx].send([analysis_dir, symbol, segmentation])
             p_ndx += 1
             idx += 1
         
@@ -61,7 +62,7 @@ def coordinate_evaluation_child_processes(authentication_parameters, analysis_di
         p_ndx = 0
         while p_ndx < p_active:
             symbol_results = c_send[p_ndx].recv()
-            eval_results = add_evaluation_results(eval_results, symbol_results)
+            eval_results = add_analysis_results(eval_results, symbol_results)
             #print ("Data from technical analysis worker: ...")
             p_ndx += 1
  
@@ -81,7 +82,7 @@ def coordinate_evaluation_child_processes(authentication_parameters, analysis_di
         p_ndx += 1
 
     #print ("\nAll workers done")
-    present_evaluation(eval_results)
+    present_evaluation(eval_results, json_config['evaluateoutputFile'])
     return 
 
 if __name__ == '__main__':
@@ -96,7 +97,7 @@ if __name__ == '__main__':
     json_config = read_config_json(app_data['config'])
 
     try:    
-        log_file = json_config['logFile']
+        log_file = json_config['evaluatelogFile']
         if json_config['loggingLevel'] == "debug":
             logging.basicConfig(filename=log_file, level=logging.DEBUG, format=json_config['loggingFormat'])
         elif json_config['loggingLevel'] == "info":
@@ -104,7 +105,7 @@ if __name__ == '__main__':
         else:
             logging.basicConfig(filename=log_file, level=logging.WARNING, format=json_config['loggingFormat'])
             
-        output_file = json_config['outputFile']
+        output_file = json_config['evaluateoutputFile']
         output_file = output_file + ' {:4d} {:0>2d} {:0>2d} {:0>2d} {:0>2d} {:0>2d}'.format(now.year, now.month, now.day, \
                                                                                        now.hour, now.minute, now.second) + '.txt'
         f_out = open(output_file, 'w')    
@@ -120,8 +121,7 @@ if __name__ == '__main__':
     log_fmt = logging.Formatter('%(asctime)s - %(name)s - %levelname - %(messages)s')
     logger.info('Updating stock data')
 
-    #update_tda_eod_data(app_data['authentication'])
-    coordinate_evaluation_child_processes(app_data['authentication'], app_data['market_analysis_data'])
+    coordinate_evaluation_child_processes(app_data['authentication'], app_data['market_analysis_data'], json_config)
     
     '''
     clean up and prepare to exit

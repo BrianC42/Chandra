@@ -23,12 +23,15 @@ import pandas as pd
 
 from tda_api_library import format_tda_datetime
 
-from technical_analysis_utilities import add_results_index
-from technical_analysis_utilities import find_sample_index
+from technical_analysis_utilities import increment_sample_counts
+
+OVERSOLD = 0.25
+TREND = 100
+NEAR = 0.25
+REVERSAL_INDICATOR = 0.25
+THRESHOLD = TREND * 0.75
 
 def bb_oversold(guidance, symbol, df_data):
-    OVERSOLD = 0.1
-
     trigger_status = ""
     trade = False
     trigger_date = ""
@@ -48,12 +51,6 @@ def bb_oversold(guidance, symbol, df_data):
     return guidance
 
 def bb_trend(guidance, symbol, df_data):
-    TREND = 100
-    NEAR = 0.2
-    REVERSAL_INDICATOR = 0.25
-    THRESHOLD = TREND * 0.75
-    OVERSOLD = 0.1
-
     trigger_status = ""
     trade = False
     trigger_date = ""
@@ -108,12 +105,6 @@ def trade_on_bb(guidance, symbol, df_data):
     guidance = bb_trend(guidance, symbol, df_data)
     guidance = bb_oversold(guidance, symbol, df_data)
     '''
-    TREND = 100
-    NEAR = 0.2
-    REVERSAL_INDICATOR = 0.25
-    THRESHOLD = TREND * 0.75
-    OVERSOLD = 0.1
-
     trigger_status = ""
     trade = False
     trigger_date = ""
@@ -128,7 +119,8 @@ def trade_on_bb(guidance, symbol, df_data):
         idx = 0
     else:
         idx = len(df_data) - TREND
-        
+
+    '''        
     while idx < len(df_data):
         if df_data.at[idx, "Close"] > df_data.at[idx, "BB_Upper"] - (ds_price_range[idx] * NEAR):
             ds_near_upper[idx] = 1
@@ -140,61 +132,38 @@ def trade_on_bb(guidance, symbol, df_data):
         if df_data.at[idx, "Close"] < df_data.at[idx, "BB_Lower"] + (ds_price_range[idx] * NEAR):
             ds_near_lower.at[idx] = 1        
         idx += 1        
-    
+    '''
+        
     idx = df_data.shape[0] - 1
     if idx > TREND and ds_reversing.at[idx]:
         trigger_date = format_tda_datetime(df_data.at[idx, 'DateTime'])
-            
+        
+        '''
         if ds_near_lower.loc[idx-TREND : idx].sum() > THRESHOLD:
             trade = True
-            trigger_status = "lower band trend: probable decline in 20 days"
+            trigger_status = "lower trend"
             guidance = guidance.append([[trade, symbol, 'BB', trigger_date, trigger_status, df_data.at[idx, "Close"]]])
-            
+        '''
+        
         if ds_near_upper.loc[idx-TREND : idx].sum() > THRESHOLD:
             trade = True
-            trigger_status = "Upper band trend: elevated chance of stable price"
+            trigger_status = "Upper trend"
             guidance = guidance.append([[trade, symbol, 'BB', trigger_date, trigger_status, df_data.at[idx, "Close"]]])
 
-        if df_data.loc[idx, "Close"] < df_data.loc[idx, "BB_Lower"] * (1 - OVERSOLD):
+        if df_data.loc[idx, "Close"] < df_data.loc[idx, "BB_Lower"] * (ds_price_range[idx] * OVERSOLD):
             trade = True
-            trigger_status = "Oversold: 85% chance of 1 day price move >1%"
+            trigger_status = "Oversold"
             guidance = guidance.append([[trade, symbol, 'BB', trigger_date, trigger_status, df_data.at[idx, "Close"]]])
             
     return guidance
 
-def eval_bollinger_bands(df_data, eval_results):
-    r1_index = 'Bollinger Bands, Squeeze, 1 day'
-    r5_index = 'Bollinger Bands, Squeeze, 5 day'
-    r10_index = 'Bollinger Bands, Squeeze, 10 day'
-    r20_index = 'Bollinger Bands, Squeeze, 20 day'
-    oversold1_index = "Bollinger Bands, Oversold, 1 day"
-    oversold5_index = "Bollinger Bands, Oversold, 5 day"
-    oversold10_index = "Bollinger Bands, Oversold, 10 day"
-    trend_Upper10_index = 'Bollinger Bands, Upper Trend, 10 day'
-    trend_Lower10_index = 'Bollinger Bands, Lower Trend, 10 day'
-    trend_Upper20_index = 'Bollinger Bands, Upper Trend, 20 day'
-    trend_Lower20_index = 'Bollinger Bands, Lower Trend, 20 day'
-    oversold_squeeze_index = "Bollinger Bands, Oversold Squeeze, 20 day"
-    if not r10_index in eval_results.index:
-        eval_results = eval_results.append(add_results_index(eval_results, r1_index))
-        eval_results = eval_results.append(add_results_index(eval_results, r5_index))
-        eval_results = eval_results.append(add_results_index(eval_results, r10_index))
-        eval_results = eval_results.append(add_results_index(eval_results, r20_index))
-        eval_results = eval_results.append(add_results_index(eval_results, oversold1_index))
-        eval_results = eval_results.append(add_results_index(eval_results, oversold5_index))
-        eval_results = eval_results.append(add_results_index(eval_results, oversold10_index))
-        eval_results = eval_results.append(add_results_index(eval_results, trend_Upper10_index))
-        eval_results = eval_results.append(add_results_index(eval_results, trend_Lower10_index))
-        eval_results = eval_results.append(add_results_index(eval_results, trend_Upper20_index))
-        eval_results = eval_results.append(add_results_index(eval_results, trend_Lower20_index))
-        eval_results = eval_results.append(add_results_index(eval_results, oversold_squeeze_index))
+def eval_bollinger_bands(symbol, df_data, eval_results):
+    rsqeeze_index = ['BB', 'Squeeze']
+    oversold_index = ['BB', 'Oversold']
+    trend_Upper_index = ['BB', 'Upper Trend']
+    trend_Lower_index = ['BB', 'Lower Trend']
+    oversold_squeeze_index = ['BB', 'Oversold Squeeze']
 
-    TREND = 100
-    NEAR = 0.2
-    REVERSAL_INDICATOR = 0.25
-    THRESHOLD = TREND * 0.75
-    OVERSOLD = 0.1
-    
     ds_price_range = df_data["BB_Upper"] - df_data["BB_Lower"]    
     ds_near_upper = pd.Series(0 for i in range(0, df_data.shape[0]))
     ds_reversing = pd.Series(False for i in range(0, df_data.shape[0]))
@@ -215,30 +184,23 @@ def eval_bollinger_bands(df_data, eval_results):
         if idx > TREND and ds_reversing.at[idx]:
             # trade signal A
             if ds_near_upper.loc[idx-TREND : idx].sum() > THRESHOLD:
-                eval_results.at[trend_Upper10_index, find_sample_index(eval_results, df_data.at[idx, '10 day change'])] += 1
-                eval_results.at[trend_Upper20_index, find_sample_index(eval_results, df_data.at[idx, '20 day change'])] += 1
+                eval_results = increment_sample_counts(symbol, eval_results, trend_Upper_index, df_data.iloc[idx, :]) 
             # trade signal B
             if ds_near_lower.loc[idx-TREND : idx].sum() > THRESHOLD:
-                eval_results.at[trend_Lower10_index, find_sample_index(eval_results, df_data.at[idx, '10 day change'])] += 1
-                eval_results.at[trend_Lower20_index, find_sample_index(eval_results, df_data.at[idx, '20 day change'])] += 1
+                eval_results = increment_sample_counts(symbol, eval_results, trend_Lower_index, df_data.iloc[idx, :]) 
         
         # Oversold indicator
-        if df_data.at[idx, "Close"] < df_data.at[idx, "BB_Lower"] * (1 - OVERSOLD):
-            eval_results.at[oversold1_index, find_sample_index(eval_results, df_data.at[idx, '1 day change'])] += 1
-            eval_results.at[oversold5_index, find_sample_index(eval_results, df_data.at[idx, '5 day change'])] += 1
-            eval_results.at[oversold10_index, find_sample_index(eval_results, df_data.at[idx, '10 day change'])] += 1
+        if df_data.at[idx, "Close"] < df_data.at[idx, "BB_Lower"] - (ds_price_range[idx] * OVERSOLD):
+            eval_results = increment_sample_counts(symbol, eval_results, oversold_index, df_data.iloc[idx, :]) 
         
         if not ds_price_range[idx] == 0:
             if idx >= TREND:
                 # Trade signal C - minimal volatility 'squeeze'
                 if ds_price_range.iloc[idx] < ds_price_range.iloc[idx-TREND:idx].min():
-                    eval_results.at[r1_index, find_sample_index(eval_results, df_data.at[idx, '1 day change'])] += 1
-                    eval_results.at[r5_index, find_sample_index(eval_results, df_data.at[idx, '5 day change'])] += 1
-                    eval_results.at[r10_index, find_sample_index(eval_results, df_data.at[idx, '10 day change'])] += 1
-                    eval_results.at[r20_index, find_sample_index(eval_results, df_data.at[idx, '20 day change'])] += 1
+                    eval_results = increment_sample_counts(symbol, eval_results, rsqeeze_index, df_data.iloc[idx, :]) 
                     # Oversold squeeze indicator
-                    if df_data.at[idx, "Close"] < df_data.at[idx, "BB_Lower"] * (1 - OVERSOLD):
-                        eval_results.at[oversold_squeeze_index, find_sample_index(eval_results, df_data.at[idx, '20 day change'])] += 1                    
+                    if df_data.at[idx, "Close"] < df_data.at[idx, "BB_Lower"] - (ds_price_range[idx] * OVERSOLD):
+                        eval_results = increment_sample_counts(symbol, eval_results, oversold_squeeze_index, df_data.iloc[idx, :]) 
                     
         idx += 1
     return eval_results

@@ -22,20 +22,17 @@ This indicator is very similar to the directional movement index (DMI) that was 
 Welles Wilder, which is also a very popular indicator used to measure the strength of a given trend.
 
 '''
-from technical_analysis_utilities import add_results_index
-from technical_analysis_utilities import find_sample_index
+from technical_analysis_utilities import increment_sample_counts
 
-def eval_aroon_indicator(df_data, eval_results):
-    result_index = 'Aroon Indicator, TBD'
-    if not result_index in eval_results.index:
-        combo_results = add_results_index(eval_results, result_index)
-        eval_results = eval_results.append(combo_results)
+def eval_aroon_indicator(symbol, df_data, eval_results):
+    AI_index = ['Aroon Indicator', 'TBD']
         
-    rows = df_data.iterrows()
-    for nrow in rows:
+    ndx = 0
+    while ndx < df_data.shape[0]:
         if False:
-            cat_str = find_sample_index(eval_results, nrow[1]['20 day change'])
-            eval_results.at[result_index, cat_str] += 1
+            eval_results = increment_sample_counts(symbol, eval_results, AI_index, df_data.iloc[ndx, :]) 
+        ndx += 1
+
     return eval_results
 
 def aroon_indicator(df_data=None):

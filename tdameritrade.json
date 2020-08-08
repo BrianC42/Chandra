@@ -4,5 +4,8 @@
 "loggingLevel" : "debug",
 "loggingFormat" : "%(asctime)s: %(levelname)s: %(message)s",
 "tokenAttributes" : "d:\\brian\\AI Projects\\tda_local.json",
-"MACDfuture" : "10"
+"MACDfuture" : "10",
+"evaluatelogFile" : "d:\\brian\\AI Projects\\Evaluate_log.txt",
+"evaluateoutputFile" : "d:\\brian\\AI Projects\\Evaluation_output",
+"evaluatesegmentationfile" : "d:\\brian\\AI Projects\\segmentation.csv"
 }
