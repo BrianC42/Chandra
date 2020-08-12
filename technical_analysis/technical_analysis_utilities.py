@@ -101,12 +101,14 @@ def increment_sample_counts(symbol, eval_results, analysis_condition, df_sample)
     return eval_results
 
 def sample_count(symbol, df_data, eval_results):
-    analysis_condition = ['Baseline', 'samples']
-    symbol = ""
+    analysis_condition = ['sample', 'counts']
+    symbol = "Baseline"
         
     ndx = 0
     while ndx < df_data.shape[0]:
-        eval_results = increment_sample_counts(symbol, eval_results, analysis_condition, df_data.iloc[ndx, :]) 
+        eval_results = increment_sample_counts(symbol, eval_results, analysis_condition, df_data.iloc[ndx, :])
+        df_data.iloc[ndx, 'segment'] = 'Baseline'
+        df_data.iloc[ndx, 'classification'] = 'Baseline'
         ndx += 1
     return eval_results
 

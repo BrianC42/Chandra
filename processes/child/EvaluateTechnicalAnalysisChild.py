@@ -54,12 +54,13 @@ def EvaluateTechnicalAnalysisChild(pipe_in):
                     classification = df_segmentation.loc[symbol, 'Classification']
                     segment = df_segmentation.loc[symbol, 'Segment']
                 else:
-                    classification = ""
-                    segment = ""
+                    classification = "TBD"
+                    segment = "TBD"
                 ndx = 0
                 while ndx < eval_results.shape[0]:
-                    eval_results.at[ndx, 'segment'] = segment
-                    eval_results.at[ndx, 'classification'] = classification
+                    if not eval_results.at[ndx, 'symbol'] == 'Baseline':
+                        eval_results.at[ndx, 'segment'] = segment
+                        eval_results.at[ndx, 'classification'] = classification
                     ndx += 1
                     
             '''================ Return processed data ====================='''
