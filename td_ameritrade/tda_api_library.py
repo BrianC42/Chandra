@@ -2,6 +2,7 @@
 Created on Jan 31, 2018
 
 @author: Brian
+
 '''
 import os
 import logging
@@ -10,7 +11,6 @@ import time
 import requests
 import json
 import pandas as pd
-from _ast import Try
 
 def format_tda_datetime(tda_datetime):
     str_dt = date.fromtimestamp(tda_datetime/1000).strftime("%Y-%m-%d")
@@ -61,6 +61,183 @@ def tda_get_access_token(json_authentication):
             
     logging.debug('<---- tda_get_access_token')
     return json_authentication["currentToken"]
+        
+def df_tda_option_chain(rcount):
+    df = pd.DataFrame(index=[i for i in range(0, rcount)], \
+                      columns = ["underlying symbol", "strategy", "underlyingPrice", "numberOfContracts", \
+                                 "expiration", "strike", \
+                                 'putCall','option symbol', 'description', 'exchangeName', 'bid', \
+                                 'ask', 'last', 'mark', 'bidSize', 'askSize', 'lastSize', \
+                                 'highPrice', 'lowPrice', 'openPrice', 'closePrice', 'totalVolume', 'quoteTimeInLong', \
+                                 'tradeTimeInLong', 'netChange', 'volatility', \
+                                 'delta', 'gamma', 'theta', 'vega', 'rho', \
+                                 'timeValue', 'openInterest', 'inTheMoney', 'theoreticalOptionValue', 'theoreticalVolatility', \
+                                 'mini', 'nonStandard', 'strikePrice', 'expirationDate', 'daysToExpiration', 'expirationType', \
+                                 'multiplier', 'settlementType', 'deliverableNote', 'isIndexOption', 'percentChange', \
+                                 'markChange', 'markPercentChange'])
+    
+    return df
+
+def tda_read_option_chain(authentication_parameters, p_symbol):
+    TSA_DATE_MAPS = ['callExpDateMap', 'putExpDateMap']
+    df_tda_options = df_tda_option_chain(0)
+    json_authentication = tda_get_authentication_details(authentication_parameters)
+    currentToken = tda_get_access_token(json_authentication)    
+    url = 'https://api.tdameritrade.com/v1/marketdata/chains'
+    apikey = 'Bearer ' + currentToken
+    symbol = p_symbol
+    headers = {'Authorization' : apikey}
+    params = {'symbol' : symbol}
+    response = requests.get(url, headers=headers, params=params)
+    if response.ok:
+        tda_option_chain_json = json.loads(response.text)
+        for dateMap in TSA_DATE_MAPS:
+            tda_ExpDateMap = tda_option_chain_json[dateMap]
+            ndx = 0
+            for tda_expDate in tda_ExpDateMap:
+                for tda_option in tda_ExpDateMap[tda_expDate]:
+                    for tda_strike in tda_ExpDateMap[tda_expDate][tda_option]:
+                        ndx += 1
+            df_tda = df_tda_option_chain(ndx)
+            ndx = 0
+            for tda_expDate in tda_ExpDateMap:
+                for tda_option in tda_ExpDateMap[tda_expDate]:
+                    for tda_strike in tda_ExpDateMap[tda_expDate][tda_option]:
+                        df_tda.at[ndx, "underlying symbol"] = tda_option_chain_json["symbol"]
+                        df_tda.at[ndx, "strategy"] = tda_option_chain_json["strategy"]
+                        df_tda.at[ndx, "underlyingPrice"] = tda_option_chain_json["underlyingPrice"]
+                        df_tda.at[ndx, "numberOfContracts"] =  tda_option_chain_json["numberOfContracts"]
+                        df_tda.at[ndx, "putCall"] = tda_strike['putCall']
+                        df_tda.at[ndx, "option symbol"] = tda_strike["symbol"]
+                        df_tda.at[ndx, "description"] = tda_strike["description"]
+                        df_tda.at[ndx, "exchangeName"] = tda_strike["exchangeName"]
+                        df_tda.at[ndx, "bid"] = tda_strike["bid"]
+                        df_tda.at[ndx, "ask"] = tda_strike["ask"]
+                        df_tda.at[ndx, "last"] = tda_strike["last"]
+                        df_tda.at[ndx, "mark"] = tda_strike["mark"]
+                        df_tda.at[ndx, "bidSize"] = tda_strike["bidSize"]
+                        df_tda.at[ndx, "askSize"] = tda_strike["askSize"]
+                        df_tda.at[ndx, "lastSize"] = tda_strike["lastSize"]
+                        df_tda.at[ndx, "highPrice"] = tda_strike["highPrice"]
+                        df_tda.at[ndx, "lowPrice"] = tda_strike["lowPrice"]
+                        df_tda.at[ndx, "openPrice"] = tda_strike["openPrice"]
+                        df_tda.at[ndx, "closePrice"] = tda_strike["closePrice"]
+                        df_tda.at[ndx, "totalVolume"] = tda_strike["totalVolume"]
+                        df_tda.at[ndx, "quoteTimeInLong"] = tda_strike["quoteTimeInLong"]
+                        df_tda.at[ndx, "tradeTimeInLong"] = tda_strike["tradeTimeInLong"]
+                        df_tda.at[ndx, "netChange"] = tda_strike["netChange"]
+                        df_tda.at[ndx, "volatility"] = tda_strike["volatility"]
+                        df_tda.at[ndx, "delta"] = tda_strike["delta"]
+                        df_tda.at[ndx, "gamma"] = tda_strike["gamma"]
+                        df_tda.at[ndx, "theta"] = tda_strike["theta"]
+                        df_tda.at[ndx, "vega"] = tda_strike["vega"]
+                        df_tda.at[ndx, "rho"] = tda_strike["rho"]
+                        df_tda.at[ndx, "timeValue"] = tda_strike["timeValue"]
+                        df_tda.at[ndx, "openInterest"] = tda_strike["openInterest"]
+                        df_tda.at[ndx, "inTheMoney"] = tda_strike["inTheMoney"]
+                        df_tda.at[ndx, "theoreticalOptionValue"] = tda_strike["theoreticalOptionValue"]
+                        df_tda.at[ndx, "theoreticalVolatility"] = tda_strike["theoreticalVolatility"]
+                        df_tda.at[ndx, "mini"] = tda_strike["mini"]
+                        df_tda.at[ndx, "nonStandard"] = tda_strike["nonStandard"]
+                        df_tda.at[ndx, "strikePrice"] = tda_strike["strikePrice"]
+                        df_tda.at[ndx, "expirationDate"] = tda_strike["expirationDate"]
+                        df_tda.at[ndx, "daysToExpiration"] = tda_strike["daysToExpiration"]
+                        df_tda.at[ndx, "expirationType"] = tda_strike["expirationType"]
+                        df_tda.at[ndx, "multiplier"] = tda_strike["multiplier"]
+                        df_tda.at[ndx, "settlementType"] = tda_strike["settlementType"]
+                        df_tda.at[ndx, "deliverableNote"] = tda_strike["deliverableNote"]
+                        df_tda.at[ndx, "isIndexOption"] = tda_strike["isIndexOption"]
+                        df_tda.at[ndx, "percentChange"] = tda_strike["percentChange"]
+                        df_tda.at[ndx, "markChange"] = tda_strike["markChange"]
+                        df_tda.at[ndx, "markPercentChange"] = tda_strike["markPercentChange"]
+                    
+                        '''
+                        df_tda[ndx, "optionDeliverablesList"] = tda_strike[  "optionDeliverablesList": [
+                        df_tda[ndx, ""] = tda_strike[    {
+                        df_tda[ndx, ""] = tda_strike[      "symbol": "string",
+                        df_tda[ndx, ""] = tda_strike[      "assetType": "string",
+                        df_tda[ndx, ""] = tda_strike[      "deliverableUnits": "string",
+                        df_tda[ndx, ""] = tda_strike[      "currencyType": "string"
+                        df_tda[ndx, ""] = tda_strike[    }
+                        df_tda[ndx, ""] = tda_strike[  ],
+                        '''
+                        ndx += 1
+        df_tda_options = df_tda_options.append(df_tda, ignore_index=True)
+        '''
+        tda_putExpDateMap = tda_option_chain_json["putExpDateMap"]
+        ndx = 0
+        for tda_expDate in tda_putExpDateMap:
+            for tda_option in tda_putExpDateMap[tda_expDate]:
+                for tda_strike in tda_putExpDateMap[tda_expDate][tda_option]:
+                    ndx += 1
+        df_tda_puts = df_tda_option_chain(ndx)
+        ndx = 0
+        for tda_expDate in tda_putExpDateMap:
+            for tda_option in tda_putExpDateMap[tda_expDate]:
+                for tda_strike in tda_putExpDateMap[tda_expDate][tda_option]:
+                    df_tda_puts.at[ndx, "underlying symbol"] = tda_option_chain_json["symbol"]
+                    df_tda_puts.at[ndx, "strategy"] = tda_option_chain_json["strategy"]
+                    df_tda_puts.at[ndx, "underlyingPrice"] = tda_option_chain_json["underlyingPrice"]
+                    df_tda_puts.at[ndx, "numberOfContracts"] =  tda_option_chain_json["numberOfContracts"]
+                    df_tda_puts.at[ndx, "putCall"] = tda_strike['putCall']
+                    df_tda_puts.at[ndx, "option symbol"] = tda_strike["symbol"]
+                    df_tda_puts.at[ndx, "description"] = tda_strike["description"]
+                    df_tda_puts.at[ndx, "exchangeName"] = tda_strike["exchangeName"]
+                    df_tda_puts.at[ndx, "bid"] = tda_strike["bid"]
+                    df_tda_puts.at[ndx, "ask"] = tda_strike["ask"]
+                    df_tda_puts.at[ndx, "last"] = tda_strike["last"]
+                    df_tda_puts.at[ndx, "mark"] = tda_strike["mark"]
+                    df_tda_puts.at[ndx, "bidSize"] = tda_strike["bidSize"]
+                    df_tda_puts.at[ndx, "askSize"] = tda_strike["askSize"]
+                    df_tda_puts.at[ndx, "lastSize"] = tda_strike["lastSize"]
+                    df_tda_puts.at[ndx, "highPrice"] = tda_strike["highPrice"]
+                    df_tda_puts.at[ndx, "lowPrice"] = tda_strike["lowPrice"]
+                    df_tda_puts.at[ndx, "openPrice"] = tda_strike["openPrice"]
+                    df_tda_puts.at[ndx, "closePrice"] = tda_strike["closePrice"]
+                    df_tda_puts.at[ndx, "totalVolume"] = tda_strike["totalVolume"]
+                    df_tda_puts.at[ndx, "quoteTimeInLong"] = tda_strike["quoteTimeInLong"]
+                    df_tda_puts.at[ndx, "tradeTimeInLong"] = tda_strike["tradeTimeInLong"]
+                    df_tda_puts.at[ndx, "netChange"] = tda_strike["netChange"]
+                    df_tda_puts.at[ndx, "volatility"] = tda_strike["volatility"]
+                    df_tda_puts.at[ndx, "delta"] = tda_strike["delta"]
+                    df_tda_puts.at[ndx, "gamma"] = tda_strike["gamma"]
+                    df_tda_puts.at[ndx, "theta"] = tda_strike["theta"]
+                    df_tda_puts.at[ndx, "vega"] = tda_strike["vega"]
+                    df_tda_puts.at[ndx, "rho"] = tda_strike["rho"]
+                    df_tda_puts.at[ndx, "timeValue"] = tda_strike["timeValue"]
+                    df_tda_puts.at[ndx, "openInterest"] = tda_strike["openInterest"]
+                    df_tda_puts.at[ndx, "inTheMoney"] = tda_strike["inTheMoney"]
+                    df_tda_puts.at[ndx, "theoreticalOptionValue"] = tda_strike["theoreticalOptionValue"]
+                    df_tda_puts.at[ndx, "theoreticalVolatility"] = tda_strike["theoreticalVolatility"]
+                    df_tda_puts.at[ndx, "mini"] = tda_strike["mini"]
+                    df_tda_puts.at[ndx, "nonStandard"] = tda_strike["nonStandard"]
+                    df_tda_puts.at[ndx, "strikePrice"] = tda_strike["strikePrice"]
+                    df_tda_puts.at[ndx, "expirationDate"] = tda_strike["expirationDate"]
+                    df_tda_puts.at[ndx, "expirationType"] = tda_strike["expirationType"]
+                    df_tda_puts.at[ndx, "multiplier"] = tda_strike["multiplier"]
+                    df_tda_puts.at[ndx, "settlementType"] = tda_strike["settlementType"]
+                    df_tda_puts.at[ndx, "deliverableNote"] = tda_strike["deliverableNote"]
+                    df_tda_puts.at[ndx, "isIndexOption"] = tda_strike["isIndexOption"]
+                    df_tda_puts.at[ndx, "percentChange"] = tda_strike["percentChange"]
+                    df_tda_puts.at[ndx, "markChange"] = tda_strike["markChange"]
+                    df_tda_puts.at[ndx, "markPercentChange"] = tda_strike["markPercentChange"]
+        '''
+        '''
+                    df_tda_puts[ndx, "optionDeliverablesList"] = tda_strike[  "optionDeliverablesList": [
+                    df_tda_puts[ndx, ""] = tda_strike[    {
+                    df_tda_puts[ndx, ""] = tda_strike[      "symbol": "string",
+                    df_tda_puts[ndx, ""] = tda_strike[      "assetType": "string",
+                    df_tda_puts[ndx, ""] = tda_strike[      "deliverableUnits": "string",
+                    df_tda_puts[ndx, ""] = tda_strike[      "currencyType": "string"
+                    df_tda_puts[ndx, ""] = tda_strike[    }
+                    df_tda_puts[ndx, ""] = tda_strike[  ],
+                    ndx += 1
+        '''
+    else:
+        print("Unable to get option chains, response code=%s, reason %s, %s" % (response.status_code, response.reason, response.text))
+        logging.info("Unable to get option chains, response code=%s, reason %s, %s" % (response.status_code, response.reason, response.text))
+        
+    return df_tda_options, response.text
         
 def tda_read_watch_lists(json_authentication):
     logging.debug('tda_read_watch_lists ---->\n %s')

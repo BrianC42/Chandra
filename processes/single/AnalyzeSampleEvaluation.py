@@ -15,12 +15,15 @@ from configuration import get_ini_data
 from configuration import read_config_json
 
 TIME_FRAMES = [1, 5, 10, 20, 40]
-BAND_UPPER  = [   -1.0, -0.5, -0.2, -0.1, -0.05, -0.01,      0.01, 0.05,  0.1, 0.2, 0.5, 1.0, 1000.0]
-BAND_LOWER  = [-1000.0, -1.0, -0.5, -0.2,  -0.1, -0.05,     -0.01, 0.01, 0.05, 0.1, 0.2, 0.5,    1.0]
-BAND_LABELS = [-1000.0, -1.0, -0.5, -0.2,  -0.1, -0.05,      0.00, 0.05,  0.1, 0.2, 0.5, 1.0, 1000.0]
+BAND_UPPER  = [   -1.0, -0.5, -0.2, -0.1, -0.05, -0.01,      0.01, 0.05, 0.10, 0.20, 0.50, 1.0, 1000.0]
+BAND_LOWER  = [-1000.0, -1.0, -0.5, -0.2,  -0.1, -0.05,     -0.01, 0.01, 0.05, 0.10, 0.20, 0.5,    1.0]
+#BAND_LABELS = [   -1.0, -0.5, -0.2, -0.1, -0.05, -0.01,      0.00, 0.01, 0.05, 0.10, 0.20, 0.5,    1.0]
+BAND_LABELS = [   -100, -50, -20, -10, -5, -1,      0.00, 1, 5, 10, 20, 50,    100]
 EVAL_COLS   = ["symbol", "segment", "classification", "analysis", "condition", "duration",   "Neg", '-5', '-4', '-3',  '-2',  '-1', 'Neutral',  '1',  '2', '3', '4', '5',  'Pos']
-INDEX_CLASS = ["duration", "classification", "segment"]
-INDEX_SEG = ["duration", "segment", "classification"]
+INDEX_CLASS = ["duration", "classification"]
+INDEX_SEG = ["duration", "segment"]
+INDEX_CLASS_SEG = ["duration", "classification", "segment"]
+INDEX_SEG_CLASS = ["duration", "segment", "classification"]
 INDEX_ANALYSIS = ["duration", "analysis", "condition"]
 ANALYSIS_CATEGORIES = ["MACD","BB","Accumulation Distribution","Average Directional Index", "OBV", "Relative Strength", "sample", "SO"]
 VALUE_COLS = ["Neg", '-5', '-4', '-3',  '-2',  '-1', 'Neutral',  '1',  '2', '3', '4', '5',  'Pos']
@@ -46,7 +49,8 @@ def display_baseline(df_baseline_pct):
     rects5 = ax.bar(x + (2*width),  df_baseline_pct.iloc[4, 1:14], width, label='40 day')
     # Add some text for labels, title and custom x-axis tick labels, etc.
     ax.set_ylabel('fraction of total samples')
-    ax.set_title('Baseline distribution of samples')
+    ax.set_xlabel('% closing price change ranges')
+    ax.set_title('Baseline distribution - all samples')
     ax.set_xticks(x)
     ax.set_xticklabels(BAND_LABELS)
     ax.legend()
@@ -59,12 +63,13 @@ def display_comparison_to_baseline(df_analysis, comparison, df_baseline_pct):
     x = np.arange(len(BAND_LABELS))  # the label locations
     width = 0.2  # the width of the bars
     fig, ((ax00, ax01), (ax10, ax11)) = plt.subplots(nrows=2, ncols=2)
-    fig.suptitle('Baseline compared to ' + comparison[1] + ', ' + comparison[2])
+    fig.suptitle('Baseline compared to ' + comparison[1] + ', ' + comparison[2], size='xx-large')
 
     anal5 = ax00.bar(x - (0.5 * width), df_analysis.loc[(5,comparison[1],comparison[2])], width, label='analysis')
     base5 = ax00.bar(x + (0.5 * width), df_baseline_pct.iloc[1, 1:14], width, label='baseline')
     # Add some text for labels, title and custom x-axis tick labels, etc.
     ax00.set_ylabel('fraction of total samples')
+    ax00.set_xlabel('% closing price change ranges')
     ax00.set_title('After 5 days')
     ax00.set_xticks(x)
     ax00.set_xticklabels(BAND_LABELS)
@@ -74,6 +79,7 @@ def display_comparison_to_baseline(df_analysis, comparison, df_baseline_pct):
     base10 = ax01.bar(x + (0.5 * width), df_baseline_pct.iloc[2, 1:14], width, label='baseline')
     # Add some text for labels, title and custom x-axis tick labels, etc.
     ax01.set_ylabel('fraction of total samples')
+    ax01.set_xlabel('% closing price change ranges')
     ax01.set_title('After 10 days')
     ax01.set_xticks(x)
     ax01.set_xticklabels(BAND_LABELS)
@@ -83,6 +89,7 @@ def display_comparison_to_baseline(df_analysis, comparison, df_baseline_pct):
     base20 = ax10.bar(x + (0.5 * width), df_baseline_pct.iloc[3, 1:14], width, label='baseline')
     # Add some text for labels, title and custom x-axis tick labels, etc.
     ax10.set_ylabel('fraction of total samples')
+    ax10.set_xlabel('% closing price change ranges')
     ax10.set_title('After 20 days')
     ax10.set_xticks(x)
     ax10.set_xticklabels(BAND_LABELS)
@@ -92,12 +99,13 @@ def display_comparison_to_baseline(df_analysis, comparison, df_baseline_pct):
     base40 = ax11.bar(x + (0.5 * width), df_baseline_pct.iloc[4, 1:14], width, label='baseline')
     # Add some text for labels, title and custom x-axis tick labels, etc.
     ax11.set_ylabel('fraction of total samples')
+    ax11.set_xlabel('% closing price change ranges')
     ax11.set_title('After 40 days')
     ax11.set_xticks(x)
     ax11.set_xticklabels(BAND_LABELS)
     ax11.legend()
     
-    fig.tight_layout()
+    fig.tight_layout(pad=0.25, h_pad=0.1)
     plt.show() 
     return
 

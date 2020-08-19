@@ -7,5 +7,8 @@
 "MACDfuture" : "10",
 "evaluatelogFile" : "d:\\brian\\AI Projects\\Evaluate_log.txt",
 "evaluateoutputFile" : "d:\\brian\\AI Projects\\Evaluation_output",
-"evaluatesegmentationfile" : "d:\\brian\\AI Projects\\segmentation.csv"
+"evaluatesegmentationfile" : "d:\\brian\\AI Projects\\segmentation.csv",
+"optionchainlog" : "d:\\brian\\AI Projects\\Option_Chain_log.txt",
+"optionchainoutputfile" : "d:\\brian\\AI Projects\\Option_Chain_Output",
+"optionchains" : "d:\\brian\\AI Projects\\tda\\options\\"
 }

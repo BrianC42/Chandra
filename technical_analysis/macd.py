@@ -97,7 +97,7 @@ def trade_on_macd(guidance, symbol, df_data):
         if df_data.at[day3, "Close"] < (df_data.at[day3, "EMA12"] * DOWNWARD_DIVERGENCE):
             trade = True
             close = df_data.at[day3, 'Close']
-            trigger_status = "confirmed negative Divergence"
+            trigger_status = "negative Divergence"
             guidance = guidance.append([[trade, symbol, 'MACD', trigger_date, trigger_status, close]])
     
     return guidance
