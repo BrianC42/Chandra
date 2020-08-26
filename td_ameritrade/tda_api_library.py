@@ -293,14 +293,14 @@ def tda_read_option_chain(authentication_parameters, p_symbol):
                         df_tda.at[ndx, "markChange"] = tda_strike["markChange"]
                         df_tda.at[ndx, "markPercentChange"] = tda_strike["markPercentChange"]
                         ndx += 1
-        df_tda_options = df_tda_options.append(df_tda, ignore_index=True)
+            df_tda_options = df_tda_options.append(df_tda, ignore_index=True)
     else:
         print("Unable to get option chains, response code=%s, reason %s, %s" % (response.status_code, response.reason, response.text))
         logging.info("Unable to get option chains, response code=%s, reason %s, %s" % (response.status_code, response.reason, response.text))
         
     return df_tda_options, response.text
         
-def tda_read_watch_lists(json_authentication):
+def tda_read_watch_lists(json_authentication, watch_list=None):
     logging.debug('tda_read_watch_lists ---->\n %s')
     
     currentToken = tda_get_access_token(json_authentication)    
@@ -315,11 +315,18 @@ def tda_read_watch_lists(json_authentication):
         for list_details in tda_watch_lists_json:
             list_name = list_details["name"]
             listItems = list_details["watchlistItems"]
-            for itemDetails in listItems:
-                instrument = itemDetails["instrument"]
-                symbol = instrument["symbol"]
-                if list_name in json_authentication["watchLists"]:
-                    symbol_list.append(symbol)
+            if watch_list == None:
+                for itemDetails in listItems:
+                    instrument = itemDetails["instrument"]
+                    symbol = instrument["symbol"]
+                    if list_name in json_authentication["watchLists"]:
+                        symbol_list.append(symbol)
+            else:
+                for itemDetails in listItems:
+                    instrument = itemDetails["instrument"]
+                    symbol = instrument["symbol"]
+                    if list_name == watch_list:
+                        symbol_list.append(symbol)
         logging.info("Symbols, %s" % symbol_list)
     else:
         print("Unable to get watch list data, response code=%s, reason %s, %s" % (response.status_code, response.reason, response.text))
