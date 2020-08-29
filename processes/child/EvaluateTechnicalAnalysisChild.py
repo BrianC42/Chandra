@@ -35,7 +35,6 @@ def EvaluateTechnicalAnalysisChild(pipe_in):
                 df_data = pd.read_csv(file_in)
                 eval_results = initialize_eval_results()
                 eval_results = sample_count(symbol, df_data, eval_results)
-                '''
                 eval_results = eval_macd_positive_cross(symbol, df_data, eval_results)
                 eval_results = eval_bollinger_bands(symbol, df_data, eval_results)
                 eval_results = eval_on_balance_volume(symbol, df_data, eval_results)
@@ -43,9 +42,8 @@ def EvaluateTechnicalAnalysisChild(pipe_in):
                 eval_results = eval_stochastic_oscillator(symbol, df_data, eval_results)
                 eval_results = eval_accumulation_distribution(symbol, df_data, eval_results)
                 eval_results = eval_combinations(symbol, df_data, eval_results)
-                eval_results = eval_aroon_indicator(symbol, df_data, eval_results)
-                '''
                 eval_results = eval_average_directional_index(symbol, df_data, eval_results)
+                eval_results = eval_aroon_indicator(symbol, df_data, eval_results)
 
             segmentation = p_list[2]
             if os.path.isfile(segmentation):
