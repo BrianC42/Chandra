@@ -41,19 +41,100 @@ to use the ADX as a way to time an entry on a market that is already confirmed t
 in a particular direction.
 
 '''
+import pandas as pd
 from technical_analysis_utilities import increment_sample_counts
+from moving_average import exponential_moving_average
+
+ADI_PERIODS = 14
+ADI_TREND_MIN = 25
+ADI_TREND_CONFIRMNATION = 5
 
 def eval_average_directional_index(symbol, df_data, eval_results):
-    ADI_index = ['Average Directional Index', 'TBD']
-        
-    ndx = 0
+    ADI_UI = ['ADI', 'Up Trend']
+    ADI_DI = ['ADI', 'Down Trend']
+    ADI_TS = ['ADI', 'Trend Strengthening']
+    ADI_TW = ['ADI', 'Trend Weakening']
+    ADI_TR = ['ADI', 'Trend reversal']
+    ADI_TRU = ['ADI', 'Trend reversal Up']
+    ADI_TRD = ['ADI', 'Trend reversalDown']
+
+    ndx = 1
     while ndx < df_data.shape[0]:
-        eval_results = increment_sample_counts(symbol, eval_results, ADI_index, df_data.iloc[ndx, :]) 
+        if df_data.at[ndx, "ADX"] > ADI_TREND_MIN:
+            if df_data.at[ndx-1, "ADX"] <= ADI_TREND_MIN:
+                eval_results = increment_sample_counts(symbol, eval_results, ADI_TR, df_data.iloc[ndx, :])
+                if df_data.at[ndx, 'ADI +DI'] > df_data.at[ndx, 'ADI -DI']:
+                    eval_results = increment_sample_counts(symbol, eval_results, ADI_TRU, df_data.iloc[ndx, :]) 
+                else:
+                    eval_results = increment_sample_counts(symbol, eval_results, ADI_TRD, df_data.iloc[ndx, :])
+            if df_data.at[ndx, 'ADI +DI'] > df_data.at[ndx, 'ADI -DI']:
+                eval_results = increment_sample_counts(symbol, eval_results, ADI_UI, df_data.iloc[ndx, :]) 
+            else:
+                eval_results = increment_sample_counts(symbol, eval_results, ADI_DI, df_data.iloc[ndx, :])
+            if ndx > ADI_TREND_CONFIRMNATION:
+                tndx = 0
+                ts = True
+                tw = True
+                while tndx < ADI_TREND_CONFIRMNATION:
+                    if df_data.at[ndx-(tndx+1), "ADX"] > df_data.at[ndx-tndx, "ADX"]:
+                        ts = False
+                    if df_data.at[ndx-(tndx+1), "ADX"] < df_data.at[ndx-tndx, "ADX"]:
+                        tw = False
+                    tndx += 1
+                if ts:
+                    eval_results = increment_sample_counts(symbol, eval_results, ADI_TS, df_data.iloc[ndx, :])                
+                if tw:
+                    eval_results = increment_sample_counts(symbol, eval_results, ADI_TW, df_data.iloc[ndx, :])
         ndx += 1
 
     return eval_results
 
 def average_directional_index(df_data=None):
-    df_data.insert(loc=0, column='Average Directional Index', value=0.0)
+    df_data.insert(loc=0, column='ADX', value=0.0)
+    df_data.insert(loc=0, column='DX', value=0.0)
+    df_data.insert(loc=0, column='ADI +DI', value=0.0)
+    df_data.insert(loc=0, column='ADI -DI', value=0.0)
+    df_data.insert(loc=0, column='ADI Smooth TR', value=0.0)
+    df_data.insert(loc=0, column='ADI TR', value=0.0)
+    df_data.insert(loc=0, column='ADI Smooth +DM', value=0.0)
+    df_data.insert(loc=0, column='ADI +DM', value=0.0)
+    df_data.insert(loc=0, column='ADI Smooth -DM', value=0.0)
+    df_data.insert(loc=0, column='ADI -DM', value=0.0)
     
+    #return df_data
+
+    ndx = 1
+    while ndx < df_data.shape[0]:
+        if df_data.at[ndx, 'High'] > df_data.at[ndx-1, 'High']:
+            df_data.at[ndx, 'ADI +DM'] = df_data.at[ndx, 'High'] - df_data.at[ndx-1, 'High']
+            
+        if df_data.at[ndx-1, 'Low'] > df_data.at[ndx, 'Low']:
+            df_data.at[ndx, 'ADI -DM'] = df_data.at[ndx- 1, 'Low'] - df_data.at[ndx, 'Low']            
+        if df_data.at[ndx, 'ADI +DM'] < df_data.at[ndx, 'ADI -DM']:
+            df_data.at[ndx, 'ADI +DM'] = 0.0
+        else:
+            df_data.at[ndx, 'ADI -DM'] = 0.0
+            
+        df_data.at[ndx, 'ADI TR'] = max(df_data.at[ndx, 'High'] - df_data.at[ndx, 'Low'], \
+                                        abs(df_data.at[ndx, 'High'] - df_data.at[ndx-1, 'Close']), \
+                                        abs(df_data.at[ndx, 'Low'] - df_data.at[ndx-1, 'Close']))
+        ndx += 1
+
+    df_data = exponential_moving_average(df_data[:], value_label="ADI -DM", interval=ADI_PERIODS, EMA_data_label='ADI Smooth -DM')
+    df_data = exponential_moving_average(df_data[:], value_label="ADI +DM", interval=ADI_PERIODS, EMA_data_label='ADI Smooth +DM')
+    df_data = exponential_moving_average(df_data[:], value_label="ADI TR", interval=ADI_PERIODS, EMA_data_label='ADI Smooth TR')
+    ndx = ADI_PERIODS
+    while ndx < df_data.shape[0]:
+        df_data.at[ndx, 'ADI +DI'] = (df_data.at[ndx, 'ADI Smooth +DM'] * 100) / df_data.at[ndx, 'ADI Smooth TR']
+        df_data.at[ndx, 'ADI -DI'] = (df_data.at[ndx, 'ADI Smooth -DM'] * 100) / df_data.at[ndx, 'ADI Smooth TR']
+        df_data.at[ndx, 'DX'] = abs((df_data.at[ndx, 'ADI +DI'] - df_data.at[ndx, 'ADI -DI']) / \
+                                    (df_data.at[ndx, 'ADI +DI'] + df_data.at[ndx, 'ADI -DI']))
+        ndx += 1
+    df_data = exponential_moving_average(df_data[:], value_label="DX", interval=ADI_PERIODS, EMA_data_label='ADX')
+    
+    ndx = 1
+    while ndx < df_data.shape[0]:
+        df_data.at[ndx, 'ADX'] = df_data.at[ndx, 'ADX'] * 100
+        ndx += 1
+        
     return df_data
