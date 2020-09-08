@@ -2,6 +2,9 @@
 Created on Jul 16, 2020
 
 @author: Brian
+
+use child processes to assess each symbol against the technical analysis implemented and save the results in
+a csv file for later analysis
 '''
 import os
 from multiprocessing import Process, Pipe

@@ -4,6 +4,8 @@ Created on Jan 31, 2018
 @author: Brian
 
 Read the csv file downloaded from Quandl which contains data for multiple symbols and create an individual csv file for each symbol
+
+deprecated: based on Quandl data
 '''
 
 

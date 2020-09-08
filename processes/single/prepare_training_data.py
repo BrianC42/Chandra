@@ -2,6 +2,8 @@
 Created on Jun 13, 2019
 
 @author: Brian
+
+deprecated: based on Quandl data
 '''
 import logging
 import time

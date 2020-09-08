@@ -2,6 +2,8 @@
 Created on Aug 19, 2020
 
 @author: Brian
+
+Read TD Ameritrade watchlists and save fundamental information of the list items to csv file for later analysis and use
 '''
 import datetime as dt
 import time

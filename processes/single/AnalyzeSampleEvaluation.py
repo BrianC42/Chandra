@@ -2,6 +2,9 @@
 Created on Aug 8, 2020
 
 @author: Brian
+
+histograms summarizing the csv file created by EvaluateAnalysisMaster
+
 '''
 import os
 import datetime as dt

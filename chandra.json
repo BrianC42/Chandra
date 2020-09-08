@@ -1,21 +1,21 @@
 {
-"logFile" : "d:\\brian\\AI Projects\\chandra_log.txt",
-"analysislogFile" : "d:\\brian\\AI Projects\\AnalyzeSampleevaluationlog.txt",
-"analysisoutputFile" : "d:\\brian\\AI Projects\\AnalysisSampleevaluation.txt",
-"evaluateoutputFile" : "d:\\brian\\AI Projects\\Evaluation_output",
-"evaluatesegmentationfile" : "d:\\brian\\AI Projects\\segmentation.csv",
-"outputFile" : "d:\\brian\\AI Projects\\chandra_output",
+"logFile" : "d:\\brian\\AI Projects\\logs\\chandra_log.txt",
+"analysislogFile" : "d:\\brian\\AI Projects\\logs\\AnalyzeSampleevaluationlog.txt",
+"analysisoutputFile" : "d:\\brian\\AI Projects\\logs\\AnalysisSampleevaluation.txt",
+"evaluateoutputFile" : "d:\\brian\\AI Projects\\logs\\Evaluation_output",
+"evaluatesegmentationfile" : "d:\\brian\\AI Projects\\logs\\segmentation.csv",
+"outputFile" : "d:\\brian\\AI Projects\\logs\\chandra_output",
 "loggingLevel" : "debug",
 "loggingFormat" : "%(asctime)s: %(levelname)s: %(message)s",
 "dataSources" : [
 	{	"srcType" : "localFileAAPL",
 		"fileType" : "csv",
-		"fileDetails" : "d:\\brian\\AI Projects\\Quandl\\symbols\\aapl.csv",
+		"fileDetails" : "d:\\brian\\AI Projects\\tda\\market_analysis_data\\aapl.csv",
 		"dataElements" : ["date","adj_open","adj_close","adj_high","adj_low"]
 	},
 	{	"srcType" : "localFileGE",
 		"fileType" : "csv",
-		"fileDetails" : "d:\\brian\\AI Projects\\Quandl\\symbols\\ge.csv",
+		"fileDetails" : "d:\\brian\\AI Projects\\tda\\market_analysis_data\\ge.csv",
 		"dataElements" : ["date","adj_close"]
 	},
 	{	"srcType" : "API"

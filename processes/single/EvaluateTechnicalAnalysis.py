@@ -2,6 +2,8 @@
 Created on Jul 9, 2020
 
 @author: Brian
+
+deprecated: replaced by multi-threaded version, EvaluateTechnicalAnalysisMaster and Child due to processing time
 '''
 import os
 import datetime as dt

@@ -2,6 +2,9 @@
 Created on Jul 15, 2020
 
 @author: Brian
+
+Process to manage child processes to update market data and technical analysis derivative data. 
+Information saved to csv files for use by other processes
 '''
 from multiprocessing import Process, Pipe
 import os

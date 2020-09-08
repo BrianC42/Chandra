@@ -2,6 +2,8 @@
 Created on Jun 25, 2019
 
 @author: Brian
+
+deprecated: based on Quandl data
 '''
 from configuration_constants import LOGGING_LEVEL
 from configuration_constants import LOGGING_FORMAT

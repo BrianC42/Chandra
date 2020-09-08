@@ -2,6 +2,8 @@
 Created on Jan 31, 2018
 
 @author: Brian
+
+deprecated: based on Quandl data
 '''
 import sys
 sys.path.append("../Technical_Analysis/")

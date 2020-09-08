@@ -124,7 +124,7 @@ def trade_on_obv(guidance, symbol, df_data):
             trigger_status = "OBV6"
 
     if trade:
-        trigger_date = format_tda_datetime(df_data.at[df_data.shape[0], 'DateTime'])
+        trigger_date = format_tda_datetime(df_data.at[df_data.shape[0]-1, 'DateTime'])
         guidance = guidance.append([[trade, symbol, 'OBV', trigger_date, trigger_status, df_data.at[idx, "Close"]]])
     return guidance
 

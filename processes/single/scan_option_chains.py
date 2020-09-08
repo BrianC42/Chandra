@@ -2,6 +2,8 @@
 Created on Aug 17, 2020
 
 @author: Brian
+
+scan TD Ameritrade watch list items for current option chain details and save to csv files 
 '''
 import datetime as dt
 import time
