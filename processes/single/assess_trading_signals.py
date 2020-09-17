@@ -20,6 +20,7 @@ from tda_api_library import tda_read_option_chain
 from tda_api_library import format_tda_datetime
 
 from macd import trade_on_macd
+from macd import macd_trade_analysis
 from bollinger_bands import trade_on_bb
 from stochastic_oscillator import trade_on_stochastic_oscillator
 from on_balance_volume import trade_on_obv
@@ -28,7 +29,7 @@ from relative_strength import trade_on_relative_strength
 MIN_DURATION = 20
 MAX_DURATION = 65
 MAX_OTM_PCT = 30
-UNDERLYING_MAX = 240
+UNDERLYING_MAX = 500
 
 def init_df_trading_strategy():
     df_trading_strategy = pd.DataFrame(columns = ["symbol", "strategy", "expiration", "days To Expiration", \
@@ -172,6 +173,10 @@ def search_for_trading_opportunities(f_out, authentication_parameters, analysis_
                 report = '{:s}, {:>8s}, {:s}, {:>8.2f}, {:s}'.format(trigger[4], trigger[2], trigger[3], trigger[6], trigger[5])
                 print(report)
                 f_out.write(report + "\n")
+                macd_trade_analysis(trigger, symbol, df_data)
+                '''
+                Additional trading strategy identification goes here
+                '''
 
     print("Analyzing potential covered calls")
     for symbol in tda_read_watch_lists(json_authentication, watch_list='Combined Holding'):

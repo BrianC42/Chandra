@@ -6,7 +6,6 @@ set PYTHONPATH=%PYTHONPATH%;d:/brian/git/chandra/technical_analysis
 set PYTHONPATH=%PYTHONPATH%;d:/brian/git/chandra/td_ameritrade
 set PYTHONPATH=%PYTHONPATH%;d:/brian/git/chandra/machine_learning
 set PYTHONPATH=%PYTHONPATH%;d:/brian/git/chandra/unit_test
-set
 d:
-cd /brian/git/chandra/processes/single 
-assess_trading_signals
+cd /brian/git/chandra/unit_test
+external 

@@ -24,7 +24,7 @@ from configuration_constants import JSON_OUTPUT_FLOW
 from configuration_constants import JSON_OUTPUTS
 from configuration_constants import JSON_INTERNAL_NODES
 from configuration_constants import JSON_TIMESTEPS
-from configuration_constants import JSON_OUTPUTNAME
+from configuration_constants import JSON_TIME_SEQ
 from configuration_constants import JSON_BATCH
 from configuration_constants import JSON_NODE_COUNT
 from configuration_constants import JSON_REGULARIZATION
@@ -169,11 +169,10 @@ def add_meta_data_edge (js_config, nx_graph):
     nx_flowName = js_config[JSON_FLOW_NAME]
     nx_flowFrom =  js_config[JSON_FLOW_FROM]
     nx_flowTo =  js_config[JSON_FLOW_TO]
-    nx_attribute1 = "dummy"
+    nx_attribute1 =  js_config[JSON_TIME_SEQ]
     
-    nx_graph.add_edge(nx_flowFrom, nx_flowTo, \
-                      flowName=nx_flowName, \
-                      dummyAttr = nx_attribute1
+    print("Adding edge: %s from %s to %s" % (nx_flowName, nx_flowFrom, nx_flowTo))    
+    nx_graph.add_edge(nx_flowFrom, nx_flowTo, flowName=nx_flowName, dummyAttr = nx_attribute1
                       )
     return
 
@@ -181,11 +180,15 @@ def add_meta_process_node (js_config, nx_graph) :
     # mandatory elements
     nx_process_name = js_config[JSON_PROCESS_NAME]
     nx_inputType = js_config[JSON_INPUT_TYPE]
-    
+    nx_inputs = js_config[JSON_INPUT_FLOWS]
+    nx_outputs = js_config[JSON_OUTPUT_FLOW]
+
+    print("Adding node: %s, inputs %s, outputs %s" % (nx_process_name, nx_inputs, nx_outputs))
     nx_graph.add_node(nx_process_name)
-    nx_graph.nodes[nx_process_name]['inputFlows'] = js_config[JSON_INPUT_FLOWS]
-    nx_graph.nodes[nx_process_name]['outputFlow'] = js_config[JSON_OUTPUT_FLOW]
-    
+    nx_graph.nodes[nx_process_name]['inputFlows'] = nx_inputs
+    nx_graph.nodes[nx_process_name]['outputFlow'] = nx_outputs
+
+    '''    
     nx_processType = js_config[JSON_PROCESS_TYPE]
     nx_graph.nodes[nx_process_name]['processType'] = nx_processType
     
@@ -203,6 +206,7 @@ def add_meta_process_node (js_config, nx_graph) :
         add_dense_meta_data(nx_graph, nx_process_name, js_config)
     else :
         raise NameError('Invalid process node type')
+    '''
     
     return
 

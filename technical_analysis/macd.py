@@ -57,7 +57,8 @@ def return_macd_ind():
     MACD_ind = dict(buy=1, sell=-1, neutral=0)
     return (MACD_ind)
 
-def trade_on_crossovers(guidance, symbol, df_data):
+def macd_trade_analysis(guidance, symbol, df_data):
+    print("Consider iron condor tbd")
     return
 
 def trade_on_macd(guidance, symbol, df_data):

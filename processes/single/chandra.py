@@ -55,6 +55,9 @@ if __name__ == '__main__':
     
     nx_graph = nx.MultiDiGraph()
     build_configuration_graph(json_config, nx_graph)
+    #nx.draw(nx_graph, arrows=True, with_labels=True, font_weight='bold')
+    nx.draw_circular(nx_graph, arrows=True, with_labels=True, font_weight='bold')
+    plt.show()
     
     ''' .......... Step 1 - Load and prepare data .........................
     ======================================================================= '''
@@ -94,8 +97,5 @@ if __name__ == '__main__':
     '''
     clean up and prepare to exit
     '''
-    nx.draw(nx_graph, arrows=True, with_labels=True, font_weight='bold')
-    plt.show()
-
     f_out.close()
     print ('\nNow go and make us rich')

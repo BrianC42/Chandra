@@ -5,6 +5,7 @@ Created on Jul 13, 2020
 '''
 from datetime import date
 from numpy import NaN
+import datetime
 from moving_average import simple_moving_average
 from moving_average import exponential_moving_average
 from tda_api_library import format_tda_datetime
@@ -22,9 +23,9 @@ def add_derived_data(df_data):
     df_data.insert(loc=0, column='40 day max', value=NaN)
     df_data.insert(loc=0, column='40 day min', value=NaN)
     df_data.insert(loc=0, column='date', value="")
-    df_data.insert(loc=0, column='month', value="")
+    #df_data.insert(loc=0, column='month', value="")
     df_data.insert(loc=0, column='day', value="")
-    df_data.insert(loc=0, column='weekday', value="")
+    #df_data.insert(loc=0, column='weekday', value="")
     df_data.insert(loc=0, column='10day5pct', value=False)
     df_data.insert(loc=0, column='10day10pct', value=False)
     df_data.insert(loc=0, column='10day25pct', value=False)
@@ -55,9 +56,9 @@ def add_derived_data(df_data):
     while idx < len(df_data):
         '''
         df_data.at[idx, 'month'] = date.month(df_data.at[idx, 'date'])
-        df_data.at[idx, 'day'] = date.day(df_data.at[idx, 'date'])
         df_data.at[idx, 'weekday'] = date.weekday(df_data.at[idx, 'date'])
         '''
+        df_data.at[idx, "day"] = date.fromtimestamp(df_data.at[idx, "DateTime"]/1000).timetuple().tm_yday
         closing_price = df_data.at[idx, "Close"]
         try:
             if not closing_price == 0:
