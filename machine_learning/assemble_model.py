@@ -2,6 +2,8 @@
 Created on Mar 25, 2020
 
 @author: Brian
+
+Build machine learning model using the Keras API as governed by the json script
 '''
 import logging
 
@@ -34,7 +36,7 @@ from configuration_constants import JSON_BIAS
 from configuration_constants import JSON_VALIDATION_SPLIT
 from configuration_constants import JSON_EPOCHS
 from configuration_constants import JSON_VERBOSE
-from configuration_constants import JSON_BALANCE
+from configuration_constants import JSON_BALANCED
 from configuration_constants import JSON_ANALYSIS
 from configuration_constants import JSON_LOSS
 from configuration_constants import JSON_METRICS

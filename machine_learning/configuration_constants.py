@@ -150,39 +150,71 @@ TFOptimizer
 '''
 json tags
 '''
+
+JSON_REQUIRED = "requiredFields"
+JSON_CONDITIONAL = "conditionalFields"
+
 JSON_PROCESS_NODES = 'processNodes'
-JSON_PROCESS_NAME = 'processName'
+
+JSON_NODE_NAME = "processNodeName"
 JSON_PROCESS_TYPE = 'processType'
-JSON_INPUT_TYPE = 'inputType'
 JSON_INPUT_FLOWS = 'inputFlows'
+JSON_OUTPUT_FLOW = 'outputFlow'
+JSON_DATA_PREP_CTRL = "dataPrepCtrl"
+JSON_KERAS_DENSE_CTRL = "KerasDenseCtrl"
+JSON_MODEL_FILE = "modelFile"
+JSON_OUTPUT_FILE = "outputFile"
+JSON_MODEL_STRUCTURE = "modelStructure"
+JSON_LOG_FILE = "logFile"
+
+JSON_DATA_PREP_PROCESS = "dataPrep"
+JSON_INPUT_DATA_PREPARATION= "dataPrepCtrl"
+JSON_INPUT_DATA_FILE= "inputFile"
+
 JSON_DATA_FLOWS = 'dataFlows'
+
 JSON_FLOW_NAME = 'flowName'
 JSON_FLOW_FROM = 'flowFrom'
 JSON_FLOW_TO = 'flowTo'
-JSON_OUTPUT_FLOW = 'outputFlow'
 
-JSON_OUTPUTS = 'outputs'
-JSON_INTERNAL_NODES = 'internalNodes'
+JSON_KERAS_DENSE_PROCESS = "KerasDense"
+JSON_KERAS_DENSE_CTRL = "KerasDenseCtrl"
+JSON_MODEL_FILE = "modelFile"
+JSON_TRAINING = "training"
+
+JSON_KERAS_DENSE_DATA = 'KerasDenseData'
+JSON_BALANCED = "balanced"
+JSON_TIME_SEQ = 'timeSequence'
+JSON_IGNORE_BLANKS = "ignoreBlanks"
+JSON_FLOW_DATA_FILE = "flowDataFile"
+JSON_DATA_FIELDS = "dataFields"
+JSON_TARGET_FIELD = "targetField"
+
+JSON_MODEL_DEPTH = 'layerCounts'
+JSON_NODE_COUNT = 'layerNodes'
 JSON_OUTPUTNAME = 'outputName'
-JSON_NODE_NAME = 'nodeName'
 JSON_TIMESTEPS = 'timeSteps'
 JSON_ELEMENTS = 'dataElements'
-JSON_TIME_SEQ = 'timeSequence'
 JSON_LOSS_WTS = 'lossWeights'
 JSON_REGULARIZATION = 'denseRegularation'
 JSON_REG_VALUE = 'regularationValue'
 JSON_DROPOUT = 'dropout'
 JSON_DROPOUT_RATE = 'dropoutRate'
-JSON_NODE_COUNT = 'layerNodes'
 JSON_BIAS = 'useBias'
 JSON_VALIDATION_SPLIT = 'validationSplit'
 JSON_BATCH = 'batchSize'
 JSON_EPOCHS = 'epochs'
 JSON_VERBOSE = 'verbose'
-JSON_BALANCE = 'balanceClasses'
-JSON_ANALYSIS = 'analysis'
 JSON_LOSS = 'compilationLoss'
 JSON_METRICS = 'compilationMetrics'
 JSON_ACTIVATION = 'activation'
 JSON_OPTIMIZER = 'optimizer'
+JSON_ANALYSIS = 'analysis'
 
+'''
+JSON_OUTPUTS = 'outputs'
+JSON_INPUT_TYPE = 'inputType'
+JSON_INTERNAL_NODES = 'internalNodes'
+JSON_NODE_NAME = 'nodeName'
+JSON_BALANCE = 'balanceClasses'
+'''

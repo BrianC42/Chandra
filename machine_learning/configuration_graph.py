@@ -11,22 +11,41 @@ import networkx as nx
 
 from configuration_constants import JSON_PROCESS_NODES
 
-from configuration_constants import JSON_PROCESS_NAME
+from configuration_constants import JSON_REQUIRED
+from configuration_constants import JSON_CONDITIONAL
+
+from configuration_constants import JSON_DATA_PREP_PROCESS
+from configuration_constants import JSON_KERAS_DENSE_PROCESS
+
+from configuration_constants import JSON_NODE_NAME
 from configuration_constants import JSON_PROCESS_TYPE
-from configuration_constants import JSON_INPUT_FLOWS
 from configuration_constants import JSON_DATA_FLOWS
 from configuration_constants import JSON_FLOW_NAME
 from configuration_constants import JSON_FLOW_FROM
 from configuration_constants import JSON_FLOW_TO
-from configuration_constants import JSON_INPUT_TYPE
+from configuration_constants import JSON_INPUT_FLOWS
 from configuration_constants import JSON_OUTPUT_FLOW
+from configuration_constants import JSON_OUTPUT_FILE
+from configuration_constants import JSON_LOG_FILE
 
-from configuration_constants import JSON_OUTPUTS
-from configuration_constants import JSON_INTERNAL_NODES
-from configuration_constants import JSON_TIMESTEPS
+from configuration_constants import JSON_INPUT_DATA_FILE
+from configuration_constants import JSON_INPUT_DATA_PREPARATION
+
+from configuration_constants import JSON_KERAS_DENSE_CTRL
+from configuration_constants import JSON_KERAS_DENSE_DATA
+from configuration_constants import JSON_MODEL_FILE
+
+from configuration_constants import JSON_BALANCED
 from configuration_constants import JSON_TIME_SEQ
-from configuration_constants import JSON_BATCH
+from configuration_constants import JSON_IGNORE_BLANKS
+from configuration_constants import JSON_FLOW_DATA_FILE
+from configuration_constants import JSON_DATA_FIELDS
+from configuration_constants import JSON_TARGET_FIELD
+
 from configuration_constants import JSON_NODE_COUNT
+
+from configuration_constants import JSON_TIMESTEPS
+from configuration_constants import JSON_BATCH
 from configuration_constants import JSON_REGULARIZATION
 from configuration_constants import JSON_REG_VALUE
 from configuration_constants import JSON_DROPOUT
@@ -35,13 +54,12 @@ from configuration_constants import JSON_BIAS
 from configuration_constants import JSON_VALIDATION_SPLIT
 from configuration_constants import JSON_EPOCHS
 from configuration_constants import JSON_VERBOSE
-from configuration_constants import JSON_BALANCE
-from configuration_constants import JSON_ANALYSIS
 from configuration_constants import JSON_LOSS
 from configuration_constants import JSON_LOSS_WTS
 from configuration_constants import JSON_METRICS
 from configuration_constants import JSON_ACTIVATION
 from configuration_constants import JSON_OPTIMIZER
+from configuration_constants import JSON_ANALYSIS
 
 def add_csv_meta_data(nx_graph, nx_process_name, js_config):
     logging.debug("readcsv process: %s" % nx_process_name)
@@ -99,7 +117,7 @@ def add_dense_meta_data(nx_graph, nx_process_name, js_config):
         
     nx_balanceClasses = ""
     if 'balanceClasses' in js_config :
-        nx_balanceClasses = js_config[JSON_BALANCE]
+        nx_balanceClasses = js_config[JSON_BALANCED]
     nx_graph.nodes[nx_process_name]['balanceClasses'] = nx_balanceClasses
         
     nx_analysis = ""
@@ -165,49 +183,79 @@ def add_LSTM_meta_data(nx_graph, nx_process_name, js_config):
     return
 
 def add_meta_data_edge (js_config, nx_graph):
-    # mandatory elements
     nx_flowName = js_config[JSON_FLOW_NAME]
-    nx_flowFrom =  js_config[JSON_FLOW_FROM]
-    nx_flowTo =  js_config[JSON_FLOW_TO]
-    nx_attribute1 =  js_config[JSON_TIME_SEQ]
-    
-    print("Adding edge: %s from %s to %s" % (nx_flowName, nx_flowFrom, nx_flowTo))    
-    nx_graph.add_edge(nx_flowFrom, nx_flowTo, flowName=nx_flowName, dummyAttr = nx_attribute1
-                      )
+
+    # mandatory elements
+    js_required = js_config[JSON_REQUIRED]
+    nx_flowFrom =  js_required[JSON_FLOW_FROM]
+    nx_flowTo =  js_required[JSON_FLOW_TO]
+    #nx_graph.add_edge(nx_flowFrom, nx_flowTo, flowName=nx_flowName)
+    nx_graph.add_edge(nx_flowFrom, nx_flowTo, key=nx_flowName)
+    nx_edge_key = (nx_flowFrom, nx_flowTo, nx_flowName)
+
+    # conditional elements
+    js_conditional = js_config[JSON_CONDITIONAL]
+    if JSON_KERAS_DENSE_DATA in js_conditional:
+        js_keras_dense_data = js_conditional[JSON_KERAS_DENSE_DATA]
+        nx_balanced = js_keras_dense_data[JSON_BALANCED]
+        nx_time_seq = js_keras_dense_data[JSON_TIME_SEQ]
+        nx_ignore_blanks = js_keras_dense_data[JSON_IGNORE_BLANKS]
+        nx_flow_data_file = js_keras_dense_data[JSON_FLOW_DATA_FILE]
+        nx_data_fields = js_keras_dense_data[JSON_DATA_FIELDS]
+        nx_target_field = js_keras_dense_data[JSON_TARGET_FIELD]
+
+        for edge_i in nx_graph.edges():
+            if edge_i == (nx_flowFrom, nx_flowTo):
+                nx.set_edge_attributes(nx_graph, {nx_edge_key:nx_balanced}, JSON_BALANCED)
+                nx.set_edge_attributes(nx_graph, {nx_edge_key:nx_time_seq}, JSON_TIME_SEQ)
+                nx.set_edge_attributes(nx_graph, {nx_edge_key:nx_ignore_blanks}, JSON_IGNORE_BLANKS)
+                nx.set_edge_attributes(nx_graph, {nx_edge_key:nx_flow_data_file}, JSON_FLOW_DATA_FILE)
+                nx.set_edge_attributes(nx_graph, {nx_edge_key:nx_data_fields}, JSON_DATA_FIELDS)
+                nx.set_edge_attributes(nx_graph, {nx_edge_key:nx_target_field}, JSON_TARGET_FIELD)
+
+    print("Connected %s to %s by data flow %s" % (nx_flowFrom, nx_flowTo, nx_flowName))
     return
 
 def add_meta_process_node (js_config, nx_graph) :
-    # mandatory elements
-    nx_process_name = js_config[JSON_PROCESS_NAME]
-    nx_inputType = js_config[JSON_INPUT_TYPE]
-    nx_inputs = js_config[JSON_INPUT_FLOWS]
-    nx_outputs = js_config[JSON_OUTPUT_FLOW]
-
-    print("Adding node: %s, inputs %s, outputs %s" % (nx_process_name, nx_inputs, nx_outputs))
+    nx_process_name = ""
+    if JSON_NODE_NAME in js_config:
+        nx_process_name = js_config[JSON_NODE_NAME]
+    else:
+        raise NameError('Missing process node name')
+        
     nx_graph.add_node(nx_process_name)
-    nx_graph.nodes[nx_process_name]['inputFlows'] = nx_inputs
-    nx_graph.nodes[nx_process_name]['outputFlow'] = nx_outputs
 
-    '''    
-    nx_processType = js_config[JSON_PROCESS_TYPE]
-    nx_graph.nodes[nx_process_name]['processType'] = nx_processType
+    # mandatory elements
+    js_required = js_config[JSON_REQUIRED]
+    nx_processType = js_required[JSON_PROCESS_TYPE]
+    nx_inputs = js_required[JSON_INPUT_FLOWS]
+    nx_output = js_required[JSON_OUTPUT_FLOW]
+    nx_outputFile = js_required[JSON_OUTPUT_FILE]
+    nx_log = js_required[JSON_LOG_FILE]
     
-    if nx_processType == "readcsv" :
-        add_csv_meta_data(nx_graph, nx_process_name, js_config)
-    elif nx_processType == "calcMACD" :
-        add_calc_MACD_meta_data(nx_graph, nx_process_name, js_config)
-    elif nx_processType == "calcBollingerBands" :
-        add_calc_bollinger_band_meta_data(nx_graph, nx_process_name, js_config)
-    elif nx_processType == "calcOnBalanceVolume" :
-        add_calc_on_balance_volume_band_meta_data(nx_graph, nx_process_name, js_config)
-    elif nx_processType == "KerasLSTM" :
-        add_LSTM_meta_data(nx_graph, nx_process_name, js_config)
-    elif nx_processType == "KerasDense" :
-        add_dense_meta_data(nx_graph, nx_process_name, js_config)
+    for node_i in nx_graph.nodes():
+        if node_i == nx_process_name:
+            nx.set_node_attributes(nx_graph, {nx_process_name:nx_processType}, JSON_PROCESS_TYPE)
+            nx.set_node_attributes(nx_graph, {nx_process_name:nx_inputs}, JSON_INPUT_FLOWS)
+            nx.set_node_attributes(nx_graph, {nx_process_name:nx_output}, JSON_OUTPUT_FLOW)
+            nx.set_node_attributes(nx_graph, {nx_process_name:nx_outputFile}, JSON_OUTPUT_FILE)
+            nx.set_node_attributes(nx_graph, {nx_process_name:nx_log}, JSON_LOG_FILE)
+    
+    # conditional elements
+    js_conditional = js_config[JSON_CONDITIONAL]
+    if js_required[JSON_PROCESS_TYPE] == JSON_DATA_PREP_PROCESS:
+        js_data_prep_ctrl = js_conditional[JSON_INPUT_DATA_PREPARATION]
+        nx_attr_inputFile = js_data_prep_ctrl[JSON_INPUT_DATA_FILE]
+        nx.set_node_attributes(nx_graph, {nx_process_name:nx_attr_inputFile}, JSON_INPUT_DATA_FILE)
+    elif js_required[JSON_PROCESS_TYPE] == JSON_KERAS_DENSE_PROCESS:
+        js_keras_dense = js_conditional[JSON_KERAS_DENSE_CTRL]
+        nx_model_file = js_keras_dense[JSON_MODEL_FILE]
+        nx.set_node_attributes(nx_graph, {nx_process_name:nx_model_file}, JSON_MODEL_FILE)
     else :
         raise NameError('Invalid process node type')
-    '''
-    
+        
+    nx_read_attr = nx.get_node_attributes(nx_graph, JSON_PROCESS_TYPE)
+    print("Added %s node %s" % (nx_read_attr[nx_process_name], nx_process_name))
     return
 
 def build_configuration_graph(json_config, nx_graph):

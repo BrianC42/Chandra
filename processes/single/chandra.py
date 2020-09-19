@@ -3,6 +3,8 @@ Created on March 23, 2020
 
 @author: Brian
 '''
+import subprocess
+import os
 import logging
 import datetime as dt
 import time
@@ -14,6 +16,33 @@ from configuration import read_config_json
 from assemble_model import build_model
 from configuration_graph import build_configuration_graph
 from load_prepare_data import load_and_prepare_data
+
+def trainModels(nx_graph):
+    logging.info('====> ================================================')
+    logging.info('====> trainModels models')
+    logging.info('====> ================================================')
+    
+    cmdstr = "python d:\\brian\\git\\chandra\\processes\\single\\KerasDenseApp.py"
+    pathin = "--pathin p1"
+    file1 = "--file f1"
+    file2 = "--file f2"
+    files = file1
+    field1 = "--field fld1"
+    field2 = "--field fld2"
+    fields = field1 + " " + field2
+    pathout = "--pathout p5"
+    output = "--output p6"
+    nx_attributes = nx.get_node_attributes(nx_graph, "inputFlows")
+    for node_i in nx_graph.nodes():
+        print("\nNode: %s" % node_i)
+        nx_input = nx_attributes[node_i]
+        print("inputFlows: %s" % nx_input)
+        subprocess.run(cmdstr + " " +  pathin + " " +  files + " " +  fields + " " +  pathout + " " +  output)
+
+    logging.info('<---- ----------------------------------------------')
+    logging.info('<---- trainModels: done')
+    logging.info('<---- ----------------------------------------------')    
+    return
 
 if __name__ == '__main__':
     print ("Good morning Dr. Chandra. I am ready for my next lesson.\n")
@@ -48,6 +77,23 @@ if __name__ == '__main__':
     except Exception:
         print("\nAn exception occurred - log file details are missing from json configuration")
         
+    pPath = "d:/brian/git/chandra/processes/single"
+    pPath += ";"
+    pPath += "d:/brian/git/chandra/processes/multiprocess"
+    pPath += ";"
+    pPath += "d:/brian/git/chandra/processes/child"
+    pPath += ";"
+    pPath += "d:/brian/git/chandra/utility"
+    pPath += ";"
+    pPath += "d:/brian/git/chandra/technical_analysis"
+    pPath += ";"
+    pPath += "d:/brian/git/chandra/td_ameritrade"
+    pPath += ";"
+    pPath += "d:/brian/git/chandra/machine_learning"
+    pPath += ";"
+    pPath += "d:/brian/git/chandra/unit_test"
+    os.environ["PYTHONPATH"] = pPath
+
     print ("Logging to", log_file)
     logger = logging.getLogger('chandra_logger')
     log_fmt = logging.Formatter('%(asctime)s - %(name)s - %levelname - %(messages)s')
@@ -69,12 +115,13 @@ if __name__ == '__main__':
     ========================================================================= '''
     step2 = time.time()
     print ('\nStep 2 - Build Model')
-    build_model(nx_graph)
+    #build_model(nx_graph)
 
     ''' ...................... Step 3 - Train the model .....................
     ========================================================================= '''
     step3 = time.time()
     print( "\nStep 3 - Train the model")
+    #trainModels(nx_graph)
     
     ''' .................... Step 4 - Evaluate the model! ...............
     ===================================================================== '''
