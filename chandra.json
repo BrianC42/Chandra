@@ -8,10 +8,11 @@
 "loggingLevel" : "debug",
 "loggingFormat" : "%(asctime)s: %(levelname)s: %(message)s",
 "processNodes" : [
-	{	
+	{
 		"processNodeName" : "inputAAPL_OHLCV",
 		"requiredFields" : {
 			"processType" : "dataPrep",
+			"comments: supported values - processType" : ["dataPrep", "KerasDense"],
 			"inputFlows" : [],
 			"outputFlow" : "OHLCV_AAPL",
 			"outputFile" : "",
@@ -23,10 +24,11 @@
 			}
 		}
 	},
-	{	
+	{
 		"processNodeName" : "Dense_OHLCV",
 		"requiredFields" : {
 			"processType" : "KerasDense",
+			"comments: supported values - processType" : ["dataPrep", "KerasDense"],
 			"inputFlows" : ["OHLCV_AAPL"],
 			"outputFlow" : "",
 			"outputFile" : "d:\\brian\\AI Projects\\models\\Dense_OHLCV",
@@ -36,11 +38,14 @@
 			"KerasDenseCtrl" : {
 				"modelFile" : "d:\\brian\\AI Projects\\models\\Dense_OHLCV",
 				"modelStructure" : {
+					"inputLayer" : "OHLCVin",
 					"layerCounts" : 5,
-					"layerNodes" : 1500
+					"layerNodes" : 1500,
+					"outputLayer" : "10day10pct",
+					"outputActivation" : "softmax"
 				},
 				"training" : {
-					"lossWeights" : [1.0, 1.0, 0.01, 0.01, 1.0, 1.0],
+					"lossWeights" : [1.0, 1.0],
 					"denseRegularation" : false,
 					"regularationValue" : 0.0,
 					"dropout" : false,
@@ -49,13 +54,17 @@
 					"validationSplit" : 0.05,
 					"batchSize" : 256,
 					"epochs" : 3,
-					"verbose" : 2,
+					"verbose" : 1,
 					"balanceClasses" : true,
 					"analysis" : "classification",
 					"compilationLoss" : "binary_crossentropy",
-					"compilationMetrics" : ["accuracy", "binary_crossentropy"],
+					"commen: supported values - compilationLoss" : ["binary_crossentropy"],
+					"compilationMetrics" : ["accuracy"],
+					"commen: supported values - compilationMetrics" : ["accuracy"],
 					"activation" : "relu",
-					"optimizer" : "adam"
+					"commen: supported values - activation" : ["relu", "sigmoid", "softmax", "softplus", "softsign", "tanh", "selu", "elu", "exponential"],
+					"optimizer" : "adam",
+					"commen: supported values - optimizer" : ["SGD", "RMSprop", "Adam", "Adadelta", "Adagrad", "Adamax", "Nadam", "Ftrl"]
 				}
 			}
 		}
@@ -71,11 +80,16 @@
 		"conditionalFields" : {
 			"KerasDenseData" : {
 				"timeSequence" : false,
-				"balanced" : true,
+				"balanceClasses" : true,
 				"ignoreBlanks" : true,
-				"flowDataFile" : "d:\\brian\\AI Projects\\tda\\market_analysis_data\\aaplTensorInput.csv",
+				"flowDataFile" : "d:\\brian\\AI Projects\\temp\\aaplTensorInput.csv",
 				"dataFields" : ["Open", "High", "Low", "Close", "Volume"],
-				"targetField" : ["20 day change"]
+				"categorization" : {
+					"comments: supported values" : ["categoryTrueFalse", "categoryThreshold (above / below)", "categoryRanges"],
+					"categoryType" : "categoryTrueFalse",
+					"categoryField" : "10day10pct",
+					"categoryOneHot" : ["catTrue", "catFalse"]
+				}
 			}
 		}
 	}

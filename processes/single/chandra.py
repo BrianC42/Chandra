@@ -2,8 +2,28 @@
 Created on March 23, 2020
 
 @author: Brian
+
+To develop, test, train and evaluate models and their combinations
+- Build, train and evaluate prediction models
+- uses json to control the process
+- 3 phases of processing
+    Phase A - use raw data to train a model designed to recognize input data associated with a specified categorization
+        each model can use unique sets of input (variable) data elements
+        ALL models MUST use the same categorization data  
+
+    Phase B - Correlate phase 'A' results.
+        use the models created in phase 'A' to generate test and training data for phase C
+        symbol/date/<raw data> -> <models> -> symbol/date/<model categorization>
+
+    Phase C - weighted correlation. Use the t&t data from phase 'B' to combine the outputs of the models developed in phase 'A'
+        into a model combining their outputs
+        model categorizations -> WC Model -> weighted correlated categorization
+            
+For future use of the models
+    - create a combined model consisting of the models trained in phases 'A' and 'C'
+    - input required data into the combined model and output the result
+
 '''
-import subprocess
 import os
 import logging
 import datetime as dt
@@ -16,33 +36,7 @@ from configuration import read_config_json
 from assemble_model import build_model
 from configuration_graph import build_configuration_graph
 from load_prepare_data import load_and_prepare_data
-
-def trainModels(nx_graph):
-    logging.info('====> ================================================')
-    logging.info('====> trainModels models')
-    logging.info('====> ================================================')
-    
-    cmdstr = "python d:\\brian\\git\\chandra\\processes\\single\\KerasDenseApp.py"
-    pathin = "--pathin p1"
-    file1 = "--file f1"
-    file2 = "--file f2"
-    files = file1
-    field1 = "--field fld1"
-    field2 = "--field fld2"
-    fields = field1 + " " + field2
-    pathout = "--pathout p5"
-    output = "--output p6"
-    nx_attributes = nx.get_node_attributes(nx_graph, "inputFlows")
-    for node_i in nx_graph.nodes():
-        print("\nNode: %s" % node_i)
-        nx_input = nx_attributes[node_i]
-        print("inputFlows: %s" % nx_input)
-        subprocess.run(cmdstr + " " +  pathin + " " +  files + " " +  fields + " " +  pathout + " " +  output)
-
-    logging.info('<---- ----------------------------------------------')
-    logging.info('<---- trainModels: done')
-    logging.info('<---- ----------------------------------------------')    
-    return
+from train_model import trainModels
 
 if __name__ == '__main__':
     print ("Good morning Dr. Chandra. I am ready for my next lesson.\n")
@@ -77,6 +71,7 @@ if __name__ == '__main__':
     except Exception:
         print("\nAn exception occurred - log file details are missing from json configuration")
         
+    # Set python path for executing stand alone scripts
     pPath = "d:/brian/git/chandra/processes/single"
     pPath += ";"
     pPath += "d:/brian/git/chandra/processes/multiprocess"
@@ -115,13 +110,13 @@ if __name__ == '__main__':
     ========================================================================= '''
     step2 = time.time()
     print ('\nStep 2 - Build Model')
-    #build_model(nx_graph)
+    k_model = build_model(nx_graph)
 
     ''' ...................... Step 3 - Train the model .....................
     ========================================================================= '''
     step3 = time.time()
     print( "\nStep 3 - Train the model")
-    #trainModels(nx_graph)
+    trainModels(nx_graph, k_model)
     
     ''' .................... Step 4 - Evaluate the model! ...............
     ===================================================================== '''

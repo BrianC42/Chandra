@@ -3,6 +3,7 @@ Created on Apr 13, 2020
 
 @author: Brian
 '''
+import sys
 import logging
 
 import json
@@ -40,9 +41,26 @@ from configuration_constants import JSON_TIME_SEQ
 from configuration_constants import JSON_IGNORE_BLANKS
 from configuration_constants import JSON_FLOW_DATA_FILE
 from configuration_constants import JSON_DATA_FIELDS
-from configuration_constants import JSON_TARGET_FIELD
 
+from configuration_constants import JSON_CATEGORIZATION_DETAILS
+from configuration_constants import JSON_CATEGORY_TYPE
+from configuration_constants import JSON_CATEGORY_FIELD
+from configuration_constants import JSON_CATEGORY_1HOT
+from configuration_constants import JSON_CAT_TF
+from configuration_constants import JSON_CAT_THRESHOLD
+from configuration_constants import JSON_THRESHOLD_VALUE
+from configuration_constants import JSON_VALUE_RANGES
+from configuration_constants import JSON_RANGE_MINS
+from configuration_constants import JSON_RANGE_MAXS
+
+from configuration_constants import JSON_MODEL_STRUCTURE
+
+from configuration_constants import JSON_MODEL_INPUT_LAYER
+from configuration_constants import JSON_MODEL_OUTPUT_LAYER
+from configuration_constants import JSON_MODEL_OUTPUT_ACTIVATION
+from configuration_constants import JSON_MODEL_DEPTH
 from configuration_constants import JSON_NODE_COUNT
+from configuration_constants import JSON_TRAINING
 
 from configuration_constants import JSON_TIMESTEPS
 from configuration_constants import JSON_BATCH
@@ -61,124 +79,120 @@ from configuration_constants import JSON_ACTIVATION
 from configuration_constants import JSON_OPTIMIZER
 from configuration_constants import JSON_ANALYSIS
 
-def add_csv_meta_data(nx_graph, nx_process_name, js_config):
-    logging.debug("readcsv process: %s" % nx_process_name)
-    if 'inputFlows' in js_config :
-        nx_graph.nodes[nx_process_name]['inputFlows'] = js_config[JSON_INPUT_FLOWS]
-    else:
-        raise KeyError
+def add_2d_data_flow_details(js_keras_dense_data, nx_graph, nx_edge_key):
+    nx_balanced = js_keras_dense_data[JSON_BALANCED]
+    nx_time_seq = js_keras_dense_data[JSON_TIME_SEQ]
+    nx_ignore_blanks = js_keras_dense_data[JSON_IGNORE_BLANKS]
+    nx_flow_data_file = js_keras_dense_data[JSON_FLOW_DATA_FILE]
+    nx_data_fields = js_keras_dense_data[JSON_DATA_FIELDS]
 
+    js_category_details = js_keras_dense_data[JSON_CATEGORIZATION_DETAILS]
+    nx_category_field = js_category_details[JSON_CATEGORY_FIELD]
+    nx_category1Hot = js_category_details[JSON_CATEGORY_1HOT]
+    
+    for edge_i in nx_graph.edges():
+        if edge_i == (nx_edge_key[0], nx_edge_key[1]):
+            nx.set_edge_attributes(nx_graph, {nx_edge_key:nx_balanced}, JSON_BALANCED)
+            nx.set_edge_attributes(nx_graph, {nx_edge_key:nx_time_seq}, JSON_TIME_SEQ)
+            nx.set_edge_attributes(nx_graph, {nx_edge_key:nx_ignore_blanks}, JSON_IGNORE_BLANKS)
+            nx.set_edge_attributes(nx_graph, {nx_edge_key:nx_flow_data_file}, JSON_FLOW_DATA_FILE)
+            nx.set_edge_attributes(nx_graph, {nx_edge_key:nx_data_fields}, JSON_DATA_FIELDS)
+            nx.set_edge_attributes(nx_graph, {nx_edge_key:nx_category_field}, JSON_CATEGORY_FIELD)
+            nx.set_edge_attributes(nx_graph, {nx_edge_key:nx_category1Hot}, JSON_CATEGORY_1HOT)
+            
+            nx_category_type = js_category_details[JSON_CATEGORY_TYPE]
+            nx.set_edge_attributes(nx_graph, {nx_edge_key:nx_category_type}, JSON_CATEGORY_TYPE)
+            if nx_category_type == JSON_CAT_TF:
+                pass
+            elif nx_category_type == JSON_CAT_THRESHOLD:
+                nx_threshold = js_category_details[JSON_THRESHOLD_VALUE]
+                nx.set_edge_attributes(nx_graph, {nx_edge_key:nx_threshold}, JSON_THRESHOLD_VALUE)
+            elif nx_category_type == JSON_VALUE_RANGES:
+                nx_rangeMins = js_category_details[JSON_RANGE_MINS]
+                nx_rangeMaxs = js_category_details[JSON_RANGE_MAXS]
+                nx.set_edge_attributes(nx_graph, {nx_edge_key:nx_rangeMins}, JSON_RANGE_MINS)
+                nx.set_edge_attributes(nx_graph, {nx_edge_key:nx_rangeMaxs}, JSON_RANGE_MAXS)
+            else:
+                raise NameError('Invalid category type')
+
+    return 
+
+def add_3d_data_flow_details(js_config, nx_graph, nx_edge_key):
     return
 
-def add_calc_bollinger_band_meta_data(nx_graph, nx_process_name, js_config):
-    print("calcBollingerBands process")
+def add_data_load_details(js_config, nx_graph, nx_process_name):
+    nx_inputFile = js_config[JSON_INPUT_DATA_FILE]
+    nx.set_node_attributes(nx_graph, {nx_process_name:nx_inputFile}, JSON_INPUT_DATA_FILE)
     return
 
-def add_calc_on_balance_volume_band_meta_data(nx_graph, nx_process_name, js_config):
-    print("calcOnBalanceVolume process")
-    return
-
-def add_calc_MACD_meta_data(nx_graph, nx_process_name, js_config):
-    print("calcMACD process")
-    return
-
-def add_dense_meta_data(nx_graph, nx_process_name, js_config):
+def add_dense_meta_data(js_dense_params, nx_graph, nx_process_name):
     logging.debug("Adding meta data to dense model process: %s" % nx_process_name)
-    
-    nx_lossWeights = ""
-    if 'lossWeights' in js_config :
-        nx_lossWeights = js_config[JSON_LOSS_WTS]
-    nx_graph.nodes[nx_process_name]['lossWeights'] = nx_lossWeights
+    nx_model_file = js_dense_params[JSON_MODEL_FILE]
+    nx.set_node_attributes(nx_graph, {nx_process_name:nx_model_file}, JSON_MODEL_FILE)
 
-    nx_denseRegularation = ""
-    if 'denseRegularation' in js_config :
-        nx_denseRegularation = js_config[JSON_REGULARIZATION]
-    nx_graph.nodes[nx_process_name]['denseRegularation'] = nx_denseRegularation
-        
-    nx_regularationValue = ""
-    if 'regularationValue' in js_config :
-        nx_regularationValue = js_config[JSON_REG_VALUE]
-    nx_graph.nodes[nx_process_name]['regularationValue'] = nx_regularationValue
-        
-    nx_dropout = ""
-    if 'dropout' in js_config :
-        nx_dropout = js_config[JSON_DROPOUT]
-    nx_graph.nodes[nx_process_name]['dropout'] = nx_dropout
-        
-    nx_dropoutRate = ""
-    if 'dropoutRate' in js_config :
-        nx_dropoutRate = js_config[JSON_DROPOUT_RATE]
-    nx_graph.nodes[nx_process_name]['dropoutRate'] = nx_dropoutRate
-        
-    nx_useBias = ""
-    if 'useBias' in js_config :
-        nx_useBias = js_config[JSON_BIAS]
-    nx_graph.nodes[nx_process_name]['useBias'] = nx_useBias
-        
-    nx_balanceClasses = ""
-    if 'balanceClasses' in js_config :
-        nx_balanceClasses = js_config[JSON_BALANCED]
-    nx_graph.nodes[nx_process_name]['balanceClasses'] = nx_balanceClasses
-        
-    nx_analysis = ""
-    if 'analysis' in js_config :
-        nx_analysis = js_config[JSON_ANALYSIS]
-    nx_graph.nodes[nx_process_name]['analysis'] = nx_analysis
-        
+    if JSON_MODEL_STRUCTURE in js_dense_params:
+        js_model_structure = js_dense_params[JSON_MODEL_STRUCTURE]
+
+        nx_input_layer = js_model_structure[JSON_MODEL_INPUT_LAYER]
+        nx_model_depth = js_model_structure[JSON_MODEL_DEPTH]
+        nx_node_count = js_model_structure[JSON_NODE_COUNT]
+        nx_output_layer = js_model_structure[JSON_MODEL_OUTPUT_LAYER]
+        nx_output_activation = js_model_structure[JSON_MODEL_OUTPUT_ACTIVATION]
+
+        nx.set_node_attributes(nx_graph, {nx_process_name:nx_input_layer}, JSON_MODEL_INPUT_LAYER)
+        nx.set_node_attributes(nx_graph, {nx_process_name:nx_model_depth}, JSON_MODEL_DEPTH)
+        nx.set_node_attributes(nx_graph, {nx_process_name:nx_node_count}, JSON_NODE_COUNT)
+        nx.set_node_attributes(nx_graph, {nx_process_name:nx_output_layer}, JSON_MODEL_OUTPUT_LAYER)
+        nx.set_node_attributes(nx_graph, {nx_process_name:nx_output_activation}, JSON_MODEL_OUTPUT_ACTIVATION)
+    
+    if JSON_TRAINING in js_dense_params:
+        js_training = js_dense_params[JSON_TRAINING]
+
+        nx_loss_weights = js_training[JSON_LOSS_WTS]
+        nx_regularization = js_training[JSON_REGULARIZATION]
+        nx_reg_value = js_training[JSON_REG_VALUE]
+        nx_dropout = js_training[JSON_DROPOUT]
+        nx_dropout_rate = js_training[JSON_DROPOUT_RATE]
+        nx_bias = js_training[JSON_BIAS]
+        nx_validation_split = js_training[JSON_VALIDATION_SPLIT]
+        nx_batch = js_training[JSON_BATCH]
+        nx_epochs = js_training[JSON_EPOCHS]
+        nx_verbose = js_training[JSON_VERBOSE]
+        nx_balanced = js_training[JSON_BALANCED]
+        nx_analysis = js_training[JSON_ANALYSIS]
+        nx_loss = js_training[JSON_LOSS]
+        nx_metrics = js_training[JSON_METRICS]
+        nx_activation = js_training[JSON_ACTIVATION]
+        nx_optimizer = js_training[JSON_OPTIMIZER]
+
+        nx.set_node_attributes(nx_graph, {nx_process_name:nx_loss_weights}, JSON_LOSS_WTS)
+        nx.set_node_attributes(nx_graph, {nx_process_name:nx_regularization}, JSON_REGULARIZATION)
+        nx.set_node_attributes(nx_graph, {nx_process_name:nx_reg_value}, JSON_REG_VALUE)
+        nx.set_node_attributes(nx_graph, {nx_process_name:nx_dropout}, JSON_DROPOUT)
+        nx.set_node_attributes(nx_graph, {nx_process_name:nx_dropout_rate}, JSON_DROPOUT_RATE)
+        nx.set_node_attributes(nx_graph, {nx_process_name:nx_bias}, JSON_BIAS)
+        nx.set_node_attributes(nx_graph, {nx_process_name:nx_validation_split}, JSON_VALIDATION_SPLIT)
+        nx.set_node_attributes(nx_graph, {nx_process_name:nx_batch}, JSON_BATCH)
+        nx.set_node_attributes(nx_graph, {nx_process_name:nx_epochs}, JSON_EPOCHS)
+        nx.set_node_attributes(nx_graph, {nx_process_name:nx_verbose}, JSON_VERBOSE)
+        nx.set_node_attributes(nx_graph, {nx_process_name:nx_balanced}, JSON_BALANCED)
+        nx.set_node_attributes(nx_graph, {nx_process_name:nx_analysis}, JSON_ANALYSIS)
+        nx.set_node_attributes(nx_graph, {nx_process_name:nx_loss}, JSON_LOSS)
+        nx.set_node_attributes(nx_graph, {nx_process_name:nx_metrics}, JSON_METRICS)
+        nx.set_node_attributes(nx_graph, {nx_process_name:nx_activation}, JSON_ACTIVATION)
+        nx.set_node_attributes(nx_graph, {nx_process_name:nx_optimizer}, JSON_OPTIMIZER)
+
     return
     
-def add_LSTM_meta_data(nx_graph, nx_process_name, js_config):
-    logging.debug("Adding meta data to LSTM model process: %s" % nx_process_name)
+def add_RNN_meta_data(js_config, nx_graph, nx_process_name):
+    logging.debug("Adding meta data to RNN model process: %s" % nx_process_name)
     
-    nx_timeSteps = 30
-    if 'timeSteps' in js_config :
-        nx_timeSteps = js_config[JSON_TIMESTEPS]
-    nx_graph.nodes[nx_process_name]['timeSteps'] = nx_timeSteps
 
-    nx_batchSize = 32
-    if 'batchSize' in js_config :
-        nx_batchSize = js_config[JSON_BATCH]
-    nx_graph.nodes[nx_process_name]['batchSize'] = nx_batchSize
+    return
 
-    nx_validationSplit = ""
-    if 'validationSplit' in js_config :
-        nx_validationSplit = js_config[JSON_VALIDATION_SPLIT]
-    nx_graph.nodes[nx_process_name]['validationSplit'] = nx_validationSplit
-        
-    nx_epochs = 3
-    if 'epochs' in js_config :
-        nx_epochs = js_config[JSON_EPOCHS]
-    nx_graph.nodes[nx_process_name]['epochs'] = nx_epochs
-        
-    nx_layerNodes = 100
-    if 'layerNodes' in js_config :
-        nx_layerNodes = js_config[JSON_NODE_COUNT]
-    nx_graph.nodes[nx_process_name]['layerNodes'] = nx_layerNodes
-
-    nx_verbose = ""
-    if 'verbose' in js_config :
-        nx_verbose = js_config[JSON_VERBOSE]
-    nx_graph.nodes[nx_process_name]['verbose'] = nx_verbose
-        
-    nx_compilationLoss = "binary_crossentropy"
-    if 'compilationLoss' in js_config :
-        nx_compilationLoss = js_config[JSON_LOSS]
-    nx_graph.nodes[nx_process_name]['compilationLoss'] = nx_compilationLoss
-        
-    nx_compilationMetrics = "accuracy"
-    if 'compilationMetrics' in js_config :
-        nx_compilationMetrics = js_config[JSON_METRICS]
-    nx_graph.nodes[nx_process_name]['compilationMetrics'] = nx_compilationMetrics
-        
-    nx_activation = "relu"
-    if 'activation' in js_config :
-        nx_activation = js_config[JSON_ACTIVATION]
-    nx_graph.nodes[nx_process_name]['activation'] = nx_activation
-        
-    nx_optimizer = "Adam"
-    if 'optimizer' in js_config :
-        nx_optimizer = js_config[JSON_OPTIMIZER]
-    nx_graph.nodes[nx_process_name]['optimizer'] = nx_optimizer
+def add_CNN_meta_data(js_config, nx_graph, nx_process_name):
+    logging.debug("Adding meta data to CNN model process: %s" % nx_process_name)
+    
 
     return
 
@@ -197,21 +211,7 @@ def add_meta_data_edge (js_config, nx_graph):
     js_conditional = js_config[JSON_CONDITIONAL]
     if JSON_KERAS_DENSE_DATA in js_conditional:
         js_keras_dense_data = js_conditional[JSON_KERAS_DENSE_DATA]
-        nx_balanced = js_keras_dense_data[JSON_BALANCED]
-        nx_time_seq = js_keras_dense_data[JSON_TIME_SEQ]
-        nx_ignore_blanks = js_keras_dense_data[JSON_IGNORE_BLANKS]
-        nx_flow_data_file = js_keras_dense_data[JSON_FLOW_DATA_FILE]
-        nx_data_fields = js_keras_dense_data[JSON_DATA_FIELDS]
-        nx_target_field = js_keras_dense_data[JSON_TARGET_FIELD]
-
-        for edge_i in nx_graph.edges():
-            if edge_i == (nx_flowFrom, nx_flowTo):
-                nx.set_edge_attributes(nx_graph, {nx_edge_key:nx_balanced}, JSON_BALANCED)
-                nx.set_edge_attributes(nx_graph, {nx_edge_key:nx_time_seq}, JSON_TIME_SEQ)
-                nx.set_edge_attributes(nx_graph, {nx_edge_key:nx_ignore_blanks}, JSON_IGNORE_BLANKS)
-                nx.set_edge_attributes(nx_graph, {nx_edge_key:nx_flow_data_file}, JSON_FLOW_DATA_FILE)
-                nx.set_edge_attributes(nx_graph, {nx_edge_key:nx_data_fields}, JSON_DATA_FIELDS)
-                nx.set_edge_attributes(nx_graph, {nx_edge_key:nx_target_field}, JSON_TARGET_FIELD)
+        add_2d_data_flow_details(js_keras_dense_data, nx_graph, nx_edge_key)
 
     print("Connected %s to %s by data flow %s" % (nx_flowFrom, nx_flowTo, nx_flowName))
     return
@@ -245,12 +245,10 @@ def add_meta_process_node (js_config, nx_graph) :
     js_conditional = js_config[JSON_CONDITIONAL]
     if js_required[JSON_PROCESS_TYPE] == JSON_DATA_PREP_PROCESS:
         js_data_prep_ctrl = js_conditional[JSON_INPUT_DATA_PREPARATION]
-        nx_attr_inputFile = js_data_prep_ctrl[JSON_INPUT_DATA_FILE]
-        nx.set_node_attributes(nx_graph, {nx_process_name:nx_attr_inputFile}, JSON_INPUT_DATA_FILE)
+        add_data_load_details(js_data_prep_ctrl, nx_graph, nx_process_name)
     elif js_required[JSON_PROCESS_TYPE] == JSON_KERAS_DENSE_PROCESS:
         js_keras_dense = js_conditional[JSON_KERAS_DENSE_CTRL]
-        nx_model_file = js_keras_dense[JSON_MODEL_FILE]
-        nx.set_node_attributes(nx_graph, {nx_process_name:nx_model_file}, JSON_MODEL_FILE)
+        add_dense_meta_data(js_keras_dense, nx_graph, nx_process_name)
     else :
         raise NameError('Invalid process node type')
         
@@ -274,6 +272,6 @@ def build_configuration_graph(json_config, nx_graph):
     except Exception:
         err_txt = "*** An exception occurred analyzing the json configuration file ***"
         logging.debug(err_txt)
-        print("\n" + err_txt)
+        sys.exit("\n" + err_txt)
         
     return

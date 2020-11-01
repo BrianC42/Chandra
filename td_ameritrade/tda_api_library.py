@@ -69,57 +69,6 @@ def tda_get_access_token(json_authentication):
     return json_authentication["currentToken"]
 
 def tda_search_instruments(authentication_parameters, p_symbol):
-    '''
-      "fundamental": {
-        "symbol": "string",
-        "high52": 0,
-        "low52": 0,
-        "dividendAmount": 0,
-        "dividendYield": 0,
-        "dividendDate": "string",
-        "peRatio": 0,
-        "pegRatio": 0,
-        "pbRatio": 0,
-        "prRatio": 0,
-        "pcfRatio": 0,
-        "grossMarginTTM": 0,
-        "grossMarginMRQ": 0,
-        "netProfitMarginTTM": 0,
-        "netProfitMarginMRQ": 0,
-        "operatingMarginTTM": 0,
-        "operatingMarginMRQ": 0,
-        "returnOnEquity": 0,
-        "returnOnAssets": 0,
-        "returnOnInvestment": 0,
-        "quickRatio": 0,
-        "currentRatio": 0,
-        "interestCoverage": 0,
-        "totalDebtToCapital": 0,
-        "ltDebtToEquity": 0,
-        "totalDebtToEquity": 0,
-        "epsTTM": 0,
-        "epsChangePercentTTM": 0,
-        "epsChangeYear": 0,
-        "epsChange": 0,
-        "revChangeYear": 0,
-        "revChangeTTM": 0,
-        "revChangeIn": 0,
-        "sharesOutstanding": 0,
-        "marketCapFloat": 0,
-        "marketCap": 0,
-        "bookValuePerShare": 0,
-        "shortIntToFloat": 0,
-        "shortIntDayToCover": 0,
-        "divGrowthRate3Year": 0,
-        "dividendPayAmount": 0,
-        "dividendPayDate": "string",
-        "beta": 0,
-        "vol1DayAvg": 0,
-        "vol10DayAvg": 0,
-        "vol3MonthAvg": 0
-      }
-    }
-    '''
     s_cols = ['symbol', \
                 'high52', 'low52', 'dividendAmount', 'dividendYield', 'dividendDate', \
                 'peRatio', 'pegRatio', 'pbRatio', 'prRatio', 'pcfRatio', 'grossMarginTTM', 'grossMarginMRQ', \

@@ -183,16 +183,30 @@ JSON_MODEL_FILE = "modelFile"
 JSON_TRAINING = "training"
 
 JSON_KERAS_DENSE_DATA = 'KerasDenseData'
-JSON_BALANCED = "balanced"
+JSON_BALANCED = "balanceClasses"
 JSON_TIME_SEQ = 'timeSequence'
 JSON_IGNORE_BLANKS = "ignoreBlanks"
 JSON_FLOW_DATA_FILE = "flowDataFile"
 JSON_DATA_FIELDS = "dataFields"
-JSON_TARGET_FIELD = "targetField"
 
+JSON_CATEGORIZATION_DETAILS = "categorization"
+JSON_CATEGORY_FIELD = "categoryField"
+JSON_CATEGORY_1HOT = "categoryOneHot"
+JSON_CATEGORY_TYPE = "categoryType"
+JSON_CAT_TF = "categoryTrueFalse"
+JSON_CAT_THRESHOLD = "categoryThreshold"
+JSON_THRESHOLD_VALUE = "categoryThresholdValue"
+JSON_VALUE_RANGES = "categoryRanges"
+JSON_RANGE_MINS = "categoryMinimums"
+JSON_RANGE_MAXS = "categoryMaximums"
+
+JSON_MODEL_INPUT_LAYER = 'inputLayer'
+JSON_MODEL_OUTPUT_LAYER = 'outputLayer'
+JSON_MODEL_OUTPUT_ACTIVATION = 'outputActivation'
+JSON_MODEL_OUTPUT_WIDTH = 'outputWidth'
 JSON_MODEL_DEPTH = 'layerCounts'
 JSON_NODE_COUNT = 'layerNodes'
-JSON_OUTPUTNAME = 'outputName'
+#JSON_OUTPUTNAME = 'outputName'
 JSON_TIMESTEPS = 'timeSteps'
 JSON_ELEMENTS = 'dataElements'
 JSON_LOSS_WTS = 'lossWeights'

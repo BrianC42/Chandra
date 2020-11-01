@@ -38,8 +38,41 @@ def init_df_trading_strategy():
                                  'Max Profit', 'Risk Management', 'Loss vs. Profit', 'premium', 'commission', \
                                  'ROI', 'Max Loss', 'Preferred Outcome', 'Preferred Result', 'Unfavored Result', 'Consideration', \
                                  'delta','gamma', 'theta', 'vega', 'rho', \
-                                 'inTheMoney', 'expirationDate'])
+                                 'inTheMoney', 'expirationDate', \
+                                 'volatility'])
     return df_trading_strategy
+
+def calendar_spread():
+    return
+
+def diagonal_spread():
+    return
+
+def iron_condor():
+    '''
+    Consider a liquid stock or ETF with a high daily trading volume. Because this trade benefits when the underlying stays in the range
+    between the two short strikes, consider stocks that are sideways-trending or that you have a neutral outlook on. Additionally,
+    the probability of an iron condor having at least some success improves when the implied volatility of the underlying falls.
+    To potentially capture this, consider looking for stocks with high implied volatility
+    for example, those that are trading in the top 50% of their 52-week implied volatility range.
+    When it comes to selecting the options themselves, look for options with narrow bid/ask spreads, high trading volumes, and large open interest. 
+    This can help ensure you get the price you want for your transaction, which can be particularly important in this strategy as it has four legs.
+    Penny increment options can be ideal as they can make it easier to enter, and potentially exit, the trade, but they're not available on every underlying.
+    Sample entry rules involve selecting expirations and strike prices. When it comes to selecting your expiration, options that
+    expire 20 to 50 days in the future can help you capture time decay for the trade. 
+    Be sure to look at the financial calendar of the underlying and try to avoid options that expire close to earnings announcements
+    or other major events. These events tend to cause implied volatility to rise  which can hurt the trade's success.
+    We'll start with the short options because these set up the iron condor's body or the area where you can expect to achieve max gain. 
+    To choose your short strike prices, a delta between .20 and .30 can be a good place to start because these options generally have a 
+    lower probability of expiring in the money than options with higher deltas. As always, selecting your strike prices will likely
+    be a trade-off between premium and chances of success. Options with a higher probability of expiring worthless (those with smaller deltas)
+    will have lower premiums.
+    It can be helpful to check these strikes against the resistance and support levels for the underlying to make sure the short strikes are near, 
+    or outside, of those levels. You might consider selling a put spread below resistance and a call spread above it.
+    To select the long option strikes, you'll have another trade-off, this time between cost and risk, The further apart the strikes,
+    the greater the potential risk. However, options that are further out of the money tend to cost less, so your max gain might be higher.
+    '''
+    return
 
 def covered_call(symbol, df_data, df_options):
     df_covered_calls = init_df_trading_strategy()
@@ -79,6 +112,7 @@ def covered_call(symbol, df_data, df_options):
                     df_covered_calls.loc[strategy_ndx, "expirationDate"] = df_options.at[option_ndx, "expirationDate"]
                     df_covered_calls.loc[strategy_ndx, "expiration"] = format_tda_datetime(df_options.at[option_ndx, "expirationDate"])
                     df_covered_calls.loc[strategy_ndx, "days To Expiration"] = df_options.at[option_ndx, "daysToExpiration"]
+                    df_covered_calls.loc[strategy_ndx, "volatility"] = df_options.at[option_ndx, "volatility"]
                     df_covered_calls.loc[strategy_ndx, "OTM Probability"] = OTM_probability
                     df_covered_calls.loc[strategy_ndx, "break even"] = f_strike + f_bid
                     strategy_ndx += 1
@@ -131,6 +165,7 @@ def cash_secured_put(symbol, df_data, df_options):
                     df_cash_secured_puts.loc[strategy_ndx, "expirationDate"] = df_options.at[option_ndx, "expirationDate"]
                     df_cash_secured_puts.loc[strategy_ndx, "expiration"] = format_tda_datetime(df_options.at[option_ndx, "expirationDate"])
                     df_cash_secured_puts.loc[strategy_ndx, "days To Expiration"] = df_options.at[option_ndx, "daysToExpiration"]
+                    df_cash_secured_puts.loc[strategy_ndx, "volatility"] = df_options.at[option_ndx, "volatility"]
                     df_cash_secured_puts.loc[strategy_ndx, "OTM Probability"] = OTM_probability
                     df_cash_secured_puts.loc[strategy_ndx, "break even"] = f_strike + f_bid
                     strategy_ndx += 1

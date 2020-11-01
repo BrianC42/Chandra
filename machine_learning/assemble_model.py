@@ -5,85 +5,95 @@ Created on Mar 25, 2020
 
 Build machine learning model using the Keras API as governed by the json script
 '''
+import sys
 import logging
-
-import pandas as pd
 import networkx as nx
+import tensorflow as tf
+from tensorflow import keras
 
-'''
-from keras import regularizers
-from keras.models import Model
-from keras.layers import Input
-from keras.layers import Concatenate
-from keras.layers import Dropout
-from keras.layers.core import Dense
-from keras.layers.core import Flatten
-from keras.layers.recurrent import LSTM
-from keras.layers.convolutional import Conv1D
+from configuration_constants import JSON_KERAS_DENSE_PROCESS
 
-'''
-from configuration_constants import JSON_NODE_NAME
 from configuration_constants import JSON_PROCESS_TYPE
-from configuration_constants import JSON_TIMESTEPS
-from configuration_constants import JSON_OUTPUTNAME
-from configuration_constants import JSON_BATCH
+from configuration_constants import JSON_INPUT_FLOWS
+
+from configuration_constants import JSON_DATA_FIELDS
+
+from configuration_constants import JSON_CATEGORY_TYPE
+from configuration_constants import JSON_CAT_TF
+from configuration_constants import JSON_CAT_THRESHOLD
+from configuration_constants import JSON_VALUE_RANGES
+
+from configuration_constants import JSON_MODEL_INPUT_LAYER
+from configuration_constants import JSON_MODEL_OUTPUT_LAYER
+from configuration_constants import JSON_MODEL_OUTPUT_ACTIVATION
+from configuration_constants import JSON_MODEL_DEPTH
 from configuration_constants import JSON_NODE_COUNT
-from configuration_constants import JSON_REGULARIZATION
-from configuration_constants import JSON_REG_VALUE
 from configuration_constants import JSON_DROPOUT
 from configuration_constants import JSON_DROPOUT_RATE
-from configuration_constants import JSON_BIAS
-from configuration_constants import JSON_VALIDATION_SPLIT
-from configuration_constants import JSON_EPOCHS
-from configuration_constants import JSON_VERBOSE
-from configuration_constants import JSON_BALANCED
-from configuration_constants import JSON_ANALYSIS
 from configuration_constants import JSON_LOSS
 from configuration_constants import JSON_METRICS
 from configuration_constants import JSON_ACTIVATION
+from configuration_constants import JSON_LOSS_WTS
 from configuration_constants import JSON_OPTIMIZER
 
-def create_core_layer(js_config, nx_graph):
-    logging.debug("\t\tCreating layer: %s" % js_config[JSON_NODE_NAME])
+def create_dense_model(nx_graph, nx_node):
+    logging.debug("\t\tCreating model defined by: %s" % nx_node)
+    print('Using installed tensorflow version %s' % tf.version)
     
-    return
-
-def create_LSTM_layer(js_config, nx_graph):
-    logging.debug("\t\tCreating layer: %s" % js_config[JSON_NODE_NAME])
-    logging.debug("\t\tTime steps: %s" % js_config[JSON_TIMESTEPS])
+    nx_input_flows = nx.get_node_attributes(nx_graph, JSON_INPUT_FLOWS)[nx_node]
+    nx_edges = nx.edges(nx_graph)
+    for nx_edge in nx_edges:
+        if nx_edge[1] == nx_node:
+            break
     
-    nx_graph.add_node(js_config[JSON_NODE_NAME], timesteps=30)
-    return
+    nx_dataFields = nx.get_edge_attributes(nx_graph, JSON_DATA_FIELDS)
+    nx_input = nx_dataFields[nx_edge[0], nx_edge[1], nx_input_flows[0]]    
 
-def create_RNN_layer(js_config, nx_graph):
-    logging.debug("\t\tCreating layer: %s" % js_config[JSON_NODE_NAME])
-        
-    nx_graph.add_node(js_config[JSON_NODE_NAME])
-    return
-
-def create_input_model(js_input_definition, nx_graph):
-    logging.debug("\tCreate a %s layer named %s with output %s" % (js_input_definition[JSON_PROCESS_TYPE], \
-                                                                   js_input_definition[JSON_PROCESS_TYPE], \
-                                                                   js_input_definition[JSON_OUTPUTNAME]))
-
-    try:
-        # create an input layer
-        if (js_input_definition[JSON_PROCESS_TYPE] == "LSTM"):
-            create_LSTM_layer(js_input_definition, nx_graph)
-        elif (js_input_definition[JSON_PROCESS_TYPE] == "dense"):
-            create_core_layer(js_input_definition, nx_graph)
-        elif (js_input_definition[JSON_PROCESS_TYPE] == "convolutional"):
-            create_RNN_layer(js_input_definition, nx_graph)
+    nx_categories = nx.get_edge_attributes(nx_graph, JSON_CATEGORY_TYPE)
+    nx_category_type = nx_categories[nx_edge[0], nx_edge[1], nx_input_flows[0]]    
+    if nx_category_type == JSON_CAT_TF:
+        nx_outputWidth = 2
+    elif nx_category_type == JSON_CAT_THRESHOLD:
+        pass
+    elif nx_category_type == JSON_VALUE_RANGES:
+        pass
+    else:
+        raise NameError('Invalid category type')
+    
+    nx_input_layer = nx.get_node_attributes(nx_graph, JSON_MODEL_INPUT_LAYER)[nx_node]
+    nx_model_depth = nx.get_node_attributes(nx_graph, JSON_MODEL_DEPTH)[nx_node]
+    nx_node_count = nx.get_node_attributes(nx_graph, JSON_NODE_COUNT)[nx_node]
+    nx_output_layer = nx.get_node_attributes(nx_graph, JSON_MODEL_OUTPUT_LAYER)[nx_node]
+    nx_output_activation = nx.get_node_attributes(nx_graph, JSON_MODEL_OUTPUT_ACTIVATION)[nx_node]
+    nx_dropout = nx.get_node_attributes(nx_graph, JSON_DROPOUT)[nx_node]
+    nx_dropout_rate = nx.get_node_attributes(nx_graph, JSON_DROPOUT_RATE)[nx_node]
+    nx_loss = nx.get_node_attributes(nx_graph, JSON_LOSS)[nx_node]
+    nx_metrics = nx.get_node_attributes(nx_graph, JSON_METRICS)[nx_node]
+    nx_activation = nx.get_node_attributes(nx_graph, JSON_ACTIVATION)[nx_node]
+    nx_optimizer = nx.get_node_attributes(nx_graph, JSON_OPTIMIZER)[nx_node]
+    nx_loss_weights = nx.get_node_attributes(nx_graph, JSON_LOSS_WTS)[nx_node]
+    
+    k_inputs = tf.keras.Input(name=nx_input_layer, shape=(len(nx_input),))
+    ndx = 0
+    while ndx < nx_model_depth:
+        if ndx == 0:
+            k_layer = tf.keras.layers.Dense(nx_node_count, activation=nx_activation)(k_inputs)
         else:
-            err_msg = "*** An error occurred analyzing the json configuration file - an unsupported layer type was specified ***"
-            logging.debug(err_msg)
-            print("\n" + err_msg)
-            
-    except Exception:
-        err_msg = "*** An exception occurred analyzing the json configuration file for an input layer ***"
-        logging.debug(err_msg)
-        print("\n" + err_msg)
+            k_layer = tf.keras.layers.Dense(nx_node_count, activation=nx_activation)(k_layer)
+        if nx_dropout:
+            k_layer = tf.keras.layers.Dropout(nx_dropout_rate)(k_layer)
+        ndx += 1
+    k_outputs = tf.keras.layers.Dense(nx_outputWidth, name=nx_output_layer, activation=nx_output_activation)(k_layer)
+    model = tf.keras.Model(name=nx_node, inputs=k_inputs, outputs=k_outputs)
+    model.compile(nx_optimizer, nx_loss, metrics=nx_metrics)
+    # , loss_weights=nx_loss_weights
 
+    return model
+
+def create_LSTM_model(nx_graph):
+    return
+
+def create_RNN_model(nx_graph):
     return
 
 def build_model(nx_graph):
@@ -95,13 +105,17 @@ def build_model(nx_graph):
     try:
         # inputs                
         logging.debug("Building ML model")
+        for node_i in nx_graph.nodes():
+            nx_read_attr = nx.get_node_attributes(nx_graph, JSON_PROCESS_TYPE)
+            if nx_read_attr[node_i] == JSON_KERAS_DENSE_PROCESS:
+                k_model = create_dense_model(nx_graph, node_i)
         
     except Exception:
-        err_txt = "*** An exception occurred analyzing the json configuration file ***"
+        err_txt = "*** An exception occurred building and compiling the model ***"
         logging.debug(err_txt)
-        print("\n" + err_txt)
+        sys.exit("\n" + err_txt)
     
     logging.info('<---- ----------------------------------------------')
     logging.info('<---- build_model: done')
     logging.info('<---- ----------------------------------------------')    
-    return
+    return k_model

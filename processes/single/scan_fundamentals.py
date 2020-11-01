@@ -33,9 +33,9 @@ def scan_fundamentals(app_data, json_config):
             tda_throttle_count = 0
             tda_throttle_time = time.time()
         print(symbol)
-        df_symbol, options_json = tda_search_instruments(app_data['authentication'], symbol)        
+        df_symbol, fundamentals_json = tda_search_instruments(app_data['authentication'], symbol)        
         f_json = open(fundamentals_dir + symbol + ".json", 'w')
-        f_json.write(options_json)
+        f_json.write(fundamentals_json)
         f_json.close()
         df_fundamentals = df_fundamentals.append(df_symbol, ignore_index=True)
     df_fundamentals.to_csv(fundamentals_dir + "watchlist fundamentals.csv", index=False)
