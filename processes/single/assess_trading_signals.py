@@ -34,12 +34,13 @@ UNDERLYING_MAX = 500
 def init_df_trading_strategy():
     df_trading_strategy = pd.DataFrame(columns = ["symbol", "strategy", "expiration", "days To Expiration", \
                                  "underlying Price", "strike Price", \
-                                 'break even', 'bid', 'ask', 'OTM Probability', 'probability of loss', 'Current Holding', 'Qty', 'max gain APY',  \
-                                 'Max Profit', 'Risk Management', 'Loss vs. Profit', 'premium', 'commission', \
-                                 'ROI', 'Max Loss', 'Preferred Outcome', 'Preferred Result', 'Unfavored Result', 'Consideration', \
+                                 'break even', 'bid', 'ask', 'OTM Probability', \
+                                 'volatility', 'ADX', 'probability of loss', \
+                                 'Purchase $', 'Concern', 'Current Holding', 'Qty', 'max gain APY',  \
+                                 'Max Profit', 'Risk Management', 'Loss vs. Profit', 'premium', 'commission', 'dividend Date', \
                                  'delta','gamma', 'theta', 'vega', 'rho', \
-                                 'inTheMoney', 'expirationDate', \
-                                 'volatility'])
+                                 'in The Money', 'expiration Date', \
+                                 'ROI', 'Max Loss', 'Preferred Outcome', 'Preferred Result', 'Unfavored Result' ])
     return df_trading_strategy
 
 def calendar_spread():
@@ -76,6 +77,7 @@ def iron_condor():
 
 def covered_call(symbol, df_data, df_options):
     df_covered_calls = init_df_trading_strategy()
+    current_ADX = df_data.at[df_data.shape[0]-1, 'ADX']
     strategy_ndx = 0
     option_ndx = 0
     while option_ndx < df_options.shape[0]:
@@ -107,20 +109,22 @@ def covered_call(symbol, df_data, df_options):
                     df_covered_calls.loc[strategy_ndx, "theta"] = df_options.at[option_ndx, "theta"]
                     df_covered_calls.loc[strategy_ndx, "vega"] = df_options.at[option_ndx, "vega"]
                     df_covered_calls.loc[strategy_ndx, "rho"] = df_options.at[option_ndx, "rho"]
-                    df_covered_calls.loc[strategy_ndx, "inTheMoney"] = df_options.at[option_ndx, "inTheMoney"]
+                    df_covered_calls.loc[strategy_ndx, "in The Money"] = df_options.at[option_ndx, "inTheMoney"]
                     df_covered_calls.loc[strategy_ndx, "strike Price"] = df_options.at[option_ndx, "strikePrice"]
-                    df_covered_calls.loc[strategy_ndx, "expirationDate"] = df_options.at[option_ndx, "expirationDate"]
+                    df_covered_calls.loc[strategy_ndx, "expiration Date"] = df_options.at[option_ndx, "expirationDate"]
                     df_covered_calls.loc[strategy_ndx, "expiration"] = format_tda_datetime(df_options.at[option_ndx, "expirationDate"])
                     df_covered_calls.loc[strategy_ndx, "days To Expiration"] = df_options.at[option_ndx, "daysToExpiration"]
                     df_covered_calls.loc[strategy_ndx, "volatility"] = df_options.at[option_ndx, "volatility"]
                     df_covered_calls.loc[strategy_ndx, "OTM Probability"] = OTM_probability
                     df_covered_calls.loc[strategy_ndx, "break even"] = f_strike + f_bid
+                    df_covered_calls.loc[strategy_ndx, "ADX"] = current_ADX
                     strategy_ndx += 1
         option_ndx += 1
     return df_covered_calls
 
 def cash_secured_put(symbol, df_data, df_options):
     df_cash_secured_puts = init_df_trading_strategy()
+    current_ADX = df_data.at[df_data.shape[0]-1, 'ADX']
     strategy_ndx = 0
     option_ndx = 0
     while option_ndx < df_options.shape[0]:
@@ -160,14 +164,15 @@ def cash_secured_put(symbol, df_data, df_options):
                     df_cash_secured_puts.loc[strategy_ndx, "theta"] = df_options.at[option_ndx, "theta"]
                     df_cash_secured_puts.loc[strategy_ndx, "vega"] = df_options.at[option_ndx, "vega"]
                     df_cash_secured_puts.loc[strategy_ndx, "rho"] = df_options.at[option_ndx, "rho"]
-                    df_cash_secured_puts.loc[strategy_ndx, "inTheMoney"] = df_options.at[option_ndx, "inTheMoney"]
+                    df_cash_secured_puts.loc[strategy_ndx, "in The Money"] = df_options.at[option_ndx, "inTheMoney"]
                     df_cash_secured_puts.loc[strategy_ndx, "strike Price"] = df_options.at[option_ndx, "strikePrice"]
-                    df_cash_secured_puts.loc[strategy_ndx, "expirationDate"] = df_options.at[option_ndx, "expirationDate"]
+                    df_cash_secured_puts.loc[strategy_ndx, "expiration Date"] = df_options.at[option_ndx, "expirationDate"]
                     df_cash_secured_puts.loc[strategy_ndx, "expiration"] = format_tda_datetime(df_options.at[option_ndx, "expirationDate"])
                     df_cash_secured_puts.loc[strategy_ndx, "days To Expiration"] = df_options.at[option_ndx, "daysToExpiration"]
                     df_cash_secured_puts.loc[strategy_ndx, "volatility"] = df_options.at[option_ndx, "volatility"]
                     df_cash_secured_puts.loc[strategy_ndx, "OTM Probability"] = OTM_probability
                     df_cash_secured_puts.loc[strategy_ndx, "break even"] = f_strike + f_bid
+                    df_cash_secured_puts.loc[strategy_ndx, "ADX"] = current_ADX
                     strategy_ndx += 1
         option_ndx += 1
     return df_cash_secured_puts
@@ -216,6 +221,9 @@ def search_for_trading_opportunities(f_out, authentication_parameters, analysis_
     print("Analyzing potential covered calls")
     for symbol in tda_read_watch_lists(json_authentication, watch_list='Combined Holding'):
         df_options, options_json = tda_read_option_chain(authentication_parameters, symbol)
+        filename = analysis_dir + '\\' + symbol + '.csv'
+        if os.path.isfile(filename):
+            df_data = pd.read_csv(filename)
         df_covered_calls = covered_call(symbol, df_data, df_options)
         if df_covered_calls.shape[0] > 0:
             df_potential_strategies = df_potential_strategies.append(df_covered_calls)
@@ -223,6 +231,9 @@ def search_for_trading_opportunities(f_out, authentication_parameters, analysis_
     print("Analyzing potential cash secured puts")
     for symbol in tda_read_watch_lists(json_authentication, watch_list='Potential Buy'):
         df_options, options_json = tda_read_option_chain(authentication_parameters, symbol)
+        filename = analysis_dir + '\\' + symbol + '.csv'
+        if os.path.isfile(filename):
+            df_data = pd.read_csv(filename)
         df_cash_secured_puts = cash_secured_put(symbol, df_data, df_options)
         if df_cash_secured_puts.shape[0] > 0:
             df_potential_strategies = df_potential_strategies.append(df_cash_secured_puts)
