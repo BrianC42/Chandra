@@ -33,11 +33,12 @@ UNDERLYING_MAX = 500
 
 def init_df_trading_strategy():
     df_trading_strategy = pd.DataFrame(columns = ["symbol", "strategy", "expiration", "days To Expiration", \
-                                 "underlying Price", "strike Price", \
+                                 "underlying Price", "close", "strike Price", \
                                  'break even', 'bid', 'ask', 'OTM Probability', \
                                  'volatility', 'ADX', 'probability of loss', \
-                                 'Purchase $', 'Concern', 'Current Holding', 'Qty', 'max gain APY',  \
-                                 'Max Profit', 'Risk Management', 'Loss vs. Profit', 'premium', 'commission', 'dividend Date', \
+                                 'Purchase $', 'Earnings', 'Dividend', 'Current Holding', 'Qty', 'max gain APY', \
+                                 'Max Profit', 'Risk Management', 'Loss vs. Profit', 'premium', 'commission', \
+                                 'Earnings Date', 'dividend Date', \
                                  'delta','gamma', 'theta', 'vega', 'rho', \
                                  'in The Money', 'expiration Date', \
                                  'ROI', 'Max Loss', 'Preferred Outcome', 'Preferred Result', 'Unfavored Result' ])
@@ -78,6 +79,7 @@ def iron_condor():
 def covered_call(symbol, df_data, df_options):
     df_covered_calls = init_df_trading_strategy()
     current_ADX = df_data.at[df_data.shape[0]-1, 'ADX']
+    current_close = df_data.at[df_data.shape[0]-1, 'Close']
     strategy_ndx = 0
     option_ndx = 0
     while option_ndx < df_options.shape[0]:
@@ -102,6 +104,7 @@ def covered_call(symbol, df_data, df_options):
                     df_covered_calls.loc[strategy_ndx, 'strategy'] = 'Covered call'
                     df_covered_calls.loc[strategy_ndx, 'symbol'] = df_options.at[option_ndx, 'underlying symbol']
                     df_covered_calls.loc[strategy_ndx, "underlying Price"] = df_options.at[option_ndx, "underlyingPrice"]
+                    df_covered_calls.loc[strategy_ndx, "close"] = current_close
                     df_covered_calls.loc[strategy_ndx, "bid"] = df_options.at[option_ndx, "bid"]
                     df_covered_calls.loc[strategy_ndx, "ask"] = df_options.at[option_ndx, "ask"]
                     df_covered_calls.loc[strategy_ndx, "delta"] = df_options.at[option_ndx, "delta"]
@@ -125,6 +128,7 @@ def covered_call(symbol, df_data, df_options):
 def cash_secured_put(symbol, df_data, df_options):
     df_cash_secured_puts = init_df_trading_strategy()
     current_ADX = df_data.at[df_data.shape[0]-1, 'ADX']
+    current_close = df_data.at[df_data.shape[0]-1, 'Close']
     strategy_ndx = 0
     option_ndx = 0
     while option_ndx < df_options.shape[0]:
@@ -157,6 +161,7 @@ def cash_secured_put(symbol, df_data, df_options):
                     df_cash_secured_puts.loc[strategy_ndx, 'strategy'] = 'Cash Secured Put'
                     df_cash_secured_puts.loc[strategy_ndx, 'symbol'] = df_options.at[option_ndx, 'underlying symbol']
                     df_cash_secured_puts.loc[strategy_ndx, "underlying Price"] = df_options.at[option_ndx, "underlyingPrice"]
+                    df_cash_secured_puts.loc[strategy_ndx, "close"] = current_close
                     df_cash_secured_puts.loc[strategy_ndx, "bid"] = df_options.at[option_ndx, "bid"]
                     df_cash_secured_puts.loc[strategy_ndx, "ask"] = df_options.at[option_ndx, "ask"]
                     df_cash_secured_puts.loc[strategy_ndx, "delta"] = df_options.at[option_ndx, "delta"]
