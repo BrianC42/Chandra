@@ -23,6 +23,11 @@ from configuration_constants import JSON_CAT_TF
 from configuration_constants import JSON_CAT_THRESHOLD
 from configuration_constants import JSON_VALUE_RANGES
 
+from configuration_constants import JSON_PREPROCESS_SEQUENCE
+from configuration_constants import JSON_PREPROCESS_DISCRETIZATION
+from configuration_constants import JSON_PREPROCESS_DISCRETIZATION_BINS
+from configuration_constants import JSON_PREPROCESS_CATEGORY_ENCODING
+
 from configuration_constants import JSON_MODEL_INPUT_LAYER
 from configuration_constants import JSON_MODEL_OUTPUT_LAYER
 from configuration_constants import JSON_MODEL_OUTPUT_ACTIVATION
@@ -105,9 +110,18 @@ def build_model(nx_graph):
     try:
         # inputs                
         logging.debug("Building ML model")
+        nx_preprocess_sequence = nx.get_node_attributes(nx_graph, JSON_PREPROCESS_SEQUENCE)
+
         for node_i in nx_graph.nodes():
             nx_read_attr = nx.get_node_attributes(nx_graph, JSON_PROCESS_TYPE)
             if nx_read_attr[node_i] == JSON_KERAS_DENSE_PROCESS:
+                if node_i in nx_preprocess_sequence:
+                    print ("Including preprocess steps %s" % nx_preprocess_sequence)
+                    for preprocessStep in nx_preprocess_sequence[node_i]:
+                        if preprocessStep == JSON_PREPROCESS_DISCRETIZATION:
+                            nx_discretization_bins = nx.get_node_attributes(nx_graph, JSON_PREPROCESS_DISCRETIZATION_BINS)
+                            nx_bins = nx_discretization_bins[node_i]
+                            print ("Setting up discretization step %s, %s" % (preprocessStep, nx_bins))
                 k_model = create_dense_model(nx_graph, node_i)
         
     except Exception:

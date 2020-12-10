@@ -20,7 +20,7 @@
 		},
 		"conditionalFields" : {
 			"dataPrepCtrl" : {
-				"inputFile" : "d:\\brian\\AI Projects\\tda\\market_analysis_data\\aapl.csv"
+				"inputFile" : ["d:\\brian\\AI Projects\\tda\\market_analysis_data\\aa*.csv", "d:\\brian\\AI Projects\\tda\\market_analysis_data\\c.csv"]
 			}
 		}
 	},
@@ -35,7 +35,14 @@
 			"logFile" : "d:\\brian\\AI Projects\\logs\\dense_OHLCV.txt"
 		},
 		"conditionalFields" : {
-			"KerasDenseCtrl" : {
+			"preprocessingLayers" : {
+				"comments - supported layers" : ["discretization", "categoryEncoding", "TBD"],
+				"preprocessSequence" : ["discretization"],
+			    "discretization" : {
+					"bins" : [-1.0, -0.5, -0.2, -0.1, -0.05, -0.01, 0.01, 0.05, 0.1, 0.2, 0.5, 1.0]
+				}
+		    },
+		    "KerasDenseCtrl" : {
 				"modelFile" : "d:\\brian\\AI Projects\\models\\Dense_OHLCV",
 				"modelStructure" : {
 					"inputLayer" : "OHLCVin",
@@ -83,7 +90,8 @@
 				"balanceClasses" : true,
 				"ignoreBlanks" : true,
 				"flowDataFile" : "d:\\brian\\AI Projects\\temp\\aaplTensorInput.csv",
-				"dataFields" : ["Open", "High", "Low", "Close", "Volume"],
+				"comment - dataFields" : ["Open", "High", "Low", "Close", "Volume"],
+				"dataFields" : ["MACD_flag", "RS SMA20", "ADX", "ADI +DI", "ADI -DI", "Stochastic Oscillator"],
 				"categorization" : {
 					"comments: supported values" : ["categoryTrueFalse", "categoryThreshold (above / below)", "categoryRanges"],
 					"categoryType" : "categoryTrueFalse",

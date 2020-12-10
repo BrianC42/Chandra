@@ -32,6 +32,12 @@ from configuration_constants import JSON_LOG_FILE
 from configuration_constants import JSON_INPUT_DATA_FILE
 from configuration_constants import JSON_INPUT_DATA_PREPARATION
 
+from configuration_constants import JSON_PREPROCESSING
+from configuration_constants import JSON_PREPROCESS_SEQUENCE
+from configuration_constants import JSON_PREPROCESS_DISCRETIZATION
+from configuration_constants import JSON_PREPROCESS_DISCRETIZATION_BINS
+from configuration_constants import JSON_PREPROCESS_CATEGORY_ENCODING
+
 from configuration_constants import JSON_KERAS_DENSE_CTRL
 from configuration_constants import JSON_KERAS_DENSE_DATA
 from configuration_constants import JSON_MODEL_FILE
@@ -243,6 +249,18 @@ def add_meta_process_node (js_config, nx_graph) :
     
     # conditional elements
     js_conditional = js_config[JSON_CONDITIONAL]
+    if JSON_PREPROCESSING in js_conditional:
+        js_preprocessing = js_conditional[JSON_PREPROCESSING]
+        if JSON_PREPROCESS_SEQUENCE in js_preprocessing:
+            js_preprocess_sequence = js_preprocessing[JSON_PREPROCESS_SEQUENCE]
+            nx_preprocess_sequence_value = js_preprocess_sequence
+            nx.set_node_attributes(nx_graph, {nx_process_name:nx_preprocess_sequence_value}, JSON_PREPROCESS_SEQUENCE)
+        if JSON_PREPROCESS_DISCRETIZATION in js_preprocessing:
+            js_bins = js_preprocessing[JSON_PREPROCESS_DISCRETIZATION][JSON_PREPROCESS_DISCRETIZATION_BINS]
+            nx_discretization_bins = js_bins
+            nx.set_node_attributes(nx_graph, {nx_process_name:nx_discretization_bins}, JSON_PREPROCESS_DISCRETIZATION_BINS)
+            
+
     if js_required[JSON_PROCESS_TYPE] == JSON_DATA_PREP_PROCESS:
         js_data_prep_ctrl = js_conditional[JSON_INPUT_DATA_PREPARATION]
         add_data_load_details(js_data_prep_ctrl, nx_graph, nx_process_name)

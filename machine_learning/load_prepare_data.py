@@ -4,6 +4,7 @@ Created on Apr 7, 2020
 @author: Brian
 '''
 import os
+import glob
 import logging
 import networkx as nx
 import pandas as pd
@@ -23,18 +24,14 @@ from configuration_constants import JSON_CATEGORY_1HOT
 from configuration_constants import JSON_CAT_TF
 from configuration_constants import JSON_CAT_THRESHOLD
 from configuration_constants import JSON_THRESHOLD_VALUE
-from configuration_constants import JSON_VALUE_RANGES
-from configuration_constants import JSON_RANGE_MINS
-from configuration_constants import JSON_RANGE_MAXS
 
 def set_1Hot_TF(df_out, categoryFields, category1Hot):
-    ndx = 0
-    while ndx < len(df_out):
+    #ndxList = df_out.index
+    for ndx in df_out.index:
         if df_out.loc[ndx, categoryFields]:
             df_out.loc[ndx, category1Hot[0]] = 1
         else:
             df_out.loc[ndx, category1Hot[1]] = 1
-        ndx += 1
     return
 
 def set_1Hot_Threshold():
@@ -45,7 +42,7 @@ def set_1Hot_Ranges():
 
 def prepare2dTrainingData(nx_graph, node_name):
     nx_data_file = nx.get_node_attributes(nx_graph, JSON_INPUT_DATA_FILE)
-    print("load and prepare data using %s json parameters and file %s" % (node_name, nx_data_file[node_name]))
+    #print("load and prepare data using %s json parameters and file %s" % (node_name, nx_data_file[node_name]))
     nx_data_flow = nx.get_node_attributes(nx_graph, JSON_OUTPUT_FLOW)
     output_flow = nx_data_flow[node_name]
     for edge_i in nx_graph.edges():
@@ -68,37 +65,40 @@ def prepare2dTrainingData(nx_graph, node_name):
             categoryFields = nx_categoryFields[edge_i[0], edge_i[1], output_flow]
             category1Hot = nx_category1Hot[edge_i[0], edge_i[1], output_flow]
 
-            if os.path.isfile(nx_data_file[node_name]):
-                df_data = pd.read_csv(nx_data_file[node_name])
-                l_filter = []
-                for fld in dataFields:
-                    l_filter.append(fld)
-                l_filter.append(categoryFields)
-                df_inputs = df_data.filter(l_filter)
-                if ignoreBlanks:
-                    df_inputs = df_inputs.dropna()
-                if balanced:
-                    pass
-                '''
-                Normalize data or use Keras normalization layer?
-                '''
-                for oneHot in category1Hot:
-                    df_inputs.insert(len(df_inputs.columns), oneHot, 0)
+            for dataFile in nx_data_file[node_name]:
+                fileSpecList = glob.glob(dataFile)
+                for FileSpec in fileSpecList:
+                    if os.path.isfile(FileSpec):
+                        df_data = pd.read_csv(FileSpec)
+                        
+                        l_filter = []
+                        for fld in dataFields:
+                            l_filter.append(fld)
+                        l_filter.append(categoryFields)
+                        df_inputs = df_data.filter(l_filter)
+                        
+                        if ignoreBlanks:
+                            df_inputs = df_inputs.dropna()
+                            
+                        if balanced:
+                            pass
+
+                        for oneHot in category1Hot:
+                            df_inputs.insert(len(df_inputs.columns), oneHot, 0)
                     
-                if categoryType == JSON_CAT_TF:
-                    set_1Hot_TF(df_inputs, categoryFields, category1Hot)
-                elif categoryType == JSON_CAT_THRESHOLD:
-                    pass
-                elif categoryType == JSON_THRESHOLD_VALUE:
-                    pass
-                else:
-                    raise NameError('Invalid category type')
+                        if categoryType == JSON_CAT_TF:
+                            set_1Hot_TF(df_inputs, categoryFields, category1Hot)
+                        elif categoryType == JSON_CAT_THRESHOLD:
+                            pass
+                        elif categoryType == JSON_THRESHOLD_VALUE:
+                            pass
+                        else:
+                            raise NameError('Invalid category type')
                 
-                df_inputs = df_inputs.drop(categoryFields, axis=1)
-                
-                df_inputs.to_csv(flowFilename, index=False)
-            else:
-                raise NameError('Data file does not exist')
+                        df_inputs = df_inputs.drop(categoryFields, axis=1)
+                        df_inputs.to_csv(flowFilename, index=False)
+                    else:
+                        raise NameError('Data file does not exist')
     return
 
 def load_and_prepare_data(nx_graph):
