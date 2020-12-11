@@ -90,8 +90,8 @@ def create_dense_model(nx_graph, nx_node):
         ndx += 1
     k_outputs = tf.keras.layers.Dense(nx_outputWidth, name=nx_output_layer, activation=nx_output_activation)(k_layer)
     model = tf.keras.Model(name=nx_node, inputs=k_inputs, outputs=k_outputs)
-    model.compile(nx_optimizer, nx_loss, metrics=nx_metrics)
-    # , loss_weights=nx_loss_weights
+    model.summary()
+    model.compile(nx_optimizer, nx_loss, metrics=nx_metrics, loss_weights=nx_loss_weights)
 
     return model
 

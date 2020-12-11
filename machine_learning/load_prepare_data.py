@@ -64,6 +64,8 @@ def prepare2dTrainingData(nx_graph, node_name):
             categoryType = nx_categoryType[edge_i[0], edge_i[1], output_flow]
             categoryFields = nx_categoryFields[edge_i[0], edge_i[1], output_flow]
             category1Hot = nx_category1Hot[edge_i[0], edge_i[1], output_flow]
+            
+            df_combined = pd.DataFrame()
 
             for dataFile in nx_data_file[node_name]:
                 fileSpecList = glob.glob(dataFile)
@@ -80,25 +82,30 @@ def prepare2dTrainingData(nx_graph, node_name):
                         if ignoreBlanks:
                             df_inputs = df_inputs.dropna()
                             
+                        '''
                         if balanced:
-                            pass
-
+                            print("Balanced data")
+                        '''
+                            
                         for oneHot in category1Hot:
                             df_inputs.insert(len(df_inputs.columns), oneHot, 0)
                     
                         if categoryType == JSON_CAT_TF:
                             set_1Hot_TF(df_inputs, categoryFields, category1Hot)
-                        elif categoryType == JSON_CAT_THRESHOLD:
-                            pass
-                        elif categoryType == JSON_THRESHOLD_VALUE:
-                            pass
                         else:
                             raise NameError('Invalid category type')
+                        '''
+                        elif categoryType == JSON_CAT_THRESHOLD:
+                            print("Threshold category type - not yet implemented")
+                        elif categoryType == JSON_THRESHOLD_VALUE:
+                            print("Threshold value type - not yet implemented")
+                        '''
                 
-                        df_inputs = df_inputs.drop(categoryFields, axis=1)
-                        df_inputs.to_csv(flowFilename, index=False)
+                        df_inputs.drop(categoryFields, axis=1)
+                        df_combined = pd.concat([df_combined, df_inputs], ignore_index=True)
                     else:
                         raise NameError('Data file does not exist')
+            df_combined.to_csv(flowFilename, index=False)
     return
 
 def load_and_prepare_data(nx_graph):

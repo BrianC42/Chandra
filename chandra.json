@@ -7,32 +7,36 @@
 "outputFile" : "d:\\brian\\AI Projects\\logs\\chandra_output",
 "loggingLevel" : "debug",
 "loggingFormat" : "%(asctime)s: %(levelname)s: %(message)s",
+"comment processing node section" : "Speciification details  for the processing nodes",
 "processNodes" : [
 	{
-		"processNodeName" : "inputAAPL_OHLCV",
+		"processNodeName" : "inputsrc",
 		"requiredFields" : {
 			"processType" : "dataPrep",
 			"comments: supported values - processType" : ["dataPrep", "KerasDense"],
 			"inputFlows" : [],
-			"outputFlow" : "OHLCV_AAPL",
+			"outputFlow" : "MLdata",
 			"outputFile" : "",
 			"logFile" : ""
 		},
 		"conditionalFields" : {
 			"dataPrepCtrl" : {
-				"inputFile" : ["d:\\brian\\AI Projects\\tda\\market_analysis_data\\aa*.csv", "d:\\brian\\AI Projects\\tda\\market_analysis_data\\c.csv"]
+				"comment - inputFile" : ["d:\\brian\\AI Projects\\tda\\market_analysis_data\\aapl.csv", 
+								"d:\\brian\\AI Projects\\tda\\market_analysis_data\\c.csv"
+								],
+				"inputFile" : ["d:\\brian\\AI Projects\\tda\\market_analysis_data\\c.csv"]
 			}
 		}
 	},
 	{
-		"processNodeName" : "Dense_OHLCV",
+		"processNodeName" : "MLmodel",
 		"requiredFields" : {
 			"processType" : "KerasDense",
 			"comments: supported values - processType" : ["dataPrep", "KerasDense"],
-			"inputFlows" : ["OHLCV_AAPL"],
+			"inputFlows" : ["MLdata"],
 			"outputFlow" : "",
-			"outputFile" : "d:\\brian\\AI Projects\\models\\Dense_OHLCV",
-			"logFile" : "d:\\brian\\AI Projects\\logs\\dense_OHLCV.txt"
+			"outputFile" : "d:\\brian\\AI Projects\\models\\MLmodel",
+			"logFile" : "d:\\brian\\AI Projects\\logs\\MLmodel.txt"
 		},
 		"conditionalFields" : {
 			"preprocessingLayers" : {
@@ -43,23 +47,24 @@
 				}
 		    },
 		    "KerasDenseCtrl" : {
-				"modelFile" : "d:\\brian\\AI Projects\\models\\Dense_OHLCV",
+				"modelFile" : "d:\\brian\\AI Projects\\models\\MLmodel",
 				"modelStructure" : {
-					"inputLayer" : "OHLCVin",
-					"layerCounts" : 5,
-					"layerNodes" : 1500,
+					"inputLayer" : "MLmodel",
+					"layerCounts" : 3,
+					"layerNodes" : 10,
 					"outputLayer" : "10day10pct",
 					"outputActivation" : "softmax"
 				},
 				"training" : {
-					"lossWeights" : [1.0, 1.0],
+					"Comment 1" : "one output - see data flow for detaiils",
+					"lossWeights" : [1.0],
 					"denseRegularation" : false,
 					"regularationValue" : 0.0,
 					"dropout" : false,
 					"dropoutRate" : 0.2,
 					"useBias" : true,
 					"validationSplit" : 0.05,
-					"batchSize" : 256,
+					"batchSize" : 32,
 					"epochs" : 3,
 					"verbose" : 1,
 					"balanceClasses" : true,
@@ -77,22 +82,25 @@
 		}
 	}
 ],
+"comment dataflow section" : "Speciification details  for the flows of data between processing nodes",
 "dataFlows" : [
 	{
-		"flowName" : "OHLCV_AAPL",
+		"flowName" : "MLdata",
 		"requiredFields" : {
-			"flowFrom" : "inputAAPL_OHLCV",
-			"flowTo" : "Dense_OHLCV"
+			"flowFrom" : "inputsrc",
+			"flowTo" : "MLmodel"
 		},
 		"conditionalFields" : {
 			"KerasDenseData" : {
 				"timeSequence" : false,
 				"balanceClasses" : true,
 				"ignoreBlanks" : true,
-				"flowDataFile" : "d:\\brian\\AI Projects\\temp\\aaplTensorInput.csv",
-				"comment - dataFields" : ["Open", "High", "Low", "Close", "Volume"],
-				"dataFields" : ["MACD_flag", "RS SMA20", "ADX", "ADI +DI", "ADI -DI", "Stochastic Oscillator"],
+				"flowDataFile" : "d:\\brian\\AI Projects\\temp\\MLdata.csv",
+				"comment1 - dataFields" : ["Open", "High", "Low", "Close", "Volume"],
+				"comment2 - dataFields" : ["MACD_flag", "RS SMA20", "ADX", "ADI +DI", "ADI -DI", "Stochastic Oscillator"],
+				"dataFields" : ["MACD_flag", "ADX", "ADI +DI"],
 				"categorization" : {
+					"comment 1" : "models to assess input data relationship to categorized outputs",
 					"comments: supported values" : ["categoryTrueFalse", "categoryThreshold (above / below)", "categoryRanges"],
 					"categoryType" : "categoryTrueFalse",
 					"categoryField" : "10day10pct",
@@ -102,180 +110,5 @@
 		}
 	}
 ],
-"comments unused process nodes" : [
-	{	"processNodeName" : "inputGE",
-		"inputType" : "localFile",
-		"inputFlows" : ["localFileGE"],
-		"processType" : "readcsv",
-		"outputFlow" : ["inputMACD"]
-	},
-	{	"processNodeName" : "calcMACD",
-		"inputType" : "dataFlow",
-		"inputFlows" : ["i1", "i2", "i3"],
-		"processType" : "calcMACD",
-		"outputFlow" : ["d"]
-	},
-	{	"processNodeName" : "calcBollingerBands",
-		"inputType" : "dataFlow",
-		"inputFlows" : ["i4", "i5", "i6"],
-		"processType" : "calcBollingerBands",
-		"outputFlow" : ["d"]
-	},
-	{	"processNodeName" : "calcOnBalanceVolume",
-		"inputType" : "dataFlow",
-		"inputFlows" : ["i7", "i8", "i9"],
-		"processType" : "calcOnBalanceVolume",
-		"outputFlow" : ["d"]
-	},
-	{	"processNodeName" : "LSTM_OBV",
-		"inputType" : "dataFlow",
-		"inputFlows" : ["i10", "i11", "i12"],
-		"processType" : "KerasLSTM",
-		"outputFlow" : ["d"]
-	},
-	{	"processNodeName" : "LSTM_BB",
-		"inputType" : "dataFlow",
-		"inputFlows" : ["i15"],
-		"processType" : "KerasLSTM",
-		"outputFlow" : ["d"]
-	},
-	{	"processNodeName" : "dense_MACD",
-		"inputType" : "dataFlow",
-		"inputFlows" : ["i16", "i17"],
-		"processType" : "KerasDense",
-		"outputFlow" : ["d"]
-	},
-	{	"processNodeName" : "summary",
-		"inputType" : "dataFlow",
-		"inputFlows" : ["i18", "i19"],
-		"processType" : "KerasDense",
-		"outputFlow" : ["d"]
-	}
-],
-"comments unused data flows" : [
-	{	"flowName" : "inputMACD",
-		"flowFrom" : "inputGE",
-		"flowTo" : "calcMACD",
-		"timeSequence" : false
-	},
-	{	"flowName" : "inputBB",
-		"flowFrom" : "inputGE",
-		"flowTo" : "calcBollingerBands",
-		"timeSequence" : false
-	},
-	{	"flowName" : "inputOBV",
-		"flowFrom" : "calcBollingerBands",
-		"flowTo" : "LSTM_BB",
-		"timeSequence" : false
-	},
-	{	"flowName" : "inputOBV",
-		"flowFrom" : "inputGE",
-		"flowTo" : "calcOnBalanceVolume",
-		"timeSequence" : false
-	},
-	{	"flowName" : "LSTM_OHLC",
-		"flowFrom" : "LSTM_OHLC",
-		"flowTo" : "summary",
-		"timeSequence" : true
-	},
-	{	"flowName" : "LSTM_BB",
-		"flowFrom" : "LSTM_BB",
-		"flowTo" : "summary",
-		"timeSequence" : true
-	},
-	{	"flowName" : "LSTM_OBV",
-		"flowFrom" : "calcOnBalanceVolume",
-		"flowTo" : "LSTM_OBV",
-		"timeSequence" : true
-	},
-	{	"flowName" : "summaryOBV",
-		"flowFrom" : "LSTM_OBV",
-		"flowTo" : "summary",
-		"timeSequence" : true
-	},
-	{	"flowName" : "denseMACD",
-		"flowFrom" : "calcMACD",
-		"flowTo" : "dense_MACD"
-	},
-	{	"flowName" : "MACD",
-		"flowFrom" : "dense_MACD",
-		"flowTo" : "summary"
-	}
-],
-"comments unused text" : {
-	"dataSources" : [
-		{	"srcType" : "localFileAAPL",
-			"fileType" : "csv",
-			"fileDetails" : "d:\\brian\\AI Projects\\tda\\market_analysis_data\\aapl.csv",
-			"dataElements" : ["date","adj_open","adj_close","adj_high","adj_low"]
-		},
-		{	"srcType" : "localFileGE",
-			"fileType" : "csv",
-			"fileDetails" : "d:\\brian\\AI Projects\\tda\\market_analysis_data\\ge.csv",
-			"dataElements" : ["date","adj_close"]
-		},
-		{	"srcType" : "API"
-		}
-	],
-	"analysisResults" : [
-		{	"resultName" : "MACD",
-			"resultNode" : "LSTM_OHLC"
-		},
-		{	"resultName" : "BollingerBands",
-			"resultNode" : "LSTM_BB"
-		},
-		{	"resultName" : "Summary",
-			"resultNode" : "summary"
-		}
-	],
-	"symbols" : ["AAPL", "c", "ge"] ,
-	"inputNodes": [
-		{	"nodeName" : "pricing", 
-			"nodeType" : "LSTM",
-			"dataElements" : ["closingPrice","Low"] ,
-			"timeSequence" : false,
-			"timeSteps" : 30,
-			"outputName" : "pricing",
-			"lossWeights" : [1.0, 1.0, 0.01, 0.01, 1.0, 1.0],
-			"denseRegularation" : false,
-			"regularationValue" : 0.0,
-			"dropout" : false,
-			"dropoutRate" : 0.2,
-			"layerNodes" : 1500,
-			"useBias" : true,
-			"validationSplit" : 0.05,
-			"batchSize" : 256,
-			"epochs" : 3,
-			"verbose" : 2,
-			"balanceClasses" : true,
-			"analysis" : "classification",
-			"compilationLoss" : "binary_crossentropy",
-			"compilationMetrics" : ["accuracy", "binary_crossentropy"],
-			"activation" : "relu",
-			"optimizer" : "adam"
-		}, 
-		{	"nodeName" : "volume", 
-			"nodeType" : "dense", 
-			"dataElements" : ["volume"] ,
-			"timeSequence" : false,
-			"outputName" : "volume"
-		},
-		{	"nodeName" : "MACD", 
-			"nodeType" : "dense", 
-			"dataElements" : ["MACD"] ,
-			"timeSequence" : false,
-			"layerNodes" : 1000,
-			"outputName" : "MACD Output"
-		}
-	],
-	"internalNodes": [
-		{"nodeName" : "stream1", 					"nodeType" : "dense", "outputName" : "stream1Out", "inputs" : ["pricing", "volume"]},
-		{"outputName" : "stream2Out",				"nodeType" : "dense", "inputs" : ["MACD"], 		"nodeName" : "stream2"},
-		{"inputs" : ["stream1Out", "stream2Out"], 	"nodeType" : "dense", "nodeName" : "stream3",  	"outputName" : "conclusion"}
-	],
-		"outputs" : [
-		"stream1Out", 
-		"conclusion"
-	]
-}
+"comment" : "end of specification"
 }

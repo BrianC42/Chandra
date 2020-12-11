@@ -100,7 +100,7 @@ def trainModels(nx_graph, k_model):
                                       verbose=nx_verbose)
 
                 nx_model_file = nx.get_node_attributes(nx_graph, JSON_MODEL_FILE)[node_i]
-                k_model.summary()
+                #k_model.summary()
                 keras.utils.plot_model(k_model, to_file=nx_model_file + '.png', show_shapes=True)
                 k_model.save(nx_model_file)
     
