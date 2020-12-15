@@ -33,9 +33,9 @@ import matplotlib.pyplot as plt
 
 from configuration import get_ini_data
 from configuration import read_config_json
-from assemble_model import build_model
 from configuration_graph import build_configuration_graph
 from load_prepare_data import load_and_prepare_data
+from assemble_model import build_and_train_model
 from train_model import trainModels
 
 if __name__ == '__main__':
@@ -109,32 +109,25 @@ if __name__ == '__main__':
     ''' ................... Step 2 - Build Model ............................
     ========================================================================= '''
     step2 = time.time()
-    print ('\nStep 2 - Build Model')
-    k_model = build_model(nx_graph)
+    print ('\nStep 2 - Build and train the Model')
+    k_model = build_and_train_model(nx_graph)
 
-    ''' ...................... Step 3 - Train the model .....................
-    ========================================================================= '''
-    step3 = time.time()
-    print( "\nStep 3 - Train the model")
-    trainModels(nx_graph, k_model)
-    
-    ''' .................... Step 4 - Evaluate the model! ...............
+    ''' .................... Step 3 - Evaluate the model! ...............
     ===================================================================== '''
-    step4 = time.time()
-    print ("\nStep 4 - Evaluate the model!")
+    step3 = time.time()
+    print ("\nStep 3 - Evaluate the model!")
     
-    ''' .................... Step 5 - clean up, archive and visualize accuracy! ...............
+    ''' .................... Step 4 - clean up, archive and visualize accuracy! ...............
     =========================================================================================== '''
-    step5 = time.time()
-    print ("\nStep 5 - clean up, archive and visualize accuracy!")
+    step4 = time.time()
+    print ("\nStep 4 - clean up, archive and visualize accuracy!")
 
     end = time.time()
     print ("")
     print ("\tStep 1 took %.1f secs to Load and prepare the data for analysis" % (step2 - step1)) 
-    print ("\tStep 2 took %.1f secs to Build Model" % (step3 - step2)) 
-    print ("\tStep 3 took %.1f secs to Train the model" % (step4 - step3)) 
-    print ("\tStep 4 took %.1f secs to Evaluate the model" % (step5 - step4)) 
-    print ("\tStep 5 took %.1f secs to Visualize accuracy, clean up and archive" % (end - step5))    
+    print ("\tStep 2 took %.1f secs to Build and train the Model" % (step3 - step2)) 
+    print ("\tStep 3 took %.1f secs to Evaluate the model" % (step4 - step3)) 
+    print ("\tStep 5 took %.1f secs to Visualize accuracy, clean up and archive" % (end - step4))    
 
     '''
     clean up and prepare to exit

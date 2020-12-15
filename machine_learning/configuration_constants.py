@@ -193,18 +193,24 @@ JSON_BALANCED = "balanceClasses"
 JSON_TIME_SEQ = 'timeSequence'
 JSON_IGNORE_BLANKS = "ignoreBlanks"
 JSON_FLOW_DATA_FILE = "flowDataFile"
-JSON_DATA_FIELDS = "dataFields"
 
-JSON_CATEGORIZATION_DETAILS = "categorization"
-JSON_CATEGORY_FIELD = "categoryField"
-JSON_CATEGORY_1HOT = "categoryOneHot"
+JSON_FEATURE_FIELDS = "features"
+JSON_TARGET_FIELDS = "targets"
+
 JSON_CATEGORY_TYPE = "categoryType"
+JSON_CATEGORIZATION_DETAILS = "categorization"
+JSON_CATEGORY_1HOT = "categoryOneHot"
 JSON_CAT_TF = "categoryTrueFalse"
 JSON_CAT_THRESHOLD = "categoryThreshold"
 JSON_THRESHOLD_VALUE = "categoryThresholdValue"
 JSON_VALUE_RANGES = "categoryRanges"
 JSON_RANGE_MINS = "categoryMinimums"
 JSON_RANGE_MAXS = "categoryMaximums"
+JSON_LINEAR_REGRESSION = "linearRegression"
+
+JSON_REMOVE_OUTLIER_LIST  = "removeOutliers"
+JSON_OUTLIER_FEATURE = "featureName"
+JSON_OUTLIER_PCT = "outlierPct"
 
 JSON_MODEL_INPUT_LAYER = 'inputLayer'
 JSON_MODEL_OUTPUT_LAYER = 'outputLayer'

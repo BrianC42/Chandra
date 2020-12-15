@@ -38,6 +38,10 @@ from configuration_constants import JSON_PREPROCESS_DISCRETIZATION
 from configuration_constants import JSON_PREPROCESS_DISCRETIZATION_BINS
 from configuration_constants import JSON_PREPROCESS_CATEGORY_ENCODING
 
+from configuration_constants import JSON_REMOVE_OUTLIER_LIST
+from configuration_constants import JSON_OUTLIER_FEATURE
+from configuration_constants import JSON_OUTLIER_PCT
+
 from configuration_constants import JSON_KERAS_DENSE_CTRL
 from configuration_constants import JSON_KERAS_DENSE_DATA
 from configuration_constants import JSON_MODEL_FILE
@@ -46,11 +50,12 @@ from configuration_constants import JSON_BALANCED
 from configuration_constants import JSON_TIME_SEQ
 from configuration_constants import JSON_IGNORE_BLANKS
 from configuration_constants import JSON_FLOW_DATA_FILE
-from configuration_constants import JSON_DATA_FIELDS
+
+from configuration_constants import JSON_FEATURE_FIELDS
+from configuration_constants import JSON_TARGET_FIELDS
 
 from configuration_constants import JSON_CATEGORIZATION_DETAILS
 from configuration_constants import JSON_CATEGORY_TYPE
-from configuration_constants import JSON_CATEGORY_FIELD
 from configuration_constants import JSON_CATEGORY_1HOT
 from configuration_constants import JSON_CAT_TF
 from configuration_constants import JSON_CAT_THRESHOLD
@@ -58,6 +63,7 @@ from configuration_constants import JSON_THRESHOLD_VALUE
 from configuration_constants import JSON_VALUE_RANGES
 from configuration_constants import JSON_RANGE_MINS
 from configuration_constants import JSON_RANGE_MAXS
+from configuration_constants import JSON_LINEAR_REGRESSION
 
 from configuration_constants import JSON_MODEL_STRUCTURE
 
@@ -90,11 +96,10 @@ def add_2d_data_flow_details(js_keras_dense_data, nx_graph, nx_edge_key):
     nx_time_seq = js_keras_dense_data[JSON_TIME_SEQ]
     nx_ignore_blanks = js_keras_dense_data[JSON_IGNORE_BLANKS]
     nx_flow_data_file = js_keras_dense_data[JSON_FLOW_DATA_FILE]
-    nx_data_fields = js_keras_dense_data[JSON_DATA_FIELDS]
+    nx_feature_fields = js_keras_dense_data[JSON_FEATURE_FIELDS]
+    nx_target_fields = js_keras_dense_data[JSON_TARGET_FIELDS]
 
     js_category_details = js_keras_dense_data[JSON_CATEGORIZATION_DETAILS]
-    nx_category_field = js_category_details[JSON_CATEGORY_FIELD]
-    nx_category1Hot = js_category_details[JSON_CATEGORY_1HOT]
     
     for edge_i in nx_graph.edges():
         if edge_i == (nx_edge_key[0], nx_edge_key[1]):
@@ -102,13 +107,18 @@ def add_2d_data_flow_details(js_keras_dense_data, nx_graph, nx_edge_key):
             nx.set_edge_attributes(nx_graph, {nx_edge_key:nx_time_seq}, JSON_TIME_SEQ)
             nx.set_edge_attributes(nx_graph, {nx_edge_key:nx_ignore_blanks}, JSON_IGNORE_BLANKS)
             nx.set_edge_attributes(nx_graph, {nx_edge_key:nx_flow_data_file}, JSON_FLOW_DATA_FILE)
-            nx.set_edge_attributes(nx_graph, {nx_edge_key:nx_data_fields}, JSON_DATA_FIELDS)
-            nx.set_edge_attributes(nx_graph, {nx_edge_key:nx_category_field}, JSON_CATEGORY_FIELD)
-            nx.set_edge_attributes(nx_graph, {nx_edge_key:nx_category1Hot}, JSON_CATEGORY_1HOT)
+            nx.set_edge_attributes(nx_graph, {nx_edge_key:nx_feature_fields}, JSON_FEATURE_FIELDS)
+            nx.set_edge_attributes(nx_graph, {nx_edge_key:nx_target_fields}, JSON_TARGET_FIELDS)
+
+            if JSON_CATEGORY_1HOT in js_category_details:
+                nx_category1Hot = js_category_details[JSON_CATEGORY_1HOT]
+                nx.set_edge_attributes(nx_graph, {nx_edge_key:nx_category1Hot}, JSON_CATEGORY_1HOT)
             
             nx_category_type = js_category_details[JSON_CATEGORY_TYPE]
             nx.set_edge_attributes(nx_graph, {nx_edge_key:nx_category_type}, JSON_CATEGORY_TYPE)
             if nx_category_type == JSON_CAT_TF:
+                pass
+            elif nx_category_type == JSON_LINEAR_REGRESSION:
                 pass
             elif nx_category_type == JSON_CAT_THRESHOLD:
                 nx_threshold = js_category_details[JSON_THRESHOLD_VALUE]
@@ -260,7 +270,10 @@ def add_meta_process_node (js_config, nx_graph) :
             nx_discretization_bins = js_bins
             nx.set_node_attributes(nx_graph, {nx_process_name:nx_discretization_bins}, JSON_PREPROCESS_DISCRETIZATION_BINS)
             
-
+    if JSON_REMOVE_OUTLIER_LIST in js_conditional:
+        js_remove_outliers = js_conditional[JSON_REMOVE_OUTLIER_LIST]
+        nx.set_node_attributes(nx_graph, {nx_process_name:js_remove_outliers}, JSON_REMOVE_OUTLIER_LIST)
+            
     if js_required[JSON_PROCESS_TYPE] == JSON_DATA_PREP_PROCESS:
         js_data_prep_ctrl = js_conditional[JSON_INPUT_DATA_PREPARATION]
         add_data_load_details(js_data_prep_ctrl, nx_graph, nx_process_name)
