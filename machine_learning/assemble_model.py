@@ -9,8 +9,10 @@ import os
 import sys
 import logging
 import networkx as nx
+import numpy as np
 import pandas as pd
 import tensorflow as tf
+from tensorflow import data
 from tensorflow import keras
 from tensorflow.keras import layers
 from tensorflow.keras.layers.experimental import preprocessing
@@ -145,10 +147,11 @@ def set_up_normalization(k_layer, df_x_train):
     )
 
     '''
-    #tf_dataset = tf.data.Dataset.(df_x_train)
+    np_features = np.array(df_x_train)
+    tf_dataset = tf.data.Dataset.from_tensor_slices(np_features)
+    print("dataflow\n%s\ntensor dataset\n%s" % (df_x_train, tf_dataset))
     norm = preprocessing.Normalization()
-    norm.adapt(df_x_train)
-    k_layer = preprocessing.Normalization()(norm)
+    norm.adapt(tf_dataset)
     
     return k_layer
 
@@ -329,5 +332,5 @@ def build_model(nx_graph, df_x_train):
 def build_and_train_model(nx_graph):
     df_x_train, df_y_train, df_x_test, df_y_test = load_training_data(nx_graph)
     k_model = build_model(nx_graph, df_x_train)
-    trainModels(nx_graph, k_model)
+    trainModels(nx_graph, k_model, df_x_train, df_y_train, df_x_test, df_y_test)
     return
