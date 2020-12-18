@@ -21,14 +21,14 @@
 		},
 		"conditionalFields" : {
 			"dataPrepCtrl" : {
-				"comment - inputFile" : ["d:\\brian\\AI Projects\\tda\\market_analysis_data\\a*.csv",
-								"d:\\brian\\AI Projects\\tda\\market_analysis_data\\c*.csv"
+				"comment - inputFile" : ["d:\\brian\\AI Projects\\tda\\market_analysis_data\\[ab]*.csv",
+								"d:\\brian\\AI Projects\\tda\\market_analysis_data\\[abc]*.csv"
 								],
-				"inputFile" : ["d:\\brian\\AI Projects\\tda\\market_analysis_data\\[ab]*.csv"]
+				"inputFile" : ["d:\\brian\\AI Projects\\tda\\market_analysis_data\\[abc]*.csv"]
 			},
 			"removeOutliers" : [
-				{"featureName" : "MACD_Signal", "outlierPct" : 0.1},
-				{"featureName" : "ADX", "outlierPct" : 0.2}
+				{"featureName" : "MACD_Signal", "outlierPct" : 0.05},
+				{"featureName" : "ADX", "outlierPct" : 0.01}
 			]
 		}
 	},
@@ -70,8 +70,8 @@
 					"verbose" : 1,
 					"balanceClasses" : true,
 					"analysis" : "classification",
-					"compilationLoss" : "binary_crossentropy",
-					"comment: supported values - compilationLoss" : ["binary_crossentropy"],
+					"compilationLoss" : "mean_squared_error",
+					"comment: supported values - compilationLoss" : ["binary_crossentropy", "mean_squared_error"],
 					"compilationMetrics" : ["accuracy"],
 					"comment: supported values - compilationMetrics" : ["accuracy"],
 					"activation" : "relu",
@@ -105,7 +105,7 @@
 				"comment 6 - available features" : ["AccumulationDistribution"],
 				"comment 7 - available features" : ["BB_Lower", "BB_Upper"],
 				"comment 8 - available features" : ["OBV"],
-				"features" : ["MACD_Signal", "OBV", "ADX"],
+				"features" : ["MACD_Signal", "ADX"],
 				"comment t1 - target fields True/False" : ["10day100pct", "10day50pct", "10day25pct", "10day10pct"],
 				"comment t2 - target fields numeric" : ["40 day change", "20 day change", "10 day change"],
 				"targets" : ["20 day change"],

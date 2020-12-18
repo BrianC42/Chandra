@@ -38,9 +38,12 @@ def discard_outliers(nx_graph, node_i, df_data):
     for feature in nx_remove_outlier_list[node_i]:
         featureName = feature[JSON_OUTLIER_FEATURE]
         outlierPct = feature[JSON_OUTLIER_PCT]
-        print("Removing outliers (highest and lowest %s%%) from %s" % (outlierPct, featureName))
+        print("Removing outliers (highest and lowest %s%%) from %s" % (outlierPct * 100, featureName))        
+        rows = df_data.shape[0]
+        df_data = df_data.sort_values(by = featureName)
+        df_data = df_data[int(rows * outlierPct) : (rows - int(rows * outlierPct))]
         
-    return
+    return df_data
 
 def set_1Hot_TF(df_out, categoryFields, category1Hot):
     #ndxList = df_out.index
@@ -64,8 +67,6 @@ def prepare2dTrainingData(nx_graph, node_name):
     output_flow = nx_data_flow[node_name]
     for edge_i in nx_graph.edges():
         if edge_i[0] == node_name:
-            nx_balanced = nx.get_edge_attributes(nx_graph, JSON_BALANCED)
-            nx_timeSeq = nx.get_edge_attributes(nx_graph, JSON_TIME_SEQ)
             nx_ignoreBlanks = nx.get_edge_attributes(nx_graph, JSON_IGNORE_BLANKS)
             nx_dataFields = nx.get_edge_attributes(nx_graph, JSON_FEATURE_FIELDS)
             nx_categoryType = nx.get_edge_attributes(nx_graph, JSON_CATEGORY_TYPE)
@@ -74,8 +75,6 @@ def prepare2dTrainingData(nx_graph, node_name):
             featureFields = nx_dataFields[edge_i[0], edge_i[1], output_flow]
             targetFields = nx_targetFields[edge_i[0], edge_i[1], output_flow]
             categoryType = nx_categoryType[edge_i[0], edge_i[1], output_flow]
-            balanced = nx_balanced[edge_i[0], edge_i[1], output_flow]
-            timeSeq = nx_timeSeq[edge_i[0], edge_i[1], output_flow]
             ignoreBlanks = nx_ignoreBlanks[edge_i[0], edge_i[1], output_flow]
             
             df_combined = pd.DataFrame()
@@ -101,7 +100,7 @@ def prepare2dTrainingData(nx_graph, node_name):
                 print("Removing NaN")
                 df_combined = df_combined.dropna()
                 
-            discard_outliers(nx_graph, node_name, df_combined)
+            df_combined = discard_outliers(nx_graph, node_name, df_combined)
                             
             if categoryType == JSON_CAT_TF:
                 nx_category1Hot = nx.get_edge_attributes(nx_graph, JSON_CATEGORY_1HOT)
@@ -137,9 +136,13 @@ def load_and_prepare_data(nx_graph):
         for node_i in nx_graph.nodes():
             output_flow = nx_data_flow[node_i]
             if nx_read_attr[node_i] == JSON_DATA_PREP_PROCESS:
-                df_data = prepare2dTrainingData(nx_graph, node_i)
                 for edge_i in nx_graph.edges():
                     if edge_i[0] == node_i:
+                        nx_balanced = nx.get_edge_attributes(nx_graph, JSON_BALANCED)
+                        balanced = nx_balanced[edge_i[0], edge_i[1], output_flow]
+                        nx_timeSeq = nx.get_edge_attributes(nx_graph, JSON_TIME_SEQ)
+                        timeSeq = nx_timeSeq[edge_i[0], edge_i[1], output_flow]
+                        df_data = prepare2dTrainingData(nx_graph, node_i)
                         flowFilename = nx_flowFilename[edge_i[0], edge_i[1], output_flow]
                         print("\nData \n%s\nwritten to %s for training\n" % (df_data.describe(), flowFilename))
                         df_data.to_csv(flowFilename, index=False)

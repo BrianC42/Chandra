@@ -91,7 +91,7 @@ def create_LSTM_model(nx_graph):
 def create_RNN_model(nx_graph):
     return
 
-def set_up_normalization(k_layer, df_x_train):
+def normalize_data(k_input_layer, df_data):
     print("Adding normalization")
     '''
     Normalization
@@ -146,16 +146,16 @@ def set_up_normalization(k_layer, df_x_train):
         **kwargs
     )
 
-    '''
     np_features = np.array(df_x_train)
     tf_dataset = tf.data.Dataset.from_tensor_slices(np_features)
     print("dataflow\n%s\ntensor dataset\n%s" % (df_x_train, tf_dataset))
     norm = preprocessing.Normalization()
     norm.adapt(tf_dataset)
+    '''
     
-    return k_layer
+    return k_input_layer, df_data
 
-def set_up_preprocessing(k_layer, nx_graph, node_i):
+def preprocess_data(nx_graph, node_i, df_data):
     '''
     see: https://www.tensorflow.org/tutorials/load_data/csv
     
@@ -199,7 +199,6 @@ def set_up_preprocessing(k_layer, nx_graph, node_i):
         
     Crucially, these layers are non-trainable. Their state is not set during training; it must be set before training, a step called "adaptation".
     You set the state of a preprocessing layer by exposing it to training data, via the adapt() method:
-    '''
     
     nx_preprocess_sequence = nx.get_node_attributes(nx_graph, JSON_PREPROCESS_SEQUENCE)
     if node_i in nx_preprocess_sequence:
@@ -209,63 +208,45 @@ def set_up_preprocessing(k_layer, nx_graph, node_i):
                 nx_discretization_bins = nx.get_node_attributes(nx_graph, JSON_PREPROCESS_DISCRETIZATION_BINS)
                 nx_bins = nx_discretization_bins[node_i]
                 print ("Setting up discretization step %s, %s" % (preprocessStep, nx_bins))
-                
-    return k_layer
+    '''
+    
+    return df_data
 
-def load_training_data(nx_graph):
+def load_training_data(nx_graph, node_i, nx_edge):
     # error handling
     try:
-        # inputs                
-        logging.debug("Training ML model")
-        for node_i in nx_graph.nodes():
-            nx_read_attr = nx.get_node_attributes(nx_graph, JSON_PROCESS_TYPE)
-            if nx_read_attr[node_i] == JSON_KERAS_DENSE_PROCESS:    
-                print("Training: %s" % node_i)
-                
-                nx_input_flow = nx.get_node_attributes(nx_graph, JSON_INPUT_FLOWS)[node_i]
-                nx_edges = nx.edges(nx_graph)
-                for nx_edge in nx_edges:
-                    if nx_edge[1] == node_i:
-                        break
-    
-                nx_featureFields = nx.get_edge_attributes(nx_graph, JSON_FEATURE_FIELDS)
-                nx_features = nx_featureFields[nx_edge[0], nx_edge[1], nx_input_flow[0]]    
 
-                nx_targetFiields = nx.get_edge_attributes(nx_graph, JSON_TARGET_FIELDS)
-                nx_targets = nx_targetFiields[nx_edge[0], nx_edge[1], nx_input_flow[0]]    
-
-                nx_validation_split = nx.get_node_attributes(nx_graph, JSON_VALIDATION_SPLIT)[node_i]
-                nx_data_file = nx.get_edge_attributes(nx_graph, JSON_FLOW_DATA_FILE)
-                inputData = nx_data_file[nx_edge[0], nx_edge[1], nx_input_flow[0]]    
-                if os.path.isfile(inputData):
-                    df_data = pd.read_csv(inputData)
-                    rows = df_data.shape[0]
-                    df_x_train = df_data.loc[int(rows * nx_validation_split):, nx_features]
-                    df_y_train = df_data.loc[int(rows * nx_validation_split):, nx_targets]
-                    df_x_test = df_data.loc[:int(rows * nx_validation_split), nx_features]
-                    df_y_test = df_data.loc[:int(rows * nx_validation_split), nx_targets]
+        nx_read_attr = nx.get_node_attributes(nx_graph, JSON_PROCESS_TYPE)
+        nx_input_flow = nx.get_node_attributes(nx_graph, JSON_INPUT_FLOWS)[node_i]
+        nx_data_file = nx.get_edge_attributes(nx_graph, JSON_FLOW_DATA_FILE)
+        inputData = nx_data_file[nx_edge[0], nx_edge[1], nx_input_flow[0]]    
+        if os.path.isfile(inputData):
+            df_data = pd.read_csv(inputData)
                 
-                nx_category_types = nx.get_edge_attributes(nx_graph, JSON_CATEGORY_TYPE)
-                category_type = nx_category_types[nx_edge[0], nx_edge[1], nx_input_flow[0]]
-                if category_type == JSON_CAT_TF:
-                    pass
-                elif category_type == JSON_CAT_THRESHOLD:
-                    pass
-                elif category_type == JSON_THRESHOLD_VALUE:
-                    pass
-                elif category_type == JSON_LINEAR_REGRESSION:
-                    pass
-                else:
-                    raise NameError('Invalid category type')
+        if nx_read_attr[node_i] == JSON_KERAS_DENSE_PROCESS:    
+            print("%s is built of core dense layers" % node_i)
+
+        nx_category_types = nx.get_edge_attributes(nx_graph, JSON_CATEGORY_TYPE)
+        category_type = nx_category_types[nx_edge[0], nx_edge[1], nx_input_flow[0]]
+        if category_type == JSON_CAT_TF:
+            pass
+        elif category_type == JSON_CAT_THRESHOLD:
+            pass
+        elif category_type == JSON_THRESHOLD_VALUE:
+            pass
+        elif category_type == JSON_LINEAR_REGRESSION:
+            pass
+        else:
+            raise NameError('Invalid category type')
     
     except Exception:
         err_txt = "*** An exception occurred training the model ***"
         logging.debug(err_txt)
         sys.exit("\n" + err_txt)
 
-    return df_x_train, df_y_train, df_x_test, df_y_test
+    return df_data
 
-def build_model(nx_graph, df_x_train):
+def build_model(nx_graph, node_i, nx_edge, df_data):
     logging.info('====> ================================================')
     logging.info('====> build_model: building the machine learning model')
     logging.info('====> ================================================')
@@ -275,49 +256,61 @@ def build_model(nx_graph, df_x_train):
         # inputs                
         logging.debug("Building ML model")
 
-        for node_i in nx_graph.nodes():
-            nx_read_attr = nx.get_node_attributes(nx_graph, JSON_PROCESS_TYPE)
-            
-            if nx_read_attr[node_i] == JSON_KERAS_DENSE_PROCESS:
-                nx_input_flows = nx.get_node_attributes(nx_graph, JSON_INPUT_FLOWS)[node_i]
-                nx_input_layer = nx.get_node_attributes(nx_graph, JSON_MODEL_INPUT_LAYER)[node_i]
-                nx_edges = nx.edges(nx_graph)
-                for nx_edge in nx_edges:
-                    if nx_edge[1] == node_i:
-                        nx_features = nx.get_edge_attributes(nx_graph, JSON_FEATURE_FIELDS)
-                        nx_input = nx_features[nx_edge[0], nx_edge[1], nx_input_flows[0]]    
-                        break
-    
-                k_input_layer = tf.keras.Input(name=nx_input_layer, shape=(len(nx_input),))
-                k_last_layer = set_up_preprocessing(k_input_layer, nx_graph, node_i)
-                k_last_layer = set_up_normalization(k_last_layer, df_x_train)
-                k_last_layer = create_dense_model(k_last_layer, nx_graph, node_i)
-        
-                nx_output_layer = nx.get_node_attributes(nx_graph, JSON_MODEL_OUTPUT_LAYER)[node_i]
-                nx_output_activation = nx.get_node_attributes(nx_graph, JSON_MODEL_OUTPUT_ACTIVATION)[node_i]
-                nx_categories = nx.get_edge_attributes(nx_graph, JSON_CATEGORY_TYPE)
-                nx_loss = nx.get_node_attributes(nx_graph, JSON_LOSS)[node_i]
-                nx_metrics = nx.get_node_attributes(nx_graph, JSON_METRICS)[node_i]
-                nx_optimizer = nx.get_node_attributes(nx_graph, JSON_OPTIMIZER)[node_i]
-                nx_loss_weights = nx.get_node_attributes(nx_graph, JSON_LOSS_WTS)[node_i]
-                nx_category_type = nx_categories[nx_edge[0], nx_edge[1], nx_input_flows[0]]    
-                if nx_category_type == JSON_CAT_TF:
-                    nx_outputWidth = 2
-                elif nx_category_type == JSON_LINEAR_REGRESSION:
-                    nx_outputWidth = 1
-                elif nx_category_type == JSON_CAT_THRESHOLD:
-                    pass
-                elif nx_category_type == JSON_VALUE_RANGES:
-                    pass
-                else:
-                    raise NameError('Invalid category type')
-                k_outputs = tf.keras.layers.Dense(nx_outputWidth, name=nx_output_layer, activation=nx_output_activation)(k_last_layer)
+        nx_input_flows = nx.get_node_attributes(nx_graph, JSON_INPUT_FLOWS)[node_i]
+        nx_input_layer = nx.get_node_attributes(nx_graph, JSON_MODEL_INPUT_LAYER)[node_i]
 
-                k_model = tf.keras.Model(name=node_i, inputs=k_input_layer, outputs=k_outputs)
-                k_model.compile(nx_optimizer, nx_loss, metrics=nx_metrics, loss_weights=nx_loss_weights)
-                k_model.summary()
-                nx_model_file = nx.get_node_attributes(nx_graph, JSON_MODEL_FILE)[node_i]
-                keras.utils.plot_model(k_model, to_file=nx_model_file + '.png', show_shapes=True)
+        nx_features = nx.get_edge_attributes(nx_graph, JSON_FEATURE_FIELDS)
+        nx_input = nx_features[nx_edge[0], nx_edge[1], nx_input_flows[0]]    
+
+        nx_featureFields = nx.get_edge_attributes(nx_graph, JSON_FEATURE_FIELDS)
+        nx_features = nx_featureFields[nx_edge[0], nx_edge[1], nx_input_flows[0]]    
+
+        nx_targetFiields = nx.get_edge_attributes(nx_graph, JSON_TARGET_FIELDS)
+        nx_targets = nx_targetFiields[nx_edge[0], nx_edge[1], nx_input_flows[0]]    
+
+        nx_validation_split = nx.get_node_attributes(nx_graph, JSON_VALIDATION_SPLIT)[node_i]
+
+        df_data = preprocess_data(nx_graph, node_i, df_data)
+        k_input_layer = tf.keras.Input(name=nx_input_layer, shape=(len(nx_input),))
+        k_last_layer, df_data = normalize_data(k_input_layer, df_data)
+        k_last_layer = create_dense_model(k_last_layer, nx_graph, node_i)
+        
+        rows = df_data.shape[0]
+        df_x_train = df_data.loc[int(rows * nx_validation_split):, nx_features]
+        df_y_train = df_data.loc[int(rows * nx_validation_split):, nx_targets]
+        df_x_test = df_data.loc[:int(rows * nx_validation_split), nx_features]
+        df_y_test = df_data.loc[:int(rows * nx_validation_split), nx_targets]
+        
+        df_x_train = np.array(df_x_train)
+        df_y_train = np.array(df_y_train)
+        df_x_test = np.array(df_x_test)
+        df_y_test = np.array(df_y_test)
+
+        nx_output_layer = nx.get_node_attributes(nx_graph, JSON_MODEL_OUTPUT_LAYER)[node_i]
+        nx_output_activation = nx.get_node_attributes(nx_graph, JSON_MODEL_OUTPUT_ACTIVATION)[node_i]
+        nx_categories = nx.get_edge_attributes(nx_graph, JSON_CATEGORY_TYPE)
+        nx_loss = nx.get_node_attributes(nx_graph, JSON_LOSS)[node_i]
+        nx_metrics = nx.get_node_attributes(nx_graph, JSON_METRICS)[node_i]
+        nx_optimizer = nx.get_node_attributes(nx_graph, JSON_OPTIMIZER)[node_i]
+        nx_loss_weights = nx.get_node_attributes(nx_graph, JSON_LOSS_WTS)[node_i]
+        nx_category_type = nx_categories[nx_edge[0], nx_edge[1], nx_input_flows[0]]    
+        if nx_category_type == JSON_CAT_TF:
+            nx_outputWidth = 2
+        elif nx_category_type == JSON_LINEAR_REGRESSION:
+            nx_outputWidth = 1
+        elif nx_category_type == JSON_CAT_THRESHOLD:
+            pass
+        elif nx_category_type == JSON_VALUE_RANGES:
+            pass
+        else:
+            raise NameError('Invalid category type')
+        k_outputs = tf.keras.layers.Dense(nx_outputWidth, name=nx_output_layer, activation=nx_output_activation)(k_last_layer)
+
+        k_model = tf.keras.Model(name=node_i, inputs=k_input_layer, outputs=k_outputs)
+        k_model.compile(nx_optimizer, nx_loss, metrics=nx_metrics, loss_weights=nx_loss_weights)
+        k_model.summary()
+        nx_model_file = nx.get_node_attributes(nx_graph, JSON_MODEL_FILE)[node_i]
+        keras.utils.plot_model(k_model, to_file=nx_model_file + '.png', show_shapes=True)
                 
     except Exception:
         err_txt = "*** An exception occurred building and compiling the model ***"
@@ -327,10 +320,21 @@ def build_model(nx_graph, df_x_train):
     logging.info('<---- ----------------------------------------------')
     logging.info('<---- build_model: done')
     logging.info('<---- ----------------------------------------------')    
-    return k_model
+    return k_model, df_x_train, df_y_train, df_x_test, df_y_test
 
 def build_and_train_model(nx_graph):
-    df_x_train, df_y_train, df_x_test, df_y_test = load_training_data(nx_graph)
-    k_model = build_model(nx_graph, df_x_train)
-    trainModels(nx_graph, k_model, df_x_train, df_y_train, df_x_test, df_y_test)
+    
+    for node_i in nx_graph.nodes():
+        nx_read_attr = nx.get_node_attributes(nx_graph, JSON_PROCESS_TYPE)
+        if nx_read_attr[node_i] == JSON_KERAS_DENSE_PROCESS:
+            nx_edges = nx.edges(nx_graph)
+            for nx_edge in nx_edges:
+                if nx_edge[1] == node_i:
+                    break
+    
+    print("Training: %s" % node_i)
+    df_data = load_training_data(nx_graph, node_i, nx_edge)
+    k_model, df_x_train, df_y_train, df_x_test, df_y_test = build_model(nx_graph, node_i, nx_edge, df_data)
+    trainModels(nx_graph, node_i, nx_edge, k_model, df_x_train, df_y_train, df_x_test, df_y_test)
+    
     return
