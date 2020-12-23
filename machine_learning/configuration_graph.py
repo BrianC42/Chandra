@@ -73,6 +73,8 @@ from configuration_constants import JSON_MODEL_OUTPUT_ACTIVATION
 from configuration_constants import JSON_MODEL_DEPTH
 from configuration_constants import JSON_NODE_COUNT
 from configuration_constants import JSON_TRAINING
+from configuration_constants import JSON_NORMALIZE_DATA
+from configuration_constants import JSON_SHUFFLE_DATA
 
 from configuration_constants import JSON_TIMESTEPS
 from configuration_constants import JSON_BATCH
@@ -180,6 +182,8 @@ def add_dense_meta_data(js_dense_params, nx_graph, nx_process_name):
         nx_metrics = js_training[JSON_METRICS]
         nx_activation = js_training[JSON_ACTIVATION]
         nx_optimizer = js_training[JSON_OPTIMIZER]
+        nx_shuffle = js_training[JSON_SHUFFLE_DATA]
+        nx_normalize = js_training[JSON_NORMALIZE_DATA]
 
         nx.set_node_attributes(nx_graph, {nx_process_name:nx_loss_weights}, JSON_LOSS_WTS)
         nx.set_node_attributes(nx_graph, {nx_process_name:nx_regularization}, JSON_REGULARIZATION)
@@ -197,6 +201,8 @@ def add_dense_meta_data(js_dense_params, nx_graph, nx_process_name):
         nx.set_node_attributes(nx_graph, {nx_process_name:nx_metrics}, JSON_METRICS)
         nx.set_node_attributes(nx_graph, {nx_process_name:nx_activation}, JSON_ACTIVATION)
         nx.set_node_attributes(nx_graph, {nx_process_name:nx_optimizer}, JSON_OPTIMIZER)
+        nx.set_node_attributes(nx_graph, {nx_process_name:nx_shuffle}, JSON_SHUFFLE_DATA)
+        nx.set_node_attributes(nx_graph, {nx_process_name:nx_normalize}, JSON_NORMALIZE_DATA)
 
     return
     

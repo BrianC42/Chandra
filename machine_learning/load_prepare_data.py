@@ -36,12 +36,13 @@ from configuration_constants import JSON_OUTLIER_PCT
 def discard_outliers(nx_graph, node_i, df_data):
     nx_remove_outlier_list = nx.get_node_attributes(nx_graph, JSON_REMOVE_OUTLIER_LIST)
     for feature in nx_remove_outlier_list[node_i]:
-        featureName = feature[JSON_OUTLIER_FEATURE]
-        outlierPct = feature[JSON_OUTLIER_PCT]
-        print("Removing outliers (highest and lowest %s%%) from %s" % (outlierPct * 100, featureName))        
-        rows = df_data.shape[0]
-        df_data = df_data.sort_values(by = featureName)
-        df_data = df_data[int(rows * outlierPct) : (rows - int(rows * outlierPct))]
+        if JSON_OUTLIER_FEATURE in feature:
+            featureName = feature[JSON_OUTLIER_FEATURE]
+            outlierPct = feature[JSON_OUTLIER_PCT]
+            print("Removing outliers (highest and lowest %s%%) from %s" % (outlierPct * 100, featureName))        
+            rows = df_data.shape[0]
+            df_data = df_data.sort_values(by = featureName)
+            df_data = df_data[int(rows * outlierPct) : (rows - int(rows * outlierPct))]
         
     return df_data
 
@@ -129,6 +130,7 @@ def load_and_prepare_data(nx_graph):
     
     # error handling
     try:
+        err_txt = "*** An exception occurred analyzing the json configuration file ***"
 
         nx_data_flow = nx.get_node_attributes(nx_graph, JSON_OUTPUT_FLOW)
         nx_flowFilename = nx.get_edge_attributes(nx_graph, JSON_FLOW_DATA_FILE)
@@ -138,6 +140,7 @@ def load_and_prepare_data(nx_graph):
             if nx_read_attr[node_i] == JSON_DATA_PREP_PROCESS:
                 for edge_i in nx_graph.edges():
                     if edge_i[0] == node_i:
+                        err_txt = "*** An exception occurred analyzing the flow details in the json configuration file ***"
                         nx_balanced = nx.get_edge_attributes(nx_graph, JSON_BALANCED)
                         balanced = nx_balanced[edge_i[0], edge_i[1], output_flow]
                         nx_timeSeq = nx.get_edge_attributes(nx_graph, JSON_TIME_SEQ)
@@ -149,7 +152,6 @@ def load_and_prepare_data(nx_graph):
                         break
         
     except Exception:
-        err_txt = "*** An exception occurred analyzing the json configuration file ***"
         logging.debug(err_txt)
         sys.exit("\n" + err_txt)
         

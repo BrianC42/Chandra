@@ -42,6 +42,7 @@ from configuration_constants import JSON_PREPROCESS_SEQUENCE
 from configuration_constants import JSON_PREPROCESS_DISCRETIZATION
 from configuration_constants import JSON_PREPROCESS_DISCRETIZATION_BINS
 from configuration_constants import JSON_PREPROCESS_CATEGORY_ENCODING
+from configuration_constants import JSON_NORMALIZE_DATA
 
 from configuration_constants import JSON_MODEL_INPUT_LAYER
 from configuration_constants import JSON_MODEL_OUTPUT_LAYER
@@ -255,12 +256,15 @@ def build_model(nx_graph, node_i, nx_edge, df_data):
     try:
         # inputs                
         logging.debug("Building ML model")
+        err_txt = "*** An exception occurred pre-processing the data ***"
 
         nx_input_flows = nx.get_node_attributes(nx_graph, JSON_INPUT_FLOWS)[node_i]
         nx_input_layer = nx.get_node_attributes(nx_graph, JSON_MODEL_INPUT_LAYER)[node_i]
 
+        '''
         nx_features = nx.get_edge_attributes(nx_graph, JSON_FEATURE_FIELDS)
         nx_input = nx_features[nx_edge[0], nx_edge[1], nx_input_flows[0]]    
+        '''
 
         nx_featureFields = nx.get_edge_attributes(nx_graph, JSON_FEATURE_FIELDS)
         nx_features = nx_featureFields[nx_edge[0], nx_edge[1], nx_input_flows[0]]    
@@ -270,29 +274,37 @@ def build_model(nx_graph, node_i, nx_edge, df_data):
 
         nx_validation_split = nx.get_node_attributes(nx_graph, JSON_VALIDATION_SPLIT)[node_i]
 
-        df_data = preprocess_data(nx_graph, node_i, df_data)
-        k_input_layer = tf.keras.Input(name=nx_input_layer, shape=(len(nx_input),))
-        k_last_layer, df_data = normalize_data(k_input_layer, df_data)
-        k_last_layer = create_dense_model(k_last_layer, nx_graph, node_i)
-        
         rows = df_data.shape[0]
         df_x_train = df_data.loc[int(rows * nx_validation_split):, nx_features]
         df_y_train = df_data.loc[int(rows * nx_validation_split):, nx_targets]
         df_x_test = df_data.loc[:int(rows * nx_validation_split), nx_features]
         df_y_test = df_data.loc[:int(rows * nx_validation_split), nx_targets]
         
-        df_x_train = np.array(df_x_train)
-        df_y_train = np.array(df_y_train)
-        df_x_test = np.array(df_x_test)
-        df_y_test = np.array(df_y_test)
+        np_x_train = np.array(df_x_train, dtype='float64')
+        np_y_train = np.array(df_y_train, dtype='float64')
+        np_x_test = np.array(df_x_test, dtype='float64')
+        np_y_test = np.array(df_y_test, dtype='float64')
 
-        nx_output_layer = nx.get_node_attributes(nx_graph, JSON_MODEL_OUTPUT_LAYER)[node_i]
-        nx_output_activation = nx.get_node_attributes(nx_graph, JSON_MODEL_OUTPUT_ACTIVATION)[node_i]
+        print("raw training data\n%s" % df_x_train.describe())
+        #normalizer = preprocessing.Normalization()
+        tf.keras.backend.set_floatx('float64')
+
+        nx_normalize = nx.get_node_attributes(nx_graph, JSON_NORMALIZE_DATA)[node_i]
+        if nx_normalize:
+            normalizer = preprocessing.Normalization()    
+            normalizer.adapt(np_x_train)
+            x_normalized  = normalizer(np_x_train)
+            np_x_norm = np.array(x_normalized)
+        else:
+            np_x_norm = np_x_train
+
+        df_data = preprocess_data(nx_graph, node_i, df_data)        
+
+        err_txt = "*** An exception occurred building the model ***"
+        k_input = tf.keras.Input(name=nx_input_layer, shape=(len(nx_features),), dtype='float64')
+        k_last_layer = create_dense_model(k_input, nx_graph, node_i)
+        
         nx_categories = nx.get_edge_attributes(nx_graph, JSON_CATEGORY_TYPE)
-        nx_loss = nx.get_node_attributes(nx_graph, JSON_LOSS)[node_i]
-        nx_metrics = nx.get_node_attributes(nx_graph, JSON_METRICS)[node_i]
-        nx_optimizer = nx.get_node_attributes(nx_graph, JSON_OPTIMIZER)[node_i]
-        nx_loss_weights = nx.get_node_attributes(nx_graph, JSON_LOSS_WTS)[node_i]
         nx_category_type = nx_categories[nx_edge[0], nx_edge[1], nx_input_flows[0]]    
         if nx_category_type == JSON_CAT_TF:
             nx_outputWidth = 2
@@ -304,23 +316,30 @@ def build_model(nx_graph, node_i, nx_edge, df_data):
             pass
         else:
             raise NameError('Invalid category type')
-        k_outputs = tf.keras.layers.Dense(nx_outputWidth, name=nx_output_layer, activation=nx_output_activation)(k_last_layer)
 
-        k_model = tf.keras.Model(name=node_i, inputs=k_input_layer, outputs=k_outputs)
+        nx_output_layer = nx.get_node_attributes(nx_graph, JSON_MODEL_OUTPUT_LAYER)[node_i]
+        nx_output_activation = nx.get_node_attributes(nx_graph, JSON_MODEL_OUTPUT_ACTIVATION)[node_i]
+        k_outputs = tf.keras.layers.Dense(nx_outputWidth, name=nx_output_layer, activation=nx_output_activation)(k_last_layer)
+        k_model = tf.keras.Model(name=node_i, inputs=k_input, outputs=k_outputs)
+
+        err_txt = "*** An exception occurred compiling the model ***"
+        nx_loss = nx.get_node_attributes(nx_graph, JSON_LOSS)[node_i]
+        nx_metrics = nx.get_node_attributes(nx_graph, JSON_METRICS)[node_i]
+        nx_optimizer = nx.get_node_attributes(nx_graph, JSON_OPTIMIZER)[node_i]
+        nx_loss_weights = nx.get_node_attributes(nx_graph, JSON_LOSS_WTS)[node_i]
         k_model.compile(nx_optimizer, nx_loss, metrics=nx_metrics, loss_weights=nx_loss_weights)
         k_model.summary()
         nx_model_file = nx.get_node_attributes(nx_graph, JSON_MODEL_FILE)[node_i]
         keras.utils.plot_model(k_model, to_file=nx_model_file + '.png', show_shapes=True)
                 
     except Exception:
-        err_txt = "*** An exception occurred building and compiling the model ***"
         logging.debug(err_txt)
         sys.exit("\n" + err_txt)
     
     logging.info('<---- ----------------------------------------------')
     logging.info('<---- build_model: done')
     logging.info('<---- ----------------------------------------------')    
-    return k_model, df_x_train, df_y_train, df_x_test, df_y_test
+    return k_model, np_x_norm, np_y_train, np_x_test, np_y_test
 
 def build_and_train_model(nx_graph):
     
@@ -334,7 +353,7 @@ def build_and_train_model(nx_graph):
     
     print("Training: %s" % node_i)
     df_data = load_training_data(nx_graph, node_i, nx_edge)
-    k_model, df_x_train, df_y_train, df_x_test, df_y_test = build_model(nx_graph, node_i, nx_edge, df_data)
-    trainModels(nx_graph, node_i, nx_edge, k_model, df_x_train, df_y_train, df_x_test, df_y_test)
+    k_model, x_train, y_train, x_test, y_test = build_model(nx_graph, node_i, nx_edge, df_data)
+    trainModels(nx_graph, node_i, nx_edge, k_model, x_train, y_train, x_test, y_test)
     
     return
