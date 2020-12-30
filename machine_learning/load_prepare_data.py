@@ -9,6 +9,7 @@ import glob
 import logging
 import networkx as nx
 import pandas as pd
+import tensorflow as tf
 
 from configuration_constants import JSON_DATA_PREP_PROCESS
 from configuration_constants import JSON_PROCESS_TYPE
@@ -82,8 +83,12 @@ def prepare2dTrainingData(nx_graph, node_name):
 
             for dataFile in nx_data_file[node_name]:
                 fileSpecList = glob.glob(dataFile)
+                fileCount = len(fileSpecList)
+                tf_progbar = tf.keras.utils.Progbar(fileCount, width=50, verbose=1, interval=1, stateful_metrics=None, unit_name='file')
+                count = 0
                 for FileSpec in fileSpecList:
                     if os.path.isfile(FileSpec):
+                        tf_progbar.update(count)
                         df_data = pd.read_csv(FileSpec)
                         
                         l_filter = []
@@ -95,6 +100,7 @@ def prepare2dTrainingData(nx_graph, node_name):
                         df_combined = pd.concat([df_combined, df_inputs], ignore_index=True)
                     else:
                         raise NameError('Data file does not exist')
+                    count += 1
             print("\nData \n%s\nread from sources\n" % df_combined.describe())
                         
             if ignoreBlanks:

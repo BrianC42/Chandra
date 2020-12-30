@@ -286,17 +286,25 @@ def build_model(nx_graph, node_i, nx_edge, df_data):
         np_y_test = np.array(df_y_test, dtype='float64')
 
         print("raw training data\n%s" % df_x_train.describe())
-        #normalizer = preprocessing.Normalization()
         tf.keras.backend.set_floatx('float64')
 
         nx_normalize = nx.get_node_attributes(nx_graph, JSON_NORMALIZE_DATA)[node_i]
         if nx_normalize:
-            normalizer = preprocessing.Normalization()    
-            normalizer.adapt(np_x_train)
-            x_normalized  = normalizer(np_x_train)
+            print("Normalizing features")
+            normalize_x = preprocessing.Normalization()    
+            normalize_x.adapt(np_x_train)
+            x_normalized  = normalize_x(np_x_train)
             np_x_norm = np.array(x_normalized)
+            print("Normalizing targets")
+            normalize_y = preprocessing.Normalization()    
+            normalize_y.adapt(np_y_train)
+            y_normalized  = normalize_y(np_y_train)
+            np_y_norm = np.array(y_normalized)
         else:
+            print("features not normalized")
             np_x_norm = np_x_train
+            print("targets not normalized")
+            np_y_norm = np_y_train
 
         df_data = preprocess_data(nx_graph, node_i, df_data)        
 
@@ -328,6 +336,8 @@ def build_model(nx_graph, node_i, nx_edge, df_data):
         nx_optimizer = nx.get_node_attributes(nx_graph, JSON_OPTIMIZER)[node_i]
         nx_loss_weights = nx.get_node_attributes(nx_graph, JSON_LOSS_WTS)[node_i]
         k_model.compile(nx_optimizer, nx_loss, metrics=nx_metrics, loss_weights=nx_loss_weights)
+        print("compile optimizer:%s loss:%s metrics:%s loss_weights:%s" % \
+              (nx_optimizer, nx_loss, nx_metrics, nx_loss_weights))
         k_model.summary()
         nx_model_file = nx.get_node_attributes(nx_graph, JSON_MODEL_FILE)[node_i]
         keras.utils.plot_model(k_model, to_file=nx_model_file + '.png', show_shapes=True)
@@ -339,7 +349,7 @@ def build_model(nx_graph, node_i, nx_edge, df_data):
     logging.info('<---- ----------------------------------------------')
     logging.info('<---- build_model: done')
     logging.info('<---- ----------------------------------------------')    
-    return k_model, np_x_norm, np_y_train, np_x_test, np_y_test
+    return k_model, np_x_norm, np_y_norm, np_x_test, np_y_test
 
 def build_and_train_model(nx_graph):
     

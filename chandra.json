@@ -15,6 +15,232 @@
 			"processType" : "dataPrep",
 			"comments: supported values - processType" : ["dataPrep", "KerasDense"],
 			"inputFlows" : [],
+			"outputFlow" : "LR_data",
+			"outputFile" : "",
+			"logFile" : ""
+		},
+		"conditionalFields" : {
+			"dataPrepCtrl" : {
+				"inputFile" : ["c:\\users\\brian\\downloads\\linear regression.csv"]
+			},
+			"removeOutliers" : [
+				{"commented - featureName - none" : "", "outlierPct" : 0.02}
+			]
+		}
+	},
+	{
+		"processNodeName" : "LRmodel",
+		"requiredFields" : {
+			"comments: supported values - processType" : ["dataPrep", "KerasDense"],
+			"processType" : "KerasDense",
+			"inputFlows" : ["LR_data"],
+			"outputFlow" : "",
+			"outputFile" : "d:\\brian\\AI Projects\\models\\LRmodel",
+			"logFile" : "d:\\brian\\AI Projects\\logs\\LRmodel.txt"
+		},
+		"conditionalFields" : {
+			"preprocessingLayers" : {
+				"comments - supported layers" : ["linearRegression", "discretization", "categoryEncoding"],
+				"preprocessSequence" : ["linearRegression"]
+				},
+		    "KerasDenseCtrl" : {
+				"modelFile" : "d:\\brian\\AI Projects\\models\\LRmodel",
+				"modelStructure" : {
+					"inputLayer" : "LR-input",
+					"layerCounts" : 1,
+					"layerNodes" : 50,
+					"outputLayer" : "ML-LinearRegression",
+					"comment - activations" : ["relu", "sigmoid", "softmax", "softplus", "softsign", "tanh", "selu", "elu", "exponential"],
+					"outputActivation" : "relu"
+				},
+				"training" : {
+					"Comment 1" : "one output - see data flow for detaiils",
+					"lossWeights" : [1.0],
+					"denseRegularation" : false,
+					"regularationValue" : 0.0,
+					"dropout" : false,
+					"dropoutRate" : 0.2,
+					"shuffle" : true,
+					"normalize" : false,
+					"useBias" : true,
+					"validationSplit" : 0.2,
+					"batchSize" : 32,
+					"epochs" : 5,
+					"verbose" : 2,
+					"balanceClasses" : true,
+					"analysis" : "classification",
+					"compilationLoss" : "mean_absolute_error",
+					"comment: supported values - compilationLoss" : ["binary_crossentropy", "mean_squared_error"],
+					"compilationMetrics" : ["accuracy"],
+					"comment: supported values - compilationMetrics" : ["accuracy"],
+					"activation" : "relu",
+					"comment: supported values - activation" : ["relu", "sigmoid", "softmax", "softplus", "softsign", "tanh", "selu", "elu", "exponential"],
+					"optimizer" : "adam",
+					"comment: supported values - optimizer" : ["SGD", "RMSprop", "Adam", "Adadelta", "Adagrad", "Adamax", "Nadam", "Ftrl"]
+				}
+			}
+		}
+	}
+],
+"comment - dataflow section" : "Specification details  for the flows of data between processing nodes",
+"dataFlows" : [
+	{
+	"flowName" : "LR_data",
+	"requiredFields" : {
+		"flowFrom" : "LoadData",
+		"flowTo" : "LRmodel"
+		},
+	"conditionalFields" : {
+		"KerasDenseData" : {
+			"timeSequence" : false,
+			"balanceClasses" : true,
+			"ignoreBlanks" : true,
+			"flowDataFile" : "c:\\users\\brian\\downloads\\linear regression.csv",
+			"features" : ["Feature-x"],
+			"targets" : ["Target-y"],
+			"categorization" : {
+				"comment 1" : "models to assess input data relationship to categorized outputs",
+				"comment 1: supported categoryType values" : ["categoryTrueFalse", "categoryThreshold (above / below)", "categoryRanges"],
+				"comment 2: supported categoryType values" : ["linearRegression"],
+				"categoryType" : "linearRegression",
+				"categoryOneHot - not required for linearRegression" : ["catTrue", "catFalse"]
+				}
+			}
+		}
+	}
+],
+"comment end of specification" : "------------------------------------------------------------------------------------",
+"analysis list - not processed - used to archive analysis models" : [
+	{"analysis name" : "linear regression of MACD to 10day10pct",
+		"description 1" : "linear regression model",
+		"description 2" : "single vaiable to predict 10day10pct from MACD",
+		"description 3 - nodes" : ["inputsrc", "MLmodel"],
+		"description 4 - flows" : ["MLdata"]
+	}
+],
+"archival comment - technical analysis - process section" : "Speciification details  for the flows of data between processing nodes",
+"archival - processNodes" : [
+	{
+	"processNodeName" : "LoadData",
+	"requiredFields" : {
+		"processType" : "dataPrep",
+		"comments: supported values - processType" : ["dataPrep", "KerasDense"],
+		"inputFlows" : [],
+		"outputFlow" : "LRdata",
+		"outputFile" : "",
+		"logFile" : ""
+	},
+	"conditionalFields" : {
+		"dataPrepCtrl" : {
+			"comment - inputFile" : ["d:\\brian\\AI Projects\\tda\\market_analysis_data\\[ab]*.csv",
+								"d:\\brian\\AI Projects\\tda\\market_analysis_data\\[abc]*.csv"
+								],
+			"inputFile" : ["d:\\brian\\AI Projects\\tda\\market_analysis_data\\c.csv"]
+		},
+		"removeOutliers" : [
+			{"featureName" : "MACD_Signal", "outlierPct" : 0.01},
+			{"commented - featureName" : "ADX", "outlierPct" : 0.02}
+		]
+	}
+	},
+	{
+	"processNodeName" : "MLmodel",
+	"requiredFields" : {
+		"comments: supported values - processType" : ["dataPrep", "KerasDense"],
+		"processType" : "KerasDense",
+		"inputFlows" : ["LRdata"],
+		"outputFlow" : "",
+		"outputFile" : "d:\\brian\\AI Projects\\models\\MLmodel",
+		"logFile" : "d:\\brian\\AI Projects\\logs\\MLmodel.txt"
+	},
+	"conditionalFields" : {
+		"preprocessingLayers" : {
+			"comments - supported layers" : ["linearRegression", "discretization", "categoryEncoding"],
+			"preprocessSequence" : ["linearRegression"]
+		},
+		"KerasDenseCtrl" : {
+			"modelFile" : "d:\\brian\\AI Projects\\models\\MLmodel",
+			"modelStructure" : {
+				"inputLayer" : "MLmodel",
+				"layerCounts" : 1,
+				"layerNodes" : 1000,
+				"outputLayer" : "ML-LinearRegression",
+				"outputActivation" : "softmax"
+			},
+			"training" : {
+				"Comment 1" : "one output - see data flow for detaiils",
+				"lossWeights" : [1.0],
+				"denseRegularation" : false,
+				"regularationValue" : 0.0,
+				"dropout" : false,
+				"dropoutRate" : 0.2,
+				"useBias" : true,
+				"validationSplit" : 0.2,
+				"batchSize" : 32,
+				"epochs" : 50,
+				"verbose" : 2,
+				"shuffle" : true,
+				"normalize" : false,
+				"balanceClasses" : true,
+				"analysis" : "classification",
+				"compilationLoss" : "mean_squared_error",
+				"comment: supported values - compilationLoss" : ["binary_crossentropy", "mean_squared_error"],
+				"compilationMetrics" : ["accuracy"],
+				"comment: supported values - compilationMetrics" : ["accuracy"],
+				"activation" : "relu",
+				"comment: supported values - activation" : ["relu", "sigmoid", "softmax", "softplus", "softsign", "tanh", "selu", "elu", "exponential"],
+				"optimizer" : "adam",
+				"comment: supported values - optimizer" : ["SGD", "RMSprop", "Adam", "Adadelta", "Adagrad", "Adamax", "Nadam", "Ftrl"]
+				}
+			}
+		}
+	}
+],
+"archival comment - technical analysis - dataflow section" : "Speciification details  for the flows of data between processing nodes",
+"archival dataFlows" : [
+	{
+	"flowName" : "LRdata",
+	"requiredFields" : {
+		"flowFrom" : "LoadData",
+		"flowTo" : "MLmodel"
+		},
+	"conditionalFields" : {
+		"KerasDenseData" : {
+			"timeSequence" : false,
+			"balanceClasses" : true,
+			"ignoreBlanks" : true,
+			"flowDataFile" : "d:\\brian\\AI Projects\\temp\\LRdata.csv",
+			"comment 1 - available features" : ["Open", "High", "Low", "Close", "Volume"],
+			"comment 2 - available features" : ["MACD_flag", "MACD_Signal", "MACD", "MACD_Sell", "MACD_Buy"],
+			"comment 3 - available features" : ["Relative Strength", "RS SMA20"],
+			"comment 4 - available features" : ["Stochastic Oscillator"],
+			"comment 5 - available features" : ["ADX", "ADI +DI", "ADI -DI"],
+			"comment 6 - available features" : ["AccumulationDistribution"],
+			"comment 7 - available features" : ["BB_Lower", "BB_Upper"],
+			"comment 8 - available features" : ["OBV"],
+			"features" : ["MACD_Signal"],
+			"comment t1 - target fields True/False" : ["10day100pct", "10day50pct", "10day25pct", "10day10pct"],
+			"comment t2 - target fields numeric" : ["40 day change", "20 day change", "10 day change"],
+			"targets" : ["20 day change"],
+			"categorization" : {
+				"comment 1" : "models to assess input data relationship to categorized outputs",
+				"comment 1: supported categoryType values" : ["categoryTrueFalse", "categoryThreshold (above / below)", "categoryRanges"],
+				"comment 2: supported categoryType values" : ["linearRegression"],
+				"categoryType" : "linearRegression",
+				"categoryOneHot - not required for linearRegression" : ["catTrue", "catFalse"]
+				}
+			}
+		}
+	},
+	"comment - Linear regression test and demo - uses csv of 2000 rows y-mx+c",
+	"comment - 1 edge",
+	"comment - 2 nodes",
+	{
+		"processNodeName" : "LoadData",
+		"requiredFields" : {
+			"processType" : "dataPrep",
+			"comments: supported values - processType" : ["dataPrep", "KerasDense"],
+			"inputFlows" : [],
 			"outputFlow" : "LRdata",
 			"outputFile" : "",
 			"logFile" : ""
@@ -48,7 +274,7 @@
 				"modelStructure" : {
 					"inputLayer" : "LR-input",
 					"layerCounts" : 1,
-					"layerNodes" : 50,
+					"layerNodes" : 200,
 					"outputLayer" : "ML-LinearRegression",
 					"comment - activations" : ["relu", "sigmoid", "softmax", "softplus", "softsign", "tanh", "selu", "elu", "exponential"],
 					"outputActivation" : "relu"
@@ -65,7 +291,7 @@
 					"useBias" : true,
 					"validationSplit" : 0.2,
 					"batchSize" : 32,
-					"epochs" :50,
+					"epochs" : 5,
 					"verbose" : 2,
 					"balanceClasses" : true,
 					"analysis" : "classification",
@@ -82,143 +308,4 @@
 		}
 	}
 ],
-"comment - dataflow section" : "Speciification details  for the flows of data between processing nodes",
-"dataFlows" : [
-	{
-		"flowName" : "LRdata",
-		"requiredFields" : {
-			"flowFrom" : "LoadData",
-			"flowTo" : "LRmodel"
-		},
-		"conditionalFields" : {
-			"KerasDenseData" : {
-				"timeSequence" : false,
-				"balanceClasses" : true,
-				"ignoreBlanks" : true,
-				"flowDataFile" : "d:\\brian\\AI Projects\\temp\\LRdata.csv",
-				"features" : ["Feature-x"],
-				"targets" : ["Target-y"],
-				"categorization" : {
-					"categoryType" : "linearRegression"
-				}
-			}
-		}
-	}
-],
-"comment" : "--------------------- end of specification ------------------------------",
-"analysis list - not processed - used to archive analysis models" : [
-	{"analysis name" : "linear regression of MACD to 10day10pct",
-		"description 1" : "linear regression model",
-		"description 2" : "single vaiable to predict 10day10pct from MACD",
-		"description 3 - nodes" : ["inputsrc", "MLmodel"],
-		"description 4 - flows" : ["MLdata"]
-	},
-	{
-		"flowName" : "LRdata",
-		"requiredFields" : {
-			"flowFrom" : "LoadData",
-			"flowTo" : "MLmodel"
-		},
-		"conditionalFields" : {
-			"KerasDenseData" : {
-				"timeSequence" : false,
-				"balanceClasses" : true,
-				"ignoreBlanks" : true,
-				"flowDataFile" : "d:\\brian\\AI Projects\\temp\\LRdata.csv",
-				"comment 1 - available features" : ["Open", "High", "Low", "Close", "Volume"],
-				"comment 2 - available features" : ["MACD_flag", "MACD_Signal", "MACD", "MACD_Sell", "MACD_Buy"],
-				"comment 3 - available features" : ["Relative Strength", "RS SMA20"],
-				"comment 4 - available features" : ["Stochastic Oscillator"],
-				"comment 5 - available features" : ["ADX", "ADI +DI", "ADI -DI"],
-				"comment 6 - available features" : ["AccumulationDistribution"],
-				"comment 7 - available features" : ["BB_Lower", "BB_Upper"],
-				"comment 8 - available features" : ["OBV"],
-				"features" : ["Stochastic Oscillator", "Relative Strength", "ADX", "ADI +DI", "ADI -DI", "MACD_flag", "MACD_Signal", "AccumulationDistribution", "OBV"],
-				"comment t1 - target fields True/False" : ["10day100pct", "10day50pct", "10day25pct", "10day10pct"],
-				"comment t2 - target fields numeric" : ["40 day change", "20 day change", "10 day change"],
-				"targets" : ["20 day change"],
-				"categorization" : {
-					"comment 1" : "models to assess input data relationship to categorized outputs",
-					"comment 1: supported categoryType values" : ["categoryTrueFalse", "categoryThreshold (above / below)", "categoryRanges"],
-					"comment 2: supported categoryType values" : ["linearRegression"],
-					"categoryType" : "linearRegression",
-					"categoryOneHot - not required for linearRegression" : ["catTrue", "catFalse"]
-				}
-			}
-		}
-	},
-	{
-		"processNodeName" : "LoadData",
-		"requiredFields" : {
-			"processType" : "dataPrep",
-			"comments: supported values - processType" : ["dataPrep", "KerasDense"],
-			"inputFlows" : [],
-			"outputFlow" : "LRdata",
-			"outputFile" : "",
-			"logFile" : ""
-		},
-		"conditionalFields" : {
-			"dataPrepCtrl" : {
-				"comment - inputFile" : ["d:\\brian\\AI Projects\\tda\\market_analysis_data\\[ab]*.csv",
-								"d:\\brian\\AI Projects\\tda\\market_analysis_data\\[abc]*.csv"
-								],
-				"inputFile" : ["d:\\brian\\AI Projects\\tda\\market_analysis_data\\*.csv"]
-			},
-			"removeOutliers" : [
-				{"featureName" : "MACD_Signal", "outlierPct" : 0.01},
-				{"commented - featureName" : "ADX", "outlierPct" : 0.02}
-			]
-		}
-	},
-	{
-		"processNodeName" : "MLmodel",
-		"requiredFields" : {
-			"comments: supported values - processType" : ["dataPrep", "KerasDense"],
-			"processType" : "KerasDense",
-			"inputFlows" : ["LRdata"],
-			"outputFlow" : "",
-			"outputFile" : "d:\\brian\\AI Projects\\models\\MLmodel",
-			"logFile" : "d:\\brian\\AI Projects\\logs\\MLmodel.txt"
-		},
-		"conditionalFields" : {
-			"preprocessingLayers" : {
-				"comments - supported layers" : ["linearRegression", "discretization", "categoryEncoding"],
-				"preprocessSequence" : ["linearRegression"]
-				},
-		    "KerasDenseCtrl" : {
-				"modelFile" : "d:\\brian\\AI Projects\\models\\MLmodel",
-				"modelStructure" : {
-					"inputLayer" : "MLmodel",
-					"layerCounts" : 1,
-					"layerNodes" : 1000,
-					"outputLayer" : "ML-LinearRegression",
-					"outputActivation" : "softmax"
-				},
-				"training" : {
-					"Comment 1" : "one output - see data flow for detaiils",
-					"lossWeights" : [1.0],
-					"denseRegularation" : false,
-					"regularationValue" : 0.0,
-					"dropout" : false,
-					"dropoutRate" : 0.2,
-					"useBias" : true,
-					"validationSplit" : 0.2,
-					"batchSize" : 512,
-					"epochs" : 5,
-					"verbose" : 1,
-					"balanceClasses" : true,
-					"analysis" : "classification",
-					"compilationLoss" : "mean_squared_error",
-					"comment: supported values - compilationLoss" : ["binary_crossentropy", "mean_squared_error"],
-					"compilationMetrics" : ["accuracy"],
-					"comment: supported values - compilationMetrics" : ["accuracy"],
-					"activation" : "relu",
-					"comment: supported values - activation" : ["relu", "sigmoid", "softmax", "softplus", "softsign", "tanh", "selu", "elu", "exponential"],
-					"optimizer" : "adam",
-					"comment: supported values - optimizer" : ["SGD", "RMSprop", "Adam", "Adadelta", "Adagrad", "Adamax", "Nadam", "Ftrl"]
-				}
-			}
-		}
-	}
-]
-}
+"end of file" : ""}

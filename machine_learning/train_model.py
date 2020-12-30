@@ -6,7 +6,6 @@ Created on Oct 9, 2020
 import sys
 import logging
 import networkx as nx
-import keras
 import numpy as np
 
 from configuration_constants import JSON_BATCH
@@ -59,7 +58,6 @@ def trainModels(nx_graph, node_i, nx_edge, k_model, x_train,y_train, x_test, y_t
         
         x_predict = np.array([1,5,20,5000,250])
         y_predict = k_model.predict(x=x_predict)
-        
         print("\nPrediction shape: [%s,%s]" % (y_predict.shape[0], y_predict.shape[1]))
         ndx = 0
         while ndx < x_predict.shape[0]:
