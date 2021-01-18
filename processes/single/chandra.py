@@ -36,7 +36,9 @@ from configuration import read_config_json
 from configuration_graph import build_configuration_graph
 from load_prepare_data import load_and_prepare_data
 from assemble_model import build_and_train_model
-from train_model import trainModels
+from evaluate_visualize import evaluate_and_visualize
+
+from configuration_constants import JSON_MODEL_FILE
 
 if __name__ == '__main__':
     print ("Good morning Dr. Chandra. I am ready for my next lesson.\n")
@@ -110,17 +112,20 @@ if __name__ == '__main__':
     ========================================================================= '''
     step2 = time.time()
     print ('\nStep 2 - Build and train the Model')
-    k_model = build_and_train_model(nx_graph)
+    node_i, k_model, x_features, y_targets, x_test, y_test, fitting = build_and_train_model(nx_graph)
 
     ''' .................... Step 3 - Evaluate the model! ...............
     ===================================================================== '''
     step3 = time.time()
-    print ("\nStep 3 - Evaluate the model!")
+    print ("\nStep 3 - Evaluate the model and visualize accuracy!")
+    evaluate_and_visualize(nx_graph, node_i, k_model, x_features, y_targets, x_test, y_test, fitting)
     
     ''' .................... Step 4 - clean up, archive and visualize accuracy! ...............
     =========================================================================================== '''
     step4 = time.time()
-    print ("\nStep 4 - clean up, archive and visualize accuracy!")
+    print ("\nStep 4 - clean up, archive")
+    nx_model_file = nx.get_node_attributes(nx_graph, JSON_MODEL_FILE)[node_i]
+    k_model.save(nx_model_file)
 
     end = time.time()
     print ("")

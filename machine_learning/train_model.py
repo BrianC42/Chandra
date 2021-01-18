@@ -6,7 +6,6 @@ Created on Oct 9, 2020
 import sys
 import logging
 import networkx as nx
-import numpy as np
 
 from configuration_constants import JSON_BATCH
 from configuration_constants import JSON_EPOCHS
@@ -51,20 +50,6 @@ def trainModels(nx_graph, node_i, nx_edge, k_model, x_train,y_train, x_test, y_t
                                 shuffle=nx_shuffle, \
                                 verbose=nx_verbose)
 
-        nx_model_file = nx.get_node_attributes(nx_graph, JSON_MODEL_FILE)[node_i]
-        k_model.save(nx_model_file)
-        
-        loss = k_model.evaluate(x=x_train, y=y_train)
-        
-        x_predict = np.array([1,5,20,5000,250])
-        y_predict = k_model.predict(x=x_predict)
-        print("\nPrediction shape: [%s,%s]" % (y_predict.shape[0], y_predict.shape[1]))
-        ndx = 0
-        while ndx < x_predict.shape[0]:
-            str_predict = 'Prediction: feature {:.1f} - target {:.1f} - should be {:.1f}'.format(x_predict[ndx], y_predict[ndx][0], ((x_predict[ndx]*1.3)+5))
-            print(str_predict)
-            ndx += 1
-    
     except Exception:
         err_txt = "*** An exception occurred training the model ***"
         logging.debug(err_txt)
@@ -73,4 +58,4 @@ def trainModels(nx_graph, node_i, nx_edge, k_model, x_train,y_train, x_test, y_t
     logging.info('<---- ----------------------------------------------')
     logging.info('<---- trainModels: done')
     logging.info('<---- ----------------------------------------------')    
-    return
+    return fitting

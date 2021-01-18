@@ -275,6 +275,8 @@ def build_model(nx_graph, node_i, nx_edge, df_data):
         nx_validation_split = nx.get_node_attributes(nx_graph, JSON_VALIDATION_SPLIT)[node_i]
 
         rows = df_data.shape[0]
+        x_features = df_data.loc[:, nx_features]
+        y_targets = df_data.loc[:, nx_targets]
         df_x_train = df_data.loc[int(rows * nx_validation_split):, nx_features]
         df_y_train = df_data.loc[int(rows * nx_validation_split):, nx_targets]
         df_x_test = df_data.loc[:int(rows * nx_validation_split), nx_features]
@@ -288,6 +290,8 @@ def build_model(nx_graph, node_i, nx_edge, df_data):
         print("raw training data\n%s" % df_x_train.describe())
         tf.keras.backend.set_floatx('float64')
 
+        np_x_norm = np_x_train
+        np_y_norm = np_y_train
         nx_normalize = nx.get_node_attributes(nx_graph, JSON_NORMALIZE_DATA)[node_i]
         if nx_normalize:
             print("Normalizing features")
@@ -302,9 +306,7 @@ def build_model(nx_graph, node_i, nx_edge, df_data):
             np_y_norm = np.array(y_normalized)
         else:
             print("features not normalized")
-            np_x_norm = np_x_train
             print("targets not normalized")
-            np_y_norm = np_y_train
 
         df_data = preprocess_data(nx_graph, node_i, df_data)        
 
@@ -335,7 +337,7 @@ def build_model(nx_graph, node_i, nx_edge, df_data):
         nx_metrics = nx.get_node_attributes(nx_graph, JSON_METRICS)[node_i]
         nx_optimizer = nx.get_node_attributes(nx_graph, JSON_OPTIMIZER)[node_i]
         nx_loss_weights = nx.get_node_attributes(nx_graph, JSON_LOSS_WTS)[node_i]
-        k_model.compile(nx_optimizer, nx_loss, metrics=nx_metrics, loss_weights=nx_loss_weights)
+        k_model.compile(optimizer=nx_optimizer, loss=nx_loss, metrics=nx_metrics, loss_weights=nx_loss_weights)
         print("compile optimizer:%s loss:%s metrics:%s loss_weights:%s" % \
               (nx_optimizer, nx_loss, nx_metrics, nx_loss_weights))
         k_model.summary()
@@ -349,7 +351,7 @@ def build_model(nx_graph, node_i, nx_edge, df_data):
     logging.info('<---- ----------------------------------------------')
     logging.info('<---- build_model: done')
     logging.info('<---- ----------------------------------------------')    
-    return k_model, np_x_norm, np_y_norm, np_x_test, np_y_test
+    return k_model, x_features, y_targets, np_x_norm, np_y_norm, np_x_test, np_y_test
 
 def build_and_train_model(nx_graph):
     
@@ -363,7 +365,7 @@ def build_and_train_model(nx_graph):
     
     print("Training: %s" % node_i)
     df_data = load_training_data(nx_graph, node_i, nx_edge)
-    k_model, x_train, y_train, x_test, y_test = build_model(nx_graph, node_i, nx_edge, df_data)
-    trainModels(nx_graph, node_i, nx_edge, k_model, x_train, y_train, x_test, y_test)
+    k_model, x_features, y_targets, x_train, y_train, x_test, y_test = build_model(nx_graph, node_i, nx_edge, df_data)
+    fitting = trainModels(nx_graph, node_i, nx_edge, k_model, x_train, y_train, x_test, y_test)
     
-    return
+    return node_i, k_model, x_features, y_targets, x_test, y_test, fitting

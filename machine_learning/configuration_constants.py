@@ -206,7 +206,7 @@ JSON_THRESHOLD_VALUE = "categoryThresholdValue"
 JSON_VALUE_RANGES = "categoryRanges"
 JSON_RANGE_MINS = "categoryMinimums"
 JSON_RANGE_MAXS = "categoryMaximums"
-JSON_LINEAR_REGRESSION = "linearRegression"
+JSON_LINEAR_REGRESSION = "Regression"
 
 JSON_REMOVE_OUTLIER_LIST  = "removeOutliers"
 JSON_OUTLIER_FEATURE = "featureName"
