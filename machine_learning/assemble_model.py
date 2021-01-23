@@ -9,13 +9,9 @@ import os
 import sys
 import logging
 import networkx as nx
-import numpy as np
 import pandas as pd
 import tensorflow as tf
-from tensorflow import data
 from tensorflow import keras
-from tensorflow.keras import layers
-from tensorflow.keras.layers.experimental import preprocessing
 
 from train_model import trainModels
 
@@ -25,9 +21,7 @@ from configuration_constants import JSON_PROCESS_TYPE
 from configuration_constants import JSON_INPUT_FLOWS
 
 from configuration_constants import JSON_FEATURE_FIELDS
-from configuration_constants import JSON_TARGET_FIELDS
 
-from configuration_constants import JSON_VALIDATION_SPLIT
 from configuration_constants import JSON_FLOW_DATA_FILE
 
 from configuration_constants import JSON_CATEGORY_TYPE
@@ -37,12 +31,6 @@ from configuration_constants import JSON_VALUE_RANGES
 from configuration_constants import JSON_LINEAR_REGRESSION
 
 from configuration_constants import JSON_THRESHOLD_VALUE
-
-from configuration_constants import JSON_PREPROCESS_SEQUENCE
-from configuration_constants import JSON_PREPROCESS_DISCRETIZATION
-from configuration_constants import JSON_PREPROCESS_DISCRETIZATION_BINS
-from configuration_constants import JSON_PREPROCESS_CATEGORY_ENCODING
-from configuration_constants import JSON_NORMALIZE_DATA
 
 from configuration_constants import JSON_MODEL_INPUT_LAYER
 from configuration_constants import JSON_MODEL_OUTPUT_LAYER
@@ -222,7 +210,7 @@ def load_training_data(nx_graph, node_i, nx_edge):
         nx_data_file = nx.get_edge_attributes(nx_graph, JSON_FLOW_DATA_FILE)
         inputData = nx_data_file[nx_edge[0], nx_edge[1], nx_input_flow[0]]    
         if os.path.isfile(inputData):
-            df_data = pd.read_csv(inputData)
+            df_training_data = pd.read_csv(inputData)
                 
         if nx_read_attr[node_i] == JSON_KERAS_DENSE_PROCESS:    
             print("%s is built of core dense layers" % node_i)
@@ -245,9 +233,9 @@ def load_training_data(nx_graph, node_i, nx_edge):
         logging.debug(err_txt)
         sys.exit("\n" + err_txt)
 
-    return df_data
+    return df_training_data
 
-def build_model(nx_graph, node_i, nx_edge, df_data):
+def build_model(nx_graph, node_i, nx_edge, df_training_data):
     logging.info('====> ================================================')
     logging.info('====> build_model: building the machine learning model')
     logging.info('====> ================================================')
@@ -260,55 +248,9 @@ def build_model(nx_graph, node_i, nx_edge, df_data):
 
         nx_input_flows = nx.get_node_attributes(nx_graph, JSON_INPUT_FLOWS)[node_i]
         nx_input_layer = nx.get_node_attributes(nx_graph, JSON_MODEL_INPUT_LAYER)[node_i]
-
-        '''
         nx_features = nx.get_edge_attributes(nx_graph, JSON_FEATURE_FIELDS)
-        nx_input = nx_features[nx_edge[0], nx_edge[1], nx_input_flows[0]]    
-        '''
 
-        nx_featureFields = nx.get_edge_attributes(nx_graph, JSON_FEATURE_FIELDS)
-        nx_features = nx_featureFields[nx_edge[0], nx_edge[1], nx_input_flows[0]]    
-
-        nx_targetFiields = nx.get_edge_attributes(nx_graph, JSON_TARGET_FIELDS)
-        nx_targets = nx_targetFiields[nx_edge[0], nx_edge[1], nx_input_flows[0]]    
-
-        nx_validation_split = nx.get_node_attributes(nx_graph, JSON_VALIDATION_SPLIT)[node_i]
-
-        rows = df_data.shape[0]
-        x_features = df_data.loc[:, nx_features]
-        y_targets = df_data.loc[:, nx_targets]
-        df_x_train = df_data.loc[int(rows * nx_validation_split):, nx_features]
-        df_y_train = df_data.loc[int(rows * nx_validation_split):, nx_targets]
-        df_x_test = df_data.loc[:int(rows * nx_validation_split), nx_features]
-        df_y_test = df_data.loc[:int(rows * nx_validation_split), nx_targets]
-        
-        np_x_train = np.array(df_x_train, dtype='float64')
-        np_y_train = np.array(df_y_train, dtype='float64')
-        np_x_test = np.array(df_x_test, dtype='float64')
-        np_y_test = np.array(df_y_test, dtype='float64')
-
-        print("raw training data\n%s" % df_x_train.describe())
-        tf.keras.backend.set_floatx('float64')
-
-        np_x_norm = np_x_train
-        np_y_norm = np_y_train
-        nx_normalize = nx.get_node_attributes(nx_graph, JSON_NORMALIZE_DATA)[node_i]
-        if nx_normalize:
-            print("Normalizing features")
-            normalize_x = preprocessing.Normalization()    
-            normalize_x.adapt(np_x_train)
-            x_normalized  = normalize_x(np_x_train)
-            np_x_norm = np.array(x_normalized)
-            print("Normalizing targets")
-            normalize_y = preprocessing.Normalization()    
-            normalize_y.adapt(np_y_train)
-            y_normalized  = normalize_y(np_y_train)
-            np_y_norm = np.array(y_normalized)
-        else:
-            print("features not normalized")
-            print("targets not normalized")
-
-        df_data = preprocess_data(nx_graph, node_i, df_data)        
+        df_training_data = preprocess_data(nx_graph, node_i, df_training_data)        
 
         err_txt = "*** An exception occurred building the model ***"
         k_input = tf.keras.Input(name=nx_input_layer, shape=(len(nx_features),), dtype='float64')
@@ -351,7 +293,8 @@ def build_model(nx_graph, node_i, nx_edge, df_data):
     logging.info('<---- ----------------------------------------------')
     logging.info('<---- build_model: done')
     logging.info('<---- ----------------------------------------------')    
-    return k_model, x_features, y_targets, np_x_norm, np_y_norm, np_x_test, np_y_test
+    #return k_model, x_features, y_targets, df_training_data, np_x_norm, np_y_norm, np_x_test, np_y_test
+    return k_model, df_training_data
 
 def build_and_train_model(nx_graph):
     
@@ -364,8 +307,8 @@ def build_and_train_model(nx_graph):
                     break
     
     print("Training: %s" % node_i)
-    df_data = load_training_data(nx_graph, node_i, nx_edge)
-    k_model, x_features, y_targets, x_train, y_train, x_test, y_test = build_model(nx_graph, node_i, nx_edge, df_data)
-    fitting = trainModels(nx_graph, node_i, nx_edge, k_model, x_train, y_train, x_test, y_test)
+    df_training_data = load_training_data(nx_graph, node_i, nx_edge)
+    k_model, df_training_data = build_model(nx_graph, node_i, nx_edge, df_training_data)
+    fitting, x_features, y_targets, x_train, y_train = trainModels(nx_graph, node_i, nx_edge, k_model, df_training_data)
     
-    return node_i, k_model, x_features, y_targets, x_test, y_test, fitting
+    return node_i, k_model, fitting, x_features, y_targets, x_train, y_train

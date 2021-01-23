@@ -21,7 +21,7 @@
 		},
 		"conditionalFields" : {
 			"dataPrepCtrl" : {
-				"inputFile" : ["c:\\users\\brian\\downloads\\regression - noisy linear.csv"]
+				"inputFile" : ["c:\\users\\brian\\downloads\\regression - sine 10.csv"]
 			},
 			"removeOutliers" : [
 				{"commented - featureName - none" : "", "outlierPct" : 0.02}
@@ -29,7 +29,7 @@
 		}
 	},
 	{
-		"processNodeName" : "Regression_Linear_Algebra",
+		"processNodeName" : "Regression_Sine",
 		"requiredFields" : {
 			"comments: supported values - processType" : ["dataPrep", "KerasDense"],
 			"processType" : "KerasDense",
@@ -48,11 +48,11 @@
 				"modelStructure" : {
 					"inputLayer" : "LR-input",
 					"layerCounts" : 1,
-					"layerNodes" : 50,
+					"layerNodes" : 25,
 					"outputLayer" : "ML-Regression",
-					"comment: activations" : "see https://keras.io/api/layers/activations/",
-					"comment: activation functions" : ["relu", "sigmoid", "softmax", "softplus", "softsign", "tanh", "selu", "elu", "exponential"],
-					"outputActivation" : "relu"
+					"comment: activations" : "output layer activation see https://keras.io/api/layers/activations/",
+					"comment: activation functions" : ["relu", "linear","sigmoid", "softmax", "softplus", "softsign", "tanh", "selu", "elu", "exponential"],
+					"outputActivation" : "linear"
 				},
 				"training" : {
 					"Comment 1" : "one output - see data flow for detaiils",
@@ -63,7 +63,7 @@
 					"dropout" : false,
 					"dropoutRate" : 0.2,
 					"shuffle" : true,
-					"normalize" : false,
+					"normalize" : true,
 					"batchSize" : 32,
 					"epochs" : 25,
 					"useBias" : true,
@@ -81,34 +81,34 @@
 					"comment: compilationMetrics true/false classification" : [],
 					"comment: compilationMetrics image" : [],
 					"comment: compilationMetrics hinge" : [],
-					"compilationMetrics" : ["mean_absolute_error"],
-					"comment: activations" : "https://keras.io/api/layers/activations/",
-					"comment: activations regression" : ["relu", "sigmoid", "softmax", "softplus", "softsign", "tanh", "selu", "elu", "exponential"],
+					"compilationMetrics" : ["mean_squared_error"],
+					"comment: activations" : "hidden layer activations https://keras.io/api/layers/activations/",
+					"comment: activations regression" : ["relu", "linear","sigmoid", "softmax", "softplus", "softsign", "tanh", "selu", "elu", "exponential"],
 					"activation" : "relu",
 					"comment: optimizers" : "https://keras.io/api/optimizers/",
 					"comment: optimizer values" : ["SGD", "RMSprop", "Adam", "Adadelta", "Adagrad", "Adamax", "Nadam", "Ftrl"],
-					"optimizer" : "adam"
+					"optimizer" : "SGD"
 				}
 			}
 		}
 	}
 ],
-"comment - dataflow section" : "Specification details  for the flows of data between processing nodes",
+"comment - wave form dataflow section" : "Specification details  for the flows of data between processing nodes",
 "dataFlows" : [
 	{
 	"flowName" : "LR_data",
 	"requiredFields" : {
 		"flowFrom" : "LoadData",
-		"flowTo" : "Regression_Linear_Algebra"
+		"flowTo" : "Regression_Sine"
 		},
 	"conditionalFields" : {
 		"KerasDenseData" : {
 			"timeSequence" : false,
 			"balanceClasses" : true,
 			"ignoreBlanks" : true,
-			"flowDataFile" : "c:\\users\\brian\\downloads\\linear regression.csv",
+			"flowDataFile" : "c:\\users\\brian\\downloads\\regression - sine.csv",
 			"features" : ["Feature-x"],
-			"targets" : ["Noisy-target"],
+			"targets" : ["Target-y"],
 			"categorization" : {
 				"comment 1" : "models to assess input data relationship to categorized outputs",
 				"comment 1: supported categoryType values" : ["categoryTrueFalse", "categoryThreshold (above / below)", "categoryRanges"],
@@ -207,7 +207,7 @@
 		}
 	}
 ],
-"archival comment - technical analysis - dataflow section" : "Speciification details  for the flows of data between processing nodes",
+"archival comment - technical analysis - dataflow section" : "Specification details  for the flows of data between processing nodes",
 "archival dataFlows" : [
 	{
 	"flowName" : "LRdata",
@@ -420,6 +420,230 @@
 			"flowDataFile" : "c:\\users\\brian\\downloads\\linear regression.csv",
 			"features" : ["Feature-x"],
 			"targets" : ["Noisy-target"],
+			"categorization" : {
+				"comment 1" : "models to assess input data relationship to categorized outputs",
+				"comment 1: supported categoryType values" : ["categoryTrueFalse", "categoryThreshold (above / below)", "categoryRanges"],
+				"comment 2: supported categoryType values" : ["Regression"],
+				"categoryType" : "Regression",
+				"categoryOneHot - not required for Regression" : ["catTrue", "catFalse"]
+				}
+			}
+		}
+	}
+],
+"Archival - Polynomial Regression" : [
+	{
+		"processNodeName" : "LoadData",
+		"requiredFields" : {
+			"processType" : "dataPrep",
+			"comments: supported values - processType" : ["dataPrep", "KerasDense"],
+			"inputFlows" : [],
+			"outputFlow" : "LR_data",
+			"outputFile" : "",
+			"logFile" : ""
+		},
+		"conditionalFields" : {
+			"dataPrepCtrl" : {
+				"inputFile" : ["c:\\users\\brian\\downloads\\regression - polynomial.csv"]
+			},
+			"removeOutliers" : [
+				{"commented - featureName - none" : "", "outlierPct" : 0.02}
+			]
+		}
+	},
+	{
+		"processNodeName" : "Regression_Polynomial",
+		"requiredFields" : {
+			"comments: supported values - processType" : ["dataPrep", "KerasDense"],
+			"processType" : "KerasDense",
+			"inputFlows" : ["LR_data"],
+			"outputFlow" : "",
+			"outputFile" : "d:\\brian\\AI Projects\\models\\LRmodel",
+			"logFile" : "d:\\brian\\AI Projects\\logs\\LRmodel.txt"
+		},
+		"conditionalFields" : {
+			"preprocessingLayers" : {
+				"comments - supported layers" : ["linearRegression", "discretization", "categoryEncoding"],
+				"preprocessSequence" : ["linearRegression"]
+				},
+		    "KerasDenseCtrl" : {
+				"modelFile" : "d:\\brian\\AI Projects\\models\\LRmodel",
+				"modelStructure" : {
+					"inputLayer" : "LR-input",
+					"layerCounts" : 1,
+					"layerNodes" : 50,
+					"outputLayer" : "ML-Regression",
+					"comment: activations" : "see https://keras.io/api/layers/activations/",
+					"comment: activation functions" : ["relu", "sigmoid", "softmax", "softplus", "softsign", "tanh", "selu", "elu", "exponential"],
+					"outputActivation" : "relu"
+				},
+				"training" : {
+					"Comment 1" : "one output - see data flow for detaiils",
+					"analysis" : "classification",
+					"lossWeights" : [1.0],
+					"denseRegularation" : false,
+					"regularationValue" : 0.0,
+					"dropout" : false,
+					"dropoutRate" : 0.2,
+					"shuffle" : true,
+					"normalize" : false,
+					"batchSize" : 32,
+					"epochs" : 25,
+					"useBias" : true,
+					"validationSplit" : 0.2,
+					"verbose" : 2,
+					"balanceClasses" : true,
+					"comment: compilationLoss" : ["see https://keras.io/api/losses/regression_losses/"],
+					"comment: compilationLoss regression" : ["mean_squared_error", "mean_absolute_error", "mean_absolute_percentage_error", "mean_squared_logarithmic_error", "cosine_similarity"],
+					"comment: compilationLoss categorization probablistic" : ["binary_crossentropy", "categorical_crossentropy", "sparse_categorical_crossentropy", "poisson"],
+					"compilationLoss" : "mean_absolute_error",
+					"comment: compilationMetrics" : ["see https://keras.io/api/metrics/regression_metrics/"],
+					"comment: compilationMetrics regression" : ["mean_squared_error", "root_mean_squared_error", "mean_absolute_error", "mean_absolute_percentage_error", "mean_squared_logarithmic_error", "cosine_similarity", "log_cosh_error"],
+					"comment: compilationMetrics categorization accuracy" : ["accuracy", "binary_accuracy", "categorical_accuracy", "top_k_categorical_accuracy", "sparse_top_k_categorical_accuracy"],
+					"comment: compilationMetrics categorization probablistic" : ["binary_crossentropy", "categorical_crossentropy", "sparse_categorical_crossentropy", "poisson"],
+					"comment: compilationMetrics true/false classification" : [],
+					"comment: compilationMetrics image" : [],
+					"comment: compilationMetrics hinge" : [],
+					"compilationMetrics" : ["mean_absolute_error"],
+					"comment: activations" : "https://keras.io/api/layers/activations/",
+					"comment: activations regression" : ["relu", "sigmoid", "softmax", "softplus", "softsign", "tanh", "selu", "elu", "exponential"],
+					"activation" : "relu",
+					"comment: optimizers" : "https://keras.io/api/optimizers/",
+					"comment: optimizer values" : ["SGD", "RMSprop", "Adam", "Adadelta", "Adagrad", "Adamax", "Nadam", "Ftrl"],
+					"optimizer" : "adam"
+				}
+			}
+		}
+	}
+],
+"Archival comment - dataflow section" : "Specification details  for the flows of data between processing nodes",
+"Archival Polynomial dataFlows" : [
+	{
+	"flowName" : "LR_data",
+	"requiredFields" : {
+		"flowFrom" : "LoadData",
+		"flowTo" : "Regression_Polynomial"
+		},
+	"conditionalFields" : {
+		"KerasDenseData" : {
+			"timeSequence" : false,
+			"balanceClasses" : true,
+			"ignoreBlanks" : true,
+			"flowDataFile" : "c:\\users\\brian\\downloads\\regression - polynomial.csv",
+			"features" : ["Feature-x"],
+			"targets" : ["Target-y"],
+			"categorization" : {
+				"comment 1" : "models to assess input data relationship to categorized outputs",
+				"comment 1: supported categoryType values" : ["categoryTrueFalse", "categoryThreshold (above / below)", "categoryRanges"],
+				"comment 2: supported categoryType values" : ["Regression"],
+				"categoryType" : "Regression",
+				"categoryOneHot - not required for Regression" : ["catTrue", "catFalse"]
+				}
+			}
+		}
+	}
+],
+"archival - wave form regression" : [
+	{
+		"processNodeName" : "LoadData",
+		"requiredFields" : {
+			"processType" : "dataPrep",
+			"comments: supported values - processType" : ["dataPrep", "KerasDense"],
+			"inputFlows" : [],
+			"outputFlow" : "LR_data",
+			"outputFile" : "",
+			"logFile" : ""
+		},
+		"conditionalFields" : {
+			"dataPrepCtrl" : {
+				"inputFile" : ["c:\\users\\brian\\downloads\\regression - sine 10.csv"]
+			},
+			"removeOutliers" : [
+				{"commented - featureName - none" : "", "outlierPct" : 0.02}
+			]
+		}
+	},
+	{
+		"processNodeName" : "Regression_Sine",
+		"requiredFields" : {
+			"comments: supported values - processType" : ["dataPrep", "KerasDense"],
+			"processType" : "KerasDense",
+			"inputFlows" : ["LR_data"],
+			"outputFlow" : "",
+			"outputFile" : "d:\\brian\\AI Projects\\models\\LRmodel",
+			"logFile" : "d:\\brian\\AI Projects\\logs\\LRmodel.txt"
+		},
+		"conditionalFields" : {
+			"preprocessingLayers" : {
+				"comments - supported layers" : ["linearRegression", "discretization", "categoryEncoding"],
+				"preprocessSequence" : ["linearRegression"]
+				},
+		    "KerasDenseCtrl" : {
+				"modelFile" : "d:\\brian\\AI Projects\\models\\LRmodel",
+				"modelStructure" : {
+					"inputLayer" : "LR-input",
+					"layerCounts" : 1,
+					"layerNodes" : 100,
+					"outputLayer" : "ML-Regression",
+					"comment: activations" : "see https://keras.io/api/layers/activations/",
+					"comment: activation functions" : ["relu", "sigmoid", "softmax", "softplus", "softsign", "tanh", "selu", "elu", "exponential"],
+					"outputActivation" : "relu"
+				},
+				"training" : {
+					"Comment 1" : "one output - see data flow for detaiils",
+					"analysis" : "classification",
+					"lossWeights" : [1.0],
+					"denseRegularation" : false,
+					"regularationValue" : 0.0,
+					"dropout" : false,
+					"dropoutRate" : 0.2,
+					"shuffle" : true,
+					"normalize" : false,
+					"batchSize" : 32,
+					"epochs" : 5,
+					"useBias" : true,
+					"validationSplit" : 0.2,
+					"verbose" : 2,
+					"balanceClasses" : true,
+					"comment: compilationLoss" : ["see https://keras.io/api/losses/regression_losses/"],
+					"comment: compilationLoss regression" : ["mean_squared_error", "mean_absolute_error", "mean_absolute_percentage_error", "mean_squared_logarithmic_error", "cosine_similarity"],
+					"comment: compilationLoss categorization probablistic" : ["binary_crossentropy", "categorical_crossentropy", "sparse_categorical_crossentropy", "poisson"],
+					"compilationLoss" : "mean_absolute_error",
+					"comment: compilationMetrics" : ["see https://keras.io/api/metrics/regression_metrics/"],
+					"comment: compilationMetrics regression" : ["mean_squared_error", "root_mean_squared_error", "mean_absolute_error", "mean_absolute_percentage_error", "mean_squared_logarithmic_error", "cosine_similarity", "log_cosh_error"],
+					"comment: compilationMetrics categorization accuracy" : ["accuracy", "binary_accuracy", "categorical_accuracy", "top_k_categorical_accuracy", "sparse_top_k_categorical_accuracy"],
+					"comment: compilationMetrics categorization probablistic" : ["binary_crossentropy", "categorical_crossentropy", "sparse_categorical_crossentropy", "poisson"],
+					"comment: compilationMetrics true/false classification" : [],
+					"comment: compilationMetrics image" : [],
+					"comment: compilationMetrics hinge" : [],
+					"compilationMetrics" : ["mean_absolute_error"],
+					"comment: activations" : "https://keras.io/api/layers/activations/",
+					"comment: activations regression" : ["relu", "sigmoid", "softmax", "softplus", "softsign", "tanh", "selu", "elu", "exponential"],
+					"activation" : "relu",
+					"comment: optimizers" : "https://keras.io/api/optimizers/",
+					"comment: optimizer values" : ["SGD", "RMSprop", "Adam", "Adadelta", "Adagrad", "Adamax", "Nadam", "Ftrl"],
+					"optimizer" : "adam"
+				}
+			}
+		}
+	}
+],
+"archival comment - wave form dataflow section" : "Specification details  for the flows of data between processing nodes",
+"archival comment - wave form dataFlows" : [
+	{
+	"flowName" : "LR_data",
+	"requiredFields" : {
+		"flowFrom" : "LoadData",
+		"flowTo" : "Regression_Sine"
+		},
+	"conditionalFields" : {
+		"KerasDenseData" : {
+			"timeSequence" : false,
+			"balanceClasses" : true,
+			"ignoreBlanks" : true,
+			"flowDataFile" : "c:\\users\\brian\\downloads\\regression - sine.csv",
+			"features" : ["Feature-x"],
+			"targets" : ["Target-y"],
 			"categorization" : {
 				"comment 1" : "models to assess input data relationship to categorized outputs",
 				"comment 1: supported categoryType values" : ["categoryTrueFalse", "categoryThreshold (above / below)", "categoryRanges"],
