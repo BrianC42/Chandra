@@ -10,7 +10,7 @@ function getSingleAnalysis(symbol) {
     "method" : "GET",
     "headers" : {
       "x-Rapidapi-host": "apidojo-yahoo-finance-v1.p.rapidapi.com",
-      "x-RapidApi-Key": "928126c705mshc0f64d4acc404a0p10bfa2jsn9eb0625826ab"
+      "x-RapidApi-Key": ""
       },
     "muteHttpExceptions" : true
    };
