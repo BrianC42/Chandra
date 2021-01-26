@@ -1,0 +1,4 @@
+function isTimeUp_(start) {
+  var now = new Date();
+  return now.getTime() - start.getTime() > 300000; // 5 minutes
+}
