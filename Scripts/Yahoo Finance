@@ -1,93 +1,233 @@
+var ndx_symbol
+var ndx_regMarketPrice
+var ndx_dividendYield
+var ndx_yahooCovered
+var ndx_exDividendDate
+var ndx_forwardPE
+var ndx_high52Week
+var ndx_low52Week
+var ndx_vol
+var ndx_quoteType
+var ndx_recommendation
+var ndx_tgtLow
+var ndx_tgtMedian
+var ndx_tgtMean
+var ndx_tgtHigh
+var ndx_margin
+
+function isTimeUp_(start) {
+  var now = new Date();
+  return now.getTime() - start.getTime() > 300000; // 5 minutes
+}
+
+function updateSymbol(symbol, dataRange, apiYahooData) {
+  Logger.log("Updating: " + symbol)
+
+  dataValues = dataRange.getValues()
+  //Logger.log("Data values : " + dataValues.length)
+  coveredByYahoo = "N"
+  fdTargetLowPrice = 0;
+  fdTargetMedianPrice = 0;
+  fdTargetMeanPrice = 0;
+  fdTargetHighPrice = 0;
+  fdProfitMargins = 0;
+  fdAnalystRecommendation = "N/A"
+  price_quoteType = "N/A"
+  price_regularMarketPrice = 0;
+  sd_fiftyTwoWeekLow = 0;
+  sd_fiftyTwoWeekHigh = 0;
+  sd_forwardPE = 0;
+  sd_dividendYield = 0;
+  sd_exDividendDate = 0;
+  sd_volume = 0;
+
+  y = 0
+  while (y < dataValues.length) {
+    sheetSymbol = dataValues[y][ndx_symbol]
+    if (symbol == dataValues[y][ndx_symbol]) {
+      //Logger.log(symbol + " is at " + y + " row")
+      dataValues[y][ndx_yahooCovered] = coveredByYahoo
+      dataValues[y][ndx_recommendation] = fdAnalystRecommendation
+      dataValues[y][ndx_tgtLow] = fdTargetLowPrice
+      dataValues[y][ndx_tgtMedian] = fdTargetMedianPrice
+      dataValues[y][ndx_tgtMean] = fdTargetMeanPrice
+      dataValues[y][ndx_tgtHigh] = fdTargetHighPrice
+      dataValues[y][ndx_margin] = fdProfitMargins
+      dataValues[y][ndx_regMarketPrice] = price_regularMarketPrice
+      dataValues[y][ndx_quoteType] = price_quoteType
+      dataValues[y][ndx_dividendYield] = sd_dividendYield
+      dataValues[y][ndx_exDividendDate] = sd_exDividendDate
+      dataValues[y][ndx_forwardPE] = sd_forwardPE
+      dataValues[y][ndx_high52Week] = sd_fiftyTwoWeekHigh
+      dataValues[y][ndx_low52Week] = sd_fiftyTwoWeekLow
+      dataValues[y][ndx_vol] = sd_volume
+      dataValues = dataRange.setValues(dataValues)
+      break
+    }
+    y += 1
+  }
+}
+
+function callRapidAPI(symbol) {
+  Logger.log("Calling API for " + symbol)
+  return response
+}
+
+function TEMPgetSingleAnalysis(symbol, RapidAPIKey) {
+  var queryString = "?symbol="+symbol;
+  var url = "https://apidojo-yahoo-finance-v1.p.rapidapi.com/stock/v2/get-analysis" + queryString;
+  var headers = ({
+	"x-Rapidapi-host": "apidojo-yahoo-finance-v1.p.rapidapi.com",
+	"x-RapidApi-Key": RapidAPIKey
+  });
+  var options = {
+    "method" : "GET",
+    "headers" : {
+      "x-Rapidapi-host": "apidojo-yahoo-finance-v1.p.rapidapi.com",
+      "x-RapidApi-Key": RapidAPIKey
+      },
+    "muteHttpExceptions" : true
+   };
+
+  try {
+    // Block of code to try
+    //Logger.log("Retrieving data from Yahoo Finance for " + symbol)
+    content = "Dummy JSON return from API call"
+  }
+  catch(err) {
+    // Block of code to handle errors
+    //Logger.log("fetch error: " +  err.message)
+    content = ""
+  }
+  finally {
+    // Block of code to be executed regardless of the try / catch result
+    // Initialize spreadsheet variable to legal values
+    //Logger.log("finally")
+  }
+
+  return content; 
+}
+
 function UpdateYahooFinanceData() {
   var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
   var x, y
-  var headers, header
-  var symbol_col, recommendation, tgtLow, tgtMedian, tgtMean, tgtHigh, profitMargin
+  var rapidAPIKeyRange, rapidAPIKey
+  var startSymbolRange, startSymbol
+  var endSymbolRange, endSymbol
+  var headers
   var symbols
-  var dataValues
-  var txtRange
   var start
-  var YahooData = []
+  var apiYahooData
 
   yahoo_finance_sheet = spreadsheet.setActiveSheet(spreadsheet.getSheetByName("Yahoo Finance"))
   Logger.log("Yahoo Finance set active")
   
-  rows = 500
   cols = 18
-  firstCol = "A"
   lastCol = "R"
-  startRow = "23"
+  parametersRow = 1
+  columnHeadersRow = 2
+  startRow = 3
+  rapidAPICol = "B"
+  startSymbolCol = "H"
+  endSymbolCol = "J"
+  firstCol = "A"
+  rows = 500
 
-  colHeaders = yahoo_finance_sheet.getRange(firstCol + "1" + ":" + lastCol + "1")
-  txtSymbolsRange = firstCol + startRow + ":" + firstCol + rows
-  symbolsRange = yahoo_finance_sheet.getRange(txtSymbolsRange)
-  txtDataRange = firstCol + startRow + ":" + lastCol + rows
-  dataRange = yahoo_finance_sheet.getRange(txtDataRange)
+  rapidAPIKeyRange = yahoo_finance_sheet.getRange(rapidAPICol + parametersRow + ":" + rapidAPICol + parametersRow)
+  spreadsheet.setActiveRange(rapidAPIKeyRange)
+  rapidAPIKey = rapidAPIKeyRange.getValues()
 
+  startSymbolRange = yahoo_finance_sheet.getRange(startSymbolCol + parametersRow + ":" + startSymbolCol + parametersRow)
+  spreadsheet.setActiveRange(startSymbolRange)
+  startSymbol = startSymbolRange.getValues()
+
+  endSymbolRange = yahoo_finance_sheet.getRange(endSymbolCol + parametersRow + ":" + endSymbolCol + parametersRow)
+  spreadsheet.setActiveRange(endSymbolRange)
+  endSymbol = endSymbolRange.getValues()
+  Logger.log("Starting with: " + startSymbol + " and ending with: " + endSymbol)
+
+  colHeaders = yahoo_finance_sheet.getRange(firstCol + columnHeadersRow + ":" + lastCol + columnHeadersRow)
   spreadsheet.setActiveRange(colHeaders)
   headers = colHeaders.getValues()
   Logger.log("headers count: " + headers[0].length + " " + headers[0])
   x = 0
   while (x < headers[0].length) {
-    Logger.log("Header: " + headers[0][x])
-    if (headers[0][x] == "Symbol") {
-      symbol_col = x
-    }
-    if (headers[0][x] == "Recommendation") {
-      recommendation = x
-    }
-    if (headers[0][x] == "Low") {
-      tgtLow = x
-    }
-    if (headers[0][x] == "Median") {
-      tgtMedian = x
-    }
-    if (headers[0][x] == "Mean") {
-      tgtMean = x
-    }
-    if (headers[0][x] == "High") {
-      tgtHigh = x
-    }
-    if (headers[0][x] == "Profit Margins") {
-      profitMargin = x
-    }
+    //Logger.log("Header: " + headers[0][x])
+    // Examine sheet headers to identify data columns
+    //Last Chg (%)	Last		Div amount						
+    if (headers[0][x] == "Symbol") {ndx_symbol = x}
+    if (headers[0][x] == "Covered") {ndx_yahooCovered = x}
+    if (headers[0][x] == "Last") {ndx_regMarketPrice = x}
+    if (headers[0][x] == "Div yield") {ndx_dividendYield = x}
+    if (headers[0][x] == "Ex-div date") {ndx_exDividendDate = x}
+    if (headers[0][x] == "P/E") {ndx_forwardPE = x}
+    if (headers[0][x] == "52-week high") {ndx_high52Week = x}
+    if (headers[0][x] == "52-week low") {ndx_low52Week = x}
+    if (headers[0][x] == "Volume") {ndx_vol = x}
+    if (headers[0][x] == "Asset") {ndx_quoteType = x}
+    if (headers[0][x] == "Recommendation") {ndx_recommendation = x}
+    if (headers[0][x] == "Low") {ndx_tgtLow = x}
+    if (headers[0][x] == "Median") {ndx_tgtMedian = x}
+    if (headers[0][x] == "Mean") {ndx_tgtMean = x}
+    if (headers[0][x] == "High") {ndx_tgtHigh = x}
+    if (headers[0][x] == "Profit Margins") {ndx_margin = x}
     x += 1
   }
   
+  txtSymbolsRange = firstCol + startRow + ":" + firstCol + (startRow + (rows-1))
+  symbolsRange = yahoo_finance_sheet.getRange(txtSymbolsRange)
   spreadsheet.setActiveRange(symbolsRange)
   symbols = symbolsRange.getValues()
-  Logger.log("symbols " + symbols)
+  //Logger.log("symbols " + symbols)
+
+  txtDataRange = firstCol + startRow + ":" + lastCol + (startRow + (rows-1))
+  dataRange = yahoo_finance_sheet.getRange(txtDataRange)
+
   dataValues = dataRange.getValues()
   y = 0
+  startFound = false
   start = new Date();
   while (y < symbols.length) {
-    if (symbols[y][0] == "") {
-      break
-    }
-
     if (isTimeUp_(start)) {
       Logger.log("Time limit reached - restart at " + symbols[y][0]);
       break
     }
 
-    dataValues[y][recommendation] = ""
-    dataValues[y][tgtLow] = 0.0
-    dataValues[y][tgtMedian] = 0.0
-    dataValues[y][tgtMean] = 0.0
-    dataValues[y][tgtHigh] = 0.0
-    dataValues[y][profitMargin] = 0.0
+    if (symbols[y][0] == "") {break}
+    if (symbols[y][0] == startSymbol) {
+      startFound = true
+    }
 
-    YahooData = getSingleAnalysis(symbols[y][0])
+    try {
+      // Block of code to try
+      //Logger.log("Symbol: " + symbols[y][0])
+      if (startFound) {
+        apiYahooData = TEMPgetSingleAnalysis(symbols[y][0], rapidAPIKey[0][0])
+        if (apiYahooData == "") {
+          Logger.log("API call failed for " + symbols[y][0])
+          break
+        }
+        else {
+          if (apiYahooData.getResponseCode() == 200){
+            updateSymbol(symbols[y][0], dataRange, apiYahooData)
+          }
+          else {
+            Logger.log("For symbol " + symbols[y][0] + " the API call returned code " + apiYahooData.getResponseCode())
+            break
+          }
+        }
+      }
+    }
+    catch(err) {
+      // Block of code to handle errors
+      Logger.log("For symbol " + symbols[y][0] + " the API call returned invalid data")
+      break
+    }
+    finally {
+      // Block of code to be executed regardless of the try / catch result
+    }
 
-    dataValues[y][recommendation] = YahooData[10]
-    dataValues[y][tgtLow] = YahooData[11]
-    dataValues[y][tgtMedian] = YahooData[12]
-    dataValues[y][tgtMean] = YahooData[13]
-    dataValues[y][tgtHigh] = YahooData[14]
-    dataValues[y][profitMargin] = YahooData[15]
-
-    Logger.log("Symbol: " + symbols[y][0])
+    if (symbols[y][0] == endSymbol){break}
     y += 1
   }
-  dataValues = dataRange.setValues(dataValues)
 }
