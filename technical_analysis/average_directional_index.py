@@ -125,10 +125,15 @@ def average_directional_index(df_data=None):
     df_data = exponential_moving_average(df_data[:], value_label="ADI TR", interval=ADI_PERIODS, EMA_data_label='ADI Smooth TR')
     ndx = ADI_PERIODS
     while ndx < df_data.shape[0]:
-        df_data.at[ndx, 'ADI +DI'] = (df_data.at[ndx, 'ADI Smooth +DM'] * 100) / df_data.at[ndx, 'ADI Smooth TR']
-        df_data.at[ndx, 'ADI -DI'] = (df_data.at[ndx, 'ADI Smooth -DM'] * 100) / df_data.at[ndx, 'ADI Smooth TR']
-        df_data.at[ndx, 'DX'] = abs((df_data.at[ndx, 'ADI +DI'] - df_data.at[ndx, 'ADI -DI']) / \
-                                    (df_data.at[ndx, 'ADI +DI'] + df_data.at[ndx, 'ADI -DI']))
+        if df_data.at[ndx, 'ADI Smooth TR'] == 0.0:
+            df_data.at[ndx, 'ADI +DI'] = 0.0
+            df_data.at[ndx, 'ADI -DI'] = 0.0
+            df_data.at[ndx, 'DX'] = 0.0
+        else:
+            df_data.at[ndx, 'ADI +DI'] = (df_data.at[ndx, 'ADI Smooth +DM'] * 100) / df_data.at[ndx, 'ADI Smooth TR']
+            df_data.at[ndx, 'ADI -DI'] = (df_data.at[ndx, 'ADI Smooth -DM'] * 100) / df_data.at[ndx, 'ADI Smooth TR']
+            df_data.at[ndx, 'DX'] = abs((df_data.at[ndx, 'ADI +DI'] - df_data.at[ndx, 'ADI -DI']) / \
+                                        (df_data.at[ndx, 'ADI +DI'] + df_data.at[ndx, 'ADI -DI']))
         ndx += 1
     df_data = exponential_moving_average(df_data[:], value_label="DX", interval=ADI_PERIODS, EMA_data_label='ADX')
     

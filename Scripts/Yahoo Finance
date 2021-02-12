@@ -20,57 +20,99 @@ function isTimeUp_(start) {
   return now.getTime() - start.getTime() > 300000; // 5 minutes
 }
 
-function updateSymbol(symbol, dataRange, apiYahooData) {
+function updateSymbol(symbol, dataRow, apiYahooData) {
+  var content
+
   Logger.log("Updating: " + symbol)
-
-  dataValues = dataRange.getValues()
-  //Logger.log("Data values : " + dataValues.length)
+  content = JSON.parse(apiYahooData.getContentText());
   coveredByYahoo = "N"
-  fdTargetLowPrice = 0;
-  fdTargetMedianPrice = 0;
-  fdTargetMeanPrice = 0;
-  fdTargetHighPrice = 0;
-  fdProfitMargins = 0;
-  fdAnalystRecommendation = "N/A"
-  price_quoteType = "N/A"
-  price_regularMarketPrice = 0;
-  sd_fiftyTwoWeekLow = 0;
-  sd_fiftyTwoWeekHigh = 0;
-  sd_forwardPE = 0;
-  sd_dividendYield = 0;
-  sd_exDividendDate = 0;
-  sd_volume = 0;
+  
+  if(content["financialData"]["recommendationKey"] === undefined)
+    fdAnalystRecommendation = "N/A"
+  else
+    fdAnalystRecommendation = content["financialData"]["recommendationKey"];
+    
+  if(content["financialData"]["targetLowPrice"] === undefined)
+    fdTargetLowPrice = 0;
+  else
+    fdTargetLowPrice = content["financialData"]["targetLowPrice"]["fmt"];
+    
+  if(content["financialData"]["targetMedianPrice"] === undefined)
+    fdTargetMedianPrice = 0;
+  else
+    fdTargetMedianPrice = content["financialData"]["targetMedianPrice"]["fmt"];
+  
+  if(content["financialData"]["targetMeanPrice"] === undefined)
+    fdTargetMeanPrice = 0;
+  else
+    fdTargetMeanPrice = content["financialData"]["targetMeanPrice"]["fmt"];
+    
+  if(content["financialData"]["targetHighPrice"] === undefined)
+    fdTargetHighPrice = 0;
+  else
+    fdTargetHighPrice = content["financialData"]["targetHighPrice"]["fmt"];
+    
+  if(content["financialData"]["profitMargins"] === undefined)
+    fdProfitMargins = 0;
+  else
+    fdProfitMargins = content["financialData"]["profitMargins"]["fmt"];
 
-  y = 0
-  while (y < dataValues.length) {
-    sheetSymbol = dataValues[y][ndx_symbol]
-    if (symbol == dataValues[y][ndx_symbol]) {
-      //Logger.log(symbol + " is at " + y + " row")
-      dataValues[y][ndx_yahooCovered] = coveredByYahoo
-      dataValues[y][ndx_recommendation] = fdAnalystRecommendation
-      dataValues[y][ndx_tgtLow] = fdTargetLowPrice
-      dataValues[y][ndx_tgtMedian] = fdTargetMedianPrice
-      dataValues[y][ndx_tgtMean] = fdTargetMeanPrice
-      dataValues[y][ndx_tgtHigh] = fdTargetHighPrice
-      dataValues[y][ndx_margin] = fdProfitMargins
-      dataValues[y][ndx_regMarketPrice] = price_regularMarketPrice
-      dataValues[y][ndx_quoteType] = price_quoteType
-      dataValues[y][ndx_dividendYield] = sd_dividendYield
-      dataValues[y][ndx_exDividendDate] = sd_exDividendDate
-      dataValues[y][ndx_forwardPE] = sd_forwardPE
-      dataValues[y][ndx_high52Week] = sd_fiftyTwoWeekHigh
-      dataValues[y][ndx_low52Week] = sd_fiftyTwoWeekLow
-      dataValues[y][ndx_vol] = sd_volume
-      dataValues = dataRange.setValues(dataValues)
-      break
-    }
-    y += 1
+  price_quoteType = content["price"]["quoteType"];
+    
+  if(content["price"]["regularMarketPrice"] === undefined)
+    price_regularMarketPrice = 0;
+  else
+    price_regularMarketPrice = content["price"]["regularMarketPrice"]["fmt"];
+    
+  if(content["summaryDetail"]["fiftyTwoWeekLow"] === undefined)
+    sd_fiftyTwoWeekLow = 0;
+  else
+    sd_fiftyTwoWeekLow = content["summaryDetail"]["fiftyTwoWeekLow"]["fmt"];
+    
+  if(content["summaryDetail"]["fiftyTwoWeekHigh"] === undefined)
+    sd_fiftyTwoWeekHigh = 0;
+  else
+    sd_fiftyTwoWeekHigh = content["summaryDetail"]["fiftyTwoWeekHigh"]["fmt"];
+  
+  if(content["summaryDetail"]["forwardPE"] === undefined)
+    sd_forwardPE = 0;
+  else
+    sd_forwardPE = content["summaryDetail"]["forwardPE"]["fmt"];
+    
+  if(content["summaryDetail"]["dividendYield"] === undefined)
+    sd_dividendYield = 0;
+  else
+    sd_dividendYield = content["summaryDetail"]["dividendYield"]["fmt"];
+ 
+  if(content["summaryDetail"]["exDividendDate"] === undefined)
+    sd_exDividendDate = 0;
+  else
+    sd_exDividendDate = content["summaryDetail"]["exDividendDate"]["fmt"];
+    
+  if(content["summaryDetail"]["volume"] === undefined)
+    sd_volume = 0;
+  else
+    sd_volume = content["summaryDetail"]["volume"]["fmt"];
+
+  sheetSymbol = dataRow[0][ndx_symbol]
+  if (symbol == dataRow[0][ndx_symbol]) {
+    dataRow[0][ndx_yahooCovered] = coveredByYahoo
+    dataRow[0][ndx_recommendation] = fdAnalystRecommendation
+    dataRow[0][ndx_tgtLow] = fdTargetLowPrice
+    dataRow[0][ndx_tgtMedian] = fdTargetMedianPrice
+    dataRow[0][ndx_tgtMean] = fdTargetMeanPrice
+    dataRow[0][ndx_tgtHigh] = fdTargetHighPrice
+    dataRow[0][ndx_margin] = fdProfitMargins
+    dataRow[0][ndx_regMarketPrice] = price_regularMarketPrice
+    dataRow[0][ndx_quoteType] = price_quoteType
+    dataRow[0][ndx_dividendYield] = sd_dividendYield
+    dataRow[0][ndx_exDividendDate] = sd_exDividendDate
+    dataRow[0][ndx_forwardPE] = sd_forwardPE
+    dataRow[0][ndx_high52Week] = sd_fiftyTwoWeekHigh
+    dataRow[0][ndx_low52Week] = sd_fiftyTwoWeekLow
+    dataRow[0][ndx_vol] = sd_volume
+    dataRow = dataRow.setValues(dataRow)
   }
-}
-
-function callRapidAPI(symbol) {
-  Logger.log("Calling API for " + symbol)
-  return response
 }
 
 function TEMPgetSingleAnalysis(symbol, RapidAPIKey) {
@@ -88,16 +130,17 @@ function TEMPgetSingleAnalysis(symbol, RapidAPIKey) {
       },
     "muteHttpExceptions" : true
    };
+   var response
 
   try {
     // Block of code to try
     //Logger.log("Retrieving data from Yahoo Finance for " + symbol)
-    content = "Dummy JSON return from API call"
+    response = UrlFetchApp.fetch(url,options);
   }
   catch(err) {
     // Block of code to handle errors
     //Logger.log("fetch error: " +  err.message)
-    content = ""
+    response = ""
   }
   finally {
     // Block of code to be executed regardless of the try / catch result
@@ -105,7 +148,7 @@ function TEMPgetSingleAnalysis(symbol, RapidAPIKey) {
     //Logger.log("finally")
   }
 
-  return content; 
+  return response; 
 }
 
 function UpdateYahooFinanceData() {
@@ -117,7 +160,7 @@ function UpdateYahooFinanceData() {
   var headers
   var symbols
   var start
-  var apiYahooData
+  var apiYahooData, content
 
   yahoo_finance_sheet = spreadsheet.setActiveSheet(spreadsheet.getSheetByName("Yahoo Finance"))
   Logger.log("Yahoo Finance set active")
@@ -149,7 +192,7 @@ function UpdateYahooFinanceData() {
   colHeaders = yahoo_finance_sheet.getRange(firstCol + columnHeadersRow + ":" + lastCol + columnHeadersRow)
   spreadsheet.setActiveRange(colHeaders)
   headers = colHeaders.getValues()
-  Logger.log("headers count: " + headers[0].length + " " + headers[0])
+  //Logger.log("headers count: " + headers[0].length + " " + headers[0])
   x = 0
   while (x < headers[0].length) {
     //Logger.log("Header: " + headers[0][x])
@@ -189,45 +232,59 @@ function UpdateYahooFinanceData() {
   start = new Date();
   while (y < symbols.length) {
     if (isTimeUp_(start)) {
+      //ensure script terminates cleanly before Google execution time limit
       Logger.log("Time limit reached - restart at " + symbols[y][0]);
       break
     }
 
     if (symbols[y][0] == "") {break}
     if (symbols[y][0] == startSymbol) {
+      //support processing (re)starting from a row other than the first symbol
       startFound = true
     }
 
     try {
       // Block of code to try
-      //Logger.log("Symbol: " + symbols[y][0])
+      //Logger.log("Symbol: " + symbols[y][ndx_symbol])
       if (startFound) {
-        apiYahooData = TEMPgetSingleAnalysis(symbols[y][0], rapidAPIKey[0][0])
-        if (apiYahooData == "") {
-          Logger.log("API call failed for " + symbols[y][0])
-          break
-        }
-        else {
-          if (apiYahooData.getResponseCode() == 200){
-            updateSymbol(symbols[y][0], dataRange, apiYahooData)
+
+        // change to pass 1 row data range
+        // test row data range for Yahoo covered NOT symbols
+        txtDataRow = firstCol + (startRow + y) + ":" + lastCol + (startRow + y)
+        dataRow = yahoo_finance_sheet.getRange(txtDataRow)
+        dataRowValues = dataRow.getValues()
+
+        if (dataRowValues[0][ndx_yahooCovered] != "N") {
+          apiYahooData = TEMPgetSingleAnalysis(symbols[y][ndx_symbol], rapidAPIKey[0][0])
+          if (apiYahooData == "") {
+            Logger.log("API call failed for " + symbols[y][ndx_symbol])
+            break
           }
           else {
-            Logger.log("For symbol " + symbols[y][0] + " the API call returned code " + apiYahooData.getResponseCode())
-            break
+            if (apiYahooData.getResponseCode() == 200){
+              updateSymbol(symbols[y][ndx_symbol], dataRow, apiYahooData)
+            }
+            else {
+              //extract response message from apiYahooData
+              content = JSON.parse(apiYahooData.getContentText());
+              Logger.log("For symbol " + symbols[y][ndx_symbol] + " the API call returned error code " + apiYahooData.getResponseCode() + " " + content["message"])
+              break
+            }
           }
         }
       }
     }
     catch(err) {
       // Block of code to handle errors
-      Logger.log("For symbol " + symbols[y][0] + " the API call returned invalid data")
+      Logger.log("For symbol " + symbols[y][ndx_symbol] + " the API call returned invalid data " + err)
       break
     }
     finally {
       // Block of code to be executed regardless of the try / catch result
     }
 
-    if (symbols[y][0] == endSymbol){break}
+    //support termination prior to the last row of symbols in the sheet
+    if (symbols[y][ndx_symbol] == endSymbol){break}
     y += 1
   }
 }
