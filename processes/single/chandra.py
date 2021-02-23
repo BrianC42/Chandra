@@ -28,20 +28,22 @@ import os
 import logging
 import datetime as dt
 import time
+import pandas as pd
+import tensorflow as tf
 import networkx as nx
 import matplotlib.pyplot as plt
 
 from configuration import get_ini_data
 from configuration import read_config_json
 from configuration_graph import build_configuration_graph
-from load_prepare_data import load_and_prepare_data
+from load_prepare_data import collect_and_select_data
 from assemble_model import build_and_train_model
 from evaluate_visualize import evaluate_and_visualize
 
 from configuration_constants import JSON_MODEL_FILE
 
 if __name__ == '__main__':
-    print ("Good morning Dr. Chandra. I am ready for my next lesson.\n")
+    print ("Good morning Dr. Chandra. I am ready for my next lesson.\n\tI'm currently running Tensorflow version %s\n" % tf.__version__)
     
     '''
     Prepare the run time environment
@@ -95,6 +97,10 @@ if __name__ == '__main__':
     logger = logging.getLogger('chandra_logger')
     log_fmt = logging.Formatter('%(asctime)s - %(name)s - %levelname - %(messages)s')
     logger.info('Keras model for stock market analysis and prediction')
+
+    #Set print parameters for Pandas dataframes 
+    pd.set_option('display.width', 200)
+    pd.set_option('display.max_columns', 20)
     
     nx_graph = nx.MultiDiGraph()
     build_configuration_graph(json_config, nx_graph)
@@ -105,8 +111,8 @@ if __name__ == '__main__':
     ''' .......... Step 1 - Load and prepare data .........................
     ======================================================================= '''
     step1 = time.time()
-    print ('\nStep 1 - Load and prepare the data for analysis')
-    load_and_prepare_data(nx_graph)
+    print ('\nStep 1 - Acquire, assemble and prepare the data for analysis')
+    collect_and_select_data(nx_graph)
 
     ''' ................... Step 2 - Build Model ............................
     ========================================================================= '''

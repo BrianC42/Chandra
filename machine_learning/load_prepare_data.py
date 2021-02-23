@@ -62,7 +62,7 @@ def set_1Hot_Threshold():
 def set_1Hot_Ranges():
     return 
 
-def prepare2dTrainingData(nx_graph, node_name):
+def prepareTrainingData(nx_graph, node_name):
     nx_data_file = nx.get_node_attributes(nx_graph, JSON_INPUT_DATA_FILE)
     #print("load and prepare data using %s json parameters and file %s" % (node_name, nx_data_file[node_name]))
     nx_data_flow = nx.get_node_attributes(nx_graph, JSON_OUTPUT_FLOW)
@@ -101,7 +101,7 @@ def prepare2dTrainingData(nx_graph, node_name):
                     else:
                         raise NameError('Data file does not exist')
                     count += 1
-            print("\nData \n%s\nread from sources\n" % df_combined.describe())
+            print("\nData \n%s\nread from sources\n" % df_combined.describe().transpose())
                         
             if ignoreBlanks:
                 print("Removing NaN")
@@ -129,7 +129,7 @@ def prepare2dTrainingData(nx_graph, node_name):
             df_combined.drop(targetFields, axis=1)
     return df_combined
 
-def load_and_prepare_data(nx_graph):
+def collect_and_select_data(nx_graph):
     logging.info('====> ================================================')
     logging.info('====> load_and_prepare_data: loading data for input to models')
     logging.info('====> ================================================')
@@ -151,9 +151,11 @@ def load_and_prepare_data(nx_graph):
                         balanced = nx_balanced[edge_i[0], edge_i[1], output_flow]
                         nx_timeSeq = nx.get_edge_attributes(nx_graph, JSON_TIME_SEQ)
                         timeSeq = nx_timeSeq[edge_i[0], edge_i[1], output_flow]
-                        df_data = prepare2dTrainingData(nx_graph, node_i)
+                        
+                        df_data = prepareTrainingData(nx_graph, node_i)
+                        
                         flowFilename = nx_flowFilename[edge_i[0], edge_i[1], output_flow]
-                        print("\nData \n%s\nwritten to %s for training\n" % (df_data.describe(), flowFilename))
+                        print("\nData \n%s\nwritten to %s for training\n" % (df_data.describe().transpose(), flowFilename))
                         df_data.to_csv(flowFilename, index=False)
                         break
         

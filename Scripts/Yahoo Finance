@@ -20,7 +20,7 @@ function isTimeUp_(start) {
   return now.getTime() - start.getTime() > 300000; // 5 minutes
 }
 
-function updateSymbol(symbol, dataRow, apiYahooData) {
+function updateSymbol(symbol, dataRow, dataRowValues, apiYahooData) {
   var content
 
   Logger.log("Updating: " + symbol)
@@ -31,6 +31,7 @@ function updateSymbol(symbol, dataRow, apiYahooData) {
     fdAnalystRecommendation = "N/A"
   else
     fdAnalystRecommendation = content["financialData"]["recommendationKey"];
+    coveredByYahoo = "Y"
     
   if(content["financialData"]["targetLowPrice"] === undefined)
     fdTargetLowPrice = 0;
@@ -94,24 +95,24 @@ function updateSymbol(symbol, dataRow, apiYahooData) {
   else
     sd_volume = content["summaryDetail"]["volume"]["fmt"];
 
-  sheetSymbol = dataRow[0][ndx_symbol]
-  if (symbol == dataRow[0][ndx_symbol]) {
-    dataRow[0][ndx_yahooCovered] = coveredByYahoo
-    dataRow[0][ndx_recommendation] = fdAnalystRecommendation
-    dataRow[0][ndx_tgtLow] = fdTargetLowPrice
-    dataRow[0][ndx_tgtMedian] = fdTargetMedianPrice
-    dataRow[0][ndx_tgtMean] = fdTargetMeanPrice
-    dataRow[0][ndx_tgtHigh] = fdTargetHighPrice
-    dataRow[0][ndx_margin] = fdProfitMargins
-    dataRow[0][ndx_regMarketPrice] = price_regularMarketPrice
-    dataRow[0][ndx_quoteType] = price_quoteType
-    dataRow[0][ndx_dividendYield] = sd_dividendYield
-    dataRow[0][ndx_exDividendDate] = sd_exDividendDate
-    dataRow[0][ndx_forwardPE] = sd_forwardPE
-    dataRow[0][ndx_high52Week] = sd_fiftyTwoWeekHigh
-    dataRow[0][ndx_low52Week] = sd_fiftyTwoWeekLow
-    dataRow[0][ndx_vol] = sd_volume
-    dataRow = dataRow.setValues(dataRow)
+  sheetSymbol = dataRowValues[0][ndx_symbol]
+  if (symbol == dataRowValues[0][ndx_symbol]) {
+    dataRowValues[0][ndx_yahooCovered] = coveredByYahoo
+    dataRowValues[0][ndx_recommendation] = fdAnalystRecommendation
+    dataRowValues[0][ndx_tgtLow] = fdTargetLowPrice
+    dataRowValues[0][ndx_tgtMedian] = fdTargetMedianPrice
+    dataRowValues[0][ndx_tgtMean] = fdTargetMeanPrice
+    dataRowValues[0][ndx_tgtHigh] = fdTargetHighPrice
+    dataRowValues[0][ndx_margin] = fdProfitMargins
+    dataRowValues[0][ndx_regMarketPrice] = price_regularMarketPrice
+    dataRowValues[0][ndx_quoteType] = price_quoteType
+    dataRowValues[0][ndx_dividendYield] = sd_dividendYield
+    dataRowValues[0][ndx_exDividendDate] = sd_exDividendDate
+    dataRowValues[0][ndx_forwardPE] = sd_forwardPE
+    dataRowValues[0][ndx_high52Week] = sd_fiftyTwoWeekHigh
+    dataRowValues[0][ndx_low52Week] = sd_fiftyTwoWeekLow
+    dataRowValues[0][ndx_vol] = sd_volume
+    //dataRow = dataRow.setValues(dataRowValues)
   }
 }
 
@@ -262,12 +263,15 @@ function UpdateYahooFinanceData() {
           }
           else {
             if (apiYahooData.getResponseCode() == 200){
-              updateSymbol(symbols[y][ndx_symbol], dataRow, apiYahooData)
+              updateSymbol(symbols[y][ndx_symbol], dataRow, dataRowValues, apiYahooData)
+              dataRow = dataRow.setValues(dataRowValues)
             }
             else {
               //extract response message from apiYahooData
               content = JSON.parse(apiYahooData.getContentText());
               Logger.log("For symbol " + symbols[y][ndx_symbol] + " the API call returned error code " + apiYahooData.getResponseCode() + " " + content["message"])
+              dataRowValues[0][ndx_yahooCovered] = ""
+              dataRow = dataRow.setValues(dataRowValues)
               break
             }
           }
@@ -277,14 +281,15 @@ function UpdateYahooFinanceData() {
     catch(err) {
       // Block of code to handle errors
       Logger.log("For symbol " + symbols[y][ndx_symbol] + " the API call returned invalid data " + err)
-      break
+      dataRowValues[0][ndx_yahooCovered] = "N"
+      dataRow = dataRow.setValues(dataRowValues)
+      //break
     }
     finally {
       // Block of code to be executed regardless of the try / catch result
+      //support termination prior to the last row of symbols in the sheet
+      if (symbols[y][ndx_symbol] == endSymbol){break}
+      y += 1
     }
-
-    //support termination prior to the last row of symbols in the sheet
-    if (symbols[y][ndx_symbol] == endSymbol){break}
-    y += 1
   }
 }
