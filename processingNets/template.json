@@ -1,0 +1,13 @@
+{
+"comment - processing node section" : "Speciification details  for the processing nodes",
+"processNodes" : [
+	{
+	}
+],
+"comment - wave form dataflow section" : "Specification details  for the flows of data between processing nodes",
+"dataFlows" : [
+	{
+	}
+],
+"comment end of specification" : "------------------------------------------------------------------------------------"
+}

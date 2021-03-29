@@ -155,8 +155,10 @@ def cash_secured_put(symbol, df_data, df_options):
                     for_review = False
                 if delta == 0.0:
                     for_review = False
+                '''
                 if f_underlying > UNDERLYING_MAX:
                     for_review = False
+                '''
                 if for_review:
                     df_cash_secured_puts.loc[strategy_ndx, 'strategy'] = 'Cash Secured Put'
                     df_cash_secured_puts.loc[strategy_ndx, 'symbol'] = df_options.at[option_ndx, 'underlying symbol']

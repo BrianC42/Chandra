@@ -22,17 +22,20 @@ import numpy as np
 import matplotlib.pyplot as plt
 import tensorflow as tf
 
-from keras import backend as K
-from keras import regularizers
-from keras.models import Model
-from keras.layers import Input
-from keras.layers import Concatenate
-from keras.layers import Dropout
-from keras.layers.core import Dense
-from keras.layers.core import Flatten
-from keras.layers.recurrent import LSTM
-from keras.layers.convolutional import Conv1D
+from tensorflow import keras
+from tensorflow.keras import backend as K
+from tensorflow.keras import regularizers
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import Input
+from tensorflow.keras.layers import Concatenate
+from tensorflow.keras.layers import Dropout
+from tensorflow.keras.layers import Dense
+from tensorflow.keras.layers import Flatten
+from tensorflow.keras.layers import LSTM
+from tensorflow.keras.layers import Conv1D
 #from keras import optimizers
+from tensorflow.keras.layers import MaxPooling1D
+from tensorflow.keras.backend import dropout
 
 from configuration_constants import ML_APPROACH
 from configuration_constants import ACTIVATION
@@ -59,9 +62,6 @@ from configuration_constants import LAYER_NODES
 from configuration_constants import PREDICTION_PROBABILITY_THRESHOLD
 from configuration_constants import ANALYSIS_LAYER_COUNT
 from configuration_constants import COMPOSITE_LAYER_COUNT
-
-from keras.layers.pooling import MaxPooling1D
-from keras.backend.tensorflow_backend import dropout
 
 from matplotlib._constrained_layout import do_constrained_layout
 from matplotlib.dates import DateFormatter, WeekdayLocator, DayLocator,  MONDAY, num2date

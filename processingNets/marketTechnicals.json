@@ -1,0 +1,117 @@
+{
+"comment - processing node section" : "Speciification details  for the processing nodes",
+"processNodes" : [
+	{
+	"processNodeName" : "LoadData",
+	"requiredFields" : {
+		"processType" : "dataPrep",
+		"comments: supported values - processType" : ["dataPrep", "KerasDense"],
+		"inputFlows" : [],
+		"outputFlow" : "LRdata",
+		"outputFile" : "",
+		"logFile" : ""
+	},
+	"conditionalFields" : {
+		"dataPrepCtrl" : {
+			"comment - inputFile" : ["d:\\brian\\AI Projects\\tda\\market_analysis_data\\[ab]*.csv",
+								"d:\\brian\\AI Projects\\tda\\market_analysis_data\\[abc]*.csv"
+								],
+			"inputFile" : ["d:\\brian\\AI Projects\\tda\\market_analysis_data\\c.csv"]
+		},
+		"removeOutliers" : [
+			{"featureName" : "MACD_Signal", "outlierPct" : 0.01},
+			{"commented - featureName" : "ADX", "outlierPct" : 0.02}
+		]
+	}
+	},
+	{
+	"processNodeName" : "MLmodel",
+	"requiredFields" : {
+		"comments: supported values - processType" : ["dataPrep", "KerasDense"],
+		"processType" : "KerasDense",
+		"inputFlows" : ["LRdata"],
+		"outputFlow" : "",
+		"outputFile" : "d:\\brian\\AI Projects\\models\\MLmodel",
+		"logFile" : "d:\\brian\\AI Projects\\logs\\MLmodel.txt"
+	},
+	"conditionalFields" : {
+		"preprocessingLayers" : {
+			"comments - supported layers" : ["linearRegression", "discretization", "categoryEncoding"],
+			"preprocessSequence" : ["linearRegression"]
+		},
+		"KerasDenseCtrl" : {
+			"modelFile" : "d:\\brian\\AI Projects\\models\\MLmodel",
+			"modelStructure" : {
+				"inputLayer" : "MLmodel",
+				"layerCounts" : 1,
+				"layerNodes" : 1000,
+				"outputLayer" : "ML-LinearRegression",
+				"outputActivation" : "softmax"
+			},
+			"training" : {
+				"Comment 1" : "one output - see data flow for detaiils",
+				"lossWeights" : [1.0],
+				"denseRegularation" : false,
+				"regularationValue" : 0.0,
+				"dropout" : false,
+				"dropoutRate" : 0.2,
+				"useBias" : true,
+				"validationSplit" : 0.2,
+				"batchSize" : 32,
+				"epochs" : 50,
+				"verbose" : 2,
+				"shuffle" : true,
+				"normalize" : false,
+				"balanceClasses" : true,
+				"analysis" : "classification",
+				"compilationLoss" : "mean_squared_error",
+				"comment: supported values - compilationLoss" : ["binary_crossentropy", "mean_squared_error"],
+				"compilationMetrics" : ["accuracy"],
+				"comment: supported values - compilationMetrics" : ["accuracy"],
+				"activation" : "relu",
+				"comment: supported values - activation" : ["relu", "sigmoid", "softmax", "softplus", "softsign", "tanh", "selu", "elu", "exponential"],
+				"optimizer" : "adam",
+				"comment: supported values - optimizer" : ["SGD", "RMSprop", "Adam", "Adadelta", "Adagrad", "Adamax", "Nadam", "Ftrl"]
+				}
+			}
+		}
+	}
+],
+"comment - dataflow section" : "Specification details  for the flows of data between processing nodes",
+"dataFlows" : [
+	{
+	"flowName" : "LRdata",
+	"requiredFields" : {
+		"flowFrom" : "LoadData",
+		"flowTo" : "MLmodel"
+		},
+	"conditionalFields" : {
+		"KerasDenseData" : {
+			"timeSequence" : false,
+			"balanceClasses" : true,
+			"ignoreBlanks" : true,
+			"flowDataFile" : "d:\\brian\\AI Projects\\temp\\LRdata.csv",
+			"comment 1 - available features" : ["Open", "High", "Low", "Close", "Volume"],
+			"comment 2 - available features" : ["MACD_flag", "MACD_Signal", "MACD", "MACD_Sell", "MACD_Buy"],
+			"comment 3 - available features" : ["Relative Strength", "RS SMA20"],
+			"comment 4 - available features" : ["Stochastic Oscillator"],
+			"comment 5 - available features" : ["ADX", "ADI +DI", "ADI -DI"],
+			"comment 6 - available features" : ["AccumulationDistribution"],
+			"comment 7 - available features" : ["BB_Lower", "BB_Upper"],
+			"comment 8 - available features" : ["OBV"],
+			"features" : ["MACD_Signal"],
+			"comment t1 - target fields True/False" : ["10day100pct", "10day50pct", "10day25pct", "10day10pct"],
+			"comment t2 - target fields numeric" : ["40 day change", "20 day change", "10 day change"],
+			"targets" : ["20 day change"],
+			"categorization" : {
+				"comment 1" : "models to assess input data relationship to categorized outputs",
+				"comment 1: supported categoryType values" : ["categoryTrueFalse", "categoryThreshold (above / below)", "categoryRanges"],
+				"comment 2: supported categoryType values" : ["linearRegression"],
+				"categoryType" : "linearRegression",
+				"categoryOneHot - not required for linearRegression" : ["catTrue", "catFalse"]
+				}
+			}
+		}
+	}
+]
+}

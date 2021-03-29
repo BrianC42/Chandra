@@ -1,0 +1,83 @@
+{
+"comment - processing node section" : "Speciification details  for the processing nodes",
+"processNodes" : [
+	{
+		"processNodeName" : "LoadData",
+		"requiredFields" : {
+			"processType" : "dataPrep",
+			"comments: supported values - processType" : ["dataPrep", "KerasDense"],
+			"inputFlows" : [],
+			"outputFlow" : "LRdata",
+			"outputFile" : "",
+			"logFile" : ""
+		},
+		"conditionalFields" : {
+			"dataPrepCtrl" : {
+				"inputFile" : ["c:\\users\\brian\\downloads\\linear regression.csv"]
+			},
+			"removeOutliers" : [
+				{"commented - featureName - none" : "", "outlierPct" : 0.02}
+			]
+		}
+	},
+	{
+		"processNodeName" : "LRmodel",
+		"requiredFields" : {
+			"comments: supported values - processType" : ["dataPrep", "KerasDense"],
+			"processType" : "KerasDense",
+			"inputFlows" : ["LRdata"],
+			"outputFlow" : "",
+			"outputFile" : "d:\\brian\\AI Projects\\models\\LRmodel",
+			"logFile" : "d:\\brian\\AI Projects\\logs\\LRmodel.txt"
+		},
+		"conditionalFields" : {
+			"preprocessingLayers" : {
+				"comments - supported layers" : ["linearRegression", "discretization", "categoryEncoding"],
+				"preprocessSequence" : ["linearRegression"]
+				},
+		    "KerasDenseCtrl" : {
+				"modelFile" : "d:\\brian\\AI Projects\\models\\LRmodel",
+				"modelStructure" : {
+					"inputLayer" : "LR-input",
+					"layerCounts" : 1,
+					"layerNodes" : 200,
+					"outputLayer" : "ML-LinearRegression",
+					"comment - activations" : ["relu", "sigmoid", "softmax", "softplus", "softsign", "tanh", "selu", "elu", "exponential"],
+					"outputActivation" : "relu"
+				},
+				"training" : {
+					"Comment 1" : "one output - see data flow for detaiils",
+					"lossWeights" : [1.0],
+					"denseRegularation" : false,
+					"regularationValue" : 0.0,
+					"dropout" : false,
+					"dropoutRate" : 0.2,
+					"shuffle" : true,
+					"normalize" : false,
+					"useBias" : true,
+					"validationSplit" : 0.2,
+					"batchSize" : 32,
+					"epochs" : 5,
+					"verbose" : 2,
+					"balanceClasses" : true,
+					"analysis" : "classification",
+					"compilationLoss" : "mean_absolute_error",
+					"comment: supported values - compilationLoss" : ["binary_crossentropy", "mean_squared_error"],
+					"compilationMetrics" : ["accuracy"],
+					"comment: supported values - compilationMetrics" : ["accuracy"],
+					"activation" : "relu",
+					"comment: supported values - activation" : ["relu", "sigmoid", "softmax", "softplus", "softsign", "tanh", "selu", "elu", "exponential"],
+					"optimizer" : "adam",
+					"comment: supported values - optimizer" : ["SGD", "RMSprop", "Adam", "Adadelta", "Adagrad", "Adamax", "Nadam", "Ftrl"]
+				}
+			}
+		}
+	}
+],
+"comment - dataflow section" : "Specification details  for the flows of data between processing nodes",
+"dataFlows" : [
+	{
+	}
+],
+"comment end of specification" : "------------------------------------------------------------------------------------"
+}

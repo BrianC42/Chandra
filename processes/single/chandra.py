@@ -29,12 +29,18 @@ import logging
 import datetime as dt
 import time
 import pandas as pd
+
+''' suppress tensorflow warning messages - 2 mechanisms '''
+#os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2' 
 import tensorflow as tf
+#os.environ['AUTOGRAPH_VERBOSITY'] = 1
+
 import networkx as nx
 import matplotlib.pyplot as plt
 
 from configuration import get_ini_data
 from configuration import read_config_json
+from configuration import read_processing_network_json
 from configuration_graph import build_configuration_graph
 from load_prepare_data import collect_and_select_data
 from assemble_model import build_and_train_model
@@ -52,11 +58,15 @@ if __name__ == '__main__':
     now = dt.datetime.now()
     
     # Get external initialization details
-    lstm_config_data = get_ini_data("CHANDRA")
-    json_config = read_config_json(lstm_config_data['config'])
+    localdirs = get_ini_data("LOCALDIRS")
+    gitdir = localdirs['git']
+    aiwork = localdirs['aiwork']
+
+    config_data = get_ini_data("CHANDRA")
+    json_config = read_config_json(gitdir + config_data['config'])
 
     try:    
-        log_file = json_config['logFile']
+        log_file = aiwork + json_config['logFile']
         if json_config['loggingLevel'] == "debug":
             logging.basicConfig(filename=log_file, level=logging.DEBUG, format=json_config['loggingFormat'])
         elif json_config['loggingLevel'] == "info":
@@ -64,7 +74,7 @@ if __name__ == '__main__':
         else:
             logging.basicConfig(filename=log_file, level=logging.WARNING, format=json_config['loggingFormat'])
             
-        output_file = json_config['outputFile']
+        output_file = aiwork + json_config['outputFile']
         output_file = output_file + ' {:4d} {:0>2d} {:0>2d} {:0>2d} {:0>2d} {:0>2d}'.format(now.year, now.month, now.day, \
                                                                                        now.hour, now.minute, now.second) + '.txt'
         f_out = open(output_file, 'w')    
@@ -76,21 +86,21 @@ if __name__ == '__main__':
         print("\nAn exception occurred - log file details are missing from json configuration")
         
     # Set python path for executing stand alone scripts
-    pPath = "d:/brian/git/chandra/processes/single"
+    pPath = gitdir + "\\chandra\\processes\\single"
     pPath += ";"
-    pPath += "d:/brian/git/chandra/processes/multiprocess"
+    pPath += gitdir + "\\chandra\\processes\\multiprocess"
     pPath += ";"
-    pPath += "d:/brian/git/chandra/processes/child"
+    pPath += gitdir + "\\chandra\\processes\\child"
     pPath += ";"
-    pPath += "d:/brian/git/chandra/utility"
+    pPath += gitdir + "\\chandra\\utility"
     pPath += ";"
-    pPath += "d:/brian/git/chandra/technical_analysis"
+    pPath += gitdir + "\\chandra\\technical_analysis"
     pPath += ";"
-    pPath += "d:/brian/git/chandra/td_ameritrade"
+    pPath += gitdir + "\\chandra\\td_ameritrade"
     pPath += ";"
-    pPath += "d:/brian/git/chandra/machine_learning"
+    pPath += gitdir + "\\chandra\\machine_learning"
     pPath += ";"
-    pPath += "d:/brian/git/chandra/unit_test"
+    pPath += gitdir + "\\chandra\\unit_test"
     os.environ["PYTHONPATH"] = pPath
 
     print ("Logging to", log_file)
@@ -102,8 +112,10 @@ if __name__ == '__main__':
     pd.set_option('display.width', 200)
     pd.set_option('display.max_columns', 20)
     
+    processingNetwork = gitdir + json_config['processNet']
+    processing_json = read_processing_network_json(processingNetwork)
     nx_graph = nx.MultiDiGraph()
-    build_configuration_graph(json_config, nx_graph)
+    build_configuration_graph(processing_json, nx_graph)
     #nx.draw(nx_graph, arrows=True, with_labels=True, font_weight='bold')
     nx.draw_circular(nx_graph, arrows=True, with_labels=True, font_weight='bold')
     plt.show()
