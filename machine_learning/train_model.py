@@ -29,7 +29,7 @@ from configuration_constants import JSON_VERBOSE
 from configuration_constants import JSON_SHUFFLE_DATA
 
 def organize_data_for_convolution(nx_graph, node_i, df_training_data):
-    print("Organizing data for convolution")
+    print("Organizing data for convolution\n%s\n" % df_training_data.describe().transpose())
 
     nx_validation_split = nx.get_node_attributes(nx_graph, JSON_VALIDATION_SPLIT)[node_i]
     nx_test_split = nx.get_node_attributes(nx_graph, JSON_TEST_SPLIT)[node_i]
@@ -115,16 +115,15 @@ def trainModels(nx_graph, node_i, nx_edge, k_model, df_training_data):
         elif nx_read_attr[node_i] == JSON_KERAS_CONV1D:
             print("%s is based on Conv1D layers" % node_i)
             trainingWindow = organize_data_for_convolution(nx_graph, node_i, df_training_data)
-            df_train = trainingWindow.train
 
         nx_normalize = nx.get_node_attributes(nx_graph, JSON_NORMALIZE_DATA)[node_i]
         if nx_normalize:
-            print("Normalizing features")
-            np_normalize = np.array(x_features, dtype='float64')
-            normalize_x = preprocessing.Normalization()    
-            normalize_x.adapt(np_normalize)
-            np_x_train  = normalize_x(np_x_train)
-            np_x_test  = normalize_x(np_x_test)
+            print("Normalizing training features\n%s\n" % trainingWindow.train_df.describe().transpose())
+            np_normalize = np.array(trainingWindow.train_df, dtype='float64')
+            normalize_layer = preprocessing.Normalization()    
+            normalize_layer.adapt(np_normalize)
+            np_x_train  = normalize_layer(np_x_train)
+            np_x_test  = normalize_layer(np_x_test)
         else:
             print("features not normalized")
             print("targets not normalized")

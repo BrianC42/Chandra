@@ -101,14 +101,19 @@ def relative_strength(df_data=None, value_label=None, relative_to=None):
         comp_ndx = 1
         while data_ndx < len(df_data):
             matched = False
+            data_date = format_tda_datetime(df_data.at[data_ndx, 'DateTime'])
             if comp_ndx < len(df_comp):
-                if df_data.at[data_ndx, 'DateTime'] == df_comp.at[comp_ndx + 1, 'DateTime']:
+                comp_date = format_tda_datetime(df_comp.at[comp_ndx + 1, 'DateTime'])
+                #if df_data.at[data_ndx, 'DateTime'] == df_comp.at[comp_ndx + 1, 'DateTime']:
+                if data_date == comp_date:
                     comp_ndx += 1
                     matched = True
             if not matched:
                 comp_ndx = 1
                 while comp_ndx < len(df_comp):
-                    if df_data.at[data_ndx, 'DateTime'] == df_comp.at[comp_ndx, 'DateTime']:
+                    comp_date = format_tda_datetime(df_comp.at[comp_ndx, 'DateTime'])
+                    #if df_data.at[data_ndx, 'DateTime'] == df_comp.at[comp_ndx, 'DateTime']:
+                    if data_date == comp_date:
                         matched = True
                         break
                     comp_ndx += 1

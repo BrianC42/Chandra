@@ -2,6 +2,24 @@
 "comment - processing node section" : "Speciification details  for the processing nodes",
 "processNodes" : [
 	{
+	"processNodeName" : "name",
+	"requiredFields" : {
+		"comments: supported values - processType" : ["dataPrep", "KerasDense", "KerasConv1D"],
+		"processType" : "type from above list",
+		"inputFlows" : [],
+		"outputFlow" : "name of output data flow",
+		"outputFile" : "",
+		"logFile" : ""
+		},
+	"conditionalFields" : {
+		"dataPrepCtrl" : {
+			"inputFile" : ["full path and file name specification"]
+			},
+		"removeOutliers" : [
+			{"featureName" : "field 1", "outlierPct" : 0.00005},
+			{"featureName" : "field 2", "outlierPct" : 0.00005}
+			]
+		}
 	}
 ],
 "comment - wave form dataflow section" : "Specification details  for the flows of data between processing nodes",

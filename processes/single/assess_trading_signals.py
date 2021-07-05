@@ -178,7 +178,7 @@ def cash_secured_put(symbol, df_data, df_options):
                     df_cash_secured_puts.loc[strategy_ndx, "days To Expiration"] = df_options.at[option_ndx, "daysToExpiration"]
                     df_cash_secured_puts.loc[strategy_ndx, "volatility"] = df_options.at[option_ndx, "volatility"]
                     df_cash_secured_puts.loc[strategy_ndx, "OTM Probability"] = OTM_probability
-                    df_cash_secured_puts.loc[strategy_ndx, "break even"] = f_strike + f_bid
+                    df_cash_secured_puts.loc[strategy_ndx, "break even"] = f_strike - f_bid
                     df_cash_secured_puts.loc[strategy_ndx, "ADX"] = current_ADX
                     strategy_ndx += 1
         option_ndx += 1
