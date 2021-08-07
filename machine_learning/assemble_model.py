@@ -83,7 +83,7 @@ def create_dense_model(nx_graph, nx_node, nx_outputWidth):
     return k_input, k_outputs
 
 def create_Convolutional_model(nx_graph, nx_node):
-    print("\n*************************************************\nPARAMETERS HARD CODED - NEED TO BE DETERMINED AND PROGRAMMED\n*************************************************\n")
+    print("\n*************************************************\nPARAMETERS HARD CODED - NEED TO BE DETERMINED AND PROGRAMMED\n\t in create_Convolutional_model\n*************************************************\n")
     nx_input_layer = nx.get_node_attributes(nx_graph, JSON_MODEL_INPUT_LAYER)[nx_node]
 
     k_input = tf.keras.Input(name=nx_input_layer, shape=(20, 10))
@@ -288,9 +288,12 @@ def build_model(nx_graph, node_i, nx_edge, nx_model_type):
               (nx_optimizer, nx_loss, nx_metrics, nx_loss_weights))
         k_model.summary()
         nx_model_file = nx.get_node_attributes(nx_graph, JSON_MODEL_FILE)[node_i]
-        keras.utils.plot_model(k_model, to_file=nx_model_file + '.png', show_shapes=True)
+
+        err_txt = "*** An exception occurred plotting the model ***"
+        tf.keras.utils.plot_model(k_model, to_file=nx_model_file + '.png', show_shapes=True)
                 
     except Exception:
+        err_info = sys.exc_info()
         logging.debug(err_txt)
         sys.exit("\n" + err_txt)
     

@@ -94,7 +94,7 @@ def trainModels(nx_graph, node_i, nx_edge, k_model, df_training_data):
 
         nx_validation_split = nx.get_node_attributes(nx_graph, JSON_VALIDATION_SPLIT)[node_i]
 
-        print("\n*************************************************\nWORK IN PROGRESS\n*************************************************\n")
+        print("\n*************************************************\nWORK IN PROGRESS\n\ttrainModel\n*************************************************\n")
         nx_read_attr = nx.get_node_attributes(nx_graph, JSON_PROCESS_TYPE)
         if nx_read_attr[node_i] == JSON_KERAS_DENSE_PROCESS:    
             print("%s is built of core dense layers" % node_i)
@@ -139,9 +139,11 @@ def trainModels(nx_graph, node_i, nx_edge, k_model, df_training_data):
                                 verbose=nx_verbose)
 
     except Exception:
-        err_txt = "*** An exception occurred training the model ***"
-        logging.debug(err_txt)
-        sys.exit("\n" + err_txt)
+        exc_info = sys.exc_info()
+        exc_str = exc_info[1].args[0]
+        exc_txt = "\n*** An exception occurred training the model ***" + "\n\t" + exc_str
+        logging.debug(exc_txt)
+        sys.exit(exc_txt)
     
     logging.info('<---- ----------------------------------------------')
     logging.info('<---- trainModels: done')
