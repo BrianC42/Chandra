@@ -2,6 +2,8 @@
 Created on Jan 31, 2018
 
 @author: Brian
+
+Not currently used
 '''
 import datetime
 import quandl
