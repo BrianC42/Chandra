@@ -28,10 +28,10 @@ def evaluate_and_visualize(nx_graph, nx_node, k_model, x_features, y_targets, x_
     
     fit_params = fitting.params
     epoch_cnt = fit_params['epochs']
-    batch_size = fit_params['batch_size']
     steps = fit_params['steps']
-    samples = fit_params['samples']
-    metrics = fit_params['metrics']
+    #batch_size = fit_params['batch_size']
+    #samples = fit_params['samples']
+    #metrics = fit_params['metrics']
     
     nx_normalize = nx.get_node_attributes(nx_graph, JSON_NORMALIZE_DATA)[nx_node]
     nx_model_depth = nx.get_node_attributes(nx_graph, JSON_MODEL_DEPTH)[nx_node]
@@ -57,11 +57,12 @@ def evaluate_and_visualize(nx_graph, nx_node, k_model, x_features, y_targets, x_
     str_structure = str_l1 + str_l2 + str_l3 + str_l4 + str_l5 + str_l7
     
     str_p0 = '\nFitting Parameters'
-    str_p1 = '\nepochs: {:.0f} batch size: {:.0f}'.format(epoch_cnt, batch_size)
-    str_p3 = '\nsamples {:.0f}, steps: {:.0f}'.format(samples, steps)
+    #str_p1 = '\nepochs: {:.0f} batch size: {:.0f}'.format(epoch_cnt, batch_size)
+    #str_p3 = '\nsamples {:.0f}, steps: {:.0f}'.format(samples, steps)
     str_p4 = '\nloss: {:s}'.format(nx_loss)
     str_p5 = '\nmetrics: {:s}'.format(nx_metrics[0])
-    str_params = str_p0 + str_p1 + str_p3 + str_p4 + str_p5
+    #str_params = str_p0 + str_p1 + str_p3 + str_p4 + str_p5
+    str_params = str_p0 + str_p4 + str_p5
     
     fig, axs = plt.subplots(2, 3)
     fig.suptitle(nx_node, fontsize=14, fontweight='bold')

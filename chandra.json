@@ -7,6 +7,11 @@
 "outputFile" : "\\logs\\chandra_output",
 "loggingLevel" : "debug",
 "loggingFormat" : "%(asctime)s: %(levelname)s: %(message)s",
-"processNet" : "\\chandra\\processingNets\\conv1DWaveForm.json",
+"comment denseLinearRegression processNet" : "\\chandra\\processingNets\\denseLinearRegression.json",
+"comment densePolynomial processNet" : "\\chandra\\processingNets\\densePolynomial.json",
+"comment denseWaveForm processNet" : "\\chandra\\processingNets\\denseWaveForm.json",
+"comment marketTchnicals processNet" : "\\chandra\\processingNets\\marketTchnicals.json",
+"comment conv1DWaveForm processNet" : "\\chandra\\processingNets\\conv1DWaveForm.json",
+"processNet" : "\\chandra\\processingNets\\denseLinearRegression.json",
 "comment end of specification" : "------------------------------------------------------------------------------------",
 "end of file" : ""}

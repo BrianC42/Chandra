@@ -13,7 +13,7 @@
 		},
 		"conditionalFields" : {
 			"dataPrepCtrl" : {
-				"inputFile" : ["c:\\users\\brian\\downloads\\linear regression.csv"]
+				"inputFile" : ["d:\\brian\\AI Projects\\Datasets\\linear regression.csv"]
 			},
 			"removeOutliers" : [
 				{"commented - featureName - none" : "", "outlierPct" : 0.02}
@@ -31,12 +31,12 @@
 			"logFile" : "d:\\brian\\AI Projects\\logs\\LRmodel.txt"
 		},
 		"conditionalFields" : {
+			"modelFile" : "d:\\brian\\AI Projects\\models\\LRmodel",
 			"preprocessingLayers" : {
 				"comments - supported layers" : ["linearRegression", "discretization", "categoryEncoding"],
 				"preprocessSequence" : ["linearRegression"]
 				},
 		    "KerasDenseCtrl" : {
-				"modelFile" : "d:\\brian\\AI Projects\\models\\LRmodel",
 				"modelStructure" : {
 					"inputLayer" : "LR-input",
 					"layerCounts" : 1,
@@ -44,32 +44,34 @@
 					"outputLayer" : "ML-LinearRegression",
 					"comment - activations" : ["relu", "sigmoid", "softmax", "softplus", "softsign", "tanh", "selu", "elu", "exponential"],
 					"outputActivation" : "relu"
-				},
-				"training" : {
-					"Comment 1" : "one output - see data flow for detaiils",
-					"lossWeights" : [1.0],
-					"denseRegularation" : false,
-					"regularationValue" : 0.0,
-					"dropout" : false,
-					"dropoutRate" : 0.2,
-					"shuffle" : true,
-					"normalize" : false,
-					"useBias" : true,
-					"validationSplit" : 0.2,
-					"batchSize" : 32,
-					"epochs" : 5,
-					"verbose" : 2,
-					"balanceClasses" : true,
-					"analysis" : "classification",
-					"compilationLoss" : "mean_absolute_error",
-					"comment: supported values - compilationLoss" : ["binary_crossentropy", "mean_squared_error"],
-					"compilationMetrics" : ["accuracy"],
-					"comment: supported values - compilationMetrics" : ["accuracy"],
-					"activation" : "relu",
-					"comment: supported values - activation" : ["relu", "sigmoid", "softmax", "softplus", "softsign", "tanh", "selu", "elu", "exponential"],
-					"optimizer" : "adam",
-					"comment: supported values - optimizer" : ["SGD", "RMSprop", "Adam", "Adadelta", "Adagrad", "Adamax", "Nadam", "Ftrl"]
 				}
+			},
+			"training" : {
+				"Comment 1" : "one output - see data flow for detaiils",
+				"lossWeights" : [1.0],
+				"denseRegularation" : false,
+				"regularationValue" : 0.0,
+				"dropout" : false,
+				"dropoutRate" : 0.2,
+				"shuffle" : true,
+				"normalize" : false,
+				"useBias" : true,
+				"validationSplit" : 0.2,
+				"testSplit" : 0.1,
+				"batchSize" : 32,
+				"epochs" : 5,
+				"verbose" : 2,
+				"balanceClasses" : true,
+				"analysis" : "classification",
+				"compilationLoss" : "mean_absolute_error",
+				"comment: supported values - compilationLoss" : ["binary_crossentropy", "mean_squared_error"],
+				"compilationMetrics" : ["accuracy"],
+				"comment: supported values - compilationMetrics" : ["accuracy"],
+				"activation" : "relu",
+				"comment: supported values - activation" : ["relu", "sigmoid", "softmax", "softplus", "softsign", "tanh", "selu", "elu", "exponential"],
+				"optimizer" : "adam",
+				"comment: supported values - optimizer" : ["SGD", "RMSprop", "Adam", "Adadelta", "Adagrad", "Adamax", "Nadam", "Ftrl"],
+				"comment end of training for LRmodel" : ""
 			}
 		}
 	}
@@ -77,6 +79,28 @@
 "comment - dataflow section" : "Specification details  for the flows of data between processing nodes",
 "dataFlows" : [
 	{
+	"flowName" : "LRdata",
+	"requiredFields" : {
+		"flowFrom" : "LoadData",
+		"flowTo" : "LRmodel"
+		},
+	"conditionalFields" : {
+		"KerasDenseData" : {
+			"timeSequence" : false,
+			"balanceClasses" : true,
+			"ignoreBlanks" : true,
+			"flowDataFile" : "d:\\brian\\AI Projects\\temp\\linear regression.csv",
+			"features" : ["Feature-x"],
+			"targets" : ["Noisy-target"],
+			"categorization" : {
+				"comment 1" : "models to assess input data relationship to categorized outputs",
+				"comment 1: supported categoryType values" : ["categoryTrueFalse", "categoryThreshold (above / below)", "categoryRanges"],
+				"comment 2: supported categoryType values" : ["Regression"],
+				"categoryType" : "Regression",
+				"categoryOneHot - not required for linearRegression" : ["catTrue", "catFalse"]
+				}
+			}
+		}
 	}
 ],
 "comment end of specification" : "------------------------------------------------------------------------------------"

@@ -399,8 +399,10 @@ def build_configuration_graph(json_config, nx_graph):
             add_meta_data_edge(flow_i, nx_graph)
         
     except Exception:
-        err_txt = "*** An exception occurred analyzing the json configuration file ***"
-        logging.debug(err_txt)
-        sys.exit("\n" + err_txt)
-        
+        exc_info = sys.exc_info()
+        exc_str = exc_info[1].args[0]
+        exc_txt = "\n*** An exception occurred analyzing the json configuration file ***" + "\n\t" + exc_str
+        logging.debug(exc_txt)
+        sys.exit(exc_txt)
+
     return

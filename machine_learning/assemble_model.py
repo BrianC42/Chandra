@@ -293,9 +293,16 @@ def build_model(nx_graph, node_i, nx_edge, nx_model_type):
         tf.keras.utils.plot_model(k_model, to_file=nx_model_file + '.png', show_shapes=True)
                 
     except Exception:
-        err_info = sys.exc_info()
-        logging.debug(err_txt)
-        sys.exit("\n" + err_txt)
+        exc_info = sys.exc_info()
+        exc_str = exc_info[1].args[0]
+        if isinstance(exc_str, str):
+            exc_txt = err_txt + "\n\t" + exc_str
+        elif isinstance(exc_str, tuple):
+            exc_txt = err_txt + "\n\t"
+            for s in exc_str:
+                exc_txt += s
+        logging.debug(exc_txt)
+        sys.exit(exc_txt)
     
     logging.info('<---- ----------------------------------------------')
     logging.info('<---- build_model: done')

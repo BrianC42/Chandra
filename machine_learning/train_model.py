@@ -44,12 +44,13 @@ def organize_data_for_convolution(nx_graph, node_i, df_training_data):
     
     test_start = train_start + train_len + validate_len
     
-    train_df = df_training_data[train_start : (train_start + train_len)]
-    val_df = df_training_data[validate_start : (validate_start + validate_len)]
-    test_df = df_training_data[test_start :]
+    df_train = df_training_data[train_start : (train_start + train_len)]
+    df_values = df_training_data[validate_start : (validate_start + validate_len)]
+    df_test = df_training_data[test_start :]
     
+    print("**********************************\nWindow generator called with hard coded parameters. Need to be parameterized from json\n***************************")
     trainingWindow = WindowGenerator(input_width=24, label_width=1, shift=24, \
-                         train_df=train_df, val_df=val_df, test_df=test_df, \
+                         df_train=df_train, df_values=df_values, df_test=df_test, \
                          label_columns=['T (degC)'])
     print(trainingWindow)
     return trainingWindow

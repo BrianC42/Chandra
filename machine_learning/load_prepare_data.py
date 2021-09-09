@@ -160,8 +160,16 @@ def collect_and_select_data(nx_graph):
                         break
         
     except Exception:
-        logging.debug(err_txt)
-        sys.exit("\n" + err_txt)
+        exc_info = sys.exc_info()
+        exc_str = exc_info[1].args[0]
+        if isinstance(exc_str, str):
+            exc_txt = err_txt + "\n\t" + exc_str
+        elif isinstance(exc_str, tuple):
+            exc_txt = err_txt + "\n\t"
+            for s in exc_str:
+                exc_txt += s
+        logging.debug(exc_txt)
+        sys.exit(exc_txt)
         
     logging.info('<---- ----------------------------------------------')
     logging.info('<---- load_and_prepare_data: done')

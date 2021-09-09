@@ -14,21 +14,21 @@ class WindowGenerator():
     classdocs
     '''
     def __init__(self, input_width, label_width, shift, \
-               train_df=None, val_df=None, test_df=None, \
+               df_train=None, df_values=None, df_test=None, \
                label_columns=None):
         '''
         Constructor
         '''
         # Store the raw data.
-        self.train_df = train_df
-        self.val_df = val_df
-        self.test_df = test_df
+        self.df_train = df_train
+        self.df_values = df_values
+        self.df_test = df_test
 
         # Work out the label column indices.
         self.label_columns = label_columns
         if label_columns is not None:
             self.label_columns_indices = {name: i for i, name in enumerate(label_columns)}
-        self.column_indices = {name: i for i, name in enumerate(train_df.columns)}
+        self.column_indices = {name: i for i, name in enumerate(df_train.columns)}
 
         # Work out the window parameters.
         self.input_width = input_width
@@ -117,15 +117,15 @@ class WindowGenerator():
     
     @property
     def train(self):
-        return self.make_dataset(self.train_df)
+        return self.make_dataset(self.df_train)
 
     @property
-    def val(self):
-        return self.make_dataset(self.val_df)
+    def values(self):
+        return self.make_dataset(self.df_values)
 
     @property
     def test(self):
-        return self.make_dataset(self.test_df)
+        return self.make_dataset(self.df_test)
 
     @property
     def example(self):
