@@ -66,16 +66,15 @@ def create_dense_model(nx_graph, nx_node, nx_outputWidth):
     nx_activation = nx.get_node_attributes(nx_graph, JSON_ACTIVATION)[nx_node]
     
     k_input = tf.keras.Input(name=nx_input_layer, shape=(len(nx_features),))
-    ndx = 0
-    while ndx < nx_model_depth:
+    
+    for ndx in range (0, nx_model_depth):
         if ndx == 0:
             k_layer = tf.keras.layers.Dense(nx_node_count, activation=nx_activation)(k_input)
         else:
             k_layer = tf.keras.layers.Dense(nx_node_count, activation=nx_activation)(k_layer)
         if nx_dropout:
             k_layer = tf.keras.layers.Dropout(nx_dropout_rate)(k_layer)
-        ndx += 1
-
+        
     nx_output_layer = nx.get_node_attributes(nx_graph, JSON_MODEL_OUTPUT_LAYER)[nx_node]
     nx_output_activation = nx.get_node_attributes(nx_graph, JSON_MODEL_OUTPUT_ACTIVATION)[nx_node]
     k_outputs = tf.keras.layers.Dense(nx_outputWidth, name=nx_output_layer, activation=nx_output_activation)(k_layer)

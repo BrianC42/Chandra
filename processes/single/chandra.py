@@ -116,7 +116,7 @@ if __name__ == '__main__':
     processing_json = read_processing_network_json(processingNetwork)
     nx_graph = nx.MultiDiGraph()
     build_configuration_graph(processing_json, nx_graph)
-    #nx.draw(nx_graph, arrows=True, with_labels=True, font_weight='bold')
+    #nx.draw(nx_graph, arrows=True, with_labels=True, font_weight='bold') 
     nx.draw_circular(nx_graph, arrows=True, with_labels=True, font_weight='bold')
     plt.show()
     
