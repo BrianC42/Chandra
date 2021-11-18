@@ -9,19 +9,36 @@ import glob
 import logging
 import networkx as nx
 import pandas as pd
+import numpy as np
 import tensorflow as tf
+from tensorflow.keras.layers.experimental import preprocessing
+
+from TrainingDataAndResults import Data2Results as d2r
+from tfWindowGenerator import WindowGenerator
 
 from configuration_constants import JSON_DATA_PREP_PROCESS
 from configuration_constants import JSON_PROCESS_TYPE
+from configuration_constants import JSON_INPUT_FLOWS
 from configuration_constants import JSON_OUTPUT_FLOW
 from configuration_constants import JSON_INPUT_DATA_FILE
 from configuration_constants import JSON_BALANCED
 from configuration_constants import JSON_TIME_SEQ
 from configuration_constants import JSON_IGNORE_BLANKS
 from configuration_constants import JSON_FLOW_DATA_FILE
+from configuration_constants import JSON_INPUT_FLOWS
 
 from configuration_constants import JSON_FEATURE_FIELDS
 from configuration_constants import JSON_TARGET_FIELDS
+from configuration_constants import JSON_NORMALIZE_DATA
+
+from configuration_constants import JSON_PROCESS_TYPE
+from configuration_constants import JSON_KERAS_DENSE_PROCESS
+from configuration_constants import JSON_KERAS_CONV1D
+
+from configuration_constants import JSON_FEATURE_FIELDS
+from configuration_constants import JSON_TARGET_FIELDS
+from configuration_constants import JSON_VALIDATION_SPLIT
+from configuration_constants import JSON_TEST_SPLIT
 
 from configuration_constants import JSON_CATEGORY_TYPE
 from configuration_constants import JSON_CATEGORY_1HOT
@@ -33,6 +50,117 @@ from configuration_constants import JSON_LINEAR_REGRESSION
 from configuration_constants import JSON_REMOVE_OUTLIER_LIST
 from configuration_constants import JSON_OUTLIER_FEATURE
 from configuration_constants import JSON_OUTLIER_PCT
+
+def loadTrainingData(d2r):
+    # error handling
+    try:
+        err_txt = "*** An exception occurred preparing the training data for the model ***"
+
+        nx_input_flow = nx.get_node_attributes(d2r.graph, JSON_INPUT_FLOWS)[d2r.mlNode]
+        print("Loading prepared data defined in flow: %s" % nx_input_flow[0])
+        nx_data_file = nx.get_edge_attributes(d2r.graph, JSON_FLOW_DATA_FILE)
+        inputData = nx_data_file[d2r.mlEdgeIn[0], d2r.mlEdgeIn[1], nx_input_flow[0]]    
+        if os.path.isfile(inputData):
+            df_training_data = pd.read_csv(inputData)
+                
+        nx_category_types = nx.get_edge_attributes(d2r.graph, JSON_CATEGORY_TYPE)
+        category_type = nx_category_types[d2r.mlEdgeIn[0], d2r.mlEdgeIn[1], nx_input_flow[0]]
+        if category_type == JSON_CAT_TF:
+            pass
+        elif category_type == JSON_CAT_THRESHOLD:
+            pass
+        elif category_type == JSON_THRESHOLD_VALUE:
+            pass
+        elif category_type == JSON_LINEAR_REGRESSION:
+            pass
+        else:
+            raise NameError('Invalid category type')
+    
+        d2r.data = df_training_data
+        
+    except Exception:
+        logging.debug(err_txt)
+        sys.exit("\n" + err_txt)
+
+    return
+
+def organize_data_for_convolution(nx_graph, node_i, df_training_data):
+    print("Organizing data for convolution\n%s\n" % df_training_data.describe().transpose())
+
+    nx_validation_split = nx.get_node_attributes(nx_graph, JSON_VALIDATION_SPLIT)[node_i]
+    nx_test_split = nx.get_node_attributes(nx_graph, JSON_TEST_SPLIT)[node_i]
+
+    n = len(df_training_data)
+    
+    train_start = 0
+    train_len = int(n * (1 - (nx_validation_split + nx_test_split)))
+    
+    validate_start = train_start + train_len
+    validate_len = int(n * nx_validation_split)
+    
+    test_start = train_start + train_len + validate_len
+    
+    df_train = df_training_data[train_start : (train_start + train_len)]
+    df_values = df_training_data[validate_start : (validate_start + validate_len)]
+    df_test = df_training_data[test_start :]
+    
+    print("**********************************\nWindow generator called with hard coded parameters. Need to be parameterized from json\n***************************")
+    trainingWindow = WindowGenerator(input_width=24, label_width=1, shift=24, \
+                         df_train=df_train, df_values=df_values, df_test=df_test, \
+                         label_columns=['T (degC)'])
+    print(trainingWindow)
+    return trainingWindow
+
+def prepareData(d2r):
+    nx_input_flows = nx.get_node_attributes(d2r.graph, JSON_INPUT_FLOWS)[d2r.mlNode]
+
+    nx_featureFields = nx.get_edge_attributes(d2r.graph, JSON_FEATURE_FIELDS)
+    nx_features = nx_featureFields[d2r.mlEdgeIn[0], d2r.mlEdgeIn[1], nx_input_flows[0]]    
+
+    nx_targetFiields = nx.get_edge_attributes(d2r.graph, JSON_TARGET_FIELDS)
+    nx_targets = nx_targetFiields[d2r.mlEdgeIn[0], d2r.mlEdgeIn[1], nx_input_flows[0]]    
+
+    nx_validation_split = nx.get_node_attributes(d2r.graph, JSON_VALIDATION_SPLIT)[d2r.mlNode]
+
+    print("\n*************************************************\nWORK IN PROGRESS\n\ttrainModel\n*************************************************\n")
+    nx_read_attr = nx.get_node_attributes(d2r.graph, JSON_PROCESS_TYPE)
+    if nx_read_attr[d2r.mlNode] == JSON_KERAS_DENSE_PROCESS:    
+        print("%s is built of core dense layers" % d2r.mlNode)
+        tf_training_data = d2r.data
+        rows = tf_training_data.shape[0]
+        x_features = tf_training_data.loc[:, nx_features]
+        y_targets = tf_training_data.loc[:, nx_targets]
+        
+        df_x_train = tf_training_data.loc[int(rows * nx_validation_split):, nx_features]
+        df_y_train = tf_training_data.loc[int(rows * nx_validation_split):, nx_targets]
+        df_x_test = tf_training_data.loc[:int(rows * nx_validation_split), nx_features]
+        df_y_test = tf_training_data.loc[:int(rows * nx_validation_split), nx_targets]
+        
+        np_x_train = np.array(df_x_train, dtype='float64')
+        np_y_train = np.array(df_y_train, dtype='float64')
+        np_x_test = np.array(df_x_test, dtype='float64')
+        np_y_test = np.array(df_y_test, dtype='float64')
+    elif nx_read_attr[d2r.mlNode] == JSON_KERAS_CONV1D:
+        print("%s is based on Conv1D layers" % d2r.mlNode)
+        trainingWindow = organize_data_for_convolution(d2r.graph, d2r.mlNode, d2r.data)
+
+    nx_normalize = nx.get_node_attributes(d2r.graph, JSON_NORMALIZE_DATA)[d2r.mlNode]
+    if nx_normalize:
+        print("Normalizing training features\n%s\n" % trainingWindow.train_df.describe().transpose())
+        np_normalize = np.array(trainingWindow.train_df, dtype='float64')
+        normalize_layer = preprocessing.Normalization()    
+        normalize_layer.adapt(np_normalize)
+        np_x_train  = normalize_layer(np_x_train)
+        np_x_test  = normalize_layer(np_x_test)
+    else:
+        print("features not normalized")
+        print("targets not normalized")
+        
+    d2r.testX = np_x_test
+    d2r.testY = np_y_test
+    d2r.trainX = np_x_train
+    d2r.trainY = np_y_train
+    return
 
 def discard_outliers(nx_graph, node_i, df_data):
     nx_remove_outlier_list = nx.get_node_attributes(nx_graph, JSON_REMOVE_OUTLIER_LIST)
@@ -129,7 +257,7 @@ def prepareTrainingData(nx_graph, node_name):
             df_combined.drop(targetFields, axis=1)
     return df_combined
 
-def collect_and_select_data(nx_graph):
+def collect_and_select_data(d2r):
     logging.info('====> ================================================')
     logging.info('====> load_and_prepare_data: loading data for input to models')
     logging.info('====> ================================================')
@@ -138,25 +266,23 @@ def collect_and_select_data(nx_graph):
     try:
         err_txt = "*** An exception occurred analyzing the json configuration file ***"
 
-        nx_data_flow = nx.get_node_attributes(nx_graph, JSON_OUTPUT_FLOW)
-        nx_flowFilename = nx.get_edge_attributes(nx_graph, JSON_FLOW_DATA_FILE)
-        nx_read_attr = nx.get_node_attributes(nx_graph, JSON_PROCESS_TYPE)
-        for node_i in nx_graph.nodes():
+        nx_data_flow = nx.get_node_attributes(d2r.graph, JSON_OUTPUT_FLOW)
+        nx_flowFilename = nx.get_edge_attributes(d2r.graph, JSON_FLOW_DATA_FILE)
+        nx_read_attr = nx.get_node_attributes(d2r.graph, JSON_PROCESS_TYPE)
+        for node_i in d2r.graph.nodes():
             output_flow = nx_data_flow[node_i]
             if nx_read_attr[node_i] == JSON_DATA_PREP_PROCESS:
-                for edge_i in nx_graph.edges():
+                for edge_i in d2r.graph.edges():
                     if edge_i[0] == node_i:
                         err_txt = "*** An exception occurred analyzing the flow details in the json configuration file ***"
-                        nx_balanced = nx.get_edge_attributes(nx_graph, JSON_BALANCED)
+                        nx_balanced = nx.get_edge_attributes(d2r.graph, JSON_BALANCED)
                         balanced = nx_balanced[edge_i[0], edge_i[1], output_flow]
-                        nx_timeSeq = nx.get_edge_attributes(nx_graph, JSON_TIME_SEQ)
+                        nx_timeSeq = nx.get_edge_attributes(d2r.graph, JSON_TIME_SEQ)
                         timeSeq = nx_timeSeq[edge_i[0], edge_i[1], output_flow]
-                        
-                        df_data = prepareTrainingData(nx_graph, node_i)
-                        
                         flowFilename = nx_flowFilename[edge_i[0], edge_i[1], output_flow]
-                        print("\nData \n%s\nwritten to %s for training\n" % (df_data.describe().transpose(), flowFilename))
-                        df_data.to_csv(flowFilename, index=False)
+                        
+                        d2r.data = prepareTrainingData(d2r.graph, node_i)
+                        d2r.archiveData(flowFilename)
                         break
         
     except Exception:
