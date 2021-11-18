@@ -32,8 +32,6 @@ import pandas as pd
 
 ''' suppress tensorflow warning messages - 2 mechanisms '''
 #os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2' 
-from TrainingDataAndResults import Data2Results as d2r
-
 import tensorflow as tf
 #os.environ['AUTOGRAPH_VERBOSITY'] = 1
 
@@ -44,12 +42,8 @@ from configuration import get_ini_data
 from configuration import read_config_json
 from configuration import read_processing_network_json
 from configuration_graph import build_configuration_graph
-
 from load_prepare_data import collect_and_select_data
-from load_prepare_data import loadTrainingData
-from load_prepare_data import prepareData
-from assemble_model import buildModel
-from train_model import trainModel
+from assemble_model import build_and_train_model
 from evaluate_visualize import evaluate_and_visualize
 
 from configuration_constants import JSON_MODEL_FILE
@@ -120,42 +114,38 @@ if __name__ == '__main__':
     
     processingNetwork = gitdir + json_config['processNet']
     processing_json = read_processing_network_json(processingNetwork)
-    
-    d2r = d2r()
-    build_configuration_graph(d2r, processing_json)
+    nx_graph = nx.MultiDiGraph()
+    build_configuration_graph(processing_json, nx_graph)
     #nx.draw(nx_graph, arrows=True, with_labels=True, font_weight='bold')
-    #nx.draw_circular(nx_graph, arrows=True, with_labels=True, font_weight='bold')
-    #plt.show()
+    nx.draw_circular(nx_graph, arrows=True, with_labels=True, font_weight='bold')
+    plt.show()
     
     ''' .......... Step 1 - Load and prepare data .........................
     ======================================================================= '''
     step1 = time.time()
     print ('\nStep 1 - Acquire, assemble and prepare the data for analysis')
-    collect_and_select_data(d2r)
+    collect_and_select_data(nx_graph)
 
     ''' ................... Step 2 - Build Model ............................
     ========================================================================= '''
     step2 = time.time()
     print ('\nStep 2 - Build and train the Model')
     #node_i, k_model, x_features, y_targets, x_test, y_test, fitting = build_and_train_model(nx_graph)
-    buildModel(d2r)
-    loadTrainingData(d2r)
-    prepareData(d2r)
-    trainModel(d2r)
+    node_i, k_model, fitting, x_features, y_targets, x_train, y_train = build_and_train_model(nx_graph)
 
     ''' .................... Step 3 - Evaluate the model! ...............
     ===================================================================== '''
     step3 = time.time()
     print ("\nStep 3 - Evaluate the model and visualize accuracy!")
     #evaluate_and_visualize(nx_graph, node_i, k_model, x_features, y_targets, x_test, y_test, fitting)
-    evaluate_and_visualize(d2r)
+    evaluate_and_visualize(nx_graph, node_i, k_model, x_features, y_targets, x_train, y_train, fitting)
     
     ''' .................... Step 4 - clean up, archive and visualize accuracy! ...............
     =========================================================================================== '''
     step4 = time.time()
     print ("\nStep 4 - clean up, archive")
-    nx_model_file = nx.get_node_attributes(d2r.graph, JSON_MODEL_FILE)[d2r.mlNode]
-    d2r.model.save(nx_model_file)
+    nx_model_file = nx.get_node_attributes(nx_graph, JSON_MODEL_FILE)[node_i]
+    k_model.save(nx_model_file)
 
     end = time.time()
     print ("")
