@@ -3,6 +3,7 @@ Created on Nov 15, 2021
 
 @author: Brian
 
+Git access error problem
 '''
 import networkx as nx
 import matplotlib.pyplot as plt
