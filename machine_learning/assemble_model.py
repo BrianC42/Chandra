@@ -13,7 +13,9 @@ import pandas as pd
 import tensorflow as tf
 from tensorflow import keras
 
-from train_model import trainModels
+from TrainingDataAndResults import Data2Results as d2r
+
+from train_model import trainModel
 
 from configuration_constants import JSON_KERAS_DENSE_PROCESS
 from configuration_constants import JSON_KERAS_CONV1D
@@ -213,38 +215,7 @@ def preprocess_data(nx_graph, node_i, df_data):
     
     return df_data
 
-def load_training_data(nx_graph, node_i, nx_edge):
-    # error handling
-    try:
-        err_txt = "*** An exception occurred preparing the training data for the model ***"
-
-        nx_input_flow = nx.get_node_attributes(nx_graph, JSON_INPUT_FLOWS)[node_i]
-        print("Loading prepared data defined in flow: %s" % nx_input_flow[0])
-        nx_data_file = nx.get_edge_attributes(nx_graph, JSON_FLOW_DATA_FILE)
-        inputData = nx_data_file[nx_edge[0], nx_edge[1], nx_input_flow[0]]    
-        if os.path.isfile(inputData):
-            df_training_data = pd.read_csv(inputData)
-                
-        nx_category_types = nx.get_edge_attributes(nx_graph, JSON_CATEGORY_TYPE)
-        category_type = nx_category_types[nx_edge[0], nx_edge[1], nx_input_flow[0]]
-        if category_type == JSON_CAT_TF:
-            pass
-        elif category_type == JSON_CAT_THRESHOLD:
-            pass
-        elif category_type == JSON_THRESHOLD_VALUE:
-            pass
-        elif category_type == JSON_LINEAR_REGRESSION:
-            pass
-        else:
-            raise NameError('Invalid category type')
-    
-    except Exception:
-        logging.debug(err_txt)
-        sys.exit("\n" + err_txt)
-
-    return df_training_data
-
-def build_model(nx_graph, node_i, nx_edge, nx_model_type):
+def assemble_layers(nx_graph, node_i, nx_edge, nx_model_type):
     logging.info('====> ================================================')
     logging.info('====> build_model: building the machine learning model')
     logging.info('====> ================================================')
@@ -310,16 +281,16 @@ def build_model(nx_graph, node_i, nx_edge, nx_model_type):
     #return k_model, x_features, y_targets, df_training_data, np_x_norm, np_y_norm, np_x_test, np_y_test
     return k_model
 
-def build_and_train_model(nx_graph):
+def buildModel(d2r):
     '''
     step 1 - load the feature and target data and structure them as required by the machine learning approach
     step 2 - assemble and compile the model defined in the json file with the definition stored in the directed network graph
     step 3 - train the model using the data organized in step 1 and the model compiled in step 2
     '''
-    nx_edges = nx.edges(nx_graph)
+    nx_edges = nx.edges(d2r.graph)
     
-    for node_i in nx_graph.nodes():
-        nx_read_attr = nx.get_node_attributes(nx_graph, JSON_PROCESS_TYPE)
+    for node_i in d2r.graph.nodes():
+        nx_read_attr = nx.get_node_attributes(d2r.graph, JSON_PROCESS_TYPE)
         if nx_read_attr[node_i] == JSON_KERAS_DENSE_PROCESS:
             nx_model_type = JSON_KERAS_DENSE_PROCESS
             break
@@ -330,11 +301,11 @@ def build_and_train_model(nx_graph):
     for nx_edge in nx_edges:
         if nx_edge[1] == node_i:
             break
-            
-    
+                
+    d2r.mlNode = node_i
+    d2r.mlEdgeIn = nx_edge
     tf.keras.backend.set_floatx('float64')
-    df_training_data = load_training_data(nx_graph, node_i, nx_edge)
-    k_model = build_model(nx_graph, node_i, nx_edge, nx_model_type)
-    fitting, x_features, y_targets, x_train, y_train = trainModels(nx_graph, node_i, nx_edge, k_model, df_training_data)
     
-    return node_i, k_model, fitting, x_features, y_targets, x_train, y_train
+    d2r.model = assemble_layers(d2r.graph, d2r.mlNode, d2r.mlEdgeIn, nx_model_type)
+    
+    return

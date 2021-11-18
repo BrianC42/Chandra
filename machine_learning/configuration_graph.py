@@ -10,6 +10,8 @@ import json
 import pandas as pd
 import networkx as nx
 
+from TrainingDataAndResults import Data2Results as d2r
+
 from configuration_constants import JSON_PROCESS_NODES
 
 from configuration_constants import JSON_REQUIRED
@@ -385,19 +387,23 @@ def add_meta_process_node (js_config, nx_graph) :
     print("Added %s node %s" % (nx_read_attr[nx_process_name], nx_process_name))
     return
 
-def build_configuration_graph(json_config, nx_graph):
+def build_configuration_graph(d2r, json_config):
     # error handling
     try:
+        d2r.graph = nx.MultiDiGraph()
+    
         # processing nodes                
         logging.debug("Adding processing nodes")
         for i, process_i in enumerate(json_config[JSON_PROCESS_NODES]):
-            add_meta_process_node(process_i, nx_graph)
+            add_meta_process_node(process_i, d2r.graph)
         
         # processing data flows                
         logging.debug("Adding data flows")
         for i, flow_i in enumerate(json_config[JSON_DATA_FLOWS]):
-            add_meta_data_edge(flow_i, nx_graph)
+            add_meta_data_edge(flow_i, d2r.graph)
         
+        d2r.plotGraph()
+
     except Exception:
         exc_info = sys.exc_info()
         exc_str = exc_info[1].args[0]

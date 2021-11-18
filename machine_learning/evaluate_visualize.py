@@ -7,6 +7,8 @@ import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
 
+from TrainingDataAndResults import Data2Results as d2r
+
 from configuration_constants import JSON_NORMALIZE_DATA
 from configuration_constants import JSON_MODEL_DEPTH
 from configuration_constants import JSON_NODE_COUNT
@@ -18,31 +20,31 @@ from configuration_constants import JSON_OPTIMIZER
 from configuration_constants import JSON_LOSS
 from configuration_constants import JSON_METRICS
 
-def evaluate_and_visualize(nx_graph, nx_node, k_model, x_features, y_targets, x_test, y_test, fitting):
+def evaluate_and_visualize(d2r):
     
-    loss = k_model.evaluate(x=x_test, y=y_test)
+    loss = d2r.model.evaluate(x=d2r.testX, y=d2r.testY)
     print("evaluation loss: %s" % loss)
     
-    x_min = np.min(x_test)
-    x_max = np.max(x_test)
+    x_min = np.min(d2r.testX)
+    x_max = np.max(d2r.testX)
     
-    fit_params = fitting.params
+    fit_params = d2r.fitting.params
     epoch_cnt = fit_params['epochs']
     steps = fit_params['steps']
     #batch_size = fit_params['batch_size']
     #samples = fit_params['samples']
     #metrics = fit_params['metrics']
     
-    nx_normalize = nx.get_node_attributes(nx_graph, JSON_NORMALIZE_DATA)[nx_node]
-    nx_model_depth = nx.get_node_attributes(nx_graph, JSON_MODEL_DEPTH)[nx_node]
-    nx_node_count = nx.get_node_attributes(nx_graph, JSON_NODE_COUNT)[nx_node]
-    nx_dropout = nx.get_node_attributes(nx_graph, JSON_DROPOUT)[nx_node]
-    nx_dropout_rate = nx.get_node_attributes(nx_graph, JSON_DROPOUT_RATE)[nx_node]
-    nx_activation = nx.get_node_attributes(nx_graph, JSON_ACTIVATION)[nx_node]
-    nx_output_activation = nx.get_node_attributes(nx_graph, JSON_MODEL_OUTPUT_ACTIVATION)[nx_node]
-    nx_optimizer = nx.get_node_attributes(nx_graph, JSON_OPTIMIZER)[nx_node]
-    nx_loss = nx.get_node_attributes(nx_graph, JSON_LOSS)[nx_node]
-    nx_metrics = nx.get_node_attributes(nx_graph, JSON_METRICS)[nx_node]
+    nx_normalize = nx.get_node_attributes(d2r.graph, JSON_NORMALIZE_DATA)[d2r.mlNode]
+    nx_model_depth = nx.get_node_attributes(d2r.graph, JSON_MODEL_DEPTH)[d2r.mlNode]
+    nx_node_count = nx.get_node_attributes(d2r.graph, JSON_NODE_COUNT)[d2r.mlNode]
+    nx_dropout = nx.get_node_attributes(d2r.graph, JSON_DROPOUT)[d2r.mlNode]
+    nx_dropout_rate = nx.get_node_attributes(d2r.graph, JSON_DROPOUT_RATE)[d2r.mlNode]
+    nx_activation = nx.get_node_attributes(d2r.graph, JSON_ACTIVATION)[d2r.mlNode]
+    nx_output_activation = nx.get_node_attributes(d2r.graph, JSON_MODEL_OUTPUT_ACTIVATION)[d2r.mlNode]
+    nx_optimizer = nx.get_node_attributes(d2r.graph, JSON_OPTIMIZER)[d2r.mlNode]
+    nx_loss = nx.get_node_attributes(d2r.graph, JSON_LOSS)[d2r.mlNode]
+    nx_metrics = nx.get_node_attributes(d2r.graph, JSON_METRICS)[d2r.mlNode]
     
     str_l1 = 'Model structure'
     if nx_normalize:
@@ -65,30 +67,30 @@ def evaluate_and_visualize(nx_graph, nx_node, k_model, x_features, y_targets, x_
     str_params = str_p0 + str_p4 + str_p5
     
     fig, axs = plt.subplots(2, 3)
-    fig.suptitle(nx_node, fontsize=14, fontweight='bold')
+    fig.suptitle(d2r.mlNode, fontsize=14, fontweight='bold')
 
     axs[0, 0].set_title("ML Parameters Used")
     axs[0, 0].text(0.5, 0.5, str_structure + '\n' + str_params, horizontalalignment='center', verticalalignment='center', wrap=True)
         
     axs[0, 1].set_title("Raw Data")
-    axs[0, 1].scatter(x_features, y_targets)
+    axs[0, 1].scatter(d2r.testX, d2r.testY)
     axs[0, 1].set_xlabel("Feature")
     axs[0, 1].set_ylabel("Target")
 
     axs[0, 2].set_title("Training Data")
-    axs[0, 2].scatter(x_test, y_test)
+    axs[0, 2].scatter(d2r.testX, d2r.testY)
     axs[0, 2].set_xlabel("Feature")
     axs[0, 2].set_ylabel("Target")
     
     axs[1, 0].set_title("Fitting history")
-    axs[1, 0].scatter(fitting.epoch, fitting.history['loss'])
+    axs[1, 0].scatter(d2r.fitting.epoch, d2r.fitting.history['loss'])
     axs[1, 0].set_xlabel("Epochs")
     axs[1, 0].set_ylabel("loss")
         
     axs[1, 1].set_title("Prediction")
     iterable = ((x_min + (((x_max - x_min) / 100) * x)) for x in range(100))
     x_predict = np.fromiter(iterable, float)
-    y_predict = k_model.predict(x=x_predict)
+    y_predict = d2r.model.predict(x=x_predict)
     axs[1, 1].scatter(x_predict, y_predict)
 
 
@@ -98,7 +100,7 @@ def evaluate_and_visualize(nx_graph, nx_node, k_model, x_features, y_targets, x_
     axs[1, 2].set_title("Extrapolation")
     iterable = ((x_max + (((x_max - x_min) / 10) * x)) for x in range(100))
     x_predict = np.fromiter(iterable, float)
-    y_predict = k_model.predict(x=x_predict)
+    y_predict = d2r.model.predict(x=x_predict)
     axs[1, 2].scatter(x_predict, y_predict)
     axs[1, 2].set_xlabel("Feature")
     axs[1, 2].set_ylabel("Target")
