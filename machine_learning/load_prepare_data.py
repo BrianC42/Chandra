@@ -13,12 +13,9 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.keras.layers.experimental import preprocessing
 
-from TrainingDataAndResults import Data2Results as d2r
 from tfWindowGenerator import WindowGenerator
 
 from configuration_constants import JSON_DATA_PREP_PROCESS
-from configuration_constants import JSON_PROCESS_TYPE
-from configuration_constants import JSON_INPUT_FLOWS
 from configuration_constants import JSON_OUTPUT_FLOW
 from configuration_constants import JSON_INPUT_DATA_FILE
 from configuration_constants import JSON_BALANCED
@@ -26,27 +23,20 @@ from configuration_constants import JSON_TIME_SEQ
 from configuration_constants import JSON_IGNORE_BLANKS
 from configuration_constants import JSON_FLOW_DATA_FILE
 from configuration_constants import JSON_INPUT_FLOWS
-
-from configuration_constants import JSON_FEATURE_FIELDS
-from configuration_constants import JSON_TARGET_FIELDS
 from configuration_constants import JSON_NORMALIZE_DATA
-
 from configuration_constants import JSON_PROCESS_TYPE
-from configuration_constants import JSON_KERAS_DENSE_PROCESS
+from configuration_constants import JSON_TENSORFLOW
 from configuration_constants import JSON_KERAS_CONV1D
-
 from configuration_constants import JSON_FEATURE_FIELDS
 from configuration_constants import JSON_TARGET_FIELDS
 from configuration_constants import JSON_VALIDATION_SPLIT
 from configuration_constants import JSON_TEST_SPLIT
-
 from configuration_constants import JSON_CATEGORY_TYPE
 from configuration_constants import JSON_CATEGORY_1HOT
 from configuration_constants import JSON_CAT_TF
 from configuration_constants import JSON_CAT_THRESHOLD
 from configuration_constants import JSON_THRESHOLD_VALUE
 from configuration_constants import JSON_LINEAR_REGRESSION
-
 from configuration_constants import JSON_REMOVE_OUTLIER_LIST
 from configuration_constants import JSON_OUTLIER_FEATURE
 from configuration_constants import JSON_OUTLIER_PCT
@@ -111,6 +101,16 @@ def organize_data_for_convolution(nx_graph, node_i, df_training_data):
     print(trainingWindow)
     return trainingWindow
 
+def to_sequences(x, y, seq_size=1):
+  x_values = []
+  y_values = []
+
+  for i in range(len(x) - seq_size):
+    x_values.append(x.iloc[i:(i+seq_size)].values)
+    y_values.append(y.iloc[i+seq_size])
+
+  return np.array(x_values), np.array(y_values)
+
 def prepareData(d2r):
     nx_input_flows = nx.get_node_attributes(d2r.graph, JSON_INPUT_FLOWS)[d2r.mlNode]
 
@@ -122,10 +122,25 @@ def prepareData(d2r):
 
     nx_validation_split = nx.get_node_attributes(d2r.graph, JSON_VALIDATION_SPLIT)[d2r.mlNode]
 
-    print("\n*************************************************\nWORK IN PROGRESS\n\ttrainModel\n*************************************************\n")
+    print("\n*************************************************\nWORK IN PROGRESS\n\tprepareData\n*************************************************\n")
     nx_read_attr = nx.get_node_attributes(d2r.graph, JSON_PROCESS_TYPE)
-    if nx_read_attr[d2r.mlNode] == JSON_KERAS_DENSE_PROCESS:    
+    if nx_read_attr[d2r.mlNode] == JSON_TENSORFLOW:    
         print("%s is built of core dense layers" % d2r.mlNode)
+        TIME_STEPS = 20
+        TRAINPCT = 0.8
+
+        train = d2r.data.loc[ : (len(d2r.data) * TRAINPCT)]
+        test = d2r.data.loc[(len(d2r.data) * TRAINPCT) :]
+        df_x_train, df_y_train = to_sequences(train[['FeatureX']],train['TargetY'], TIME_STEPS)
+        df_x_test, df_y_test = to_sequences(test[['FeatureX']], test['TargetY'], TIME_STEPS)        
+        np_x_train = np.array(df_x_train, dtype='float64')
+        np_y_train = np.array(df_y_train, dtype='float64')
+        np_x_test = np.array(df_x_test, dtype='float64')
+        np_y_test = np.array(df_y_test, dtype='float64')
+
+        print("Training shapes X:%s y:%s, testing shapes X:%s y:%s" % (df_x_train.shape, df_y_train.shape, df_x_test.shape, df_y_test.shape))
+
+        '''
         tf_training_data = d2r.data
         rows = tf_training_data.shape[0]
         x_features = tf_training_data.loc[:, nx_features]
@@ -140,10 +155,13 @@ def prepareData(d2r):
         np_y_train = np.array(df_y_train, dtype='float64')
         np_x_test = np.array(df_x_test, dtype='float64')
         np_y_test = np.array(df_y_test, dtype='float64')
+        '''
+
+    '''        
     elif nx_read_attr[d2r.mlNode] == JSON_KERAS_CONV1D:
         print("%s is based on Conv1D layers" % d2r.mlNode)
         trainingWindow = organize_data_for_convolution(d2r.graph, d2r.mlNode, d2r.data)
-
+        
     nx_normalize = nx.get_node_attributes(d2r.graph, JSON_NORMALIZE_DATA)[d2r.mlNode]
     if nx_normalize:
         print("Normalizing training features\n%s\n" % trainingWindow.train_df.describe().transpose())
@@ -155,6 +173,7 @@ def prepareData(d2r):
     else:
         print("features not normalized")
         print("targets not normalized")
+    '''
         
     d2r.testX = np_x_test
     d2r.testY = np_y_test
@@ -183,12 +202,6 @@ def set_1Hot_TF(df_out, categoryFields, category1Hot):
         else:
             df_out.loc[ndx, category1Hot[1]] = 1
     return
-
-def set_1Hot_Threshold():
-    return 
-
-def set_1Hot_Ranges():
-    return 
 
 def prepareTrainingData(nx_graph, node_name):
     nx_data_file = nx.get_node_attributes(nx_graph, JSON_INPUT_DATA_FILE)
@@ -264,7 +277,7 @@ def collect_and_select_data(d2r):
     
     # error handling
     try:
-        err_txt = "*** An exception occurred analyzing the json configuration file ***"
+        err_txt = "*** An exception occurred collecting and selecting the data ***"
 
         nx_data_flow = nx.get_node_attributes(d2r.graph, JSON_OUTPUT_FLOW)
         nx_flowFilename = nx.get_edge_attributes(d2r.graph, JSON_FLOW_DATA_FILE)

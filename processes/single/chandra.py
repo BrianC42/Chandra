@@ -29,16 +29,14 @@ import logging
 import datetime as dt
 import time
 import pandas as pd
+import networkx as nx
 
 ''' suppress tensorflow warning messages - 2 mechanisms '''
 #os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2' 
-from TrainingDataAndResults import Data2Results as d2r
-
 import tensorflow as tf
 #os.environ['AUTOGRAPH_VERBOSITY'] = 1
 
-import networkx as nx
-import matplotlib.pyplot as plt
+from TrainingDataAndResults import Data2Results as d2r
 
 from configuration import get_ini_data
 from configuration import read_config_json

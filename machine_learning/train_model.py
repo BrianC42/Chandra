@@ -7,11 +7,8 @@ import sys
 import logging
 import numpy as np
 import networkx as nx
+import tensorflow as tf
 
-from TrainingDataAndResults import Data2Results as d2r
-
-from configuration_constants import JSON_VALIDATION_SPLIT
-from configuration_constants import JSON_TEST_SPLIT
 from configuration_constants import JSON_BATCH
 from configuration_constants import JSON_EPOCHS
 from configuration_constants import JSON_VERBOSE
@@ -22,6 +19,8 @@ def trainModel(d2r):
     logging.info('====> ================================================')
     logging.info('====> trainModels models')
     logging.info('====> ================================================')
+    
+    RANDOM_SEED = 42
 
     # error handling
     try:
@@ -52,6 +51,11 @@ def trainModel(d2r):
         nx_epochs = nx.get_node_attributes(d2r.graph, JSON_EPOCHS)[d2r.mlNode]
         nx_verbose = nx.get_node_attributes(d2r.graph, JSON_VERBOSE)[d2r.mlNode]
         nx_shuffle = nx.get_node_attributes(d2r.graph, JSON_SHUFFLE_DATA)[d2r.mlNode]
+        
+        np.random.seed(RANDOM_SEED)
+        tf.random.set_seed(RANDOM_SEED)
+        
+        print("Training shapes X:%s y:%s, testing shapes X:%s y:%s" % (d2r.trainX.shape, d2r.trainY.shape, d2r.testX.shape, d2r.testY.shape))
         
         d2r.fitting = d2r.model.fit(x=d2r.trainX, y=d2r.trainY, \
                               batch_size=nx_batch, epochs=nx_epochs, \

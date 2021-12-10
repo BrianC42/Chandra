@@ -83,9 +83,11 @@ def evaluate_and_visualize(d2r):
     axs[0, 2].set_ylabel("Target")
     
     axs[1, 0].set_title("Fitting history")
-    axs[1, 0].scatter(d2r.fitting.epoch, d2r.fitting.history['loss'])
+    axs[1, 0].plot(d2r.fitting.epoch, d2r.fitting.history['loss'], label='Training loss')
+    axs[1, 0].plot(d2r.fitting.epoch, d2r.fitting.history['val_loss'], label='Validation loss')
     axs[1, 0].set_xlabel("Epochs")
     axs[1, 0].set_ylabel("loss")
+    axs[1, 0].legend()
         
     axs[1, 1].set_title("Prediction")
     iterable = ((x_min + (((x_max - x_min) / 100) * x)) for x in range(100))

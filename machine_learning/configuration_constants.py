@@ -182,9 +182,10 @@ JSON_PREPROCESS_DISCRETIZATION = 'discretization'
 JSON_PREPROCESS_DISCRETIZATION_BINS = 'bins'
 JSON_PREPROCESS_CATEGORY_ENCODING = 'categoryEncoding'
 
-JSON_KERAS_DENSE_PROCESS = "KerasDense"
+JSON_LAYERS = "modelLayers"
+JSON_TENSORFLOW = "Tensorflow"
 JSON_KERAS_DENSE_CTRL = "KerasDenseCtrl"
-JSON_KERAS_DENSE_DATA = 'KerasDenseData'
+JSON_KERAS_DENSE_DATA = 'TensorflowData'
 
 JSON_KERAS_CONV1D = "KerasConv1D"
 JSON_KERAS_CONV1D_CONTROL = "KerasConv1DCtrl"
@@ -215,6 +216,8 @@ JSON_FLOW_DATA_FILE = "flowDataFile"
 
 JSON_FEATURE_FIELDS = "features"
 JSON_TARGET_FIELDS = "targets"
+JSON_SEQUENCE_LENGTH = 'sequenceLength'
+JSON_FEATURE_COUNT = 'featureCount'
 
 JSON_CATEGORY_TYPE = "categoryType"
 JSON_CATEGORIZATION_DETAILS = "categorization"
@@ -256,6 +259,8 @@ JSON_VERBOSE = 'verbose'
 JSON_LOSS = 'compilationLoss'
 JSON_METRICS = 'compilationMetrics'
 JSON_ACTIVATION = 'activation'
+JSON_RETURN_SEQUENCES = 'returnSequences'
+JSON_REPEAT_COUNT = 'repeatCount'
 JSON_OPTIMIZER = 'optimizer'
 JSON_ANALYSIS = 'analysis'
 

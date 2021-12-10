@@ -5,9 +5,9 @@
 		"processNodeName" : "LoadData",
 		"requiredFields" : {
 			"processType" : "dataPrep",
-			"comments: supported values - processType" : ["dataPrep", "KerasDense"],
+			"comments: supported values - processType" : ["dataPrep", "Tensorflow"],
 			"inputFlows" : [],
-			"outputFlow" : "LR_data",
+			"outputFlow" : "SinWave",
 			"outputFile" : "",
 			"logFile" : ""
 		},
@@ -21,21 +21,23 @@
 		}
 	},
 	{
-		"processNodeName" : "Regression_Sine",
+		"processNodeName" : "SineWaveRegression",
 		"requiredFields" : {
-			"comments: supported values - processType" : ["dataPrep", "KerasDense"],
-			"processType" : "KerasDense",
-			"inputFlows" : ["LR_data"],
+			"comments: supported values - processType" : ["dataPrep", "Tensorflow"],
+			"processType" : "Tensorflow",
+			"inputFlows" : ["SinWave"],
 			"outputFlow" : "",
-			"outputFile" : "d:\\brian\\AI Projects\\models\\LRmodel",
-			"logFile" : "d:\\brian\\AI Projects\\logs\\LRmodel.txt"
+			"outputFile" : "d:\\brian\\AI Projects\\models\\TimeSeriesDemo_LSTM",
+			"logFile" : "d:\\brian\\AI Projects\\logs\\TimeSeriesDemo_LSTM.txt"
 		},
 		"conditionalFields" : {
-			"modelFile" : "d:\\brian\\AI Projects\\models\\LRmodel",
+			"modelFile" : "d:\\brian\\AI Projects\\models\\SineWave",
 			"modelLayers" : [
 				{
 				"layerName" : "lstm1",
 				"layerType" : "lstm",
+				"sequenceLength" : 20,
+				"featureCount": 1,
 				"layerUnits" : 10,
 				"returnSequences" : false
 				},
@@ -107,17 +109,17 @@
 "comment - wave form dataflow section" : "Specification details  for the flows of data between processing nodes",
 "dataFlows" : [
 	{
-	"flowName" : "LR_data",
+	"flowName" : "SinWave",
 	"requiredFields" : {
 		"flowFrom" : "LoadData",
-		"flowTo" : "Regression_Sine"
+		"flowTo" : "SineWaveRegression"
 		},
 	"conditionalFields" : {
-		"KerasDenseData" : {
-			"timeSequence" : false,
-			"balanceClasses" : true,
+		"TensorflowData" : {
+			"timeSequence" : true,
+			"balanceClasses" : false,
 			"ignoreBlanks" : true,
-			"flowDataFile" : "c:\\users\\brian\\downloads\\regression - sine.csv",
+			"flowDataFile" : "d:\\brian\\AI Projects\\internal_flows\\regression - sine - LSTM.csv",
 			"features" : ["FeatureX"],
 			"targets" : ["TargetY"],
 			"categorization" : {

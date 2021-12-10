@@ -18,7 +18,7 @@ from configuration_constants import JSON_REQUIRED
 from configuration_constants import JSON_CONDITIONAL
 
 from configuration_constants import JSON_DATA_PREP_PROCESS
-from configuration_constants import JSON_KERAS_DENSE_PROCESS
+from configuration_constants import JSON_TENSORFLOW
 from configuration_constants import JSON_KERAS_CONV1D
 
 from configuration_constants import JSON_NODE_NAME
@@ -48,6 +48,7 @@ from configuration_constants import JSON_OUTLIER_PCT
 from configuration_constants import JSON_KERAS_DENSE_CTRL
 from configuration_constants import JSON_KERAS_DENSE_DATA
 from configuration_constants import JSON_MODEL_FILE
+from configuration_constants import JSON_LAYERS
 
 from configuration_constants import JSON_KERAS_CONV1D_CONTROL
 from configuration_constants import JSON_KERAS_CONV1D_FILTERS
@@ -349,9 +350,13 @@ def add_meta_process_node (js_config, nx_graph) :
     # conditional elements
     js_conditional = js_config[JSON_CONDITIONAL]
     
-    if nx_processType == JSON_KERAS_DENSE_PROCESS or nx_processType == JSON_KERAS_CONV1D:
+    if nx_processType == JSON_TENSORFLOW or nx_processType == JSON_KERAS_CONV1D:
         nx_model_file = js_conditional[JSON_MODEL_FILE]
         nx.set_node_attributes(nx_graph, {nx_process_name:nx_model_file}, JSON_MODEL_FILE)
+        
+    if JSON_LAYERS in js_conditional:
+        nx_layers = js_conditional[JSON_LAYERS]
+        nx.set_node_attributes(nx_graph, {nx_process_name:nx_layers}, JSON_LAYERS)
     
     if JSON_PREPROCESSING in js_conditional:
         js_preprocessing = js_conditional[JSON_PREPROCESSING]
@@ -371,7 +376,7 @@ def add_meta_process_node (js_config, nx_graph) :
     if js_required[JSON_PROCESS_TYPE] == JSON_DATA_PREP_PROCESS:
         js_data_prep_ctrl = js_conditional[JSON_INPUT_DATA_PREPARATION]
         add_data_load_details(js_data_prep_ctrl, nx_graph, nx_process_name)
-    elif js_required[JSON_PROCESS_TYPE] == JSON_KERAS_DENSE_PROCESS:
+    elif js_required[JSON_PROCESS_TYPE] == JSON_TENSORFLOW:
         js_keras_dense = js_conditional[JSON_KERAS_DENSE_CTRL]
         add_dense_meta_data(js_keras_dense, nx_graph, nx_process_name)
     elif js_required[JSON_PROCESS_TYPE] == JSON_KERAS_CONV1D:
