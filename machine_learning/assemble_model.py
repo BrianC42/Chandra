@@ -104,7 +104,8 @@ def build_layer(layer_type, layer_definition, input_layer):
             nx_dropout_rate = layer_definition[JSON_DROPOUT_RATE]
         k_layer = tf.keras.layers.Dropout(rate=nx_dropout_rate)
     else:
-        pass
+        err_msg = 'Layer type not yet implemented: ' + layer_type
+        raise NameError(err_msg)
 
     return k_layer
 
@@ -129,6 +130,8 @@ def assemble_layers(nx_graph, node_i, nx_edge):
         for nx_layer_definition in nx_layers:
             ''' layer type is required '''
             nx_layer_type = nx_layer_definition['layerType']
+            if input_layer:
+                print("Need to store sequenceLength for future use in preparing data for training")
             if nx_layer_type == 'timeDistributed':
                 '''
                 TimeDistributed layer type specification is not defined - future support required

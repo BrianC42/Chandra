@@ -284,8 +284,8 @@ def add_training_controls(js_training, nx_graph, nx_process_name):
     nx_loss_weights = js_training[JSON_LOSS_WTS]
     nx_regularization = js_training[JSON_REGULARIZATION]
     nx_reg_value = js_training[JSON_REG_VALUE]
-    nx_dropout = js_training[JSON_DROPOUT]
-    nx_dropout_rate = js_training[JSON_DROPOUT_RATE]
+    #nx_dropout = js_training[JSON_DROPOUT]
+    #nx_dropout_rate = js_training[JSON_DROPOUT_RATE]
     nx_bias = js_training[JSON_BIAS]
     nx_validation_split = js_training[JSON_VALIDATION_SPLIT]
     nx_test_split = js_training[JSON_TEST_SPLIT]
@@ -304,8 +304,8 @@ def add_training_controls(js_training, nx_graph, nx_process_name):
     nx.set_node_attributes(nx_graph, {nx_process_name:nx_loss_weights}, JSON_LOSS_WTS)
     nx.set_node_attributes(nx_graph, {nx_process_name:nx_regularization}, JSON_REGULARIZATION)
     nx.set_node_attributes(nx_graph, {nx_process_name:nx_reg_value}, JSON_REG_VALUE)
-    nx.set_node_attributes(nx_graph, {nx_process_name:nx_dropout}, JSON_DROPOUT)
-    nx.set_node_attributes(nx_graph, {nx_process_name:nx_dropout_rate}, JSON_DROPOUT_RATE)
+    #nx.set_node_attributes(nx_graph, {nx_process_name:nx_dropout}, JSON_DROPOUT)
+    #nx.set_node_attributes(nx_graph, {nx_process_name:nx_dropout_rate}, JSON_DROPOUT_RATE)
     nx.set_node_attributes(nx_graph, {nx_process_name:nx_bias}, JSON_BIAS)
     nx.set_node_attributes(nx_graph, {nx_process_name:nx_validation_split}, JSON_VALIDATION_SPLIT)
     nx.set_node_attributes(nx_graph, {nx_process_name:nx_test_split}, JSON_TEST_SPLIT)

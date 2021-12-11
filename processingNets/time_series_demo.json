@@ -74,8 +74,6 @@
 				"lossWeights" : [1.0],
 				"denseRegularation" : false,
 				"regularationValue" : 0.0,
-				"dropout" : false,
-				"dropoutRate" : 0.2,
 				"shuffle" : false,
 				"normalize" : false,
 				"batchSize" : 32,

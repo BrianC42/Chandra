@@ -142,40 +142,11 @@ def prepareData(d2r):
 
         print("Training shapes X:%s y:%s, testing shapes X:%s y:%s" % (df_x_train.shape, df_y_train.shape, df_x_test.shape, df_y_test.shape))
 
-        '''
-        tf_training_data = d2r.data
-        rows = tf_training_data.shape[0]
-        x_features = tf_training_data.loc[:, nx_features]
-        y_targets = tf_training_data.loc[:, nx_targets]
-        
-        df_x_train = tf_training_data.loc[int(rows * nx_validation_split):, nx_features]
-        df_y_train = tf_training_data.loc[int(rows * nx_validation_split):, nx_targets]
-        df_x_test = tf_training_data.loc[:int(rows * nx_validation_split), nx_features]
-        df_y_test = tf_training_data.loc[:int(rows * nx_validation_split), nx_targets]
-        
-        np_x_train = np.array(df_x_train, dtype='float64')
-        np_y_train = np.array(df_y_train, dtype='float64')
-        np_x_test = np.array(df_x_test, dtype='float64')
-        np_y_test = np.array(df_y_test, dtype='float64')
-        '''
-
-    '''        
-    elif nx_read_attr[d2r.mlNode] == JSON_KERAS_CONV1D:
-        print("%s is based on Conv1D layers" % d2r.mlNode)
-        trainingWindow = organize_data_for_convolution(d2r.graph, d2r.mlNode, d2r.data)
-        
     nx_normalize = nx.get_node_attributes(d2r.graph, JSON_NORMALIZE_DATA)[d2r.mlNode]
     if nx_normalize:
-        print("Normalizing training features\n%s\n" % trainingWindow.train_df.describe().transpose())
-        np_normalize = np.array(trainingWindow.train_df, dtype='float64')
-        normalize_layer = preprocessing.Normalization()    
-        normalize_layer.adapt(np_normalize)
-        np_x_train  = normalize_layer(np_x_train)
-        np_x_test  = normalize_layer(np_x_test)
+        print("Normalization is not implemented")
     else:
-        print("features not normalized")
-        print("targets not normalized")
-    '''
+        print("features and target are not normalized")
         
     d2r.testX = np_x_test
     d2r.testY = np_y_test
@@ -205,71 +176,48 @@ def set_1Hot_TF(df_out, categoryFields, category1Hot):
             df_out.loc[ndx, category1Hot[1]] = 1
     return
 
-def prepareTrainingData(nx_graph, node_name):
+def prepareTrainingData(nx_graph, node_name, nx_edge):
     nx_data_file = nx.get_node_attributes(nx_graph, JSON_INPUT_DATA_FILE)
     #print("load and prepare data using %s json parameters and file %s" % (node_name, nx_data_file[node_name]))
     nx_data_flow = nx.get_node_attributes(nx_graph, JSON_OUTPUT_FLOW)
     output_flow = nx_data_flow[node_name]
-    for edge_i in nx_graph.edges():
-        if edge_i[0] == node_name:
-            nx_ignoreBlanks = nx.get_edge_attributes(nx_graph, JSON_IGNORE_BLANKS)
-            nx_dataFields = nx.get_edge_attributes(nx_graph, JSON_FEATURE_FIELDS)
-            nx_categoryType = nx.get_edge_attributes(nx_graph, JSON_CATEGORY_TYPE)
-            nx_targetFields = nx.get_edge_attributes(nx_graph, JSON_TARGET_FIELDS)
-                    
-            featureFields = nx_dataFields[edge_i[0], edge_i[1], output_flow]
-            targetFields = nx_targetFields[edge_i[0], edge_i[1], output_flow]
-            categoryType = nx_categoryType[edge_i[0], edge_i[1], output_flow]
-            ignoreBlanks = nx_ignoreBlanks[edge_i[0], edge_i[1], output_flow]
+    nx_ignoreBlanks = nx.get_edge_attributes(nx_graph, JSON_IGNORE_BLANKS)
+    nx_dataFields = nx.get_edge_attributes(nx_graph, JSON_FEATURE_FIELDS)
+    nx_targetFields = nx.get_edge_attributes(nx_graph, JSON_TARGET_FIELDS)
+    featureFields = nx_dataFields[nx_edge[0], nx_edge[1], output_flow]
+    targetFields = nx_targetFields[nx_edge[0], nx_edge[1], output_flow]
+    ignoreBlanks = nx_ignoreBlanks[nx_edge[0], nx_edge[1], output_flow]
             
-            df_combined = pd.DataFrame()
+    df_combined = pd.DataFrame()
 
-            for dataFile in nx_data_file[node_name]:
-                fileSpecList = glob.glob(dataFile)
-                fileCount = len(fileSpecList)
-                tf_progbar = tf.keras.utils.Progbar(fileCount, width=50, verbose=1, interval=1, stateful_metrics=None, unit_name='file')
-                count = 0
-                for FileSpec in fileSpecList:
-                    if os.path.isfile(FileSpec):
-                        tf_progbar.update(count)
-                        df_data = pd.read_csv(FileSpec)
+    for dataFile in nx_data_file[node_name]:
+        fileSpecList = glob.glob(dataFile)
+        fileCount = len(fileSpecList)
+        tf_progbar = tf.keras.utils.Progbar(fileCount, width=50, verbose=1, interval=1, stateful_metrics=None, unit_name='file')
+        count = 0
+        for FileSpec in fileSpecList:
+            if os.path.isfile(FileSpec):
+                tf_progbar.update(count)
+                df_data = pd.read_csv(FileSpec)
                         
-                        l_filter = []
-                        for fld in featureFields:
-                            l_filter.append(fld)
-                        for fld in targetFields:
-                            l_filter.append(fld)
-                        df_inputs = df_data.filter(l_filter)
-                        df_combined = pd.concat([df_combined, df_inputs], ignore_index=True)
-                    else:
-                        raise NameError('Data file does not exist')
-                    count += 1
-            print("\nData \n%s\nread from sources\n" % df_combined.describe().transpose())
-                        
-            if ignoreBlanks:
-                print("Removing NaN")
-                df_combined = df_combined.dropna()
-                
-            df_combined = discard_outliers(nx_graph, node_name, df_combined)
-                            
-            if categoryType == JSON_CAT_TF:
-                nx_category1Hot = nx.get_edge_attributes(nx_graph, JSON_CATEGORY_1HOT)
-                category1Hot = nx_category1Hot[edge_i[0], edge_i[1], output_flow]
-                for oneHot in category1Hot:
-                    df_combined.insert(len(df_combined.columns), oneHot, 0)
-                set_1Hot_TF(df_combined, targetFields, category1Hot)
-            elif categoryType == JSON_LINEAR_REGRESSION:
-                pass
-            elif categoryType == JSON_CAT_THRESHOLD:
-                print("Threshold category type - not yet implemented")
-                raise NameError('Category type not yet implemented')
-            elif categoryType == JSON_THRESHOLD_VALUE:
-                print("Threshold value type - not yet implemented")
-                raise NameError('Category type not yet implemented')
+                l_filter = []
+                for fld in featureFields:
+                    l_filter.append(fld)
+                for fld in targetFields:
+                    l_filter.append(fld)
+                df_inputs = df_data.filter(l_filter)
+                df_combined = pd.concat([df_combined, df_inputs], ignore_index=True)
             else:
-                raise NameError('Invalid category type')
+                raise NameError('Data file does not exist')
+            count += 1
+    print("\nData \n%s\nread from sources\n" % df_combined.describe().transpose())
+                        
+    if ignoreBlanks:
+        print("Removing NaN")
+        df_combined = df_combined.dropna()
                 
-            df_combined.drop(targetFields, axis=1)
+    df_combined = discard_outliers(nx_graph, node_name, df_combined)                            
+    df_combined.drop(targetFields, axis=1)
     return df_combined
 
 def collect_and_select_data(d2r):
@@ -290,13 +238,9 @@ def collect_and_select_data(d2r):
                 for edge_i in d2r.graph.edges():
                     if edge_i[0] == node_i:
                         err_txt = "*** An exception occurred analyzing the flow details in the json configuration file ***"
-                        nx_balanced = nx.get_edge_attributes(d2r.graph, JSON_BALANCED)
-                        balanced = nx_balanced[edge_i[0], edge_i[1], output_flow]
-                        nx_timeSeq = nx.get_edge_attributes(d2r.graph, JSON_TIME_SEQ)
-                        timeSeq = nx_timeSeq[edge_i[0], edge_i[1], output_flow]
                         flowFilename = nx_flowFilename[edge_i[0], edge_i[1], output_flow]
-                        
-                        d2r.data = prepareTrainingData(d2r.graph, node_i)
+                        d2r.data = prepareTrainingData(d2r.graph, node_i, edge_i)
+                        print(d2r.data.describe().transpose())
                         d2r.archiveData(flowFilename)
                         break
         

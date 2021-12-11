@@ -24,7 +24,8 @@ def trainModel(d2r):
 
     # error handling
     try:
-        print("Training model")
+        print("Training shapes X:%s y:%s, testing shapes X:%s y:%s" % (d2r.trainX.shape, d2r.trainY.shape, d2r.testX.shape, d2r.testY.shape))
+                
         '''
         nx_regularization = nx.get_node_attributes(d2r.graph, JSON_REGULARIZATION)[d2r.mlNode]
         nx_reg_value = nx.get_node_attributes(d2r.graph, JSON_REG_VALUE)[d2r.mlNode]
@@ -54,8 +55,6 @@ def trainModel(d2r):
         
         np.random.seed(RANDOM_SEED)
         tf.random.set_seed(RANDOM_SEED)
-        
-        print("Training shapes X:%s y:%s, testing shapes X:%s y:%s" % (d2r.trainX.shape, d2r.trainY.shape, d2r.testX.shape, d2r.testY.shape))
         
         d2r.fitting = d2r.model.fit(x=d2r.trainX, y=d2r.trainY, \
                               batch_size=nx_batch, epochs=nx_epochs, \
