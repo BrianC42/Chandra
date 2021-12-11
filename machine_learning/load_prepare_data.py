@@ -102,14 +102,14 @@ def organize_data_for_convolution(nx_graph, node_i, df_training_data):
     return trainingWindow
 
 def to_sequences(x, y, seq_size=1):
-  x_values = []
-  y_values = []
+    x_values = []
+    y_values = []
 
-  for i in range(len(x) - seq_size):
-    x_values.append(x.iloc[i:(i+seq_size)].values)
-    y_values.append(y.iloc[i+seq_size])
+    for i in range(len(x) - seq_size):
+        x_values.append(x.iloc[i:(i+seq_size)].values)
+        y_values.append(y.iloc[i+seq_size])
 
-  return np.array(x_values), np.array(y_values)
+    return np.array(x_values), np.array(y_values)
 
 def prepareData(d2r):
     nx_input_flows = nx.get_node_attributes(d2r.graph, JSON_INPUT_FLOWS)[d2r.mlNode]
@@ -131,8 +131,8 @@ def prepareData(d2r):
 
         train = d2r.data.loc[ : (len(d2r.data) * TRAINPCT)]
         test = d2r.data.loc[(len(d2r.data) * TRAINPCT) :]
-        df_x_train, df_y_train = to_sequences(train[['FeatureX']],train['TargetY'], TIME_STEPS)
-        df_x_test, df_y_test = to_sequences(test[['FeatureX']], test['TargetY'], TIME_STEPS)        
+        df_x_train, df_y_train = to_sequences(train[nx_features],train[nx_targets[0]], TIME_STEPS)
+        df_x_test, df_y_test = to_sequences(test[nx_features], test[nx_targets[0]], TIME_STEPS)        
         np_x_train = np.array(df_x_train, dtype='float64')
         np_y_train = np.array(df_y_train, dtype='float64')
         np_x_test = np.array(df_x_test, dtype='float64')
