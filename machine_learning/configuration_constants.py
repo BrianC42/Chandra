@@ -184,6 +184,7 @@ JSON_PREPROCESS_CATEGORY_ENCODING = 'categoryEncoding'
 
 JSON_LAYERS = "modelLayers"
 JSON_TENSORFLOW = "Tensorflow"
+JSON_PRECISION = "dataPrecision"
 JSON_KERAS_DENSE_CTRL = "KerasDenseCtrl"
 JSON_KERAS_DENSE_DATA = 'TensorflowData'
 

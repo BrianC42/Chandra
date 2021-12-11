@@ -32,6 +32,7 @@
 		},
 		"conditionalFields" : {
 			"modelFile" : "d:\\brian\\AI Projects\\models\\SineWave",
+			"dataPrecision" : "float32",
 			"modelLayers" : [
 				{
 				"layerName" : "lstm1",

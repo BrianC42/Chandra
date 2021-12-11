@@ -17,6 +17,7 @@ import tensorflow as tf
 #from keras.preprocessing.sequence import TimeseriesGenerator # Generates batches for sequence data
 
 from configuration_constants import JSON_TENSORFLOW
+from configuration_constants import JSON_PRECISION
 from configuration_constants import JSON_KERAS_CONV1D
 from configuration_constants import JSON_PROCESS_TYPE
 from configuration_constants import JSON_INPUT_FLOWS
@@ -119,11 +120,12 @@ def assemble_layers(nx_graph, node_i, nx_edge):
         logging.debug("Building ML model")
 
         err_txt = "*** An exception occurred building the model ***"
-        tf.keras.backend.set_floatx('float64')
-        k_model = tf.keras.models.Sequential()
-        
         input_layer = True
         nx_layers = nx.get_node_attributes(nx_graph, JSON_LAYERS)[node_i]
+        nx_data_precision = nx.get_node_attributes(nx_graph, JSON_PRECISION)[node_i]
+        tf.keras.backend.set_floatx(nx_data_precision)
+        k_model = tf.keras.models.Sequential()
+        
         for nx_layer_definition in nx_layers:
             ''' layer type is required '''
             nx_layer_type = nx_layer_definition['layerType']

@@ -19,6 +19,7 @@ from configuration_constants import JSON_CONDITIONAL
 
 from configuration_constants import JSON_DATA_PREP_PROCESS
 from configuration_constants import JSON_TENSORFLOW
+from configuration_constants import JSON_PRECISION
 from configuration_constants import JSON_KERAS_CONV1D
 
 from configuration_constants import JSON_NODE_NAME
@@ -350,9 +351,11 @@ def add_meta_process_node (js_config, nx_graph) :
     # conditional elements
     js_conditional = js_config[JSON_CONDITIONAL]
     
-    if nx_processType == JSON_TENSORFLOW or nx_processType == JSON_KERAS_CONV1D:
+    if nx_processType == JSON_TENSORFLOW:
         nx_model_file = js_conditional[JSON_MODEL_FILE]
         nx.set_node_attributes(nx_graph, {nx_process_name:nx_model_file}, JSON_MODEL_FILE)
+        nx_dataPrecision = js_conditional[JSON_PRECISION]
+        nx.set_node_attributes(nx_graph, {nx_process_name:nx_dataPrecision}, JSON_PRECISION)
         
     if JSON_LAYERS in js_conditional:
         nx_layers = js_conditional[JSON_LAYERS]

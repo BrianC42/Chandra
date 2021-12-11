@@ -15,6 +15,7 @@ from tensorflow.keras.layers.experimental import preprocessing
 
 from tfWindowGenerator import WindowGenerator
 
+from configuration_constants import JSON_PRECISION
 from configuration_constants import JSON_DATA_PREP_PROCESS
 from configuration_constants import JSON_OUTPUT_FLOW
 from configuration_constants import JSON_INPUT_DATA_FILE
@@ -125,7 +126,8 @@ def prepareData(d2r):
     print("\n*************************************************\nWORK IN PROGRESS\n\tprepareData\n*************************************************\n")
     nx_read_attr = nx.get_node_attributes(d2r.graph, JSON_PROCESS_TYPE)
     if nx_read_attr[d2r.mlNode] == JSON_TENSORFLOW:    
-        print("%s is built of core dense layers" % d2r.mlNode)
+        print("Building model define in node: %s" % d2r.mlNode)
+        nx_data_precision = nx.get_node_attributes(d2r.graph, JSON_PRECISION)[d2r.mlNode]
         TIME_STEPS = 20
         TRAINPCT = 0.8
 
@@ -133,10 +135,10 @@ def prepareData(d2r):
         test = d2r.data.loc[(len(d2r.data) * TRAINPCT) :]
         df_x_train, df_y_train = to_sequences(train[nx_features],train[nx_targets[0]], TIME_STEPS)
         df_x_test, df_y_test = to_sequences(test[nx_features], test[nx_targets[0]], TIME_STEPS)        
-        np_x_train = np.array(df_x_train, dtype='float64')
-        np_y_train = np.array(df_y_train, dtype='float64')
-        np_x_test = np.array(df_x_test, dtype='float64')
-        np_y_test = np.array(df_y_test, dtype='float64')
+        np_x_train = np.array(df_x_train, dtype=nx_data_precision)
+        np_y_train = np.array(df_y_train, dtype=nx_data_precision)
+        np_x_test = np.array(df_x_test, dtype=nx_data_precision)
+        np_y_test = np.array(df_y_test, dtype=nx_data_precision)
 
         print("Training shapes X:%s y:%s, testing shapes X:%s y:%s" % (df_x_train.shape, df_y_train.shape, df_x_test.shape, df_y_test.shape))
 
