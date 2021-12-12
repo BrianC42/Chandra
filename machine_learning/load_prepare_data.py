@@ -11,7 +11,7 @@ import networkx as nx
 import pandas as pd
 import numpy as np
 import tensorflow as tf
-from tensorflow.keras.layers.experimental import preprocessing
+#from tensorflow.keras.layers.experimental import preprocessing
 
 from tfWindowGenerator import WindowGenerator
 
@@ -19,30 +19,35 @@ from configuration_constants import JSON_PRECISION
 from configuration_constants import JSON_DATA_PREP_PROCESS
 from configuration_constants import JSON_OUTPUT_FLOW
 from configuration_constants import JSON_INPUT_DATA_FILE
-from configuration_constants import JSON_BALANCED
-from configuration_constants import JSON_TIME_SEQ
 from configuration_constants import JSON_IGNORE_BLANKS
 from configuration_constants import JSON_FLOW_DATA_FILE
 from configuration_constants import JSON_INPUT_FLOWS
 from configuration_constants import JSON_NORMALIZE_DATA
 from configuration_constants import JSON_PROCESS_TYPE
 from configuration_constants import JSON_TENSORFLOW
-from configuration_constants import JSON_KERAS_CONV1D
 from configuration_constants import JSON_FEATURE_FIELDS
 from configuration_constants import JSON_TARGET_FIELDS
 from configuration_constants import JSON_VALIDATION_SPLIT
 from configuration_constants import JSON_TEST_SPLIT
+'''
+from configuration_constants import JSON_BALANCED
+from configuration_constants import JSON_TIME_SEQ
+from configuration_constants import JSON_KERAS_CONV1D
 from configuration_constants import JSON_CATEGORY_TYPE
 from configuration_constants import JSON_CATEGORY_1HOT
 from configuration_constants import JSON_CAT_TF
 from configuration_constants import JSON_CAT_THRESHOLD
 from configuration_constants import JSON_THRESHOLD_VALUE
 from configuration_constants import JSON_LINEAR_REGRESSION
+'''
 from configuration_constants import JSON_REMOVE_OUTLIER_LIST
 from configuration_constants import JSON_OUTLIER_FEATURE
 from configuration_constants import JSON_OUTLIER_PCT
 
 def loadTrainingData(d2r):
+    '''
+    load data for training and testine
+    '''
     # error handling
     try:
         err_txt = "*** An exception occurred preparing the training data for the model ***"
@@ -53,25 +58,19 @@ def loadTrainingData(d2r):
         inputData = nx_data_file[d2r.mlEdgeIn[0], d2r.mlEdgeIn[1], nx_input_flow[0]]    
         if os.path.isfile(inputData):
             df_training_data = pd.read_csv(inputData)
-                
-        nx_category_types = nx.get_edge_attributes(d2r.graph, JSON_CATEGORY_TYPE)
-        category_type = nx_category_types[d2r.mlEdgeIn[0], d2r.mlEdgeIn[1], nx_input_flow[0]]
-        if category_type == JSON_CAT_TF:
-            pass
-        elif category_type == JSON_CAT_THRESHOLD:
-            pass
-        elif category_type == JSON_THRESHOLD_VALUE:
-            pass
-        elif category_type == JSON_LINEAR_REGRESSION:
-            pass
-        else:
-            raise NameError('Invalid category type')
-    
         d2r.data = df_training_data
         
     except Exception:
-        logging.debug(err_txt)
-        sys.exit("\n" + err_txt)
+        exc_info = sys.exc_info()
+        exc_str = exc_info[1].args[0]
+        if isinstance(exc_str, str):
+            exc_txt = err_txt + "\n\t" + exc_str
+        elif isinstance(exc_str, tuple):
+            exc_txt = err_txt + "\n\t"
+            for s in exc_str:
+                exc_txt += s
+        logging.debug(exc_txt)
+        sys.exit(exc_txt)
 
     return
 
@@ -103,6 +102,9 @@ def organize_data_for_convolution(nx_graph, node_i, df_training_data):
     return trainingWindow
 
 def to_sequences(x, y, seq_size=1):
+    '''
+    create 3 dimensional dataframes for RNN input layers
+    '''
     x_values = []
     y_values = []
 
@@ -113,6 +115,9 @@ def to_sequences(x, y, seq_size=1):
     return np.array(x_values), np.array(y_values)
 
 def prepareData(d2r):
+    '''
+    Organize the feature data elements as required by Tensorflow models and matching target elements
+    '''
     nx_input_flows = nx.get_node_attributes(d2r.graph, JSON_INPUT_FLOWS)[d2r.mlNode]
 
     nx_featureFields = nx.get_edge_attributes(d2r.graph, JSON_FEATURE_FIELDS)
@@ -177,6 +182,9 @@ def set_1Hot_TF(df_out, categoryFields, category1Hot):
     return
 
 def prepareTrainingData(nx_graph, node_name, nx_edge):
+    '''
+    Select required data elements and discard the rest
+    '''
     nx_data_file = nx.get_node_attributes(nx_graph, JSON_INPUT_DATA_FILE)
     #print("load and prepare data using %s json parameters and file %s" % (node_name, nx_data_file[node_name]))
     nx_data_flow = nx.get_node_attributes(nx_graph, JSON_OUTPUT_FLOW)
