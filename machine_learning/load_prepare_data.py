@@ -33,9 +33,11 @@ from configuration_constants import JSON_TARGET_FIELDS
 from configuration_constants import JSON_VALIDATION_SPLIT
 from configuration_constants import JSON_TEST_SPLIT
 from configuration_constants import JSON_TIMESTEPS
+'''
 from configuration_constants import JSON_REMOVE_OUTLIER_LIST
 from configuration_constants import JSON_OUTLIER_FEATURE
 from configuration_constants import JSON_OUTLIER_PCT
+'''
 
 def loadTrainingData(d2r):
     '''
@@ -155,6 +157,7 @@ def prepareData(d2r):
         d2r.testY = np.array(df_y_test, dtype=nx_data_precision)
     return
 
+'''
 def discard_outliers(nx_graph, node_i, df_data):
     nx_remove_outlier_list = nx.get_node_attributes(nx_graph, JSON_REMOVE_OUTLIER_LIST)
     for feature in nx_remove_outlier_list[node_i]:
@@ -167,6 +170,7 @@ def discard_outliers(nx_graph, node_i, df_data):
             df_data = df_data[int(rows * outlierPct) : (rows - int(rows * outlierPct))]
         
     return df_data
+'''
 
 def set_1Hot_TF(df_out, categoryFields, category1Hot):
     #ndxList = df_out.index
@@ -220,7 +224,7 @@ def prepareTrainingData(nx_graph, node_name, nx_edge):
         print("Removing NaN")
         df_combined = df_combined.dropna()
                 
-    df_combined = discard_outliers(nx_graph, node_name, df_combined)                            
+    #df_combined = discard_outliers(nx_graph, node_name, df_combined)                            
     df_combined.drop(targetFields, axis=1)
     return df_combined
 

@@ -27,35 +27,14 @@ from configuration_constants import JSON_OUTPUT_FILE
 from configuration_constants import JSON_LOG_FILE
 from configuration_constants import JSON_INPUT_DATA_FILE
 from configuration_constants import JSON_INPUT_DATA_PREPARATION
-from configuration_constants import JSON_REMOVE_OUTLIER_LIST
 from configuration_constants import JSON_MODEL_FILE
 from configuration_constants import JSON_LAYERS
-from configuration_constants import JSON_KERAS_CONV1D_FILTERS
-from configuration_constants import JSON_KERAS_CONV1D_KERNEL_SIZE
-from configuration_constants import JSON_KERAS_CONV1D_STRIDES
-from configuration_constants import JSON_KERAS_CONV1D_PADDING
-from configuration_constants import JSON_KERAS_CONV1D_DATA_FORMAT
-from configuration_constants import JSON_KERAS_CONV1D_DILATION_RATE
-from configuration_constants import JSON_KERAS_CONV1D_GROUPS
-from configuration_constants import JSON_KERAS_CONV1D_ACTIVATION
-from configuration_constants import JSON_KERAS_CONV1D_USE_BIAS
-from configuration_constants import JSON_KERAS_CONV1D_KERNEL_INITIALIZER
-from configuration_constants import JSON_KERAS_CONV1D_BIAS_INITIALIZER
-from configuration_constants import JSON_KERAS_CONV1D_KERNEL_REGULARIZER
-from configuration_constants import JSON_KERAS_CONV1D_BIAS_REGULARIZER
-from configuration_constants import JSON_KERAS_CONV1D_ACTIVITY_REGULARIZER
-from configuration_constants import JSON_KERAS_CONV1D_KERNEL_CONSTRAINT
-from configuration_constants import JSON_KERAS_CONV1D_BIAS_CONSTRAINT
 from configuration_constants import JSON_BALANCED
 from configuration_constants import JSON_TIME_SEQ
 from configuration_constants import JSON_IGNORE_BLANKS
 from configuration_constants import JSON_FLOW_DATA_FILE
 from configuration_constants import JSON_FEATURE_FIELDS
 from configuration_constants import JSON_TARGET_FIELDS
-from configuration_constants import JSON_CATEGORY_1HOT
-from configuration_constants import JSON_MODEL_INPUT_LAYER
-from configuration_constants import JSON_MODEL_OUTPUT_LAYER
-from configuration_constants import JSON_MODEL_OUTPUT_ACTIVATION
 from configuration_constants import JSON_TRAINING
 from configuration_constants import JSON_NORMALIZE_DATA
 from configuration_constants import JSON_SHUFFLE_DATA
@@ -99,96 +78,11 @@ def add_data_flow_details(js_flow_conditional, nx_graph, nx_edge_key):
                     nx_target_fields = js_tensorflow_data[JSON_TARGET_FIELDS]
                     nx.set_edge_attributes(nx_graph, {nx_edge_key:nx_target_fields}, JSON_TARGET_FIELDS)
 
-                if JSON_CATEGORY_1HOT in js_tensorflow_data:
-                    nx_category1Hot = js_tensorflow_data[JSON_CATEGORY_1HOT]
-                    nx.set_edge_attributes(nx_graph, {nx_edge_key:nx_category1Hot}, JSON_CATEGORY_1HOT)
-
     return 
-
-def add_3d_data_flow_details(js_config, nx_graph, nx_edge_key):
-    return
 
 def add_data_load_details(js_config, nx_graph, nx_process_name):
     nx_inputFile = js_config[JSON_INPUT_DATA_FILE]
     nx.set_node_attributes(nx_graph, {nx_process_name:nx_inputFile}, JSON_INPUT_DATA_FILE)
-    return
-
-def add_dense_meta_data(js_dense_params, nx_graph, nx_process_name):
-    logging.debug("Adding meta data to dense model process: %s" % nx_process_name)
-
-    return
-    
-def add_Conv1D_meta_data(js_keras_Conv1D, nx_graph, nx_process_name):
-    
-    nx_input_layer = js_keras_Conv1D[JSON_MODEL_INPUT_LAYER]
-    nx.set_node_attributes(nx_graph, {nx_process_name:nx_input_layer}, JSON_MODEL_INPUT_LAYER)
-    
-    nx_output_layer = js_keras_Conv1D[JSON_MODEL_OUTPUT_LAYER]
-    nx.set_node_attributes(nx_graph, {nx_process_name:nx_output_layer}, JSON_MODEL_OUTPUT_LAYER)
-    
-    nx_output_activation = js_keras_Conv1D[JSON_MODEL_OUTPUT_ACTIVATION]
-    nx.set_node_attributes(nx_graph, {nx_process_name:nx_output_activation}, JSON_MODEL_OUTPUT_ACTIVATION)
-
-    nx_conv1DFilters = js_keras_Conv1D[JSON_KERAS_CONV1D_FILTERS]
-    nx.set_node_attributes(nx_graph, {nx_process_name:nx_conv1DFilters}, JSON_KERAS_CONV1D_FILTERS)
-
-    nx_kernel_size = js_keras_Conv1D[JSON_KERAS_CONV1D_KERNEL_SIZE]
-    nx.set_node_attributes(nx_graph, {nx_process_name:nx_kernel_size}, JSON_KERAS_CONV1D_KERNEL_SIZE)
-
-    nx_conv1D_strides = js_keras_Conv1D[JSON_KERAS_CONV1D_STRIDES]
-    nx.set_node_attributes(nx_graph, {nx_process_name:nx_conv1D_strides}, JSON_KERAS_CONV1D_STRIDES)
-
-    nx_conv1D_padding = js_keras_Conv1D[JSON_KERAS_CONV1D_PADDING]
-    nx.set_node_attributes(nx_graph, {nx_process_name:nx_conv1D_padding}, JSON_KERAS_CONV1D_PADDING)
-
-    nx_conv1D_data_format = js_keras_Conv1D[JSON_KERAS_CONV1D_DATA_FORMAT]
-    nx.set_node_attributes(nx_graph, {nx_process_name:nx_conv1D_data_format}, JSON_KERAS_CONV1D_DATA_FORMAT)
-
-    nx_conv1D_dilation_rate = js_keras_Conv1D[JSON_KERAS_CONV1D_DILATION_RATE]
-    nx.set_node_attributes(nx_graph, {nx_process_name:nx_conv1D_dilation_rate}, JSON_KERAS_CONV1D_DILATION_RATE)
-
-    nx_conv1D_groups = js_keras_Conv1D[JSON_KERAS_CONV1D_GROUPS]
-    nx.set_node_attributes(nx_graph, {nx_process_name:nx_conv1D_groups}, JSON_KERAS_CONV1D_GROUPS)
-
-    nx_conv1D_activation = js_keras_Conv1D[JSON_KERAS_CONV1D_ACTIVATION]
-    nx.set_node_attributes(nx_graph, {nx_process_name:nx_conv1D_activation}, JSON_KERAS_CONV1D_ACTIVATION)
-
-    nx_conv1D_use_bias = js_keras_Conv1D[JSON_KERAS_CONV1D_USE_BIAS]
-    nx.set_node_attributes(nx_graph, {nx_process_name:nx_conv1D_use_bias}, JSON_KERAS_CONV1D_USE_BIAS)
-
-    nx_conv1D_kernel_initializer = js_keras_Conv1D[JSON_KERAS_CONV1D_KERNEL_INITIALIZER]
-    nx.set_node_attributes(nx_graph, {nx_process_name:nx_conv1D_kernel_initializer}, JSON_KERAS_CONV1D_KERNEL_INITIALIZER)
-
-    nx_conv1D_bias_initializer = js_keras_Conv1D[JSON_KERAS_CONV1D_BIAS_INITIALIZER]
-    nx.set_node_attributes(nx_graph, {nx_process_name:nx_conv1D_bias_initializer}, JSON_KERAS_CONV1D_BIAS_INITIALIZER)
-
-    nx_conv1D_kernel_regularizer = js_keras_Conv1D[JSON_KERAS_CONV1D_KERNEL_REGULARIZER]
-    nx.set_node_attributes(nx_graph, {nx_process_name:nx_conv1D_kernel_regularizer}, JSON_KERAS_CONV1D_KERNEL_REGULARIZER)
-
-    nx_conv1D_bias_regularizer = js_keras_Conv1D[JSON_KERAS_CONV1D_BIAS_REGULARIZER]
-    nx.set_node_attributes(nx_graph, {nx_process_name:nx_conv1D_bias_regularizer}, JSON_KERAS_CONV1D_BIAS_REGULARIZER)
-
-    nx_conv1D_activity_regularizer = js_keras_Conv1D[JSON_KERAS_CONV1D_ACTIVITY_REGULARIZER]
-    nx.set_node_attributes(nx_graph, {nx_process_name:nx_conv1D_activity_regularizer}, JSON_KERAS_CONV1D_ACTIVITY_REGULARIZER)
-
-    nx_conv1D_kernel_constraint = js_keras_Conv1D[JSON_KERAS_CONV1D_KERNEL_CONSTRAINT]
-    nx.set_node_attributes(nx_graph, {nx_process_name:nx_conv1D_kernel_constraint}, JSON_KERAS_CONV1D_KERNEL_CONSTRAINT)
-
-    nx_conv1D_bias_constraint = js_keras_Conv1D[JSON_KERAS_CONV1D_BIAS_CONSTRAINT]
-    nx.set_node_attributes(nx_graph, {nx_process_name:nx_conv1D_bias_constraint}, JSON_KERAS_CONV1D_BIAS_CONSTRAINT)
-
-    return 
-
-def add_RNN_meta_data(js_config, nx_graph, nx_process_name):
-    logging.debug("Adding meta data to RNN model process: %s" % nx_process_name)
-    
-
-    return
-
-def add_CNN_meta_data(js_config, nx_graph, nx_process_name):
-    logging.debug("Adding meta data to CNN model process: %s" % nx_process_name)
-    
-
     return
 
 def add_meta_data_edge (js_config, nx_graph):
@@ -280,10 +174,6 @@ def add_meta_process_node (js_config, nx_graph) :
         nx_layers = js_conditional[JSON_LAYERS]
         nx.set_node_attributes(nx_graph, {nx_process_name:nx_layers}, JSON_LAYERS)
     
-    if JSON_REMOVE_OUTLIER_LIST in js_conditional:
-        js_remove_outliers = js_conditional[JSON_REMOVE_OUTLIER_LIST]
-        nx.set_node_attributes(nx_graph, {nx_process_name:js_remove_outliers}, JSON_REMOVE_OUTLIER_LIST)
-            
     if js_required[JSON_PROCESS_TYPE] == JSON_DATA_PREP_PROCESS:
         js_data_prep_ctrl = js_conditional[JSON_INPUT_DATA_PREPARATION]
         add_data_load_details(js_data_prep_ctrl, nx_graph, nx_process_name)
