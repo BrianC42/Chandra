@@ -37,7 +37,7 @@
 				{
 				"layerName" : "lstm1",
 				"layerType" : "lstm",
-				"sequenceLength" : 20,
+				"timeSteps" : 20,
 				"featureCount": 1,
 				"layerUnits" : 10,
 				"returnSequences" : false
@@ -50,37 +50,18 @@
 				{
 				"layerName" : "output",
 				"layerType" : "dense",
-				"layerUnits" : 10
+				"layerUnits" : 1
 				}
 			],
-			"preprocessingLayers" : {
-				"comments - supported layers" : ["linearRegression", "discretization", "categoryEncoding"],
-				"preprocessSequence" : ["linearRegression"]
-				},
-		    "KerasDenseCtrl" : {
-				"modelStructure" : {
-					"inputLayer" : "LR-input",
-					"layerCounts" : 1,
-					"layerNodes" : 100,
-					"outputLayer" : "ML-Regression",
-					"comment: activations" : "see https://keras.io/api/layers/activations/",
-					"comment: activation functions" : ["relu", "sigmoid", "softmax", "softplus", "softsign", "tanh", "selu", "elu", "exponential"],
-					"outputActivation" : "relu"
-				}
-			},
 			"training" : {
-				"Comment 1" : "one output - see data flow for detaiils",
-				"analysis" : "classification",
 				"lossWeights" : [1.0],
 				"denseRegularation" : false,
 				"regularationValue" : 0.0,
-				"shuffle" : false,
-				"normalize" : false,
 				"batchSize" : 32,
 				"epochs" : 10,
 				"useBias" : true,
 				"validationSplit" : 0.1,
-				"testSplit" : 0.1,
+				"testSplit" : 0.2,
 				"verbose" : 2,
 				"balanceClasses" : true,
 				"comment: compilationLoss" : ["see https://keras.io/api/losses/regression_losses/"],
@@ -111,23 +92,16 @@
 	"flowName" : "SinWave",
 	"requiredFields" : {
 		"flowFrom" : "LoadData",
-		"flowTo" : "SineWaveRegression"
+		"flowTo" : "SineWaveRegression",
+		"flowDataFile" : "d:\\brian\\AI Projects\\internal_flows\\regression - sine - LSTM.csv"
 		},
 	"conditionalFields" : {
 		"TensorflowData" : {
 			"timeSequence" : true,
 			"balanceClasses" : false,
 			"ignoreBlanks" : true,
-			"flowDataFile" : "d:\\brian\\AI Projects\\internal_flows\\regression - sine - LSTM.csv",
 			"features" : ["FeatureX"],
-			"targets" : ["TargetY"],
-			"categorization" : {
-				"comment 1" : "models to assess input data relationship to categorized outputs",
-				"comment 1: supported categoryType values" : ["categoryTrueFalse", "categoryThreshold (above / below)", "categoryRanges"],
-				"comment 2: supported categoryType values" : ["Regression"],
-				"categoryType" : "Regression",
-				"categoryOneHot - not required for Regression" : ["catTrue", "catFalse"]
-				}
+			"targets" : ["TargetY"]
 			}
 		}
 	}

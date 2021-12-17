@@ -9,17 +9,14 @@ import sys
 import logging
 import networkx as nx
 import tensorflow as tf
-#from tensorflow import keras
-#from keras.models import Sequential, Model
-#from keras.models import load_model
-#from keras.layers import Input, Dropout, Dense, LSTM, SimpleRNN, Conv2D, MaxPooling2D, Flatten
-#from keras.layers import RepeatVector, TimeDistributed
-#from keras.preprocessing.sequence import TimeseriesGenerator # Generates batches for sequence data
-
-from configuration_constants import JSON_TENSORFLOW
-from configuration_constants import JSON_PRECISION
+'''
+from tensorflow import keras
+from keras.models import Sequential, Model
+from keras.models import load_model
+from keras.layers import Input, Dropout, Dense, LSTM, SimpleRNN, Conv2D, MaxPooling2D, Flatten
+from keras.layers import RepeatVector, TimeDistributed
+from keras.preprocessing.sequence import TimeseriesGenerator # Generates batches for sequence data
 from configuration_constants import JSON_KERAS_CONV1D
-from configuration_constants import JSON_PROCESS_TYPE
 from configuration_constants import JSON_INPUT_FLOWS
 from configuration_constants import JSON_FEATURE_FIELDS
 from configuration_constants import JSON_CATEGORY_TYPE
@@ -27,13 +24,22 @@ from configuration_constants import JSON_CAT_TF
 from configuration_constants import JSON_CAT_THRESHOLD
 from configuration_constants import JSON_VALUE_RANGES
 from configuration_constants import JSON_LINEAR_REGRESSION
-from configuration_constants import JSON_LAYERS
 from configuration_constants import JSON_MODEL_INPUT_LAYER
 from configuration_constants import JSON_MODEL_OUTPUT_LAYER
-from configuration_constants import JSON_MODEL_OUTPUT_ACTIVATION
 from configuration_constants import JSON_MODEL_DEPTH
 from configuration_constants import JSON_NODE_COUNT
-from configuration_constants import JSON_SEQUENCE_LENGTH
+'''
+
+from configuration_constants import JSON_TENSORFLOW
+from configuration_constants import JSON_PRECISION
+from configuration_constants import JSON_PROCESS_TYPE
+from configuration_constants import MODEL_TYPE
+from configuration_constants import INPUT_LAYERTYPE_DENSE
+from configuration_constants import INPUT_LAYERTYPE_RNN
+from configuration_constants import INPUT_LAYERTYPE_CNN
+from configuration_constants import JSON_LAYERS
+from configuration_constants import JSON_MODEL_OUTPUT_ACTIVATION
+from configuration_constants import JSON_TIMESTEPS
 from configuration_constants import JSON_FEATURE_COUNT
 from configuration_constants import JSON_DROPOUT
 from configuration_constants import JSON_DROPOUT_RATE
@@ -43,10 +49,9 @@ from configuration_constants import JSON_LOSS
 from configuration_constants import JSON_METRICS
 from configuration_constants import JSON_LOSS_WTS
 from configuration_constants import JSON_OPTIMIZER
-
 from configuration_constants import JSON_MODEL_FILE
 
-def build_layer(layer_type, layer_definition, input_layer):
+def build_layer(graph, node, layer_type, layer_definition, input_layer):
     ''' some parameters are common across multiple layer type '''
     nx_layer_name = None
     if 'layerName' in layer_definition:
@@ -62,27 +67,30 @@ def build_layer(layer_type, layer_definition, input_layer):
                 
     if layer_type == 'dense':
         if input_layer:
+            nx.set_node_attributes(graph, {node:INPUT_LAYERTYPE_DENSE}, MODEL_TYPE)
             nx_feature_count = layer_definition[JSON_FEATURE_COUNT]
             k_layer = tf.keras.layers.Dense(name=nx_layer_name, \
                                             activation = nx_activation, \
                                             units=nx_layer_units, \
-                                            input_shape=(JSON_FEATURE_COUNT,))
+                                            input_shape=(nx_feature_count, ))
         else:
             k_layer = tf.keras.layers.Dense(name=nx_layer_name, \
                                             activation = nx_activation, \
                                             units=nx_layer_units)
     elif layer_type == 'lstm':
+        nx.set_node_attributes(graph, {node:INPUT_LAYERTYPE_RNN}, MODEL_TYPE)
         nx_return_sequences = False
         if JSON_RETURN_SEQUENCES in layer_definition:
             nx_dropout_rate = layer_definition[JSON_RETURN_SEQUENCES]
         if input_layer:
             nx_feature_count = layer_definition[JSON_FEATURE_COUNT]
-            nx_sequence_length = layer_definition[JSON_SEQUENCE_LENGTH]
+            nx_time_steps = layer_definition[JSON_TIMESTEPS]
+            nx.set_node_attributes(graph, {node:nx_time_steps}, JSON_TIMESTEPS)
             k_layer = tf.keras.layers.LSTM(name=nx_layer_name, \
                                            units=nx_layer_units, \
                                            activation = nx_activation, \
                                            return_sequences = nx_return_sequences, \
-                                           input_shape=(nx_sequence_length, nx_feature_count))
+                                           input_shape=(nx_time_steps, nx_feature_count))
         else:
             k_layer = tf.keras.layers.LSTM(name=nx_layer_name, \
                                            units=nx_layer_units, \
@@ -92,6 +100,8 @@ def build_layer(layer_type, layer_definition, input_layer):
         '''
         Future support required
         '''
+        if input_layer:
+            nx.set_node_attributes(graph, {node:INPUT_LAYERTYPE_CNN}, MODEL_TYPE)
         pass
     elif layer_type == 'RepeatVector':
         nx_repeat_count = 1
@@ -130,16 +140,14 @@ def assemble_layers(nx_graph, node_i, nx_edge):
         for nx_layer_definition in nx_layers:
             ''' layer type is required '''
             nx_layer_type = nx_layer_definition['layerType']
-            if input_layer:
-                print("Need to store sequenceLength for future use in preparing data for training")
             if nx_layer_type == 'timeDistributed':
                 '''
                 TimeDistributed layer type specification is not defined - future support required
                 '''
-                k_layer = build_layer(nx_layer_type, nx_layer_definition, input_layer)
+                k_layer = build_layer(nx_graph, node_i, nx_layer_type, nx_layer_definition, input_layer)
                 k_model.add(tf.keras.layers.TimeDistributed(k_layer))
             else:
-                k_layer = build_layer(nx_layer_type, nx_layer_definition, input_layer)
+                k_layer = build_layer(nx_graph, node_i, nx_layer_type, nx_layer_definition, input_layer)
                 k_model.add(k_layer)
             input_layer = False
             

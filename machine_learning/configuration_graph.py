@@ -6,11 +6,14 @@ Created on Apr 13, 2020
 import sys
 import logging
 
+'''
+deprecated
+
 import json
 import pandas as pd
-import networkx as nx
-
 from TrainingDataAndResults import Data2Results as d2r
+'''
+import networkx as nx
 
 from configuration_constants import JSON_PROCESS_NODES
 
@@ -19,9 +22,8 @@ from configuration_constants import JSON_CONDITIONAL
 
 from configuration_constants import JSON_DATA_PREP_PROCESS
 from configuration_constants import JSON_TENSORFLOW
+from configuration_constants import JSON_TENSORFLOW_DATA
 from configuration_constants import JSON_PRECISION
-from configuration_constants import JSON_KERAS_CONV1D
-
 from configuration_constants import JSON_NODE_NAME
 from configuration_constants import JSON_PROCESS_TYPE
 from configuration_constants import JSON_DATA_FLOWS
@@ -36,22 +38,42 @@ from configuration_constants import JSON_LOG_FILE
 from configuration_constants import JSON_INPUT_DATA_FILE
 from configuration_constants import JSON_INPUT_DATA_PREPARATION
 
+'''
+deprecated
+
 from configuration_constants import JSON_PREPROCESSING
+from configuration_constants import JSON_KERAS_CONV1D
 from configuration_constants import JSON_PREPROCESS_SEQUENCE
 from configuration_constants import JSON_PREPROCESS_DISCRETIZATION
 from configuration_constants import JSON_PREPROCESS_DISCRETIZATION_BINS
 from configuration_constants import JSON_PREPROCESS_CATEGORY_ENCODING
-
-from configuration_constants import JSON_REMOVE_OUTLIER_LIST
-from configuration_constants import JSON_OUTLIER_FEATURE
-from configuration_constants import JSON_OUTLIER_PCT
-
 from configuration_constants import JSON_KERAS_DENSE_CTRL
 from configuration_constants import JSON_KERAS_DENSE_DATA
+from configuration_constants import JSON_MODEL_DEPTH
+from configuration_constants import JSON_NODE_COUNT
+from configuration_constants import JSON_MODEL_STRUCTURE
+from configuration_constants import JSON_OUTLIER_FEATURE
+from configuration_constants import JSON_OUTLIER_PCT
+from configuration_constants import JSON_KERAS_CONV1D_CONTROL
+from configuration_constants import JSON_TIMESTEPS
+from configuration_constants import JSON_DROPOUT
+from configuration_constants import JSON_DROPOUT_RATE
+from configuration_constants import JSON_CATEGORIZATION_DETAILS
+from configuration_constants import JSON_CATEGORY_TYPE
+from configuration_constants import JSON_CAT_TF
+from configuration_constants import JSON_CAT_THRESHOLD
+from configuration_constants import JSON_THRESHOLD_VALUE
+from configuration_constants import JSON_VALUE_RANGES
+from configuration_constants import JSON_RANGE_MINS
+from configuration_constants import JSON_RANGE_MAXS
+from configuration_constants import JSON_LINEAR_REGRESSION
+from configuration_constants import JSON_ACTIVATION
+from configuration_constants import JSON_ANALYSIS
+'''
+
+from configuration_constants import JSON_REMOVE_OUTLIER_LIST
 from configuration_constants import JSON_MODEL_FILE
 from configuration_constants import JSON_LAYERS
-
-from configuration_constants import JSON_KERAS_CONV1D_CONTROL
 from configuration_constants import JSON_KERAS_CONV1D_FILTERS
 from configuration_constants import JSON_KERAS_CONV1D_KERNEL_SIZE
 from configuration_constants import JSON_KERAS_CONV1D_STRIDES
@@ -68,43 +90,22 @@ from configuration_constants import JSON_KERAS_CONV1D_BIAS_REGULARIZER
 from configuration_constants import JSON_KERAS_CONV1D_ACTIVITY_REGULARIZER
 from configuration_constants import JSON_KERAS_CONV1D_KERNEL_CONSTRAINT
 from configuration_constants import JSON_KERAS_CONV1D_BIAS_CONSTRAINT
-
 from configuration_constants import JSON_BALANCED
 from configuration_constants import JSON_TIME_SEQ
 from configuration_constants import JSON_IGNORE_BLANKS
 from configuration_constants import JSON_FLOW_DATA_FILE
-
 from configuration_constants import JSON_FEATURE_FIELDS
 from configuration_constants import JSON_TARGET_FIELDS
-
-from configuration_constants import JSON_CATEGORIZATION_DETAILS
-from configuration_constants import JSON_CATEGORY_TYPE
 from configuration_constants import JSON_CATEGORY_1HOT
-from configuration_constants import JSON_CAT_TF
-from configuration_constants import JSON_CAT_THRESHOLD
-from configuration_constants import JSON_THRESHOLD_VALUE
-from configuration_constants import JSON_VALUE_RANGES
-from configuration_constants import JSON_RANGE_MINS
-from configuration_constants import JSON_RANGE_MAXS
-from configuration_constants import JSON_LINEAR_REGRESSION
-
-from configuration_constants import JSON_MODEL_STRUCTURE
-
 from configuration_constants import JSON_MODEL_INPUT_LAYER
 from configuration_constants import JSON_MODEL_OUTPUT_LAYER
 from configuration_constants import JSON_MODEL_OUTPUT_ACTIVATION
-from configuration_constants import JSON_MODEL_DEPTH
-from configuration_constants import JSON_NODE_COUNT
 from configuration_constants import JSON_TRAINING
 from configuration_constants import JSON_NORMALIZE_DATA
 from configuration_constants import JSON_SHUFFLE_DATA
-
-from configuration_constants import JSON_TIMESTEPS
 from configuration_constants import JSON_BATCH
 from configuration_constants import JSON_REGULARIZATION
 from configuration_constants import JSON_REG_VALUE
-from configuration_constants import JSON_DROPOUT
-from configuration_constants import JSON_DROPOUT_RATE
 from configuration_constants import JSON_BIAS
 from configuration_constants import JSON_VALIDATION_SPLIT
 from configuration_constants import JSON_TEST_SPLIT
@@ -113,34 +114,48 @@ from configuration_constants import JSON_VERBOSE
 from configuration_constants import JSON_LOSS
 from configuration_constants import JSON_LOSS_WTS
 from configuration_constants import JSON_METRICS
-from configuration_constants import JSON_ACTIVATION
 from configuration_constants import JSON_OPTIMIZER
-from configuration_constants import JSON_ANALYSIS
 
-def add_data_flow_details(js_keras_dense_data, nx_graph, nx_edge_key):
-    nx_balanced = js_keras_dense_data[JSON_BALANCED]
-    nx_time_seq = js_keras_dense_data[JSON_TIME_SEQ]
-    nx_ignore_blanks = js_keras_dense_data[JSON_IGNORE_BLANKS]
-    nx_flow_data_file = js_keras_dense_data[JSON_FLOW_DATA_FILE]
-    nx_feature_fields = js_keras_dense_data[JSON_FEATURE_FIELDS]
-    nx_target_fields = js_keras_dense_data[JSON_TARGET_FIELDS]
+def add_data_flow_details(js_flow_conditional, nx_graph, nx_edge_key):
 
-    js_category_details = js_keras_dense_data[JSON_CATEGORIZATION_DETAILS]
+    '''
+    deprecated
+    
+    js_category_details = js_flow_conditional[JSON_CATEGORIZATION_DETAILS]
+    '''
     
     for edge_i in nx_graph.edges():
         if edge_i == (nx_edge_key[0], nx_edge_key[1]):
-            nx.set_edge_attributes(nx_graph, {nx_edge_key:nx_balanced}, JSON_BALANCED)
-            nx.set_edge_attributes(nx_graph, {nx_edge_key:nx_time_seq}, JSON_TIME_SEQ)
-            nx.set_edge_attributes(nx_graph, {nx_edge_key:nx_ignore_blanks}, JSON_IGNORE_BLANKS)
-            nx.set_edge_attributes(nx_graph, {nx_edge_key:nx_flow_data_file}, JSON_FLOW_DATA_FILE)
-            nx.set_edge_attributes(nx_graph, {nx_edge_key:nx_feature_fields}, JSON_FEATURE_FIELDS)
-            nx.set_edge_attributes(nx_graph, {nx_edge_key:nx_target_fields}, JSON_TARGET_FIELDS)
+            if JSON_TENSORFLOW_DATA in js_flow_conditional:
+                js_tensorflow_data = js_flow_conditional[JSON_TENSORFLOW_DATA]
+                
+                if JSON_BALANCED in js_tensorflow_data:
+                    nx_balanced = js_tensorflow_data[JSON_BALANCED]
+                    nx.set_edge_attributes(nx_graph, {nx_edge_key:nx_balanced}, JSON_BALANCED)
+        
+                if JSON_TIME_SEQ in js_tensorflow_data:
+                    nx_time_seq = js_tensorflow_data[JSON_TIME_SEQ]
+                    nx.set_edge_attributes(nx_graph, {nx_edge_key:nx_time_seq}, JSON_TIME_SEQ)
 
-            if JSON_CATEGORY_1HOT in js_category_details:
-                nx_category1Hot = js_category_details[JSON_CATEGORY_1HOT]
-                nx.set_edge_attributes(nx_graph, {nx_edge_key:nx_category1Hot}, JSON_CATEGORY_1HOT)
-            
-            nx_category_type = js_category_details[JSON_CATEGORY_TYPE]
+                if JSON_IGNORE_BLANKS in js_tensorflow_data:
+                    nx_ignore_blanks = js_tensorflow_data[JSON_IGNORE_BLANKS]
+                    nx.set_edge_attributes(nx_graph, {nx_edge_key:nx_ignore_blanks}, JSON_IGNORE_BLANKS)
+
+                if JSON_FEATURE_FIELDS in js_tensorflow_data:
+                    nx_feature_fields = js_tensorflow_data[JSON_FEATURE_FIELDS]
+                    nx.set_edge_attributes(nx_graph, {nx_edge_key:nx_feature_fields}, JSON_FEATURE_FIELDS)
+
+                if JSON_TARGET_FIELDS in js_tensorflow_data:
+                    nx_target_fields = js_tensorflow_data[JSON_TARGET_FIELDS]
+                    nx.set_edge_attributes(nx_graph, {nx_edge_key:nx_target_fields}, JSON_TARGET_FIELDS)
+
+                if JSON_CATEGORY_1HOT in js_tensorflow_data:
+                    nx_category1Hot = js_tensorflow_data[JSON_CATEGORY_1HOT]
+                    nx.set_edge_attributes(nx_graph, {nx_edge_key:nx_category1Hot}, JSON_CATEGORY_1HOT)
+
+            '''
+            deprcated            
+            nx_category_type = js_flow_conditional[JSON_CATEGORY_TYPE]
             nx.set_edge_attributes(nx_graph, {nx_edge_key:nx_category_type}, JSON_CATEGORY_TYPE)
             if nx_category_type == JSON_CAT_TF:
                 pass
@@ -156,6 +171,7 @@ def add_data_flow_details(js_keras_dense_data, nx_graph, nx_edge_key):
                 nx.set_edge_attributes(nx_graph, {nx_edge_key:nx_rangeMaxs}, JSON_RANGE_MAXS)
             else:
                 raise NameError('Invalid category type')
+            '''
 
     return 
 
@@ -170,20 +186,24 @@ def add_data_load_details(js_config, nx_graph, nx_process_name):
 def add_dense_meta_data(js_dense_params, nx_graph, nx_process_name):
     logging.debug("Adding meta data to dense model process: %s" % nx_process_name)
 
+    '''
+    deprecated
+        
     if JSON_MODEL_STRUCTURE in js_dense_params:
         js_model_structure = js_dense_params[JSON_MODEL_STRUCTURE]
 
         nx_input_layer = js_model_structure[JSON_MODEL_INPUT_LAYER]
         nx_model_depth = js_model_structure[JSON_MODEL_DEPTH]
         nx_node_count = js_model_structure[JSON_NODE_COUNT]
+        nx.set_node_attributes(nx_graph, {nx_process_name:nx_model_depth}, JSON_MODEL_DEPTH)
+        nx.set_node_attributes(nx_graph, {nx_process_name:nx_node_count}, JSON_NODE_COUNT)
         nx_output_layer = js_model_structure[JSON_MODEL_OUTPUT_LAYER]
         nx_output_activation = js_model_structure[JSON_MODEL_OUTPUT_ACTIVATION]
 
         nx.set_node_attributes(nx_graph, {nx_process_name:nx_input_layer}, JSON_MODEL_INPUT_LAYER)
-        nx.set_node_attributes(nx_graph, {nx_process_name:nx_model_depth}, JSON_MODEL_DEPTH)
-        nx.set_node_attributes(nx_graph, {nx_process_name:nx_node_count}, JSON_NODE_COUNT)
         nx.set_node_attributes(nx_graph, {nx_process_name:nx_output_layer}, JSON_MODEL_OUTPUT_LAYER)
         nx.set_node_attributes(nx_graph, {nx_process_name:nx_output_activation}, JSON_MODEL_OUTPUT_ACTIVATION)
+    '''
     
     return
     
@@ -269,13 +289,19 @@ def add_meta_data_edge (js_config, nx_graph):
     nx_flowTo =  js_required[JSON_FLOW_TO]
     #nx_graph.add_edge(nx_flowFrom, nx_flowTo, flowName=nx_flowName)
     nx_graph.add_edge(nx_flowFrom, nx_flowTo, key=nx_flowName)
-    nx_edge_key = (nx_flowFrom, nx_flowTo, nx_flowName)
 
     # conditional elements
-    js_conditional = js_config[JSON_CONDITIONAL]
-    if JSON_KERAS_DENSE_DATA in js_conditional:
-        js_keras_dense_data = js_conditional[JSON_KERAS_DENSE_DATA]
-        add_data_flow_details(js_keras_dense_data, nx_graph, nx_edge_key)
+    '''
+    deprecated
+    '''
+
+    nx_edge_key = (nx_flowFrom, nx_flowTo, nx_flowName)
+    nx_flow_data_file = js_required[JSON_FLOW_DATA_FILE]
+    nx.set_edge_attributes(nx_graph, {nx_edge_key:nx_flow_data_file}, JSON_FLOW_DATA_FILE)
+
+    if JSON_CONDITIONAL in js_config:
+        js_conditional = js_config[JSON_CONDITIONAL]
+        add_data_flow_details(js_conditional, nx_graph, nx_edge_key)
 
     print("Connected %s to %s by data flow %s" % (nx_flowFrom, nx_flowTo, nx_flowName))
     return
@@ -293,19 +319,28 @@ def add_training_controls(js_training, nx_graph, nx_process_name):
     nx_epochs = js_training[JSON_EPOCHS]
     nx_verbose = js_training[JSON_VERBOSE]
     nx_balanced = js_training[JSON_BALANCED]
-    nx_analysis = js_training[JSON_ANALYSIS]
     nx_loss = js_training[JSON_LOSS]
     nx_metrics = js_training[JSON_METRICS]
-    nx_activation = js_training[JSON_ACTIVATION]
     nx_optimizer = js_training[JSON_OPTIMIZER]
+    '''
+    deprecated
+    
+    nx_analysis = js_training[JSON_ANALYSIS]
+    nx_activation = js_training[JSON_ACTIVATION]
     nx_shuffle = js_training[JSON_SHUFFLE_DATA]
     nx_normalize = js_training[JSON_NORMALIZE_DATA]
 
+    nx.set_node_attributes(nx_graph, {nx_process_name:nx_dropout}, JSON_DROPOUT)
+    nx.set_node_attributes(nx_graph, {nx_process_name:nx_dropout_rate}, JSON_DROPOUT_RATE)
+    nx.set_node_attributes(nx_graph, {nx_process_name:nx_analysis}, JSON_ANALYSIS)
+    nx.set_node_attributes(nx_graph, {nx_process_name:nx_activation}, JSON_ACTIVATION)
+    nx.set_node_attributes(nx_graph, {nx_process_name:nx_shuffle}, JSON_SHUFFLE_DATA)
+    nx.set_node_attributes(nx_graph, {nx_process_name:nx_normalize}, JSON_NORMALIZE_DATA)
+    '''
+    
     nx.set_node_attributes(nx_graph, {nx_process_name:nx_loss_weights}, JSON_LOSS_WTS)
     nx.set_node_attributes(nx_graph, {nx_process_name:nx_regularization}, JSON_REGULARIZATION)
     nx.set_node_attributes(nx_graph, {nx_process_name:nx_reg_value}, JSON_REG_VALUE)
-    #nx.set_node_attributes(nx_graph, {nx_process_name:nx_dropout}, JSON_DROPOUT)
-    #nx.set_node_attributes(nx_graph, {nx_process_name:nx_dropout_rate}, JSON_DROPOUT_RATE)
     nx.set_node_attributes(nx_graph, {nx_process_name:nx_bias}, JSON_BIAS)
     nx.set_node_attributes(nx_graph, {nx_process_name:nx_validation_split}, JSON_VALIDATION_SPLIT)
     nx.set_node_attributes(nx_graph, {nx_process_name:nx_test_split}, JSON_TEST_SPLIT)
@@ -313,13 +348,9 @@ def add_training_controls(js_training, nx_graph, nx_process_name):
     nx.set_node_attributes(nx_graph, {nx_process_name:nx_epochs}, JSON_EPOCHS)
     nx.set_node_attributes(nx_graph, {nx_process_name:nx_verbose}, JSON_VERBOSE)
     nx.set_node_attributes(nx_graph, {nx_process_name:nx_balanced}, JSON_BALANCED)
-    nx.set_node_attributes(nx_graph, {nx_process_name:nx_analysis}, JSON_ANALYSIS)
     nx.set_node_attributes(nx_graph, {nx_process_name:nx_loss}, JSON_LOSS)
     nx.set_node_attributes(nx_graph, {nx_process_name:nx_metrics}, JSON_METRICS)
-    nx.set_node_attributes(nx_graph, {nx_process_name:nx_activation}, JSON_ACTIVATION)
     nx.set_node_attributes(nx_graph, {nx_process_name:nx_optimizer}, JSON_OPTIMIZER)
-    nx.set_node_attributes(nx_graph, {nx_process_name:nx_shuffle}, JSON_SHUFFLE_DATA)
-    nx.set_node_attributes(nx_graph, {nx_process_name:nx_normalize}, JSON_NORMALIZE_DATA)
 
     return
 
@@ -361,6 +392,8 @@ def add_meta_process_node (js_config, nx_graph) :
         nx_layers = js_conditional[JSON_LAYERS]
         nx.set_node_attributes(nx_graph, {nx_process_name:nx_layers}, JSON_LAYERS)
     
+    '''
+    deprecated
     if JSON_PREPROCESSING in js_conditional:
         js_preprocessing = js_conditional[JSON_PREPROCESSING]
         if JSON_PREPROCESS_SEQUENCE in js_preprocessing:
@@ -371,6 +404,7 @@ def add_meta_process_node (js_config, nx_graph) :
             js_bins = js_preprocessing[JSON_PREPROCESS_DISCRETIZATION][JSON_PREPROCESS_DISCRETIZATION_BINS]
             nx_discretization_bins = js_bins
             nx.set_node_attributes(nx_graph, {nx_process_name:nx_discretization_bins}, JSON_PREPROCESS_DISCRETIZATION_BINS)
+    '''
             
     if JSON_REMOVE_OUTLIER_LIST in js_conditional:
         js_remove_outliers = js_conditional[JSON_REMOVE_OUTLIER_LIST]
@@ -379,6 +413,9 @@ def add_meta_process_node (js_config, nx_graph) :
     if js_required[JSON_PROCESS_TYPE] == JSON_DATA_PREP_PROCESS:
         js_data_prep_ctrl = js_conditional[JSON_INPUT_DATA_PREPARATION]
         add_data_load_details(js_data_prep_ctrl, nx_graph, nx_process_name)
+    '''
+    deprecated
+    
     elif js_required[JSON_PROCESS_TYPE] == JSON_TENSORFLOW:
         js_keras_dense = js_conditional[JSON_KERAS_DENSE_CTRL]
         add_dense_meta_data(js_keras_dense, nx_graph, nx_process_name)
@@ -387,6 +424,7 @@ def add_meta_process_node (js_config, nx_graph) :
         add_Conv1D_meta_data(js_keras_Conv1D, nx_graph, nx_process_name)
     else :
         raise NameError('Invalid process node type')
+    '''
         
     if JSON_TRAINING in js_conditional:
         add_training_controls(js_conditional[JSON_TRAINING], nx_graph, nx_process_name)

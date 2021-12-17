@@ -24,11 +24,16 @@ from configuration_constants import JSON_FLOW_DATA_FILE
 from configuration_constants import JSON_INPUT_FLOWS
 from configuration_constants import JSON_NORMALIZE_DATA
 from configuration_constants import JSON_PROCESS_TYPE
+from configuration_constants import MODEL_TYPE
+from configuration_constants import INPUT_LAYERTYPE_DENSE
+from configuration_constants import INPUT_LAYERTYPE_RNN
+from configuration_constants import INPUT_LAYERTYPE_CNN
 from configuration_constants import JSON_TENSORFLOW
 from configuration_constants import JSON_FEATURE_FIELDS
 from configuration_constants import JSON_TARGET_FIELDS
 from configuration_constants import JSON_VALIDATION_SPLIT
 from configuration_constants import JSON_TEST_SPLIT
+from configuration_constants import JSON_TIMESTEPS
 '''
 from configuration_constants import JSON_BALANCED
 from configuration_constants import JSON_TIME_SEQ
@@ -126,37 +131,40 @@ def prepareData(d2r):
     nx_targetFiields = nx.get_edge_attributes(d2r.graph, JSON_TARGET_FIELDS)
     nx_targets = nx_targetFiields[d2r.mlEdgeIn[0], d2r.mlEdgeIn[1], nx_input_flows[0]]    
 
+    nx_test_split = nx.get_node_attributes(d2r.graph, JSON_TEST_SPLIT)[d2r.mlNode]
     nx_validation_split = nx.get_node_attributes(d2r.graph, JSON_VALIDATION_SPLIT)[d2r.mlNode]
 
-    print("\n*************************************************\nWORK IN PROGRESS\n\tprepareData\n*************************************************\n")
     nx_read_attr = nx.get_node_attributes(d2r.graph, JSON_PROCESS_TYPE)
     if nx_read_attr[d2r.mlNode] == JSON_TENSORFLOW:    
-        print("Building model define in node: %s" % d2r.mlNode)
+        print("Preparing the data for training: %s" % d2r.mlNode)
+            
         nx_data_precision = nx.get_node_attributes(d2r.graph, JSON_PRECISION)[d2r.mlNode]
-        TIME_STEPS = 20
-        TRAINPCT = 0.8
-
-        train = d2r.data.loc[ : (len(d2r.data) * TRAINPCT)]
-        test = d2r.data.loc[(len(d2r.data) * TRAINPCT) :]
-        df_x_train, df_y_train = to_sequences(train[nx_features],train[nx_targets[0]], TIME_STEPS)
-        df_x_test, df_y_test = to_sequences(test[nx_features], test[nx_targets[0]], TIME_STEPS)        
-        np_x_train = np.array(df_x_train, dtype=nx_data_precision)
-        np_y_train = np.array(df_y_train, dtype=nx_data_precision)
-        np_x_test = np.array(df_x_test, dtype=nx_data_precision)
-        np_y_test = np.array(df_y_test, dtype=nx_data_precision)
-
-        print("Training shapes X:%s y:%s, testing shapes X:%s y:%s" % (df_x_train.shape, df_y_train.shape, df_x_test.shape, df_y_test.shape))
-
-    nx_normalize = nx.get_node_attributes(d2r.graph, JSON_NORMALIZE_DATA)[d2r.mlNode]
-    if nx_normalize:
-        print("Normalization is not implemented")
-    else:
-        print("features and target are not normalized")
+        '''
+        nx_normalize = nx.get_node_attributes(d2r.graph, JSON_NORMALIZE_DATA)[d2r.mlNode]
+        if nx_normalize:
+            print("\n*************************************************\nWORK IN PROGRESS\n\tNormalization is not implemented\n*************************************************\n")
+        '''
+        train = d2r.data.loc[ : (len(d2r.data) * (1-nx_test_split))]
+        test = d2r.data.loc[(len(d2r.data) * (1-nx_test_split)) :]
         
-    d2r.testX = np_x_test
-    d2r.testY = np_y_test
-    d2r.trainX = np_x_train
-    d2r.trainY = np_y_train
+        nx_model_type = nx.get_node_attributes(d2r.graph, MODEL_TYPE)[d2r.mlNode]
+        if nx_model_type == INPUT_LAYERTYPE_DENSE:
+            df_x_train = train[nx_features]
+            df_y_train = train[nx_targets[0]]
+            df_x_test = test[nx_features]
+            df_y_test = test[nx_targets[0]]
+        elif nx_model_type == INPUT_LAYERTYPE_RNN:
+            nx_time_steps = nx.get_node_attributes(d2r.graph, JSON_TIMESTEPS)[d2r.mlNode]
+            df_x_train, df_y_train = to_sequences(train[nx_features],train[nx_targets[0]], nx_time_steps)
+            df_x_test, df_y_test = to_sequences(test[nx_features], test[nx_targets[0]], nx_time_steps)        
+        elif nx_model_type == INPUT_LAYERTYPE_CNN:
+            print("\n*************************************************\nWORK IN PROGRESS\n\tCNN preparation is not implemented\n*************************************************\n")
+            pass
+
+        d2r.trainX = np.array(df_x_train, dtype=nx_data_precision)
+        d2r.trainY = np.array(df_y_train, dtype=nx_data_precision)
+        d2r.testX = np.array(df_x_test, dtype=nx_data_precision)
+        d2r.testY = np.array(df_y_test, dtype=nx_data_precision)
     return
 
 def discard_outliers(nx_graph, node_i, df_data):
@@ -237,15 +245,15 @@ def collect_and_select_data(d2r):
     try:
         err_txt = "*** An exception occurred collecting and selecting the data ***"
 
-        nx_data_flow = nx.get_node_attributes(d2r.graph, JSON_OUTPUT_FLOW)
-        nx_flowFilename = nx.get_edge_attributes(d2r.graph, JSON_FLOW_DATA_FILE)
-        nx_read_attr = nx.get_node_attributes(d2r.graph, JSON_PROCESS_TYPE)
         for node_i in d2r.graph.nodes():
-            output_flow = nx_data_flow[node_i]
+            nx_read_attr = nx.get_node_attributes(d2r.graph, JSON_PROCESS_TYPE)
             if nx_read_attr[node_i] == JSON_DATA_PREP_PROCESS:
+                nx_data_flow = nx.get_node_attributes(d2r.graph, JSON_OUTPUT_FLOW)
+                output_flow = nx_data_flow[node_i]
                 for edge_i in d2r.graph.edges():
                     if edge_i[0] == node_i:
                         err_txt = "*** An exception occurred analyzing the flow details in the json configuration file ***"
+                        nx_flowFilename = nx.get_edge_attributes(d2r.graph, JSON_FLOW_DATA_FILE)
                         flowFilename = nx_flowFilename[edge_i[0], edge_i[1], output_flow]
                         d2r.data = prepareTrainingData(d2r.graph, node_i, edge_i)
                         print(d2r.data.describe().transpose())
@@ -260,7 +268,7 @@ def collect_and_select_data(d2r):
         elif isinstance(exc_str, tuple):
             exc_txt = err_txt + "\n\t"
             for s in exc_str:
-                exc_txt += s
+                exc_txt += " " + s
         logging.debug(exc_txt)
         sys.exit(exc_txt)
         

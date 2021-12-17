@@ -163,7 +163,6 @@ JSON_OUTPUT_FLOW = 'outputFlow'
 JSON_DATA_PREP_CTRL = "dataPrepCtrl"
 JSON_MODEL_FILE = "modelFile"
 JSON_OUTPUT_FILE = "outputFile"
-JSON_MODEL_STRUCTURE = "modelStructure"
 JSON_LOG_FILE = "logFile"
 
 JSON_DATA_PREP_PROCESS = "dataPrep"
@@ -177,16 +176,20 @@ JSON_FLOW_FROM = 'flowFrom'
 JSON_FLOW_TO = 'flowTo'
 
 JSON_PREPROCESSING = 'preprocessingLayers'
+'''
+JSON_MODEL_STRUCTURE = "modelStructure"
 JSON_PREPROCESS_SEQUENCE = 'preprocessSequence'
 JSON_PREPROCESS_DISCRETIZATION = 'discretization'
 JSON_PREPROCESS_DISCRETIZATION_BINS = 'bins'
 JSON_PREPROCESS_CATEGORY_ENCODING = 'categoryEncoding'
+JSON_KERAS_DENSE_CTRL = "KerasDenseCtrl"
+JSON_KERAS_DENSE_DATA = 'TensorflowData'
+'''
 
 JSON_LAYERS = "modelLayers"
 JSON_TENSORFLOW = "Tensorflow"
+JSON_TENSORFLOW_DATA = "TensorflowData"
 JSON_PRECISION = "dataPrecision"
-JSON_KERAS_DENSE_CTRL = "KerasDenseCtrl"
-JSON_KERAS_DENSE_DATA = 'TensorflowData'
 
 JSON_KERAS_CONV1D = "KerasConv1D"
 JSON_KERAS_CONV1D_CONTROL = "KerasConv1DCtrl"
@@ -217,7 +220,8 @@ JSON_FLOW_DATA_FILE = "flowDataFile"
 
 JSON_FEATURE_FIELDS = "features"
 JSON_TARGET_FIELDS = "targets"
-JSON_SEQUENCE_LENGTH = 'sequenceLength'
+#JSON_SEQUENCE_LENGTH = 'sequenceLength'
+JSON_TIMESTEPS = 'timeSteps'
 JSON_FEATURE_COUNT = 'featureCount'
 
 JSON_CATEGORY_TYPE = "categoryType"
@@ -236,15 +240,20 @@ JSON_OUTLIER_FEATURE = "featureName"
 JSON_OUTLIER_PCT = "outlierPct"
 
 JSON_MODEL_INPUT_LAYER = 'inputLayer'
+MODEL_TYPE = 'modelType'
+INPUT_LAYERTYPE_DENSE = 'dense'
+INPUT_LAYERTYPE_RNN = 'rnn'
+INPUT_LAYERTYPE_CNN = 'cnn'
 JSON_MODEL_OUTPUT_LAYER = 'outputLayer'
 JSON_MODEL_OUTPUT_ACTIVATION = 'outputActivation'
 JSON_MODEL_OUTPUT_WIDTH = 'outputWidth'
+'''
 JSON_MODEL_DEPTH = 'layerCounts'
 JSON_NODE_COUNT = 'layerNodes'
+'''
 JSON_NORMALIZE_DATA = 'normalize'
 JSON_SHUFFLE_DATA = 'shuffle'
 #JSON_OUTPUTNAME = 'outputName'
-JSON_TIMESTEPS = 'timeSteps'
 JSON_ELEMENTS = 'dataElements'
 JSON_LOSS_WTS = 'lossWeights'
 JSON_REGULARIZATION = 'denseRegularation'

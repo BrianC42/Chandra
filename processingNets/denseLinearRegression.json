@@ -24,7 +24,7 @@
 		"processNodeName" : "LRmodel",
 		"requiredFields" : {
 			"comments: supported values - processType" : ["dataPrep", "KerasDense"],
-			"processType" : "KerasDense",
+			"processType" : "Tensorflow",
 			"inputFlows" : ["LRdata"],
 			"outputFlow" : "",
 			"outputFile" : "d:\\brian\\AI Projects\\models\\LRmodel",
@@ -32,30 +32,48 @@
 		},
 		"conditionalFields" : {
 			"modelFile" : "d:\\brian\\AI Projects\\models\\LRmodel",
+			"dataPrecision" : "float32",
 			"preprocessingLayers" : {
 				"comments - supported layers" : ["linearRegression", "discretization", "categoryEncoding"],
-				"preprocessSequence" : ["linearRegression"]
+				"preprocessSequence" : ["linearRegression"],
+				"normalize" : false
 				},
-		    "KerasDenseCtrl" : {
-				"modelStructure" : {
-					"inputLayer" : "LR-input",
-					"layerCounts" : 1,
-					"layerNodes" : 200,
-					"outputLayer" : "ML-LinearRegression",
-					"comment - activations" : ["relu", "sigmoid", "softmax", "softplus", "softsign", "tanh", "selu", "elu", "exponential"],
-					"outputActivation" : "relu"
+			"modelLayers" : [
+				{
+				"layerName" : "dense1",
+				"layerType" : "dense",
+				"featureCount": 1,
+				"layerUnits" : 1,
+				"activation" : "relu"
+				},
+				{
+				"layerName" : "dropout",
+				"layerType" : "dropout",
+				"dropoutRate" : 0.2
+				},
+				{
+				"layerName" : "hidden",
+				"layerType" : "dense",
+				"layerUnits" : 20,
+				"activation" : "relu"
+				},
+				{
+				"layerName" : "output",
+				"layerType" : "dense",
+				"layerUnits" : 1,
+				"comment: supported values - activation" : ["relu", "sigmoid", "softmax", "softplus", "softsign", "tanh", "selu", "elu", "exponential"],
+				"activation" : "relu"
 				}
-			},
+			],
 			"training" : {
 				"Comment 1" : "one output - see data flow for detaiils",
-				"analysis" : "classification",
+				"Comment deprecate 1 - analysis" : "classification",
 				"lossWeights" : [1.0],
 				"denseRegularation" : false,
 				"regularationValue" : 0.0,
-				"dropout" : false,
-				"dropoutRate" : 0.2,
-				"shuffle" : true,
-				"normalize" : false,
+				"deprecate 2 - dropout" : false,
+				"deprecate 3 - dropoutRate" : 0.2,
+				"deprecate 4 - shuffle" : true,
 				"batchSize" : 32,
 				"epochs" : 17,
 				"useBias" : true,
@@ -67,8 +85,6 @@
 				"comment: supported values - compilationLoss" : ["binary_crossentropy", "mean_squared_error", "mean_absolute_error"],
 				"compilationMetrics" : ["accuracy"],
 				"comment: supported values - compilationMetrics" : ["accuracy"],
-				"activation" : "relu",
-				"comment: supported values - activation" : ["relu", "sigmoid", "softmax", "softplus", "softsign", "tanh", "selu", "elu", "exponential"],
 				"optimizer" : "adam",
 				"comment: supported values - optimizer" : ["SGD", "RMSprop", "Adam", "Adadelta", "Adagrad", "Adamax", "Nadam", "Ftrl"],
 				"comment end of training for LRmodel" : ""
@@ -82,23 +98,16 @@
 	"flowName" : "LRdata",
 	"requiredFields" : {
 		"flowFrom" : "LoadData",
-		"flowTo" : "LRmodel"
+		"flowTo" : "LRmodel",
+		"flowDataFile" : "d:\\brian\\AI Projects\\temp\\linear regression.csv"
 		},
 	"conditionalFields" : {
-		"KerasDenseData" : {
-			"timeSequence" : false,
-			"balanceClasses" : true,
+		"TensorflowData" : {
 			"ignoreBlanks" : true,
-			"flowDataFile" : "d:\\brian\\AI Projects\\temp\\linear regression.csv",
 			"features" : ["Feature-x"],
 			"targets" : ["Noisy-target"],
-			"categorization" : {
-				"comment 1" : "models to assess input data relationship to categorized outputs",
-				"comment 1: supported categoryType values" : ["categoryTrueFalse", "categoryThreshold (above / below)", "categoryRanges"],
-				"comment 2: supported categoryType values" : ["Regression"],
-				"categoryType" : "Regression",
-				"categoryOneHot - not required for linearRegression" : ["catTrue", "catFalse"]
-				}
+			"timeSequence" : false,
+			"balanceClasses" : true
 			}
 		}
 	}

@@ -24,7 +24,7 @@ def trainModel(d2r):
 
     # error handling
     try:
-        print("Training shapes X:%s y:%s, testing shapes X:%s y:%s" % (d2r.trainX.shape, d2r.trainY.shape, d2r.testX.shape, d2r.testY.shape))
+        print("Training shapes x:%s y:%s, testing shapes x:%s y:%s" % (d2r.trainX.shape, d2r.trainY.shape, d2r.testX.shape, d2r.testY.shape))
                 
         '''
         nx_regularization = nx.get_node_attributes(d2r.graph, JSON_REGULARIZATION)[d2r.mlNode]
@@ -51,7 +51,10 @@ def trainModel(d2r):
         nx_batch = nx.get_node_attributes(d2r.graph, JSON_BATCH)[d2r.mlNode]
         nx_epochs = nx.get_node_attributes(d2r.graph, JSON_EPOCHS)[d2r.mlNode]
         nx_verbose = nx.get_node_attributes(d2r.graph, JSON_VERBOSE)[d2r.mlNode]
+        '''
         nx_shuffle = nx.get_node_attributes(d2r.graph, JSON_SHUFFLE_DATA)[d2r.mlNode]
+                              shuffle=nx_shuffle, \
+        '''
         
         np.random.seed(RANDOM_SEED)
         tf.random.set_seed(RANDOM_SEED)
@@ -59,7 +62,6 @@ def trainModel(d2r):
         d2r.fitting = d2r.model.fit(x=d2r.trainX, y=d2r.trainY, \
                               batch_size=nx_batch, epochs=nx_epochs, \
                               validation_data=(d2r.testX, d2r.testY), \
-                              shuffle=nx_shuffle, \
                               verbose=nx_verbose)
         
     except Exception:

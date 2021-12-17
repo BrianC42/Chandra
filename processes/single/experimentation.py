@@ -32,6 +32,9 @@ from sklearn.preprocessing import MinMaxScaler, StandardScaler
 #from keras.models import Model
 import seaborn as sns
 
+def linear_regression():
+    return
+
 def to_sequences(x, y, seq_size=1):
     x_values = []
     y_values = []
@@ -45,6 +48,7 @@ def to_sequences(x, y, seq_size=1):
 
 def digitalSreeni_180():
     dataDir = 'g:/My Drive/Colab Notebooks/data/'
+    dataDir = 'd:/Brian/AI Projects/Datasets/'
     
     dataframe = pd.read_csv(dataDir + 'GE - Yahoo.csv')
     df = dataframe[['Date', 'Close']]
@@ -156,4 +160,6 @@ def digitalSreeni_180():
     return
 
 if __name__ == '__main__':
-    digitalSreeni_180()
+    #digitalSreeni_180()
+    linear_regression()
+    

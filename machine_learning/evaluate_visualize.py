@@ -10,8 +10,11 @@ import matplotlib.pyplot as plt
 from TrainingDataAndResults import Data2Results as d2r
 
 from configuration_constants import JSON_NORMALIZE_DATA
+'''
+deprecated
 from configuration_constants import JSON_MODEL_DEPTH
 from configuration_constants import JSON_NODE_COUNT
+'''
 #from configuration_constants import JSON_DROPOUT
 #from configuration_constants import JSON_DROPOUT_RATE
 from configuration_constants import JSON_ACTIVATION
@@ -35,28 +38,33 @@ def evaluate_and_visualize(d2r):
     #samples = fit_params['samples']
     #metrics = fit_params['metrics']
     
+    '''
+    deprecated
     nx_normalize = nx.get_node_attributes(d2r.graph, JSON_NORMALIZE_DATA)[d2r.mlNode]
     nx_model_depth = nx.get_node_attributes(d2r.graph, JSON_MODEL_DEPTH)[d2r.mlNode]
     nx_node_count = nx.get_node_attributes(d2r.graph, JSON_NODE_COUNT)[d2r.mlNode]
-    #nx_dropout = nx.get_node_attributes(d2r.graph, JSON_DROPOUT)[d2r.mlNode]
-    #nx_dropout_rate = nx.get_node_attributes(d2r.graph, JSON_DROPOUT_RATE)[d2r.mlNode]
+    nx_dropout = nx.get_node_attributes(d2r.graph, JSON_DROPOUT)[d2r.mlNode]
+    nx_dropout_rate = nx.get_node_attributes(d2r.graph, JSON_DROPOUT_RATE)[d2r.mlNode]
+    str_l3 = '\nHidden layers: {:.0f} Nodes: {:.0f}'.format(nx_model_depth, nx_node_count)
     nx_activation = nx.get_node_attributes(d2r.graph, JSON_ACTIVATION)[d2r.mlNode]
     nx_output_activation = nx.get_node_attributes(d2r.graph, JSON_MODEL_OUTPUT_ACTIVATION)[d2r.mlNode]
+    '''
     nx_optimizer = nx.get_node_attributes(d2r.graph, JSON_OPTIMIZER)[d2r.mlNode]
     nx_loss = nx.get_node_attributes(d2r.graph, JSON_LOSS)[d2r.mlNode]
     nx_metrics = nx.get_node_attributes(d2r.graph, JSON_METRICS)[d2r.mlNode]
     
     str_l1 = 'Model structure'
+    '''
     if nx_normalize:
         str_tf = 'True'
     else:
         str_tf = 'False'
     str_l2 = '\nData normalized: ' + str_tf
-    str_l3 = '\nHidden layers: {:.0f} Nodes: {:.0f}'.format(nx_model_depth, nx_node_count)
-    #str_l4 = '\nDropout {:.0f} Rate: {:.0f}'.format(nx_dropout, nx_dropout_rate)
+    str_l4 = '\nDropout {:.0f} Rate: {:.0f}'.format(nx_dropout, nx_dropout_rate)
     str_l5 = '\nActivations: Hidden layers: {:s}, Output: {:s}'.format(nx_activation, nx_output_activation)
+    '''
     str_l7 = '\nOptimizer: {:s}'.format(nx_optimizer)
-    str_structure = str_l1 + str_l2 + str_l3 + str_l5 + str_l7
+    str_structure = str_l1 + str_l7
     
     str_p0 = '\nFitting Parameters'
     #str_p1 = '\nepochs: {:.0f} batch size: {:.0f}'.format(epoch_cnt, batch_size)
