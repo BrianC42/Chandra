@@ -13,6 +13,6 @@
 "comment conv1DWaveForm processNet" : "\\chandra\\processingNets\\conv1DWaveForm.json",
 "comment denseLinearRegression processNet" : "\\chandra\\processingNets\\denseLinearRegression.json",
 "comment sinWaveRegression processNet" : "\\chandra\\processingNets\\time_series_demo.json",
-"processNet" : "\\chandra\\processingNets\\denseLinearRegression.json",
+"processNet" : "\\chandra\\processingNets\\time_series_demo.json",
 "comment end of specification" : "------------------------------------------------------------------------------------",
 "end of file" : ""}

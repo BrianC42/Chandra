@@ -81,7 +81,14 @@ class Data2Results():
     @fitting.setter
     def fitting(self, fitting):
         self._fitting = fitting
-        
+    
+    @property
+    def modelType(self):
+        return self._modelType
+    
+    @modelType.setter
+    def modelType(self, modelType):
+        self._modelType = modelType
     
     '''
     machine learning data samples

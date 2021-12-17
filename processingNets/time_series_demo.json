@@ -50,7 +50,7 @@
 				{
 				"layerName" : "output",
 				"layerType" : "dense",
-				"layerUnits" : 1
+				"layerUnits" : 10
 				}
 			],
 			"training" : {
@@ -93,7 +93,7 @@
 	"requiredFields" : {
 		"flowFrom" : "LoadData",
 		"flowTo" : "SineWaveRegression",
-		"flowDataFile" : "d:\\brian\\AI Projects\\internal_flows\\regression - sine - LSTM.csv"
+		"flowDataFile" : "d:\\brian\\AI Projects\\internal_flows\\regression - sine 10.csv"
 		},
 	"conditionalFields" : {
 		"TensorflowData" : {

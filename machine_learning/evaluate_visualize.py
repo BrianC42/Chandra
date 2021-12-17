@@ -12,6 +12,9 @@ from TrainingDataAndResults import Data2Results as d2r
 from configuration_constants import JSON_NORMALIZE_DATA
 from configuration_constants import JSON_ACTIVATION
 from configuration_constants import JSON_MODEL_OUTPUT_ACTIVATION
+from configuration_constants import INPUT_LAYERTYPE_DENSE
+from configuration_constants import INPUT_LAYERTYPE_RNN
+from configuration_constants import INPUT_LAYERTYPE_CNN
 from configuration_constants import JSON_OPTIMIZER
 from configuration_constants import JSON_LOSS
 from configuration_constants import JSON_METRICS
@@ -47,12 +50,14 @@ def evaluate_and_visualize(d2r):
     axs[0, 0].text(0.5, 0.5, str_structure + '\n' + str_params, horizontalalignment='center', verticalalignment='center', wrap=True)
         
     axs[0, 1].set_title("Raw Data")
-    axs[0, 1].scatter(d2r.testX, d2r.testY)
+    if d2r.modelType == INPUT_LAYERTYPE_DENSE:
+        axs[0, 1].scatter(d2r.testX, d2r.testY)
     axs[0, 1].set_xlabel("Feature")
     axs[0, 1].set_ylabel("Target")
 
     axs[0, 2].set_title("Training Data")
-    axs[0, 2].scatter(d2r.testX, d2r.testY)
+    if d2r.modelType == INPUT_LAYERTYPE_DENSE:
+        axs[0, 2].scatter(d2r.testX, d2r.testY)
     axs[0, 2].set_xlabel("Feature")
     axs[0, 2].set_ylabel("Target")
     
@@ -64,20 +69,21 @@ def evaluate_and_visualize(d2r):
     axs[1, 0].legend()
         
     axs[1, 1].set_title("Prediction")
-    iterable = ((x_min + (((x_max - x_min) / 100) * x)) for x in range(100))
-    x_predict = np.fromiter(iterable, float)
-    y_predict = d2r.model.predict(x=x_predict)
-    axs[1, 1].scatter(x_predict, y_predict)
-
+    if d2r.modelType == INPUT_LAYERTYPE_DENSE:
+        iterable = ((x_min + (((x_max - x_min) / 100) * x)) for x in range(100))
+        x_predict = np.fromiter(iterable, float)
+        y_predict = d2r.model.predict(x=x_predict)
+        axs[1, 1].scatter(x_predict, y_predict)
 
     axs[1, 1].set_xlabel("Feature")
     axs[1, 1].set_ylabel("Target")
     
     axs[1, 2].set_title("Extrapolation")
-    iterable = ((x_max + (((x_max - x_min) / 10) * x)) for x in range(100))
-    x_predict = np.fromiter(iterable, float)
-    y_predict = d2r.model.predict(x=x_predict)
-    axs[1, 2].scatter(x_predict, y_predict)
+    if d2r.modelType == INPUT_LAYERTYPE_DENSE:
+        iterable = ((x_max + (((x_max - x_min) / 10) * x)) for x in range(100))
+        x_predict = np.fromiter(iterable, float)
+        y_predict = d2r.model.predict(x=x_predict)
+        axs[1, 2].scatter(x_predict, y_predict)
     axs[1, 2].set_xlabel("Feature")
     axs[1, 2].set_ylabel("Target")
     

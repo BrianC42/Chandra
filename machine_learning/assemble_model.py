@@ -30,7 +30,7 @@ from configuration_constants import JSON_LOSS_WTS
 from configuration_constants import JSON_OPTIMIZER
 from configuration_constants import JSON_MODEL_FILE
 
-def build_layer(graph, node, layer_type, layer_definition, input_layer):
+def build_layer(d2r, layer_type, layer_definition, input_layer):
     ''' some parameters are common across multiple layer type '''
     nx_layer_name = None
     if 'layerName' in layer_definition:
@@ -46,7 +46,8 @@ def build_layer(graph, node, layer_type, layer_definition, input_layer):
                 
     if layer_type == 'dense':
         if input_layer:
-            nx.set_node_attributes(graph, {node:INPUT_LAYERTYPE_DENSE}, MODEL_TYPE)
+            d2r.modelType = INPUT_LAYERTYPE_DENSE
+            nx.set_node_attributes(d2r.graph, {d2r.mlNode:INPUT_LAYERTYPE_DENSE}, MODEL_TYPE)
             nx_feature_count = layer_definition[JSON_FEATURE_COUNT]
             k_layer = tf.keras.layers.Dense(name=nx_layer_name, \
                                             activation = nx_activation, \
@@ -57,14 +58,15 @@ def build_layer(graph, node, layer_type, layer_definition, input_layer):
                                             activation = nx_activation, \
                                             units=nx_layer_units)
     elif layer_type == 'lstm':
-        nx.set_node_attributes(graph, {node:INPUT_LAYERTYPE_RNN}, MODEL_TYPE)
+        nx.set_node_attributes(d2r.graph, {d2r.mlNode:INPUT_LAYERTYPE_RNN}, MODEL_TYPE)
         nx_return_sequences = False
         if JSON_RETURN_SEQUENCES in layer_definition:
             nx_dropout_rate = layer_definition[JSON_RETURN_SEQUENCES]
         if input_layer:
+            d2r.modelType = INPUT_LAYERTYPE_RNN
             nx_feature_count = layer_definition[JSON_FEATURE_COUNT]
             nx_time_steps = layer_definition[JSON_TIMESTEPS]
-            nx.set_node_attributes(graph, {node:nx_time_steps}, JSON_TIMESTEPS)
+            nx.set_node_attributes(d2r.graph, {d2r.mlNode:nx_time_steps}, JSON_TIMESTEPS)
             k_layer = tf.keras.layers.LSTM(name=nx_layer_name, \
                                            units=nx_layer_units, \
                                            activation = nx_activation, \
@@ -80,8 +82,8 @@ def build_layer(graph, node, layer_type, layer_definition, input_layer):
         Future support required
         '''
         if input_layer:
-            nx.set_node_attributes(graph, {node:INPUT_LAYERTYPE_CNN}, MODEL_TYPE)
-        pass
+            d2r.modelType = INPUT_LAYERTYPE_CNN
+            nx.set_node_attributes(d2r.graph, {d2r.mlNode:INPUT_LAYERTYPE_CNN}, MODEL_TYPE)
     elif layer_type == 'RepeatVector':
         nx_repeat_count = 1
         if JSON_REPEAT_COUNT in layer_definition:
@@ -98,7 +100,8 @@ def build_layer(graph, node, layer_type, layer_definition, input_layer):
 
     return k_layer
 
-def assemble_layers(nx_graph, node_i, nx_edge):
+def assemble_layers(d2r):
+
     logging.info('====> ================================================')
     logging.info('====> build_model: building the machine learning model')
     logging.info('====> ================================================')
@@ -106,13 +109,13 @@ def assemble_layers(nx_graph, node_i, nx_edge):
     # error handling
     try:
         # inputs                
-        print("Assembling model defined in node: %s" % node_i)
+        print("Assembling model defined in node: %s" % d2r.mlNode)
         logging.debug("Building ML model")
 
         err_txt = "*** An exception occurred building the model ***"
         input_layer = True
-        nx_layers = nx.get_node_attributes(nx_graph, JSON_LAYERS)[node_i]
-        nx_data_precision = nx.get_node_attributes(nx_graph, JSON_PRECISION)[node_i]
+        nx_layers = nx.get_node_attributes(d2r.graph, JSON_LAYERS)[d2r.mlNode]
+        nx_data_precision = nx.get_node_attributes(d2r.graph, JSON_PRECISION)[d2r.mlNode]
         tf.keras.backend.set_floatx(nx_data_precision)
         k_model = tf.keras.models.Sequential()
         
@@ -123,23 +126,23 @@ def assemble_layers(nx_graph, node_i, nx_edge):
                 '''
                 TimeDistributed layer type specification is not defined - future support required
                 '''
-                k_layer = build_layer(nx_graph, node_i, nx_layer_type, nx_layer_definition, input_layer)
+                k_layer = build_layer(d2r, nx_layer_type, nx_layer_definition, input_layer)
                 k_model.add(tf.keras.layers.TimeDistributed(k_layer))
             else:
-                k_layer = build_layer(nx_graph, node_i, nx_layer_type, nx_layer_definition, input_layer)
+                k_layer = build_layer(d2r, nx_layer_type, nx_layer_definition, input_layer)
                 k_model.add(k_layer)
             input_layer = False
             
         err_txt = "*** An exception occurred compiling the model ***"
-        nx_loss = nx.get_node_attributes(nx_graph, JSON_LOSS)[node_i]
-        nx_metrics = nx.get_node_attributes(nx_graph, JSON_METRICS)[node_i]
-        nx_optimizer = nx.get_node_attributes(nx_graph, JSON_OPTIMIZER)[node_i]
-        nx_loss_weights = nx.get_node_attributes(nx_graph, JSON_LOSS_WTS)[node_i]
+        nx_loss = nx.get_node_attributes(d2r.graph, JSON_LOSS)[d2r.mlNode]
+        nx_metrics = nx.get_node_attributes(d2r.graph, JSON_METRICS)[d2r.mlNode]
+        nx_optimizer = nx.get_node_attributes(d2r.graph, JSON_OPTIMIZER)[d2r.mlNode]
+        nx_loss_weights = nx.get_node_attributes(d2r.graph, JSON_LOSS_WTS)[d2r.mlNode]
         k_model.compile(optimizer=nx_optimizer, loss=nx_loss, metrics=nx_metrics, loss_weights=nx_loss_weights)
         print("compile optimizer:%s loss:%s metrics:%s loss_weights:%s" % \
               (nx_optimizer, nx_loss, nx_metrics, nx_loss_weights))
         k_model.summary()
-        nx_model_file = nx.get_node_attributes(nx_graph, JSON_MODEL_FILE)[node_i]
+        nx_model_file = nx.get_node_attributes(d2r.graph, JSON_MODEL_FILE)[d2r.mlNode]
 
         err_txt = "*** An exception occurred plotting the model ***"
         tf.keras.utils.plot_model(k_model, to_file=nx_model_file + '.png', show_shapes=True)
@@ -172,7 +175,7 @@ def buildModel(d2r):
                 if nx_edge[1] == node_i:
                     d2r.mlNode = node_i
                     d2r.mlEdgeIn = nx_edge
-                    d2r.model = assemble_layers(d2r.graph, d2r.mlNode, d2r.mlEdgeIn)
+                    d2r.model = assemble_layers(d2r)
                     break
             break
                 
