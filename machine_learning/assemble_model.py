@@ -9,27 +9,6 @@ import sys
 import logging
 import networkx as nx
 import tensorflow as tf
-'''
-from tensorflow import keras
-from keras.models import Sequential, Model
-from keras.models import load_model
-from keras.layers import Input, Dropout, Dense, LSTM, SimpleRNN, Conv2D, MaxPooling2D, Flatten
-from keras.layers import RepeatVector, TimeDistributed
-from keras.preprocessing.sequence import TimeseriesGenerator # Generates batches for sequence data
-from configuration_constants import JSON_KERAS_CONV1D
-from configuration_constants import JSON_INPUT_FLOWS
-from configuration_constants import JSON_FEATURE_FIELDS
-from configuration_constants import JSON_CATEGORY_TYPE
-from configuration_constants import JSON_CAT_TF
-from configuration_constants import JSON_CAT_THRESHOLD
-from configuration_constants import JSON_VALUE_RANGES
-from configuration_constants import JSON_LINEAR_REGRESSION
-from configuration_constants import JSON_MODEL_INPUT_LAYER
-from configuration_constants import JSON_MODEL_OUTPUT_LAYER
-from configuration_constants import JSON_MODEL_DEPTH
-from configuration_constants import JSON_NODE_COUNT
-'''
-
 from configuration_constants import JSON_TENSORFLOW
 from configuration_constants import JSON_PRECISION
 from configuration_constants import JSON_PROCESS_TYPE

@@ -11,7 +11,6 @@ import networkx as nx
 import pandas as pd
 import numpy as np
 import tensorflow as tf
-#from tensorflow.keras.layers.experimental import preprocessing
 
 from tfWindowGenerator import WindowGenerator
 
@@ -34,17 +33,6 @@ from configuration_constants import JSON_TARGET_FIELDS
 from configuration_constants import JSON_VALIDATION_SPLIT
 from configuration_constants import JSON_TEST_SPLIT
 from configuration_constants import JSON_TIMESTEPS
-'''
-from configuration_constants import JSON_BALANCED
-from configuration_constants import JSON_TIME_SEQ
-from configuration_constants import JSON_KERAS_CONV1D
-from configuration_constants import JSON_CATEGORY_TYPE
-from configuration_constants import JSON_CATEGORY_1HOT
-from configuration_constants import JSON_CAT_TF
-from configuration_constants import JSON_CAT_THRESHOLD
-from configuration_constants import JSON_THRESHOLD_VALUE
-from configuration_constants import JSON_LINEAR_REGRESSION
-'''
 from configuration_constants import JSON_REMOVE_OUTLIER_LIST
 from configuration_constants import JSON_OUTLIER_FEATURE
 from configuration_constants import JSON_OUTLIER_PCT

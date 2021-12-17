@@ -26,28 +26,6 @@ def trainModel(d2r):
     try:
         print("Training shapes x:%s y:%s, testing shapes x:%s y:%s" % (d2r.trainX.shape, d2r.trainY.shape, d2r.testX.shape, d2r.testY.shape))
                 
-        '''
-        nx_regularization = nx.get_node_attributes(d2r.graph, JSON_REGULARIZATION)[d2r.mlNode]
-        nx_reg_value = nx.get_node_attributes(d2r.graph, JSON_REG_VALUE)[d2r.mlNode]
-        nx_bias = nx.get_node_attributes(d2r.graph, JSON_BIAS)[d2r.mlNode]
-        nx_balanced = nx.get_node_attributes(d2r.graph, JSON_BALANCED)[d2r.mlNode]
-        nx_analysis = nx.get_node_attributes(d2r.graph, JSON_ANALYSIS)[d2r.mlNode]
-                
-        fit parameters not used:
-                    validation_split - validation_data used instead
-                    shuffle
-                    class_weight
-                    sample_weight
-                    initial_epooch
-                    steps_per_epoch
-                    validation_steps
-                    validation_batch_size
-                    validation_freq
-                    max_queue_size
-                    workers
-                    use_multiprocessing
-        '''
-
         nx_batch = nx.get_node_attributes(d2r.graph, JSON_BATCH)[d2r.mlNode]
         nx_epochs = nx.get_node_attributes(d2r.graph, JSON_EPOCHS)[d2r.mlNode]
         nx_verbose = nx.get_node_attributes(d2r.graph, JSON_VERBOSE)[d2r.mlNode]
