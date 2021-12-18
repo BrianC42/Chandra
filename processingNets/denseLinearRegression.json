@@ -35,26 +35,21 @@
 			"dataPrecision" : "float32",
 			"preprocessingLayers" : {
 				"comments - supported layers" : ["linearRegression", "discretization", "categoryEncoding"],
-				"preprocessSequence" : ["linearRegression"],
+				"deprecated 1 - preprocessSequence" : ["linearRegression"],
 				"normalize" : false
 				},
 			"modelLayers" : [
 				{
-				"layerName" : "dense1",
+				"layerName" : "input",
 				"layerType" : "dense",
 				"featureCount": 1,
-				"layerUnits" : 1,
+				"layerUnits" : 64,
 				"activation" : "relu"
-				},
-				{
-				"layerName" : "dropout",
-				"layerType" : "dropout",
-				"dropoutRate" : 0.2
 				},
 				{
 				"layerName" : "hidden",
 				"layerType" : "dense",
-				"layerUnits" : 20,
+				"layerUnits" : 64,
 				"activation" : "relu"
 				},
 				{
@@ -62,7 +57,7 @@
 				"layerType" : "dense",
 				"layerUnits" : 1,
 				"comment: supported values - activation" : ["relu", "sigmoid", "softmax", "softplus", "softsign", "tanh", "selu", "elu", "exponential"],
-				"activation" : "relu"
+				"comment activation" : "relu"
 				}
 			],
 			"training" : {
@@ -71,11 +66,8 @@
 				"lossWeights" : [1.0],
 				"denseRegularation" : false,
 				"regularationValue" : 0.0,
-				"deprecate 2 - dropout" : false,
-				"deprecate 3 - dropoutRate" : 0.2,
-				"deprecate 4 - shuffle" : true,
 				"batchSize" : 32,
-				"epochs" : 17,
+				"epochs" : 10,
 				"useBias" : true,
 				"validationSplit" : 0.2,
 				"testSplit" : 0.1,

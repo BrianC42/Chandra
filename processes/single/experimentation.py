@@ -20,6 +20,7 @@ Also try S&P: https://finance.yahoo.com/quote/%5EGSPC/history?p=%5EGSPC
 import numpy as np
 
 import tensorflow as tf
+from tensorflow import keras
 
 #from keras.models import Sequential
 #from keras.layers import LSTM, Input, Dropout
@@ -34,6 +35,57 @@ import seaborn as sns
 
 def linear_regression():
     return
+
+def create_dataset(X, y, time_steps=1):
+    Xs, ys = [], []
+    for i in range(len(X) - time_steps):
+        v = X.iloc[i:(i + time_steps)].values
+        Xs.append(v)        
+        ys.append(y.iloc[i + time_steps])
+    return np.array(Xs), np.array(ys)
+
+def sine_wave_regression():
+    df_data = pd.read_csv('d:/Brian/AI Projects/Datasets/regression - sine 10.csv')
+    print(df_data.head())
+    plt.plot(df_data['FeatureX'], df_data['TargetY'])
+    plt.show()
+    TRAINPCT = 0.8
+    train = df_data.loc[ : (len(df_data) * TRAINPCT)]
+    test = df_data.loc[(len(df_data) * TRAINPCT) :]
+    print("Training shape %s, testing shape %s" % (train.shape, test.shape))
+    TIME_STEPS = 20
+    # reshape to [samples, time_steps, n_features]
+    X_train, y_train = create_dataset(train[['TargetY']], train.TargetY, TIME_STEPS)
+    X_test, y_test = create_dataset(test[['TargetY']], test.TargetY, TIME_STEPS)
+    print("Training shapes X:%s y:%s, testing shapes X:%s y:%s" % (X_train.shape, y_train.shape, X_test.shape, y_test.shape))
+    OUTPUTDIMENSIONALITY = 10
+    model = keras.Sequential()
+    model.add(keras.layers.LSTM(
+        units=OUTPUTDIMENSIONALITY, 
+        input_shape=(X_train.shape[1], X_train.shape[2])
+        ))
+    model.add(keras.layers.Dropout(rate=0.2))
+    model.add(keras.layers.Dense(units=OUTPUTDIMENSIONALITY))
+    model.compile(loss='mae', optimizer='adam')
+    model.summary()
+    history = model.fit(
+        X_train, y_train,
+        epochs=10,
+        batch_size=32,
+        validation_split=0.1,
+        shuffle=False
+        )
+    plt.plot(history.history['loss'], label='train')
+    plt.plot(history.history['val_loss'], label='test')
+    plt.legend();
+    plt.show()
+    prediction = model.predict(X_test)
+    prediction.shape
+    testX = test[:len(test) - TIME_STEPS]
+    plt.plot(testX.FeatureX, prediction[:, 0], linestyle='dashed')
+    plt.plot(testX.FeatureX, testX.TargetY)
+    plt.show()
+    return 
 
 def to_sequences(x, y, seq_size=1):
     x_values = []
@@ -161,5 +213,6 @@ def digitalSreeni_180():
 
 if __name__ == '__main__':
     #digitalSreeni_180()
-    linear_regression()
+    #linear_regression()
+    sine_wave_regression()
     

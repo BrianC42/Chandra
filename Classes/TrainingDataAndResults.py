@@ -24,8 +24,8 @@ class Data2Results():
             trainY - values matching the trainX samples
             testX -  sample data used to test the model
             testY -  values matching the testX samples
-            evalX -  sample data used to evaluate the model
-            evalY -  values matching the evalX samples
+            validateX -  sample data used to validateuate the model
+            validateY -  values matching the validateX samples
         
     Functions
         plotGraph
@@ -97,8 +97,8 @@ class Data2Results():
         trainY - values matching the trainX samples
         testX -  sample data used to test the model
         testY -  values matching the testX samples
-        evalX -  sample data used to evaluate the model
-        evalY -  values matching the evalX samples
+        validateX -  sample data used to validateuate the model
+        validateY -  values matching the validateX samples
     '''
     @property
     def data(self):
@@ -141,20 +141,20 @@ class Data2Results():
         self._testY = testY
         
     @property
-    def evalX(self):
-        return self._evalX
+    def validateX(self):
+        return self._validateX
     
-    @evalX.setter
-    def evalX(self, evalX):
-        self._evalX = evalX
+    @validateX.setter
+    def validateX(self, validateX):
+        self._validateX = validateX
         
     @property
-    def evalY(self):
-        return self._evalY
+    def validateY(self):
+        return self._validateY
     
-    @evalY.setter
-    def evalY(self, evalY):
-        self._evalY = evalY
+    @validateY.setter
+    def validateY(self, validateY):
+        self._validateY = validateY
         
     '''
     Functions ...

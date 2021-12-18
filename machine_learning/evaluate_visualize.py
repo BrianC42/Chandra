@@ -7,11 +7,6 @@ import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
 
-from TrainingDataAndResults import Data2Results as d2r
-
-from configuration_constants import JSON_NORMALIZE_DATA
-from configuration_constants import JSON_ACTIVATION
-from configuration_constants import JSON_MODEL_OUTPUT_ACTIVATION
 from configuration_constants import INPUT_LAYERTYPE_DENSE
 from configuration_constants import INPUT_LAYERTYPE_RNN
 from configuration_constants import INPUT_LAYERTYPE_CNN
@@ -22,7 +17,6 @@ from configuration_constants import JSON_METRICS
 def evaluate_and_visualize(d2r):
     
     loss = d2r.model.evaluate(x=d2r.testX, y=d2r.testY)
-    print("evaluation loss: %s" % loss)
     
     x_min = np.min(d2r.testX)
     x_max = np.max(d2r.testX)
@@ -49,18 +43,30 @@ def evaluate_and_visualize(d2r):
     axs[0, 0].set_title("ML Parameters Used")
     axs[0, 0].text(0.5, 0.5, str_structure + '\n' + str_params, horizontalalignment='center', verticalalignment='center', wrap=True)
         
-    axs[0, 1].set_title("Raw Data")
+    axs[0, 1].set_title("Training Data")
     if d2r.modelType == INPUT_LAYERTYPE_DENSE:
-        axs[0, 1].scatter(d2r.testX, d2r.testY)
-    axs[0, 1].set_xlabel("Feature")
-    axs[0, 1].set_ylabel("Target")
-
-    axs[0, 2].set_title("Training Data")
-    if d2r.modelType == INPUT_LAYERTYPE_DENSE:
-        axs[0, 2].scatter(d2r.testX, d2r.testY)
-    axs[0, 2].set_xlabel("Feature")
-    axs[0, 2].set_ylabel("Target")
+        axs[0, 1].scatter(d2r.trainX, d2r.trainY)
+    elif d2r.modelType == INPUT_LAYERTYPE_RNN:
+        axs[0, 1].set_xlabel("time periods")
+        axs[0, 1].set_ylabel("Data Value")
+        #axs[0, 1].plot(d2r.data[:, 0], d2r.data[:, 0])
+    elif d2r.modelType == INPUT_LAYERTYPE_CNN:
+        pass
     
+    axs[0, 2].set_title("Testing Data")
+    if d2r.modelType == INPUT_LAYERTYPE_DENSE:
+        axs[0, 2].set_xlabel("Feature")
+        axs[0, 2].set_ylabel("Target")
+        axs[0, 2].scatter(d2r.testX, d2r.testY)
+    elif d2r.modelType == INPUT_LAYERTYPE_RNN:
+        '''
+        axs[0, 2].set_xlabel("Feature")
+        axs[0, 2].set_ylabel("Target")
+        axs[0, 2].plot(d2r.testX[:, 0], d2r.testY)
+        '''
+    elif d2r.modelType == INPUT_LAYERTYPE_CNN:
+        pass
+
     axs[1, 0].set_title("Fitting history")
     axs[1, 0].plot(d2r.fitting.epoch, d2r.fitting.history['loss'], label='Training loss')
     axs[1, 0].plot(d2r.fitting.epoch, d2r.fitting.history['val_loss'], label='Validation loss')
@@ -70,13 +76,21 @@ def evaluate_and_visualize(d2r):
         
     axs[1, 1].set_title("Prediction")
     if d2r.modelType == INPUT_LAYERTYPE_DENSE:
+        axs[1, 1].set_xlabel("Feature")
+        axs[1, 1].set_ylabel("Target")
         iterable = ((x_min + (((x_max - x_min) / 100) * x)) for x in range(100))
         x_predict = np.fromiter(iterable, float)
         y_predict = d2r.model.predict(x=x_predict)
         axs[1, 1].scatter(x_predict, y_predict)
+    elif d2r.modelType == INPUT_LAYERTYPE_RNN:
+        axs[1, 1].set_xlabel("time periods")
+        axs[1, 1].set_ylabel("Data Value")
+        prediction = d2r.model.predict(d2r.testX)
+        axs[1, 1].plot(range(len(prediction)), d2r.testY)
+        axs[1, 1].plot(range(len(prediction)), prediction[:, 0], linestyle='dashed')
+    elif d2r.modelType == INPUT_LAYERTYPE_CNN:
+        pass
 
-    axs[1, 1].set_xlabel("Feature")
-    axs[1, 1].set_ylabel("Target")
     
     axs[1, 2].set_title("Extrapolation")
     if d2r.modelType == INPUT_LAYERTYPE_DENSE:
@@ -84,6 +98,10 @@ def evaluate_and_visualize(d2r):
         x_predict = np.fromiter(iterable, float)
         y_predict = d2r.model.predict(x=x_predict)
         axs[1, 2].scatter(x_predict, y_predict)
+    elif d2r.modelType == INPUT_LAYERTYPE_RNN:
+        pass
+    elif d2r.modelType == INPUT_LAYERTYPE_CNN:
+        pass
     axs[1, 2].set_xlabel("Feature")
     axs[1, 2].set_ylabel("Target")
     

@@ -119,6 +119,7 @@ def add_training_controls(js_training, nx_graph, nx_process_name):
     nx_loss = js_training[JSON_LOSS]
     nx_metrics = js_training[JSON_METRICS]
     nx_optimizer = js_training[JSON_OPTIMIZER]
+    nx_shuffle = js_training[JSON_SHUFFLE_DATA]
     
     nx.set_node_attributes(nx_graph, {nx_process_name:nx_loss_weights}, JSON_LOSS_WTS)
     nx.set_node_attributes(nx_graph, {nx_process_name:nx_regularization}, JSON_REGULARIZATION)
@@ -133,6 +134,7 @@ def add_training_controls(js_training, nx_graph, nx_process_name):
     nx.set_node_attributes(nx_graph, {nx_process_name:nx_loss}, JSON_LOSS)
     nx.set_node_attributes(nx_graph, {nx_process_name:nx_metrics}, JSON_METRICS)
     nx.set_node_attributes(nx_graph, {nx_process_name:nx_optimizer}, JSON_OPTIMIZER)
+    nx.set_node_attributes(nx_graph, {nx_process_name:nx_shuffle}, JSON_SHUFFLE_DATA)
 
     return
 

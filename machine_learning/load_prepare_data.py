@@ -69,33 +69,6 @@ def loadTrainingData(d2r):
 
     return
 
-def organize_data_for_convolution(nx_graph, node_i, df_training_data):
-    print("Organizing data for convolution\n%s\n" % df_training_data.describe().transpose())
-
-    nx_validation_split = nx.get_node_attributes(nx_graph, JSON_VALIDATION_SPLIT)[node_i]
-    nx_test_split = nx.get_node_attributes(nx_graph, JSON_TEST_SPLIT)[node_i]
-
-    n = len(df_training_data)
-    
-    train_start = 0
-    train_len = int(n * (1 - (nx_validation_split + nx_test_split)))
-    
-    validate_start = train_start + train_len
-    validate_len = int(n * nx_validation_split)
-    
-    test_start = train_start + train_len + validate_len
-    
-    df_train = df_training_data[train_start : (train_start + train_len)]
-    df_values = df_training_data[validate_start : (validate_start + validate_len)]
-    df_test = df_training_data[test_start :]
-    
-    print("**********************************\nWindow generator called with hard coded parameters. Need to be parameterized from json\n***************************")
-    trainingWindow = WindowGenerator(input_width=24, label_width=1, shift=24, \
-                         df_train=df_train, df_values=df_values, df_test=df_test, \
-                         label_columns=['T (degC)'])
-    print(trainingWindow)
-    return trainingWindow
-
 def to_sequences(x, y, seq_size=1):
     '''
     create 3 dimensional dataframes for RNN input layers
@@ -134,70 +107,63 @@ def prepareData(d2r):
         if nx_normalize:
             print("\n*************************************************\nWORK IN PROGRESS\n\tNormalization is not implemented\n*************************************************\n")
         '''
-        train = d2r.data.loc[ : (len(d2r.data) * (1-nx_test_split))]
-        test = d2r.data.loc[(len(d2r.data) * (1-nx_test_split)) :]
+        train = d2r.data.loc[ : (len(d2r.data) * (1-(nx_test_split+nx_validation_split)))]
+        validation = d2r.data.loc[len(train) : (len(train) + (len(d2r.data) * nx_validation_split))]
+        test = d2r.data.loc[len(train) + len(validation) :]
         
         nx_model_type = nx.get_node_attributes(d2r.graph, MODEL_TYPE)[d2r.mlNode]
         if nx_model_type == INPUT_LAYERTYPE_DENSE:
             df_x_train = train[nx_features]
             df_y_train = train[nx_targets[0]]
+            df_x_validation = validation[nx_features]
+            df_y_validation = validation[nx_targets[0]]
             df_x_test = test[nx_features]
             df_y_test = test[nx_targets[0]]
         elif nx_model_type == INPUT_LAYERTYPE_RNN:
             nx_time_steps = nx.get_node_attributes(d2r.graph, JSON_TIMESTEPS)[d2r.mlNode]
+            '''
+            X_train, y_train = create_dataset(train[['TargetY']], train.TargetY, TIME_STEPS)
+            X_test, y_test = create_dataset(test[['TargetY']], test.TargetY, TIME_STEPS)
+
             df_x_train, df_y_train = to_sequences(train[nx_features],train[nx_targets[0]], nx_time_steps)
+            df_x_validation, df_y_validation = to_sequences(validation[nx_features],validation[nx_targets[0]], nx_time_steps)
             df_x_test, df_y_test = to_sequences(test[nx_features], test[nx_targets[0]], nx_time_steps)        
+            '''
+            df_x_train, df_y_train = to_sequences(train[nx_targets],train[nx_targets[0]], nx_time_steps)
+            df_x_validation, df_y_validation = to_sequences(validation[nx_targets],validation[nx_targets[0]], nx_time_steps)
+            df_x_test, df_y_test = to_sequences(test[nx_targets], test[nx_targets[0]], nx_time_steps)        
+
         elif nx_model_type == INPUT_LAYERTYPE_CNN:
             print("\n*************************************************\nWORK IN PROGRESS\n\tCNN preparation is not implemented\n*************************************************\n")
             pass
 
         d2r.trainX = np.array(df_x_train, dtype=nx_data_precision)
         d2r.trainY = np.array(df_y_train, dtype=nx_data_precision)
+        d2r.validateX = np.array(df_x_validation, dtype=nx_data_precision)
+        d2r.validateY = np.array(df_y_validation, dtype=nx_data_precision)
         d2r.testX = np.array(df_x_test, dtype=nx_data_precision)
         d2r.testY = np.array(df_y_test, dtype=nx_data_precision)
-    return
-
-'''
-def discard_outliers(nx_graph, node_i, df_data):
-    nx_remove_outlier_list = nx.get_node_attributes(nx_graph, JSON_REMOVE_OUTLIER_LIST)
-    for feature in nx_remove_outlier_list[node_i]:
-        if JSON_OUTLIER_FEATURE in feature:
-            featureName = feature[JSON_OUTLIER_FEATURE]
-            outlierPct = feature[JSON_OUTLIER_PCT]
-            print("Removing outliers (highest and lowest %s%%) from %s" % (outlierPct * 100, featureName))        
-            rows = df_data.shape[0]
-            df_data = df_data.sort_values(by = featureName)
-            df_data = df_data[int(rows * outlierPct) : (rows - int(rows * outlierPct))]
-        
-    return df_data
-'''
-
-def set_1Hot_TF(df_out, categoryFields, category1Hot):
-    #ndxList = df_out.index
-    for ndx in df_out.index:
-        if df_out.loc[ndx, categoryFields]:
-            df_out.loc[ndx, category1Hot[0]] = 1
-        else:
-            df_out.loc[ndx, category1Hot[1]] = 1
     return
 
 def prepareTrainingData(nx_graph, node_name, nx_edge):
     '''
     Select required data elements and discard the rest
     '''
-    nx_data_file = nx.get_node_attributes(nx_graph, JSON_INPUT_DATA_FILE)
-    #print("load and prepare data using %s json parameters and file %s" % (node_name, nx_data_file[node_name]))
+    
     nx_data_flow = nx.get_node_attributes(nx_graph, JSON_OUTPUT_FLOW)
     output_flow = nx_data_flow[node_name]
+    
     nx_ignoreBlanks = nx.get_edge_attributes(nx_graph, JSON_IGNORE_BLANKS)
-    nx_dataFields = nx.get_edge_attributes(nx_graph, JSON_FEATURE_FIELDS)
-    nx_targetFields = nx.get_edge_attributes(nx_graph, JSON_TARGET_FIELDS)
-    featureFields = nx_dataFields[nx_edge[0], nx_edge[1], output_flow]
-    targetFields = nx_targetFields[nx_edge[0], nx_edge[1], output_flow]
     ignoreBlanks = nx_ignoreBlanks[nx_edge[0], nx_edge[1], output_flow]
+    
+    nx_dataFields = nx.get_edge_attributes(nx_graph, JSON_FEATURE_FIELDS)
+    featureFields = nx_dataFields[nx_edge[0], nx_edge[1], output_flow]
+    
+    nx_targetFields = nx.get_edge_attributes(nx_graph, JSON_TARGET_FIELDS)
+    targetFields = nx_targetFields[nx_edge[0], nx_edge[1], output_flow]
             
     df_combined = pd.DataFrame()
-
+    nx_data_file = nx.get_node_attributes(nx_graph, JSON_INPUT_DATA_FILE)
     for dataFile in nx_data_file[node_name]:
         fileSpecList = glob.glob(dataFile)
         fileCount = len(fileSpecList)

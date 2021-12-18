@@ -50,7 +50,10 @@
 				{
 				"layerName" : "output",
 				"layerType" : "dense",
-				"layerUnits" : 10
+				"layerUnits" : 10,
+				"comment: activations" : "https://keras.io/api/layers/activations/",
+				"comment: activations regression" : ["relu", "sigmoid", "softmax", "softplus", "softsign", "tanh", "selu", "elu", "exponential"],
+				"activation" : "relu"
 				}
 			],
 			"training" : {
@@ -58,16 +61,17 @@
 				"denseRegularation" : false,
 				"regularationValue" : 0.0,
 				"batchSize" : 32,
-				"epochs" : 10,
+				"epochs" : 13,
 				"useBias" : true,
 				"validationSplit" : 0.1,
 				"testSplit" : 0.2,
+				"shuffle" : false,
 				"verbose" : 2,
 				"balanceClasses" : true,
 				"comment: compilationLoss" : ["see https://keras.io/api/losses/regression_losses/"],
 				"comment: compilationLoss regression" : ["mean_squared_error", "mean_absolute_error", "mean_absolute_percentage_error", "mean_squared_logarithmic_error", "cosine_similarity"],
 				"comment: compilationLoss categorization probablistic" : ["binary_crossentropy", "categorical_crossentropy", "sparse_categorical_crossentropy", "poisson"],
-				"compilationLoss" : "mean_absolute_error",
+				"compilationLoss" : "mae",
 				"comment: compilationMetrics" : ["see https://keras.io/api/metrics/regression_metrics/"],
 				"comment: compilationMetrics regression" : ["mean_squared_error", "root_mean_squared_error", "mean_absolute_error", "mean_absolute_percentage_error", "mean_squared_logarithmic_error", "cosine_similarity", "log_cosh_error"],
 				"comment: compilationMetrics categorization accuracy" : ["accuracy", "binary_accuracy", "categorical_accuracy", "top_k_categorical_accuracy", "sparse_top_k_categorical_accuracy"],
@@ -76,9 +80,6 @@
 				"comment: compilationMetrics image" : [],
 				"comment: compilationMetrics hinge" : [],
 				"compilationMetrics" : ["accuracy"],
-				"comment: activations" : "https://keras.io/api/layers/activations/",
-				"comment: activations regression" : ["relu", "sigmoid", "softmax", "softplus", "softsign", "tanh", "selu", "elu", "exponential"],
-				"activation" : "relu",
 				"comment: optimizers" : "https://keras.io/api/optimizers/",
 				"comment: optimizer values" : ["SGD", "RMSprop", "Adam", "Adadelta", "Adagrad", "Adamax", "Nadam", "Ftrl"],
 				"optimizer" : "adam"

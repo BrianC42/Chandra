@@ -20,7 +20,7 @@ def trainModel(d2r):
     logging.info('====> trainModels models')
     logging.info('====> ================================================')
     
-    RANDOM_SEED = 42
+    #RANDOM_SEED = 42
 
     # error handling
     try:
@@ -29,18 +29,18 @@ def trainModel(d2r):
         nx_batch = nx.get_node_attributes(d2r.graph, JSON_BATCH)[d2r.mlNode]
         nx_epochs = nx.get_node_attributes(d2r.graph, JSON_EPOCHS)[d2r.mlNode]
         nx_verbose = nx.get_node_attributes(d2r.graph, JSON_VERBOSE)[d2r.mlNode]
-        '''
         nx_shuffle = nx.get_node_attributes(d2r.graph, JSON_SHUFFLE_DATA)[d2r.mlNode]
-                              shuffle=nx_shuffle, \
-        '''
         
-        np.random.seed(RANDOM_SEED)
-        tf.random.set_seed(RANDOM_SEED)
-        
+        #np.random.seed(RANDOM_SEED)
+        #tf.random.set_seed(RANDOM_SEED)
+
         d2r.fitting = d2r.model.fit(x=d2r.trainX, y=d2r.trainY, \
-                              batch_size=nx_batch, epochs=nx_epochs, \
-                              validation_data=(d2r.testX, d2r.testY), \
-                              verbose=nx_verbose)
+                                    validation_data=(d2r.validateX, d2r.validateY), \
+                                    #validation_split=0.1, \
+                                    epochs=nx_epochs, \
+                                    batch_size=nx_batch, \
+                                    shuffle=nx_shuffle, \
+                                    verbose=nx_verbose)
         
     except Exception:
         exc_info = sys.exc_info()
