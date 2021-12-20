@@ -40,7 +40,8 @@
 				"timeSteps" : 20,
 				"featureCount": 1,
 				"layerUnits" : 10,
-				"returnSequences" : false
+				"returnSequences" : false,
+				"outputActivation" : "linear"
 				},
 				{
 				"layerName" : "dropout1",
@@ -53,7 +54,7 @@
 				"layerUnits" : 10,
 				"comment: activations" : "https://keras.io/api/layers/activations/",
 				"comment: activations regression" : ["relu", "sigmoid", "softmax", "softplus", "softsign", "tanh", "selu", "elu", "exponential"],
-				"activation" : "relu"
+				"outputActivation" : "linear"
 				}
 			],
 			"training" : {
@@ -61,7 +62,7 @@
 				"denseRegularation" : false,
 				"regularationValue" : 0.0,
 				"batchSize" : 32,
-				"epochs" : 13,
+				"epochs" : 10,
 				"useBias" : true,
 				"validationSplit" : 0.1,
 				"testSplit" : 0.2,

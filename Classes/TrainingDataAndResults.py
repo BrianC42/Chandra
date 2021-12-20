@@ -83,6 +83,14 @@ class Data2Results():
         self._fitting = fitting
     
     @property
+    def evaluation(self):
+        return self._evaluation
+    
+    @evaluation.setter
+    def evaluation(self, evaluation):
+        self._evaluation = evaluation
+    
+    @property
     def modelType(self):
         return self._modelType
     

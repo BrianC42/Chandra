@@ -113,12 +113,28 @@ def prepareData(d2r):
         
         nx_model_type = nx.get_node_attributes(d2r.graph, MODEL_TYPE)[d2r.mlNode]
         if nx_model_type == INPUT_LAYERTYPE_DENSE:
-            df_x_train = train[nx_features]
+            '''
+            '''
+            d2r.trainX = train[nx_features[0]]
+            d2r.trainY = train[nx_targets[0]]
+            d2r.validateX = validation[nx_features[0]]
+            d2r.validateY = validation[nx_targets[0]]
+            d2r.testX = test[nx_features[0]]
+            d2r.testY = test[nx_targets[0]]
+            '''
+            df_x_train = train[nx_features[0]]
             df_y_train = train[nx_targets[0]]
-            df_x_validation = validation[nx_features]
+            df_x_validation = validation[nx_features[0]]
             df_y_validation = validation[nx_targets[0]]
-            df_x_test = test[nx_features]
+            df_x_test = test[nx_features[0]]
             df_y_test = test[nx_targets[0]]
+            d2r.trainX = np.array(df_x_train, dtype=nx_data_precision)
+            d2r.trainY = np.array(df_y_train, dtype=nx_data_precision)
+            d2r.validateX = np.array(df_x_validation, dtype=nx_data_precision)
+            d2r.validateY = np.array(df_y_validation, dtype=nx_data_precision)
+            d2r.testX = np.array(df_x_test, dtype=nx_data_precision)
+            d2r.testY = np.array(df_y_test, dtype=nx_data_precision)
+            '''
         elif nx_model_type == INPUT_LAYERTYPE_RNN:
             nx_time_steps = nx.get_node_attributes(d2r.graph, JSON_TIMESTEPS)[d2r.mlNode]
             '''
@@ -133,16 +149,16 @@ def prepareData(d2r):
             df_x_validation, df_y_validation = to_sequences(validation[nx_targets],validation[nx_targets[0]], nx_time_steps)
             df_x_test, df_y_test = to_sequences(test[nx_targets], test[nx_targets[0]], nx_time_steps)        
 
+            d2r.trainX = np.array(df_x_train, dtype=nx_data_precision)
+            d2r.trainY = np.array(df_y_train, dtype=nx_data_precision)
+            d2r.validateX = np.array(df_x_validation, dtype=nx_data_precision)
+            d2r.validateY = np.array(df_y_validation, dtype=nx_data_precision)
+            d2r.testX = np.array(df_x_test, dtype=nx_data_precision)
+            d2r.testY = np.array(df_y_test, dtype=nx_data_precision)
         elif nx_model_type == INPUT_LAYERTYPE_CNN:
             print("\n*************************************************\nWORK IN PROGRESS\n\tCNN preparation is not implemented\n*************************************************\n")
             pass
 
-        d2r.trainX = np.array(df_x_train, dtype=nx_data_precision)
-        d2r.trainY = np.array(df_y_train, dtype=nx_data_precision)
-        d2r.validateX = np.array(df_x_validation, dtype=nx_data_precision)
-        d2r.validateY = np.array(df_y_validation, dtype=nx_data_precision)
-        d2r.testX = np.array(df_x_test, dtype=nx_data_precision)
-        d2r.testY = np.array(df_y_test, dtype=nx_data_precision)
     return
 
 def prepareTrainingData(nx_graph, node_name, nx_edge):

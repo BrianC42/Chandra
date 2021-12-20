@@ -11,6 +11,7 @@
 "comment denseWaveForm processNet" : "\\chandra\\processingNets\\denseWaveForm.json",
 "comment marketTchnicals processNet" : "\\chandra\\processingNets\\marketTchnicals.json",
 "comment conv1DWaveForm processNet" : "\\chandra\\processingNets\\conv1DWaveForm.json",
+"comment active development below" : true,
 "comment denseLinearRegression processNet" : "\\chandra\\processingNets\\denseLinearRegression.json",
 "comment sinWaveRegression processNet" : "\\chandra\\processingNets\\time_series_demo.json",
 "processNet" : "\\chandra\\processingNets\\time_series_demo.json",

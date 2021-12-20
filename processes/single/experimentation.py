@@ -34,6 +34,30 @@ from sklearn.preprocessing import MinMaxScaler, StandardScaler
 import seaborn as sns
 
 def linear_regression():
+    df_data = pd.read_csv('d:/Brian/AI Projects/Datasets/linear regression.csv')
+    TRAINPCT = 0.8
+    train = df_data.loc[ : (len(df_data) * TRAINPCT)]
+    test = df_data.loc[(len(df_data) * TRAINPCT) :]
+    print("Training shape %s, testing shape %s" % (train.shape, test.shape))
+    model = keras.Sequential()
+    model.add(keras.layers.Dense(units=64, input_shape=(1, )))
+    model.add(keras.layers.Dropout(rate=0.2))
+    model.add(keras.layers.Dense(units=64))
+    model.add(keras.layers.Dense(units=1))
+    model.compile(loss='mae', optimizer='adam')
+    model.summary()
+    print("Training shape: x-%s, y-%s" % (train['Feature-x'].shape, train['Noisy-target'].shape))
+    history = model.fit(train['Feature-x'], train['Noisy-target'], \
+                        epochs=5, batch_size=32, validation_split=0.1, shuffle=True, verbose=2)
+    plt.plot(history.history['loss'], label='training loss')
+    plt.plot(history.history['val_loss'], label='testing loss')
+    plt.legend()
+    plt.show()
+    prediction = model.predict(test['Feature-x'])
+    plt.plot(test['Feature-x'], test['Noisy-target'], label='test')
+    plt.plot(test['Feature-x'], prediction, linestyle='dashed', label='prediction')
+    plt.legend()
+    plt.show()
     return
 
 def create_dataset(X, y, time_steps=1):
@@ -60,30 +84,23 @@ def sine_wave_regression():
     print("Training shapes X:%s y:%s, testing shapes X:%s y:%s" % (X_train.shape, y_train.shape, X_test.shape, y_test.shape))
     OUTPUTDIMENSIONALITY = 10
     model = keras.Sequential()
-    model.add(keras.layers.LSTM(
-        units=OUTPUTDIMENSIONALITY, 
-        input_shape=(X_train.shape[1], X_train.shape[2])
-        ))
+    model.add(keras.layers.LSTM(units=OUTPUTDIMENSIONALITY, input_shape=(X_train.shape[1], X_train.shape[2])))
     model.add(keras.layers.Dropout(rate=0.2))
     model.add(keras.layers.Dense(units=OUTPUTDIMENSIONALITY))
     model.compile(loss='mae', optimizer='adam')
     model.summary()
-    history = model.fit(
-        X_train, y_train,
-        epochs=10,
-        batch_size=32,
-        validation_split=0.1,
-        shuffle=False
-        )
+    history = model.fit(X_train, y_train,
+                        epochs=10, batch_size=32, validation_split=0.1,shuffle=False, verbose=2)
     plt.plot(history.history['loss'], label='train')
     plt.plot(history.history['val_loss'], label='test')
-    plt.legend();
+    plt.legend()
     plt.show()
     prediction = model.predict(X_test)
     prediction.shape
     testX = test[:len(test) - TIME_STEPS]
-    plt.plot(testX.FeatureX, prediction[:, 0], linestyle='dashed')
-    plt.plot(testX.FeatureX, testX.TargetY)
+    plt.plot(testX.FeatureX, prediction[:, 0], label='prediction', linestyle='dashed')
+    plt.plot(testX.FeatureX, testX.TargetY, label='test series')
+    plt.legend()
     plt.show()
     return 
 
@@ -213,6 +230,6 @@ def digitalSreeni_180():
 
 if __name__ == '__main__':
     #digitalSreeni_180()
-    #linear_regression()
+    linear_regression()
     sine_wave_regression()
     

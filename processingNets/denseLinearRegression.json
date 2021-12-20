@@ -32,10 +32,8 @@
 		},
 		"conditionalFields" : {
 			"modelFile" : "d:\\brian\\AI Projects\\models\\LRmodel",
-			"dataPrecision" : "float32",
+			"dataPrecision" : "float64",
 			"preprocessingLayers" : {
-				"comments - supported layers" : ["linearRegression", "discretization", "categoryEncoding"],
-				"deprecated 1 - preprocessSequence" : ["linearRegression"],
 				"normalize" : false
 				},
 			"modelLayers" : [
@@ -44,20 +42,25 @@
 				"layerType" : "dense",
 				"featureCount": 1,
 				"layerUnits" : 64,
-				"activation" : "relu"
+				"outputActivation" : "linear"
+				},
+				{
+				"layerName" : "dropout",
+				"layerType" : "dropout",
+				"dropoutRate" : 0.2
 				},
 				{
 				"layerName" : "hidden",
 				"layerType" : "dense",
 				"layerUnits" : 64,
-				"activation" : "relu"
+				"outputActivation" : "linear"
 				},
 				{
 				"layerName" : "output",
 				"layerType" : "dense",
 				"layerUnits" : 1,
 				"comment: supported values - activation" : ["relu", "sigmoid", "softmax", "softplus", "softsign", "tanh", "selu", "elu", "exponential"],
-				"comment activation" : "relu"
+				"outputActivation" : "linear"
 				}
 			],
 			"training" : {
@@ -67,13 +70,14 @@
 				"denseRegularation" : false,
 				"regularationValue" : 0.0,
 				"batchSize" : 32,
-				"epochs" : 10,
+				"epochs" : 5,
 				"useBias" : true,
-				"validationSplit" : 0.2,
-				"testSplit" : 0.1,
+				"validationSplit" : 0.1,
+				"testSplit" : 0.2,
+				"shuffle" : true,
 				"verbose" : 2,
 				"balanceClasses" : true,
-				"compilationLoss" : "mean_squared_error",
+				"compilationLoss" : "mae",
 				"comment: supported values - compilationLoss" : ["binary_crossentropy", "mean_squared_error", "mean_absolute_error"],
 				"compilationMetrics" : ["accuracy"],
 				"comment: supported values - compilationMetrics" : ["accuracy"],

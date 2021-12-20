@@ -33,7 +33,7 @@ def trainModel(d2r):
         
         #np.random.seed(RANDOM_SEED)
         #tf.random.set_seed(RANDOM_SEED)
-
+        
         d2r.fitting = d2r.model.fit(x=d2r.trainX, y=d2r.trainY, \
                                     validation_data=(d2r.validateX, d2r.validateY), \
                                     #validation_split=0.1, \
@@ -41,7 +41,7 @@ def trainModel(d2r):
                                     batch_size=nx_batch, \
                                     shuffle=nx_shuffle, \
                                     verbose=nx_verbose)
-        
+    
     except Exception:
         exc_info = sys.exc_info()
         exc_str = exc_info[1].args[0]
