@@ -90,7 +90,7 @@ def sine_wave_regression():
     model.compile(loss='mae', optimizer='adam')
     model.summary()
     history = model.fit(X_train, y_train,
-                        epochs=10, batch_size=32, validation_split=0.1,shuffle=False, verbose=2)
+                        epochs=6, batch_size=32, validation_split=0.1,shuffle=False, verbose=2)
     plt.plot(history.history['loss'], label='train')
     plt.plot(history.history['val_loss'], label='test')
     plt.legend()

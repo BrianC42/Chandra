@@ -14,10 +14,6 @@ from tensorflow import keras
 from configuration_constants import JSON_TENSORFLOW
 from configuration_constants import JSON_PRECISION
 from configuration_constants import JSON_PROCESS_TYPE
-from configuration_constants import MODEL_TYPE
-from configuration_constants import INPUT_LAYERTYPE_DENSE
-from configuration_constants import INPUT_LAYERTYPE_RNN
-from configuration_constants import INPUT_LAYERTYPE_CNN
 from configuration_constants import JSON_LAYERS
 from configuration_constants import JSON_MODEL_OUTPUT_ACTIVATION
 from configuration_constants import JSON_TIMESTEPS
@@ -32,6 +28,11 @@ from configuration_constants import JSON_LOSS_WTS
 from configuration_constants import JSON_OPTIMIZER
 from configuration_constants import JSON_MODEL_FILE
 
+from TrainingDataAndResults import MODEL_TYPE
+from TrainingDataAndResults import INPUT_LAYERTYPE_DENSE
+from TrainingDataAndResults import INPUT_LAYERTYPE_RNN
+from TrainingDataAndResults import INPUT_LAYERTYPE_CNN
+
 def build_layer(d2r, layer_type, layer_definition, input_layer):
     ''' some parameters are common across multiple layer type '''
     nx_layer_name = None
@@ -42,7 +43,8 @@ def build_layer(d2r, layer_type, layer_definition, input_layer):
     if 'layerUnits' in layer_definition:
         nx_layer_units = layer_definition['layerUnits']
 
-    nx_activation = 'tanh'
+    #nx_activation = 'tanh'
+    nx_activation = None
     if JSON_MODEL_OUTPUT_ACTIVATION in layer_definition:
         nx_activation = layer_definition[JSON_MODEL_OUTPUT_ACTIVATION]
                 

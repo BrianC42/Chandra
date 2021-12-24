@@ -1,30 +1,101 @@
 {
-"comment - processing node section" : "Speciification details  for the processing nodes",
+"comment - processing node section" : "Specification details for the processing nodes",
 "processNodes" : [
 	{
-	"processNodeName" : "name",
-	"requiredFields" : {
-		"comments: supported values - processType" : ["dataPrep", "KerasDense", "KerasConv1D"],
-		"processType" : "type from above list",
-		"inputFlows" : [],
-		"outputFlow" : "name of output data flow",
-		"outputFile" : "",
-		"logFile" : ""
+		"processNodeName" : "???",
+		"requiredFields" : {
+			"processType" : "???",
+			"comments: supported values - processType" : ["dataPrep", "Tensorflow"],
+			"inputFlows" : [],
+			"outputFlow" : "???",
+			"outputFile" : "",
+			"logFile" : ""
 		},
-	"conditionalFields" : {
-		"dataPrepCtrl" : {
-			"inputFile" : ["full path and file name specification"]
+		"conditionalFields" : {
+			"dataPrepCtrl" : {
+				"inputFile" : ["???"]
 			},
-		"removeOutliers" : [
-			{"featureName" : "field 1", "outlierPct" : 0.00005},
-			{"featureName" : "field 2", "outlierPct" : 0.00005}
+			"removeOutliers" : [
+				{"commented - featureName - none" : "", "outlierPct" : 0.02}
 			]
+		}
+	},
+	{
+		"processNodeName" : "???",
+		"requiredFields" : {
+			"comments: supported values - processType" : ["dataPrep", "Tensorflow"],
+			"processType" : "???",
+			"inputFlows" : ["???"],
+			"outputFlow" : "",
+			"outputFile" : "d:\\brian\\AI Projects\\models\\???",
+			"logFile" : "d:\\brian\\AI Projects\\logs\\???.txt"
+		},
+		"conditionalFields" : {
+			"modelFile" : "d:\\brian\\AI Projects\\models\\???",
+			"dataPrecision" : "float32",
+			"modelLayers" : [
+				{
+				"layerName" : "???",
+				"layerType" : "lstm",
+				"timeSteps" : 20,
+				"featureCount": 1,
+				"layerUnits" : 10,
+				"returnSequences" : false,
+				"comment: activations" : "https://keras.io/api/layers/activations/",
+				"comment outputActivation" : "???"
+				},
+				{
+				"layerName" : "???",
+				"layerType" : "dropout",
+				"dropoutRate" : 0.2
+				},
+				{
+				"layerName" : "???",
+				"layerType" : "dense",
+				"layerUnits" : 10,
+				"comment outputActivation" : "???"
+				}
+			],
+			"training" : {
+				"lossWeights" : [1.0],
+				"denseRegularation" : false,
+				"regularationValue" : 0.0,
+				"batchSize" : 32,
+				"epochs" : 10,
+				"useBias" : true,
+				"validationSplit" : 0.1,
+				"testSplit" : 0.2,
+				"shuffle" : false,
+				"verbose" : 2,
+				"balanceClasses" : true,
+				"comment: compilationLoss" : ["see https://keras.io/api/losses/regression_losses/"],
+				"compilationLoss" : "mae",
+				"comment: compilationMetrics" : ["see https://keras.io/api/metrics/regression_metrics/"],
+				"compilationMetrics" : ["accuracy"],
+				"comment: optimizers" : "https://keras.io/api/optimizers/",
+				"optimizer" : "adam"
+			}
 		}
 	}
 ],
-"comment - wave form dataflow section" : "Specification details  for the flows of data between processing nodes",
+"comment - wave form dataflow section" : "Specification details for the flows of data between processing nodes",
 "dataFlows" : [
 	{
+	"flowName" : "???",
+	"requiredFields" : {
+		"flowFrom" : "???",
+		"flowTo" : "???",
+		"flowDataFile" : "d:\\brian\\AI Projects\\internal_flows\\???.csv"
+		},
+	"conditionalFields" : {
+		"TensorflowData" : {
+			"timeSequence" : true,
+			"balanceClasses" : false,
+			"ignoreBlanks" : true,
+			"features" : ["???"],
+			"targets" : ["???"]
+			}
+		}
 	}
 ],
 "comment end of specification" : "------------------------------------------------------------------------------------"

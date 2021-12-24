@@ -45,7 +45,7 @@ from configuration_graph import build_configuration_graph
 
 from load_prepare_data import collect_and_select_data
 from load_prepare_data import loadTrainingData
-from load_prepare_data import prepareData
+from load_prepare_data import prepareTrainingData
 from assemble_model import buildModel
 from train_model import trainModel
 from evaluate_visualize import evaluate_and_visualize
@@ -138,7 +138,7 @@ if __name__ == '__main__':
     #node_i, k_model, x_features, y_targets, x_test, y_test, fitting = build_and_train_model(nx_graph)
     buildModel(d2r)
     loadTrainingData(d2r)
-    prepareData(d2r)
+    prepareTrainingData(d2r)
     trainModel(d2r)
 
     ''' .................... Step 3 - Evaluate the model! ...............

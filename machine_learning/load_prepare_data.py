@@ -11,8 +11,8 @@ import networkx as nx
 import pandas as pd
 import numpy as np
 import tensorflow as tf
-
-from tfWindowGenerator import WindowGenerator
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
+from termcolor import colored
 
 from configuration_constants import JSON_PRECISION
 from configuration_constants import JSON_DATA_PREP_PROCESS
@@ -23,21 +23,18 @@ from configuration_constants import JSON_FLOW_DATA_FILE
 from configuration_constants import JSON_INPUT_FLOWS
 from configuration_constants import JSON_NORMALIZE_DATA
 from configuration_constants import JSON_PROCESS_TYPE
-from configuration_constants import MODEL_TYPE
-from configuration_constants import INPUT_LAYERTYPE_DENSE
-from configuration_constants import INPUT_LAYERTYPE_RNN
-from configuration_constants import INPUT_LAYERTYPE_CNN
 from configuration_constants import JSON_TENSORFLOW
 from configuration_constants import JSON_FEATURE_FIELDS
 from configuration_constants import JSON_TARGET_FIELDS
 from configuration_constants import JSON_VALIDATION_SPLIT
 from configuration_constants import JSON_TEST_SPLIT
 from configuration_constants import JSON_TIMESTEPS
-'''
-from configuration_constants import JSON_REMOVE_OUTLIER_LIST
-from configuration_constants import JSON_OUTLIER_FEATURE
-from configuration_constants import JSON_OUTLIER_PCT
-'''
+
+from TrainingDataAndResults import MODEL_TYPE
+from TrainingDataAndResults import INPUT_LAYERTYPE_DENSE
+from TrainingDataAndResults import INPUT_LAYERTYPE_RNN
+from TrainingDataAndResults import INPUT_LAYERTYPE_CNN
+from pickle import FALSE
 
 def loadTrainingData(d2r):
     '''
@@ -52,8 +49,7 @@ def loadTrainingData(d2r):
         nx_data_file = nx.get_edge_attributes(d2r.graph, JSON_FLOW_DATA_FILE)
         inputData = nx_data_file[d2r.mlEdgeIn[0], d2r.mlEdgeIn[1], nx_input_flow[0]]    
         if os.path.isfile(inputData):
-            df_training_data = pd.read_csv(inputData)
-        d2r.data = df_training_data
+            d2r.data = pd.read_csv(inputData)
         
     except Exception:
         exc_info = sys.exc_info()
@@ -63,6 +59,7 @@ def loadTrainingData(d2r):
         elif isinstance(exc_str, tuple):
             exc_txt = err_txt + "\n\t"
             for s in exc_str:
+                exc_txt += " "
                 exc_txt += s
         logging.debug(exc_txt)
         sys.exit(exc_txt)
@@ -71,7 +68,9 @@ def loadTrainingData(d2r):
 
 def to_sequences(x, y, seq_size=1):
     '''
-    create 3 dimensional dataframes for RNN input layers
+    return dataframe inputs as numpy arrays of shapes
+    x: (samples, seq_size, 1)
+    y: (samples, )
     '''
     x_values = []
     y_values = []
@@ -82,7 +81,31 @@ def to_sequences(x, y, seq_size=1):
 
     return np.array(x_values), np.array(y_values)
 
-def prepareData(d2r):
+def id_columns(data, features, targets):
+    feature_cols = []
+    target_cols= []
+    
+    ndx = 0
+    for col in data.columns:
+        if col in features:
+            feature_cols.append(ndx)
+        if col in targets:
+            target_cols.append(ndx)
+        ndx += 1
+    
+    return feature_cols, target_cols
+
+def np_to_sequence(data, sequence_step_id, targets, seq_size=1):
+    npx = np.empty([len(data) - (seq_size+1), seq_size, len(targets)], dtype=float)
+    npy = np.empty([len(data) - (seq_size+1), len(targets)          ], dtype=float)
+
+    for i in range(len(data) - (seq_size+1)):
+        npx[i, :, :]    = data[i : i+seq_size, targets[:]]
+        npy[i]          = data[i+seq_size+1, targets[:]]
+
+    return npx, npy
+
+def prepareTrainingData(d2r):
     '''
     Organize the feature data elements as required by Tensorflow models and matching target elements
     '''
@@ -91,77 +114,87 @@ def prepareData(d2r):
     nx_featureFields = nx.get_edge_attributes(d2r.graph, JSON_FEATURE_FIELDS)
     nx_features = nx_featureFields[d2r.mlEdgeIn[0], d2r.mlEdgeIn[1], nx_input_flows[0]]    
 
-    nx_targetFiields = nx.get_edge_attributes(d2r.graph, JSON_TARGET_FIELDS)
-    nx_targets = nx_targetFiields[d2r.mlEdgeIn[0], d2r.mlEdgeIn[1], nx_input_flows[0]]    
+    nx_targetFields = nx.get_edge_attributes(d2r.graph, JSON_TARGET_FIELDS)
+    nx_targets = nx_targetFields[d2r.mlEdgeIn[0], d2r.mlEdgeIn[1], nx_input_flows[0]]    
+
+    feature_cols, target_cols = id_columns(d2r.data, nx_features, nx_targets)
 
     nx_test_split = nx.get_node_attributes(d2r.graph, JSON_TEST_SPLIT)[d2r.mlNode]
     nx_validation_split = nx.get_node_attributes(d2r.graph, JSON_VALIDATION_SPLIT)[d2r.mlNode]
 
+    d2r.normalized = False
+    
     nx_read_attr = nx.get_node_attributes(d2r.graph, JSON_PROCESS_TYPE)
     if nx_read_attr[d2r.mlNode] == JSON_TENSORFLOW:    
         print("Preparing the data for training: %s" % d2r.mlNode)
-            
         nx_data_precision = nx.get_node_attributes(d2r.graph, JSON_PRECISION)[d2r.mlNode]
-        '''
-        nx_normalize = nx.get_node_attributes(d2r.graph, JSON_NORMALIZE_DATA)[d2r.mlNode]
-        if nx_normalize:
-            print("\n*************************************************\nWORK IN PROGRESS\n\tNormalization is not implemented\n*************************************************\n")
-        '''
-        train = d2r.data.loc[ : (len(d2r.data) * (1-(nx_test_split+nx_validation_split)))]
-        validation = d2r.data.loc[len(train) : (len(train) + (len(d2r.data) * nx_validation_split))]
-        test = d2r.data.loc[len(train) + len(validation) :]
         
+        len_train = int(len(d2r.data) * (1-(nx_test_split+nx_validation_split)))
+        len_validate = int(len(d2r.data) * nx_validation_split)
+        len_test = int(len(d2r.data) * nx_test_split)
+        
+        nx_normalize = nx.get_node_attributes(d2r.graph, JSON_NORMALIZE_DATA)[d2r.mlNode]
+
         nx_model_type = nx.get_node_attributes(d2r.graph, MODEL_TYPE)[d2r.mlNode]
         if nx_model_type == INPUT_LAYERTYPE_DENSE:
-            '''
-            '''
+            if nx_normalize == 'standard':
+                print("========= WIP ===========\n\tnormalization - standard\n\tnot implemented\n=========================")
+            elif nx_normalize == 'minmax':
+                print("========= WIP ===========\n\tnormalization - minmax\n\tnot implemented\n=========================")
+            elif nx_normalize == 'none':
+                print("\nData is not normalized ...")
+            else:
+                ex_txt = 'Normalization {:s} is not supported'.format(nx_normalize)
+                raise NameError(ex_txt)
+
+            train       = d2r.data.loc[                         : len_train]
+            validation  = d2r.data.loc[len_train                : (len_train + len_validate)]
+            test        = d2r.data.loc[len_train + len_validate : ]
+            
             d2r.trainX = train[nx_features[0]]
             d2r.trainY = train[nx_targets[0]]
             d2r.validateX = validation[nx_features[0]]
             d2r.validateY = validation[nx_targets[0]]
             d2r.testX = test[nx_features[0]]
             d2r.testY = test[nx_targets[0]]
-            '''
-            df_x_train = train[nx_features[0]]
-            df_y_train = train[nx_targets[0]]
-            df_x_validation = validation[nx_features[0]]
-            df_y_validation = validation[nx_targets[0]]
-            df_x_test = test[nx_features[0]]
-            df_y_test = test[nx_targets[0]]
-            d2r.trainX = np.array(df_x_train, dtype=nx_data_precision)
-            d2r.trainY = np.array(df_y_train, dtype=nx_data_precision)
-            d2r.validateX = np.array(df_x_validation, dtype=nx_data_precision)
-            d2r.validateY = np.array(df_y_validation, dtype=nx_data_precision)
-            d2r.testX = np.array(df_x_test, dtype=nx_data_precision)
-            d2r.testY = np.array(df_y_test, dtype=nx_data_precision)
-            '''
         elif nx_model_type == INPUT_LAYERTYPE_RNN:
             nx_time_steps = nx.get_node_attributes(d2r.graph, JSON_TIMESTEPS)[d2r.mlNode]
-            '''
-            X_train, y_train = create_dataset(train[['TargetY']], train.TargetY, TIME_STEPS)
-            X_test, y_test = create_dataset(test[['TargetY']], test.TargetY, TIME_STEPS)
+            
+            if nx_normalize == 'standard':
+                print("========= WIP ===========\n\tnormalization - standard\n\thard coded 1 feature maximum\n=========================")
+                d2r.scaler = StandardScaler()
+                d2r.scaler = d2r.scaler.fit(d2r.data)
 
-            df_x_train, df_y_train = to_sequences(train[nx_features],train[nx_targets[0]], nx_time_steps)
-            df_x_validation, df_y_validation = to_sequences(validation[nx_features],validation[nx_targets[0]], nx_time_steps)
-            df_x_test, df_y_test = to_sequences(test[nx_features], test[nx_targets[0]], nx_time_steps)        
-            '''
-            df_x_train, df_y_train = to_sequences(train[nx_targets],train[nx_targets[0]], nx_time_steps)
-            df_x_validation, df_y_validation = to_sequences(validation[nx_targets],validation[nx_targets[0]], nx_time_steps)
-            df_x_test, df_y_test = to_sequences(test[nx_targets], test[nx_targets[0]], nx_time_steps)        
+                data = d2r.scaler.transform(d2r.data)
+                d2r.normalized = True
+            elif nx_normalize == 'minmax':
+                print("========= WIP ===========\n\tnormalization - minmax\n\thard coded 1 feature maximum\n=========================")
+                d2r.scaler = MinMaxScaler()
+                d2r.scaler = d2r.scaler.fit(d2r.data)
 
-            d2r.trainX = np.array(df_x_train, dtype=nx_data_precision)
-            d2r.trainY = np.array(df_y_train, dtype=nx_data_precision)
-            d2r.validateX = np.array(df_x_validation, dtype=nx_data_precision)
-            d2r.validateY = np.array(df_y_validation, dtype=nx_data_precision)
-            d2r.testX = np.array(df_x_test, dtype=nx_data_precision)
-            d2r.testY = np.array(df_y_test, dtype=nx_data_precision)
+                data = d2r.scaler.transform(d2r.data)
+                d2r.normalized = True
+            elif nx_normalize == 'none':
+                print("\nData is not normalized ...")
+                data = np.array(d2r.data, dtype=nx_data_precision)
+            else:
+                ex_txt = 'Normalization {:s} is not supported'.format(nx_normalize)
+                raise NameError(ex_txt)
+
+            train       = data[                         : len_train]
+            validation  = data[len_train                : len_train + len_validate]
+            test        = data[len_train + len_validate : ]
+
+            d2r.trainX,    d2r.trainY    = np_to_sequence(train, feature_cols, target_cols, nx_time_steps)
+            d2r.validateX, d2r.validateY = np_to_sequence(validation, feature_cols, target_cols, nx_time_steps)
+            d2r.testX,     d2r.testY     = np_to_sequence(test, feature_cols, target_cols, nx_time_steps)        
         elif nx_model_type == INPUT_LAYERTYPE_CNN:
             print("\n*************************************************\nWORK IN PROGRESS\n\tCNN preparation is not implemented\n*************************************************\n")
             pass
 
     return
 
-def prepareTrainingData(nx_graph, node_name, nx_edge):
+def selectTrainingData(nx_graph, node_name, nx_edge):
     '''
     Select required data elements and discard the rest
     '''
@@ -229,7 +262,7 @@ def collect_and_select_data(d2r):
                         err_txt = "*** An exception occurred analyzing the flow details in the json configuration file ***"
                         nx_flowFilename = nx.get_edge_attributes(d2r.graph, JSON_FLOW_DATA_FILE)
                         flowFilename = nx_flowFilename[edge_i[0], edge_i[1], output_flow]
-                        d2r.data = prepareTrainingData(d2r.graph, node_i, edge_i)
+                        d2r.data = selectTrainingData(d2r.graph, node_i, edge_i)
                         print(d2r.data.describe().transpose())
                         d2r.archiveData(flowFilename)
                         break

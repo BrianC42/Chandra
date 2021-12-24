@@ -33,13 +33,13 @@
 		"conditionalFields" : {
 			"modelFile" : "d:\\brian\\AI Projects\\models\\GM_mkt",
 			"dataPrecision" : "float32",
-			"normalize" : "standard",
+			"normalize" : "minmax",
 			"modelLayers" : [
 				{
 				"layerName" : "GM-lstm",
 				"layerType" : "lstm",
 				"timeSteps" : 20,
-				"featureCount": 1,
+				"featureCount": 2,
 				"layerUnits" : 50,
 				"returnSequences" : true,
 				"outputActivation" : "relu"
@@ -61,7 +61,7 @@
 				{
 				"layerName" : "output",
 				"layerType" : "dense",
-				"layerUnits" : 1,
+				"layerUnits" : 2,
 				"comment outputActivation" : "linear"
 				}
 			],
@@ -99,7 +99,8 @@
 			"balanceClasses" : false,
 			"ignoreBlanks" : true,
 			"features" : ["DateTime"],
-			"targets" : ["Close"]
+			"comment targets" : ["Close"],
+			"targets" : ["Close", "Volume"]
 			}
 		}
 	}

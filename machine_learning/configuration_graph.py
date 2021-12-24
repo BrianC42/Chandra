@@ -171,6 +171,10 @@ def add_meta_process_node (js_config, nx_graph) :
         nx.set_node_attributes(nx_graph, {nx_process_name:nx_model_file}, JSON_MODEL_FILE)
         nx_dataPrecision = js_conditional[JSON_PRECISION]
         nx.set_node_attributes(nx_graph, {nx_process_name:nx_dataPrecision}, JSON_PRECISION)
+
+    if JSON_NORMALIZE_DATA in js_conditional:
+        nx_normalize = js_conditional[JSON_NORMALIZE_DATA]
+        nx.set_node_attributes(nx_graph, {nx_process_name:nx_normalize}, JSON_NORMALIZE_DATA)
         
     if JSON_LAYERS in js_conditional:
         nx_layers = js_conditional[JSON_LAYERS]

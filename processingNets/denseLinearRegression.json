@@ -33,6 +33,7 @@
 		"conditionalFields" : {
 			"modelFile" : "d:\\brian\\AI Projects\\models\\LRmodel",
 			"dataPrecision" : "float64",
+			"normalize" : "none",
 			"preprocessingLayers" : {
 				"normalize" : false
 				},

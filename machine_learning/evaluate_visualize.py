@@ -7,12 +7,14 @@ import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
 
-from configuration_constants import INPUT_LAYERTYPE_DENSE
-from configuration_constants import INPUT_LAYERTYPE_RNN
-from configuration_constants import INPUT_LAYERTYPE_CNN
 from configuration_constants import JSON_OPTIMIZER
 from configuration_constants import JSON_LOSS
 from configuration_constants import JSON_METRICS
+from configuration_constants import JSON_NORMALIZE_DATA
+
+from TrainingDataAndResults import INPUT_LAYERTYPE_DENSE
+from TrainingDataAndResults import INPUT_LAYERTYPE_RNN
+from TrainingDataAndResults import INPUT_LAYERTYPE_CNN
 
 def visualize_fit(d2r, plot_on_axis):
     plot_on_axis.set_title("Fitting history")
@@ -28,21 +30,29 @@ def visualize_parameters(d2r, plot_on_axis):
     nx_optimizer = nx.get_node_attributes(d2r.graph, JSON_OPTIMIZER)[d2r.mlNode]
     nx_loss = nx.get_node_attributes(d2r.graph, JSON_LOSS)[d2r.mlNode]
     nx_metrics = nx.get_node_attributes(d2r.graph, JSON_METRICS)[d2r.mlNode]
-    
+    nx_normalize = nx.get_node_attributes(d2r.graph, JSON_NORMALIZE_DATA)[d2r.mlNode]
+
     str_l1 = 'Model parameters'
-    str_l7 = '\nOptimizer: {:s}'.format(nx_optimizer)
-    str_model = str_l1 + str_l7
+    str_l7 = 'Opt:{:s}'.format(nx_optimizer)
+    str_model = str_l7
     
     str_p0 = '\nFitting Parameters'
-    str_p4 = '\nloss: {:s}'.format(nx_loss)
-    str_p5 = '\nmetrics: {:s}'.format(nx_metrics[0])
-    str_p6 = '\nepochs: {:d}'.format(d2r.fitting.params['epochs'])
-    str_p7 = '\nsteps: {:d}'.format(d2r.fitting.params['steps'])
-    str_params = str_p0 + str_p4 + str_p5 + str_p6 + str_p7
+    str_p4 = ',loss:{:s}'.format(nx_loss)
+    str_p5 = ',metrics:{:s}'.format(nx_metrics[0])
+    str_p6 = ',epochs:{:d}'.format(d2r.fitting.params['epochs'])
+    str_p7 = ',steps:{:d}'.format(d2r.fitting.params['steps'])
+    str_p8 = '\nnormalization:{:s}'.format(nx_normalize)
+    str_params = str_l7 + str_p4 + str_p6 + str_p7 + str_p8
     
-    plot_on_axis.set_title("ML Parameters Used")
+    #plot_on_axis.set_title("ML Parameters Used")
+    plot_on_axis.set_title(str_params)
+    '''
     plot_on_axis.text(0.5, 0.5, str_model + '\n' + str_params, horizontalalignment='center', \
                       verticalalignment='center', wrap=True)
+    '''
+    plot_on_axis.plot(d2r.fitting.epoch, d2r.fitting.history['accuracy'], label='accuracy')
+    plot_on_axis.plot(d2r.fitting.epoch, d2r.fitting.history['val_accuracy'], label='Validation accuracy')
+    plot_on_axis.legend()
 
     return
 
@@ -87,17 +97,41 @@ def visualize_rnn(d2r):
     fig.suptitle(d2r.mlNode, fontsize=14, fontweight='bold')
     visualize_parameters(d2r, axs[0, 0])
     visualize_fit(d2r, axs[1, 0])
+    prediction = d2r.model.predict(d2r.testX)
     
-    axs[0, 1].set_title("Future use - outliers?")
+    recent_len = 40
+    axs[0, 1].set_title("WIP")
     axs[0, 1].set_xlabel("time periods")
     axs[0, 1].set_ylabel("Data Value")
+    axs[0, 1].plot(range(len(prediction)-recent_len, len(prediction)), \
+                   d2r.testY[len(prediction)-recent_len : ], \
+                   label='Test series')
+    axs[0, 1].plot(range(len(prediction)-recent_len, len(prediction)), \
+                   prediction[len(prediction)-recent_len : , 0], \
+                   linestyle='dashed', label='Prediction - 1 period')
+    if prediction.shape[1] > 1:
+        '''
+        time period alignment is required
+        
+        axs[0, 1].plot(range(len(prediction)-20, len(prediction)), \
+                       prediction[len(prediction)-20 : , prediction.shape[1]-1], \
+                       linestyle='dashed', label='Prediction - max periods')
+        '''
+        pass
+    axs[0, 1].legend()
     
     axs[1, 1].set_title("Data series vs. Predictions")
     axs[1, 1].set_xlabel("time periods")
     axs[1, 1].set_ylabel("Data Value")
-    prediction = d2r.model.predict(d2r.testX)
     axs[1, 1].plot(range(len(prediction)), d2r.testY, label='Test series')
-    axs[1, 1].plot(range(len(prediction)), prediction[:, 0], linestyle='dashed', label='Prediction')
+    axs[1, 1].plot(range(len(prediction)), prediction[:, :], linestyle='dashed', label='Prediction - 1 period')
+    if prediction.shape[1] > 1:
+        '''
+        time period alignment is required
+        
+        axs[1, 1].plot(range(len(prediction)), prediction[:, prediction.shape[1]-1], linestyle='dashed', label='Prediction - max periods')
+        '''
+        pass
     axs[1, 1].legend()
 
     plt.tight_layout()

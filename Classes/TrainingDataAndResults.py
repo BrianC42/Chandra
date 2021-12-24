@@ -8,6 +8,11 @@ Git access error problem
 import networkx as nx
 import matplotlib.pyplot as plt
 
+MODEL_TYPE = 'modelType'
+INPUT_LAYERTYPE_DENSE = 'dense'
+INPUT_LAYERTYPE_RNN = 'rnn'
+INPUT_LAYERTYPE_CNN = 'cnn'
+
 class Data2Results():
     '''
     Class to prepare training data, store training results and plot results
@@ -115,6 +120,22 @@ class Data2Results():
     @data.setter
     def data(self, data):
         self._data = data
+        
+    @property
+    def scaler(self):
+        return self._scaler
+    
+    @scaler.setter
+    def scaler(self, scaler):
+        self._scaler = scaler
+        
+    @property
+    def normalized(self):
+        return self._normalized
+    
+    @normalized.setter
+    def normalized(self, normalized):
+        self._normalized = normalized
         
     @property
     def trainX(self):

@@ -1,5 +1,5 @@
 {
-"comment - processing node section" : "Speciification details  for the processing nodes",
+"comment - processing node section" : "Specification details for the processing nodes",
 "processNodes" : [
 	{
 		"processNodeName" : "LoadData",
@@ -33,6 +33,7 @@
 		"conditionalFields" : {
 			"modelFile" : "d:\\brian\\AI Projects\\models\\SineWave",
 			"dataPrecision" : "float32",
+			"normalize" : "none",
 			"modelLayers" : [
 				{
 				"layerName" : "lstm1",
@@ -41,7 +42,7 @@
 				"featureCount": 1,
 				"layerUnits" : 10,
 				"returnSequences" : false,
-				"outputActivation" : "linear"
+				"comment outputActivation" : "linear"
 				},
 				{
 				"layerName" : "dropout1",
@@ -54,7 +55,7 @@
 				"layerUnits" : 10,
 				"comment: activations" : "https://keras.io/api/layers/activations/",
 				"comment: activations regression" : ["relu", "sigmoid", "softmax", "softplus", "softsign", "tanh", "selu", "elu", "exponential"],
-				"outputActivation" : "linear"
+				"comment outputActivation" : "linear"
 				}
 			],
 			"training" : {
