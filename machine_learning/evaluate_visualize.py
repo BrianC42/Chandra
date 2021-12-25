@@ -56,8 +56,11 @@ def visualize_parameters(d2r, plot_on_axis):
 
     return
 
+def visualize_anomalies(d2r, plot_on_axis):
+    return
+
 def visualize_dense(d2r):
-    fig, axs = plt.subplots(2, 3)
+    fig, axs = plt.subplots(3, 3)
     fig.suptitle(d2r.mlNode, fontsize=14, fontweight='bold')
     visualize_parameters(d2r, axs[0, 0])
     visualize_fit(d2r, axs[1, 0])
@@ -93,46 +96,56 @@ def visualize_dense(d2r):
     return 
 
 def visualize_rnn(d2r):
-    fig, axs = plt.subplots(2, 2)
-    fig.suptitle(d2r.mlNode, fontsize=14, fontweight='bold')
-    visualize_parameters(d2r, axs[0, 0])
-    visualize_fit(d2r, axs[1, 0])
-    prediction = d2r.model.predict(d2r.testX)
+    fig1, axs1 = plt.subplots(1, 2)
+    fig1.suptitle(d2r.mlNode, fontsize=14, fontweight='bold')
     
+    visualize_parameters(d2r, axs1[0])
+    visualize_fit(d2r, axs1[1])
+    
+
+    plt.tight_layout()
+    plt.show()
+
+    fig2, axs2 = plt.subplots(1, 2)
+    fig2.suptitle(d2r.mlNode, fontsize=14, fontweight='bold')
+    
+    prediction = d2r.model.predict(d2r.testX)
     recent_len = 40
-    axs[0, 1].set_title("WIP")
-    axs[0, 1].set_xlabel("time periods")
-    axs[0, 1].set_ylabel("Data Value")
-    axs[0, 1].plot(range(len(prediction)-recent_len, len(prediction)), \
+    FORECAST = 0
+    
+    axs2[0].set_title("WIP")
+    axs2[0].set_xlabel("time periods")
+    axs2[0].set_ylabel("Data Value")
+    axs2[0].plot(range(len(prediction)-recent_len, len(prediction)), \
                    d2r.testY[len(prediction)-recent_len : ], \
                    label='Test series')
-    axs[0, 1].plot(range(len(prediction)-recent_len, len(prediction)), \
-                   prediction[len(prediction)-recent_len : , 0], \
+    axs2[0].plot(range(len(prediction)-recent_len, len(prediction)), \
+                   prediction[len(prediction)-recent_len : , FORECAST], \
                    linestyle='dashed', label='Prediction - 1 period')
-    if prediction.shape[1] > 1:
-        '''
-        time period alignment is required
-        
-        axs[0, 1].plot(range(len(prediction)-20, len(prediction)), \
-                       prediction[len(prediction)-20 : , prediction.shape[1]-1], \
-                       linestyle='dashed', label='Prediction - max periods')
-        '''
-        pass
-    axs[0, 1].legend()
+    axs2[0].legend()
+
+    axs2[1].set_title("Data series vs. Predictions")
+    axs2[1].set_xlabel("time periods")
+    axs2[1].set_ylabel("Data Value")
+    axs2[1].plot(range(len(prediction)), d2r.testY[:], label='Test series')
+    axs2[1].plot(range(len(prediction)), prediction[:, FORECAST], linestyle='dashed', label='Prediction - 1 period')
+    visualize_anomalies(d2r, axs2[1])
+
+    plt.tight_layout()
+    plt.show()
     
-    axs[1, 1].set_title("Data series vs. Predictions")
-    axs[1, 1].set_xlabel("time periods")
-    axs[1, 1].set_ylabel("Data Value")
-    axs[1, 1].plot(range(len(prediction)), d2r.testY, label='Test series')
-    axs[1, 1].plot(range(len(prediction)), prediction[:, :], linestyle='dashed', label='Prediction - 1 period')
-    if prediction.shape[1] > 1:
-        '''
-        time period alignment is required
+    fig3, axs3 = plt.subplots(1, 2)
+    fig3.suptitle(d2r.mlNode, fontsize=14, fontweight='bold')
+    
+    axs3[0].set_title("Data series anomaly distribution")
+    axs3[0].set_xlabel("prediction error")
+    axs3[0].set_ylabel("error count")
         
-        axs[1, 1].plot(range(len(prediction)), prediction[:, prediction.shape[1]-1], linestyle='dashed', label='Prediction - max periods')
-        '''
-        pass
-    axs[1, 1].legend()
+    axs3[1].set_title("Data series anomalies")
+    axs3[1].set_xlabel("time periods")
+    axs3[1].set_ylabel("Data Value")
+    axs3[1].plot(range(len(prediction)), d2r.testY[:], label='Test series')
+    visualize_anomalies(d2r, axs3[1])    
 
     plt.tight_layout()
     plt.show()

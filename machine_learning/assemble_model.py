@@ -99,6 +99,10 @@ def build_layer(d2r, layer_type, layer_definition, input_layer):
         if JSON_DROPOUT_RATE in layer_definition:
             nx_dropout_rate = layer_definition[JSON_DROPOUT_RATE]
         k_layer = keras.layers.Dropout(rate=nx_dropout_rate)
+    elif layer_type == 'TimeDistributed':
+        nx_feature_count = layer_definition[JSON_FEATURE_COUNT]
+        TD_layer = keras.layers.Dense(nx_feature_count)
+        k_layer = keras.layers.TimeDistributed(TD_layer)
     else:
         err_msg = 'Layer type not yet implemented: ' + layer_type
         raise NameError(err_msg)

@@ -2,12 +2,11 @@
 "comment - processing node section" : "Specification details for the processing nodes",
 "processNodes" : [
 	{
-		"processNodeName" : "dataIn",
+		"processNodeName" : "gmIn",
 		"requiredFields" : {
 			"processType" : "dataPrep",
-			"comments: supported values - processType" : ["dataPrep", "Tensorflow"],
 			"inputFlows" : [],
-			"outputFlow" : "marketDataMulti",
+			"outputFlow" : "gmAutoEncode",
 			"outputFile" : "",
 			"logFile" : ""
 		},
@@ -18,46 +17,55 @@
 		}
 	},
 	{
-		"processNodeName" : "mktMulti",
+		"processNodeName" : "gmMktAE",
 		"requiredFields" : {
-			"comments: supported values - processType" : ["dataPrep", "Tensorflow"],
 			"processType" : "Tensorflow",
-			"inputFlows" : ["marketDataMulti"],
+			"inputFlows" : ["gmAutoEncode"],
 			"outputFlow" : "",
-			"outputFile" : "d:\\brian\\AI Projects\\models\\mkt_multi",
-			"logFile" : "d:\\brian\\AI Projects\\logs\\mkt_multi.txt"
+			"outputFile" : "d:\\brian\\AI Projects\\models\\gmMktAE",
+			"logFile" : "d:\\brian\\AI Projects\\logs\\gmMktAE.txt"
 		},
 		"conditionalFields" : {
-			"modelFile" : "d:\\brian\\AI Projects\\models\\mkt_multi",
+			"modelFile" : "d:\\brian\\AI Projects\\models\\gmMktAE",
 			"dataPrecision" : "float32",
-			"normalize" : "standard",
+			"normalize" : "minmax",
 			"modelLayers" : [
 				{
 				"layerName" : "lstmIn",
 				"layerType" : "lstm",
 				"timeSteps" : 20,
-				"featureCount": 3,
-				"layerUnits" : 64,
-				"returnSequences" : true,
-				"outputActivation" : "tanh"
-				},
-				{
-				"layerName" : "hidden-lstm",
-				"layerType" : "lstm",
-				"layerUnits" : 32,
+				"featureCount": 1,
+				"layerUnits" : 128,
 				"returnSequences" : false,
 				"outputActivation" : "tanh"
 				},
 				{
-				"layerName" : "hidden-dense",
-				"layerType" : "dense",
-				"layerUnits" : 64
+				"layerName" : "Dropout1",
+				"layerType" : "dropout",
+				"dropoutRate" : 0.2
+				},
+				{
+				"layerName" : "RepeatVector",
+				"layerType" : "RepeatVector",
+				"repeatCount" : 20
+				},
+				{
+				"layerName" : "hidden-lstm-1",
+				"layerType" : "lstm",
+				"comment timeSteps" : 20,
+				"layerUnits" : 128,
+				"returnSequences" : true,
+				"outputActivation" : "tanh"
+				},
+				{
+				"layerName" : "Dropout2",
+				"layerType" : "dropout",
+				"dropoutRate" : 0.2
 				},
 				{
 				"layerName" : "output",
-				"layerType" : "dense",
-				"layerUnits" : 1,
-				"comment outputActivation" : "linear"
+				"layerType" : "TimeDistributed",
+				"featureCount": 1
 				}
 			],
 			"training" : {
@@ -65,7 +73,7 @@
 				"denseRegularation" : false,
 				"regularationValue" : 0.0,
 				"batchSize" : 32,
-				"epochs" : 6,
+				"epochs" : 8,
 				"useBias" : true,
 				"validationSplit" : 0.1,
 				"testSplit" : 0.2,
@@ -82,11 +90,11 @@
 "comment - wave form dataflow section" : "Specification details for the flows of data between processing nodes",
 "dataFlows" : [
 	{
-	"flowName" : "marketDataMulti",
+	"flowName" : "gmAutoEncode",
 	"requiredFields" : {
-		"flowFrom" : "dataIn",
-		"flowTo" : "mktMulti",
-		"flowDataFile" : "d:\\brian\\AI Projects\\internal_flows\\mktDataMulti.csv"
+		"flowFrom" : "gmIn",
+		"flowTo" : "gmMktAE",
+		"flowDataFile" : "d:\\brian\\AI Projects\\internal_flows\\gmAutoEncode.csv"
 		},
 	"conditionalFields" : {
 		"TensorflowData" : {
@@ -94,10 +102,7 @@
 			"balanceClasses" : false,
 			"ignoreBlanks" : true,
 			"features" : ["DateTime"],
-			"comment" : "List the variable to forecast first",
-			"comment featureCount above" : "needs to be set to the number of targets",
-			"comment targets" : ["Close", "Open", "OBV", "Relative Strength", "AccumulationDistribution", "MACD", "MACD_flag", "Aroon Indicator", "BB_Lower", "BB_Upper"],
-			"targets" : ["Close", "Open", "Volume"]
+			"targets" : ["Close"]
 			}
 		}
 	}

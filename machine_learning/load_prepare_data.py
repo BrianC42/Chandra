@@ -97,11 +97,11 @@ def id_columns(data, features, targets):
 
 def np_to_sequence(data, sequence_step_id, targets, seq_size=1):
     npx = np.empty([len(data) - (seq_size+1), seq_size, len(targets)], dtype=float)
-    npy = np.empty([len(data) - (seq_size+1), len(targets)          ], dtype=float)
+    npy = np.empty([len(data) - (seq_size+1),                       ], dtype=float)
 
     for i in range(len(data) - (seq_size+1)):
         npx[i, :, :]    = data[i : i+seq_size, targets[:]]
-        npy[i]          = data[i+seq_size+1, targets[:]]
+        npy[i]          = data[i+seq_size+1, targets[0]]
 
     return npx, npy
 
@@ -161,14 +161,14 @@ def prepareTrainingData(d2r):
             nx_time_steps = nx.get_node_attributes(d2r.graph, JSON_TIMESTEPS)[d2r.mlNode]
             
             if nx_normalize == 'standard':
-                print("========= WIP ===========\n\tnormalization - standard\n\thard coded 1 feature maximum\n=========================")
+                print("\n\tnormalization - standard")
                 d2r.scaler = StandardScaler()
                 d2r.scaler = d2r.scaler.fit(d2r.data)
 
                 data = d2r.scaler.transform(d2r.data)
                 d2r.normalized = True
             elif nx_normalize == 'minmax':
-                print("========= WIP ===========\n\tnormalization - minmax\n\thard coded 1 feature maximum\n=========================")
+                print("\n\tnormalization - minmax")
                 d2r.scaler = MinMaxScaler()
                 d2r.scaler = d2r.scaler.fit(d2r.data)
 
