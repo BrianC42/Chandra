@@ -28,10 +28,19 @@ JSON_INPUT_FLOWS = 'inputFlows'
 JSON_OUTPUT_FLOW = 'outputFlow'
 JSON_DATA_PREP_CTRL = "dataPrepCtrl"
 JSON_MODEL_FILE = "modelFile"
-JSON_OUTPUT_FILE = "outputFile"
+#JSON_OUTPUT_FILE = "outputFile"
 JSON_LOG_FILE = "logFile"
+JSON_DATA_LOAD_PROCESS = "dataLoad"
 JSON_DATA_PREP_PROCESS = "dataPrep"
-JSON_INPUT_DATA_PREPARATION= "dataPrepCtrl"
+JSON_TENSORFLOW = "Tensorflow"
+JSON_INPUT_DATA_PREPARATION = "dataLoadCtrl"
+JSON_DATA_PREPARATION_CTRL = "dataPrepCtrl"
+JSON_1HOT_ENCODING = "oneHotEncoding"
+JSON_1HOT_FIELD = "field"
+JSON_1HOT_CATEGORYTYPE = "categoryType"
+JSON_1HOT_SERIESTREND = "seriesTrend"
+JSON_1HOT_CATEGORIES = "categories"
+JSON_1HOT_OUTPUTFIELDS = "outputFields"
 JSON_INPUT_DATA_FILE= "inputFile"
 JSON_DATA_FLOWS = 'dataFlows'
 JSON_FLOW_NAME = 'flowName'
@@ -52,10 +61,13 @@ JSON_FEATURE_FIELDS = "features"
 JSON_TARGET_FIELDS = "targets"
 JSON_TIMESTEPS = 'timeSteps'
 JSON_FEATURE_COUNT = 'featureCount'
+JSON_MODEL_OUTPUT_ACTIVATION = 'outputActivation'
+
+'''
 JSON_MODEL_INPUT_LAYER = 'inputLayer'
 JSON_MODEL_OUTPUT_LAYER = 'outputLayer'
-JSON_MODEL_OUTPUT_ACTIVATION = 'outputActivation'
 JSON_MODEL_OUTPUT_WIDTH = 'outputWidth'
+'''
 JSON_NORMALIZE_DATA = 'normalize'
 JSON_SHUFFLE_DATA = 'shuffle'
 JSON_ELEMENTS = 'dataElements'

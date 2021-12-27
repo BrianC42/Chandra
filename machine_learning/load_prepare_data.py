@@ -15,7 +15,6 @@ from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from termcolor import colored
 
 from configuration_constants import JSON_PRECISION
-from configuration_constants import JSON_DATA_PREP_PROCESS
 from configuration_constants import JSON_OUTPUT_FLOW
 from configuration_constants import JSON_INPUT_DATA_FILE
 from configuration_constants import JSON_IGNORE_BLANKS
@@ -23,22 +22,98 @@ from configuration_constants import JSON_FLOW_DATA_FILE
 from configuration_constants import JSON_INPUT_FLOWS
 from configuration_constants import JSON_NORMALIZE_DATA
 from configuration_constants import JSON_PROCESS_TYPE
+from configuration_constants import JSON_DATA_LOAD_PROCESS
+from configuration_constants import JSON_DATA_PREP_PROCESS
 from configuration_constants import JSON_TENSORFLOW
 from configuration_constants import JSON_FEATURE_FIELDS
 from configuration_constants import JSON_TARGET_FIELDS
 from configuration_constants import JSON_VALIDATION_SPLIT
 from configuration_constants import JSON_TEST_SPLIT
 from configuration_constants import JSON_TIMESTEPS
+from configuration_constants import JSON_1HOT_ENCODING
+from configuration_constants import JSON_1HOT_FIELD
+from configuration_constants import JSON_1HOT_CATEGORYTYPE
+from configuration_constants import JSON_1HOT_SERIESTREND
+from configuration_constants import JSON_1HOT_CATEGORIES
+from configuration_constants import JSON_1HOT_OUTPUTFIELDS
 
 from TrainingDataAndResults import MODEL_TYPE
 from TrainingDataAndResults import INPUT_LAYERTYPE_DENSE
 from TrainingDataAndResults import INPUT_LAYERTYPE_RNN
 from TrainingDataAndResults import INPUT_LAYERTYPE_CNN
+
+
 from pickle import FALSE
+
+def prepareTrainingData(d2r):
+    print("============== WIP =============\n\tPreparing data\n================================")
+    ''' error handling '''
+    try:
+        err_txt = "*** An exception occurred preparing the training data ***"
+
+        for node_i in d2r.graph.nodes():
+            nx_read_attr = nx.get_node_attributes(d2r.graph, JSON_PROCESS_TYPE)
+            if nx_read_attr[node_i] == JSON_DATA_PREP_PROCESS:
+                #print("Preparing data in %s" % node_i)
+            
+                nx_outputFlow = nx.get_node_attributes(d2r.graph, JSON_OUTPUT_FLOW)
+                output_flow = nx_outputFlow[node_i]
+
+                nx_inputFlows = nx.get_node_attributes(d2r.graph, JSON_INPUT_FLOWS)
+                for input_flow in nx_inputFlows[node_i]:
+                    for edge_i in d2r.graph.edges():
+                        if edge_i[0] == node_i:
+                            nx_output_data_files = nx.get_edge_attributes(d2r.graph, JSON_FLOW_DATA_FILE)
+                            nx_output_data_file = nx_output_data_files[edge_i[0], edge_i[1], output_flow]
+                            '''
+                            print("from %s to %s\n\tflow %s\n\tfile %s" % \
+                                  (edge_i[0], edge_i[1], output_flow, nx_output_data_file))
+                            '''
+                        if edge_i[1] == node_i:
+                            nx_input_data_files = nx.get_edge_attributes(d2r.graph, JSON_FLOW_DATA_FILE)
+                            nx_input_data_file = nx_input_data_files[edge_i[0], edge_i[1], input_flow]    
+                            '''
+                            print("from %s to %s\n\tflow %s\n\tfile %s" % \
+                                  (edge_i[0], edge_i[1], input_flow, nx_input_data_file))
+                            '''
+                if os.path.isfile(nx_input_data_file):
+                    d2r.data = pd.read_csv(nx_input_data_file)
+                else:
+                    ex_txt = node_i + ", input file " + nx_input_data_file + " does not exist"
+                    raise NameError(ex_txt)
+                
+                nx_1hotConfig = nx.get_node_attributes(d2r.graph, JSON_1HOT_ENCODING)[node_i]
+                nx_1hotCategoryType = nx_1hotConfig[JSON_1HOT_CATEGORYTYPE]
+                if nx_1hotCategoryType == JSON_1HOT_SERIESTREND:
+                    nx_1hotField = nx_1hotConfig[JSON_1HOT_FIELD]
+                    nx_1hotCategories = nx_1hotConfig[JSON_1HOT_CATEGORIES]
+                    nx_1hotOutputFields = nx_1hotConfig[JSON_1HOT_OUTPUTFIELDS]
+                    print("Encoding %s as 1hot %s" % (nx_1hotField, JSON_1HOT_SERIESTREND))
+                    print(nx_1hotCategories)
+                    print(nx_1hotOutputFields)
+                else:
+                    ex_txt = d2r.mlNode + ", prep type " + nx_read_attr[d2r.mlNode] + " is not supported"
+                    raise NameError(ex_txt)
+
+                d2r.archiveData(nx_output_data_file)
+        
+    except Exception:
+        exc_info = sys.exc_info()
+        exc_str = exc_info[1].args[0]
+        if isinstance(exc_str, str):
+            exc_txt = err_txt + "\n\t" + exc_str
+        elif isinstance(exc_str, tuple):
+            exc_txt = err_txt + "\n\t"
+            for s in exc_str:
+                exc_txt += " " + s
+        logging.debug(exc_txt)
+        sys.exit(exc_txt)
+
+    return
 
 def loadTrainingData(d2r):
     '''
-    load data for training and testine
+    load data for training and testing
     '''
     # error handling
     try:
@@ -66,12 +141,11 @@ def loadTrainingData(d2r):
 
     return
 
+'''
 def to_sequences(x, y, seq_size=1):
-    '''
     return dataframe inputs as numpy arrays of shapes
     x: (samples, seq_size, 1)
     y: (samples, )
-    '''
     x_values = []
     y_values = []
 
@@ -80,6 +154,7 @@ def to_sequences(x, y, seq_size=1):
         y_values.append(y.iloc[i+seq_size])
 
     return np.array(x_values), np.array(y_values)
+'''
 
 def id_columns(data, features, targets):
     feature_cols = []
@@ -105,7 +180,7 @@ def np_to_sequence(data, sequence_step_id, targets, seq_size=1):
 
     return npx, npy
 
-def prepareTrainingData(d2r):
+def arrangeDataForTraining(d2r):
     '''
     Organize the feature data elements as required by Tensorflow models and matching target elements
     '''
@@ -202,9 +277,6 @@ def selectTrainingData(nx_graph, node_name, nx_edge):
     nx_data_flow = nx.get_node_attributes(nx_graph, JSON_OUTPUT_FLOW)
     output_flow = nx_data_flow[node_name]
     
-    nx_ignoreBlanks = nx.get_edge_attributes(nx_graph, JSON_IGNORE_BLANKS)
-    ignoreBlanks = nx_ignoreBlanks[nx_edge[0], nx_edge[1], output_flow]
-    
     nx_dataFields = nx.get_edge_attributes(nx_graph, JSON_FEATURE_FIELDS)
     featureFields = nx_dataFields[nx_edge[0], nx_edge[1], output_flow]
     
@@ -235,11 +307,13 @@ def selectTrainingData(nx_graph, node_name, nx_edge):
             count += 1
     print("\nData \n%s\nread from sources\n" % df_combined.describe().transpose())
                         
-    if ignoreBlanks:
-        print("Removing NaN")
-        df_combined = df_combined.dropna()
+    nx_ignoreBlanks = nx.get_edge_attributes(nx_graph, JSON_IGNORE_BLANKS)
+    if nx_ignoreBlanks != []:
+        ignoreBlanks = nx_ignoreBlanks[nx_edge[0], nx_edge[1], output_flow]
+        if ignoreBlanks:
+            print("Removing NaN")
+            df_combined = df_combined.dropna()
                 
-    #df_combined = discard_outliers(nx_graph, node_name, df_combined)                            
     df_combined.drop(targetFields, axis=1)
     return df_combined
 
@@ -248,13 +322,13 @@ def collect_and_select_data(d2r):
     logging.info('====> load_and_prepare_data: loading data for input to models')
     logging.info('====> ================================================')
     
-    # error handling
+    ''' error handling '''
     try:
         err_txt = "*** An exception occurred collecting and selecting the data ***"
 
         for node_i in d2r.graph.nodes():
             nx_read_attr = nx.get_node_attributes(d2r.graph, JSON_PROCESS_TYPE)
-            if nx_read_attr[node_i] == JSON_DATA_PREP_PROCESS:
+            if nx_read_attr[node_i] == JSON_DATA_LOAD_PROCESS:
                 nx_data_flow = nx.get_node_attributes(d2r.graph, JSON_OUTPUT_FLOW)
                 output_flow = nx_data_flow[node_i]
                 for edge_i in d2r.graph.edges():

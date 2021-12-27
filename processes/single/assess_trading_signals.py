@@ -3,7 +3,10 @@ Created on Jul 17, 2020
 
 @author: Brian
 
-scan TD Ameritrade watch lists and assess symbols against actionable trade triggers and option strategies of interest
+********************************************************************
+scan TD Ameritrade watch lists and assess symbols against actionable
+trade triggers and option strategies of interest
+********************************************************************
 '''
 import os
 import datetime as dt

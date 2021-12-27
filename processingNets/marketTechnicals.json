@@ -4,28 +4,44 @@
 	{
 		"processNodeName" : "LoadData",
 		"requiredFields" : {
-			"processType" : "dataPrep",
-			"comments: supported values - processType" : ["dataPrep", "Tensorflow"],
+			"processType" : "dataLoad",
+			"comments: supported values - processType" : ["dataLoad", "dataPrep", "Tensorflow"],
 			"inputFlows" : [],
-			"outputFlow" : "GMmarketData",
-			"outputFile" : "",
+			"outputFlow" : "marketData",
+			"comment outputFile" : "",
+			"logFile" : ""
+		},
+		"conditionalFields" : {
+			"dataLoadCtrl" : {
+				"inputFile" : ["d:\\brian\\AI Projects\\tda\\market_analysis_data\\gm.csv"]
+			}
+		}
+	},
+	{
+		"processNodeName" : "PrepData",
+		"requiredFields" : {
+			"processType" : "dataPrep",
+			"inputFlows" : ["marketData"],
+			"outputFlow" : "Prepared",
+			"comment outputFile" : "",
 			"logFile" : ""
 		},
 		"conditionalFields" : {
 			"dataPrepCtrl" : {
-				"inputFile" : ["d:\\brian\\AI Projects\\tda\\market_analysis_data\\gm.csv"]
-			},
-			"comment removeOutliers" : [
-				{"commented - featureName - none" : "", "outlierPct" : 0.02}
-			]
+				"oneHotEncoding" : {
+					"field" : "close",
+					"categoryType" : "seriesTrend",
+					"categories" : ["increasingSeries" , "decreasingSeries"],
+					"outputFields" : ["closeIncreasing", "closeDecreasing"]
+				}
+			}
 		}
 	},
 	{
 		"processNodeName" : "GMmkt",
 		"requiredFields" : {
-			"comments: supported values - processType" : ["dataPrep", "Tensorflow"],
 			"processType" : "Tensorflow",
-			"inputFlows" : ["GMmarketData"],
+			"inputFlows" : ["Prepared"],
 			"outputFlow" : "",
 			"outputFile" : "d:\\brian\\AI Projects\\models\\GM_mkt",
 			"logFile" : "d:\\brian\\AI Projects\\logs\\GM_mkt.txt"
@@ -42,7 +58,7 @@
 				"featureCount": 1,
 				"layerUnits" : 50,
 				"returnSequences" : true,
-				"outputActivation" : "relu"
+				"outputActivation" : "tanh"
 				},
 				{
 				"layerName" : "hidden-lstm",
@@ -51,7 +67,7 @@
 				"comment featureCount": 1,
 				"layerUnits" : 50,
 				"returnSequences" : false,
-				"outputActivation" : "relu"
+				"outputActivation" : "tanh"
 				},
 				{
 				"layerName" : "hidden-dense",
@@ -70,7 +86,7 @@
 				"denseRegularation" : false,
 				"regularationValue" : 0.0,
 				"batchSize" : 32,
-				"epochs" : 6,
+				"epochs" : 10,
 				"useBias" : true,
 				"validationSplit" : 0.1,
 				"testSplit" : 0.2,
@@ -87,17 +103,29 @@
 "comment - wave form dataflow section" : "Specification details for the flows of data between processing nodes",
 "dataFlows" : [
 	{
-	"flowName" : "GMmarketData",
+	"flowName" : "marketData",
 	"requiredFields" : {
 		"flowFrom" : "LoadData",
-		"flowTo" : "GMmkt",
-		"flowDataFile" : "d:\\brian\\AI Projects\\internal_flows\\GMmktData.csv"
+		"flowTo" : "PrepData",
+		"flowDataFile" : "d:\\brian\\AI Projects\\internal_flows\\mktData.csv"
 		},
 	"conditionalFields" : {
 		"TensorflowData" : {
-			"timeSequence" : true,
-			"balanceClasses" : false,
 			"ignoreBlanks" : true,
+			"features" : ["DateTime"],
+			"targets" : ["Close"]
+			}
+		}
+	},
+	{
+	"flowName" : "Prepared",
+	"requiredFields" : {
+		"flowFrom" : "PrepData",
+		"flowTo" : "GMmkt",
+		"flowDataFile" : "d:\\brian\\AI Projects\\internal_flows\\preparedMktData.csv"
+		},
+	"conditionalFields" : {
+		"TensorflowData" : {
 			"features" : ["DateTime"],
 			"targets" : ["Close"]
 			}
