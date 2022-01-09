@@ -21,6 +21,6 @@
 "comment marketTchnicalsMV processNet" : "\\chandra\\processingNets\\marketTechnicalsMultiVariant.json",
 "comment LSTMmarketTchnicals processNet" : "\\chandra\\processingNets\\LSTMAutoEncoder.json",
 "comment active processing network" : "",
-"processNet" : "\\chandra\\processingNets\\marketTechnicals.json",
+"processNet" : "\\chandra\\processingNets\\marketTechnicalsMultiVariant.json",
 "comment end of specification" : "--------------------------------------------------------",
 "end of file" : ""}

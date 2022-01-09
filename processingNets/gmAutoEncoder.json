@@ -4,14 +4,15 @@
 	{
 		"processNodeName" : "gmIn",
 		"requiredFields" : {
-			"processType" : "dataPrep",
+			"processType" : "dataLoad",
 			"inputFlows" : [],
 			"outputFlow" : "gmAutoEncode",
 			"outputFile" : "",
 			"logFile" : ""
 		},
 		"conditionalFields" : {
-			"dataPrepCtrl" : {
+			"dataLoadCtrl" : {
+				"comment symbols" : ["gm", "eog", "gild"],
 				"inputFile" : ["d:\\brian\\AI Projects\\tda\\market_analysis_data\\gm.csv"]
 			}
 		}
@@ -73,7 +74,7 @@
 				"denseRegularation" : false,
 				"regularationValue" : 0.0,
 				"batchSize" : 32,
-				"epochs" : 8,
+				"epochs" : 6,
 				"useBias" : true,
 				"validationSplit" : 0.1,
 				"testSplit" : 0.2,
@@ -101,7 +102,8 @@
 			"timeSequence" : true,
 			"balanceClasses" : false,
 			"ignoreBlanks" : true,
-			"features" : ["DateTime"],
+			"comment features" : ["DateTime", "Close", "Open", "High", "Low", "Volume"],
+			"features" : ["DateTime", "Close"],
 			"targets" : ["Close"]
 			}
 		}

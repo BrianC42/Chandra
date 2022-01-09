@@ -4,16 +4,36 @@
 	{
 		"processNodeName" : "dataIn",
 		"requiredFields" : {
-			"processType" : "dataPrep",
-			"comments: supported values - processType" : ["dataPrep", "Tensorflow"],
+			"processType" : "dataLoad",
+			"comments: supported values - processType" : ["dataLoad", "dataPrep", "Tensorflow"],
 			"inputFlows" : [],
 			"outputFlow" : "marketDataMulti",
 			"outputFile" : "",
 			"logFile" : ""
 		},
 		"conditionalFields" : {
-			"dataPrepCtrl" : {
+			"dataLoadCtrl" : {
 				"inputFile" : ["d:\\brian\\AI Projects\\tda\\market_analysis_data\\gm.csv"]
+			}
+		}
+	},
+	{
+		"processNodeName" : "PrepData",
+		"requiredFields" : {
+			"processType" : "dataPrep",
+			"inputFlows" : ["marketDataMulti"],
+			"outputFlow" : "Prepared",
+			"comment outputFile" : "",
+			"logFile" : ""
+		},
+		"conditionalFields" : {
+			"dataPrepCtrl" : {
+				"oneHotEncoding" : {
+					"field" : "Close",
+					"categoryType" : "seriesTrend",
+					"categories" : ["increasingSeries" , "decreasingSeries"],
+					"outputFields" : ["closeIncreasing", "closeDecreasing"]
+				}
 			}
 		}
 	},
@@ -22,7 +42,7 @@
 		"requiredFields" : {
 			"comments: supported values - processType" : ["dataPrep", "Tensorflow"],
 			"processType" : "Tensorflow",
-			"inputFlows" : ["marketDataMulti"],
+			"inputFlows" : ["Prepared"],
 			"outputFlow" : "",
 			"outputFile" : "d:\\brian\\AI Projects\\models\\mkt_multi",
 			"logFile" : "d:\\brian\\AI Projects\\logs\\mkt_multi.txt"
@@ -36,7 +56,7 @@
 				"layerName" : "lstmIn",
 				"layerType" : "lstm",
 				"timeSteps" : 20,
-				"featureCount": 3,
+				"featureCount": 5,
 				"layerUnits" : 64,
 				"returnSequences" : true,
 				"outputActivation" : "tanh"
@@ -85,7 +105,7 @@
 	"flowName" : "marketDataMulti",
 	"requiredFields" : {
 		"flowFrom" : "dataIn",
-		"flowTo" : "mktMulti",
+		"flowTo" : "PrepData",
 		"flowDataFile" : "d:\\brian\\AI Projects\\internal_flows\\mktDataMulti.csv"
 		},
 	"conditionalFields" : {
@@ -93,11 +113,25 @@
 			"timeSequence" : true,
 			"balanceClasses" : false,
 			"ignoreBlanks" : true,
-			"features" : ["DateTime"],
+			"features" : ["DateTime", "Close", "Open", "High", "Low", "Volume"],
 			"comment" : "List the variable to forecast first",
 			"comment featureCount above" : "needs to be set to the number of targets",
 			"comment targets" : ["Close", "Open", "OBV", "Relative Strength", "AccumulationDistribution", "MACD", "MACD_flag", "Aroon Indicator", "BB_Lower", "BB_Upper"],
-			"targets" : ["Close", "Open", "Volume"]
+			"targets" : ["Close"]
+			}
+		}
+	},
+	{
+	"flowName" : "Prepared",
+	"requiredFields" : {
+		"flowFrom" : "PrepData",
+		"flowTo" : "mktMulti",
+		"flowDataFile" : "d:\\brian\\AI Projects\\internal_flows\\preparedMktDataMulti.csv"
+		},
+	"conditionalFields" : {
+		"TensorflowData" : {
+			"features" : ["DateTime", "Close", "Open", "High", "Low", "Volume"],
+			"targets" : ["Close"]
 			}
 		}
 	}

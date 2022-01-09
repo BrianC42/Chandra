@@ -110,8 +110,12 @@ class Data2Results():
         trainY - values matching the trainX samples
         testX -  sample data used to test the model
         testY -  values matching the testX samples
-        validateX -  sample data used to validateuate the model
+        validateX -  sample data used to validate the model
         validateY -  values matching the validateX samples
+        trainLen
+        validateLen
+        testLen
+        sequenceIDCol
     '''
     @property
     def data(self):
@@ -121,6 +125,48 @@ class Data2Results():
     def data(self, data):
         self._data = data
         
+    '''
+    @property
+    def normalizedData(self):
+        return self._normalizedData
+    
+    @normalizedData.setter
+    def normalizedData(self, normalizedData):
+        self._normalizedData = normalizedData
+    '''
+        
+    @property
+    def trainLen(self):
+        return self._trainLen
+    
+    @trainLen.setter
+    def trainLen(self, trainLen):
+        self._trainLen = trainLen
+        
+    @property
+    def validateLen(self):
+        return self._validateLen
+    
+    @validateLen.setter
+    def validateLen(self, validateLen):
+        self._validateLen = validateLen
+        
+    @property
+    def testLen(self):
+        return self._testLen
+    
+    @testLen.setter
+    def testLen(self, testLen):
+        self._testLen = testLen
+        
+    @property
+    def sequenceIDCol(self):
+        return self._sequenceIDCol
+    
+    @sequenceIDCol.setter
+    def sequenceIDCol(self, sequenceIDCol):
+        self._sequenceIDCol = sequenceIDCol
+
     @property
     def scaler(self):
         return self._scaler

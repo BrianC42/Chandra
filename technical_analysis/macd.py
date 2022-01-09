@@ -58,7 +58,7 @@ def return_macd_ind():
     return (MACD_ind)
 
 def macd_trade_analysis(guidance, symbol, df_data):
-    print("Consider iron condor tbd")
+    #print("Consider iron condor tbd")
     return
 
 def trade_on_macd(guidance, symbol, df_data):

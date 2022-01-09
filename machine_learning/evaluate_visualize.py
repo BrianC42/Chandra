@@ -4,8 +4,12 @@ Created on Jan 15, 2021
 @author: Brian
 '''
 import numpy as np
+import pandas as pd
 import networkx as nx
 import matplotlib.pyplot as plt
+import seaborn as sns
+
+from tda_api_library import format_tda_datetime
 
 from configuration_constants import JSON_OPTIMIZER
 from configuration_constants import JSON_LOSS
@@ -56,7 +60,83 @@ def visualize_parameters(d2r, plot_on_axis):
 
     return
 
-def visualize_anomalies(d2r, plot_on_axis):
+def visualizeAnomalyDistribution(d2r, prediction, plot_on_axis):
+    print("\n=======================WIP ====================\n\tdisplay distribution of forecast error")
+    plot_on_axis.set_title("Data series anomaly distribution")
+    plot_on_axis.set_xlabel("prediction error")
+    plot_on_axis.set_ylabel("error count")
+
+    #testMAE = np.mean(np.abs(prediction[:, 0] - d2r.testY))
+    testError = np.abs(prediction[:, 0] - d2r.testY)
+    n, bins, patches = plot_on_axis.hist(testError, bins=50)
+    plot_on_axis.set_xticks(np.arange(0, max(testError), max(testError)/10))
+    '''
+    max_trainMAE = 0.2  #or Define 90% value of max as threshold.
+
+    #Capture all details in a DataFrame for easy plotting
+    anomaly_df = pd.DataFrame(d2r.testX[20:])
+    anomaly_df['testMAE'] = testMAE
+    anomaly_df['max_trainMAE'] = max_trainMAE
+    anomaly_df['anomaly'] = anomaly_df['testMAE'] > anomaly_df['max_trainMAE']
+    anomaly_df['Close'] = d2r.testX[20:]['Close']
+
+    #Plot testMAE vs max_trainMAE
+    sns.lineplot(x=anomaly_df['Date'], y=anomaly_df['testMAE'])
+    sns.lineplot(x=anomaly_df['Date'], y=anomaly_df['max_trainMAE'])
+
+    anomalies = anomaly_df.loc[anomaly_df['anomaly'] == True]
+
+    #Plot anomalies
+    sns.lineplot(x=anomaly_df['Date'], y=d2r.scaler.inverse_transform(anomaly_df['Close']))
+    sns.scatterplot(x=anomalies['Date'], y=d2r.scaler.inverse_transform(anomalies['Close']), color='r')
+    '''
+    return
+
+def selectDateAxisLabels(dateTimes):
+    testDates = []    
+    for dt in dateTimes:
+        testDates.append(format_tda_datetime(dt))
+        
+    tmark = list(range(0, len(testDates), int(len(testDates)/10)))
+    
+    tmarkDates = []    
+    for ndx in range(0, len(testDates)):
+        if ndx in tmark:
+            tmarkDates.append(testDates[ndx])
+        
+    return tmark, tmarkDates
+
+def visualizeTestVsForecast(d2r, prediction, axis1, axis2):
+    RECENT = 40
+    FORECAST = 0
+    
+    axis1.set_title("WIP")
+    axis1.set_xlabel("time periods")
+    axis1.set_ylabel("Data Value")
+    axis1.plot(range(len(prediction)-RECENT, len(prediction)), \
+               d2r.testY[len(prediction)-RECENT : ], \
+               label='Test series')
+    axis1.plot(range(len(prediction)-RECENT, len(prediction)), \
+               prediction[len(prediction)-RECENT : , FORECAST], \
+               linestyle='dashed', label='Prediction - 1 period')
+    testData = d2r.data.iloc[(len(d2r.data) - RECENT) : ]
+    testDateTimes = testData.iloc[:, 0]
+    tmark, tmarkDates = selectDateAxisLabels(testDateTimes)
+    axis1.legend()
+    axis1.grid(True)
+
+    axis2.set_title("Data series vs. Predictions")
+    axis2.set_xlabel("time periods")
+    axis2.set_ylabel("Data Value")
+    axis2.plot(range(len(prediction)), d2r.testY[:], label='Test series')
+    axis2.plot(range(len(prediction)), prediction[:, FORECAST], linestyle='dashed', label='Prediction - 1 period')
+    testData = d2r.data.iloc[(len(d2r.data) - len(d2r.testY)) : ]
+    testDateTimes = testData.iloc[:, 0]
+    tmark, tmarkDates = selectDateAxisLabels(testDateTimes)
+    plt.xticks(tmark, tmarkDates, rotation=20)
+    axis2.legend()
+    axis2.grid(True)
+
     return
 
 def visualize_dense(d2r):
@@ -96,57 +176,63 @@ def visualize_dense(d2r):
     return 
 
 def visualize_rnn(d2r):
-    fig1, axs1 = plt.subplots(1, 2)
+    prediction = d2r.model.predict(d2r.testX)
+
+    '''
+    Screen 1
+        Training parameters
+        Fitting results
+    '''
+    fig1, axs1 = plt.subplots(2, 1)
     fig1.suptitle(d2r.mlNode, fontsize=14, fontweight='bold')
     
     visualize_parameters(d2r, axs1[0])
     visualize_fit(d2r, axs1[1])
     
-
     plt.tight_layout()
     plt.show()
 
-    fig2, axs2 = plt.subplots(1, 2)
+    '''
+    Screen 2
+        Testing data and model predictions
+        Two timeframes with focus on the most recent period
+    '''
+    fig2, axs2 = plt.subplots(2, 1)
     fig2.suptitle(d2r.mlNode, fontsize=14, fontweight='bold')
     
-    prediction = d2r.model.predict(d2r.testX)
-    recent_len = 40
-    FORECAST = 0
+    visualizeTestVsForecast(d2r, prediction, axs2[0], axs2[1])
     
-    axs2[0].set_title("WIP")
-    axs2[0].set_xlabel("time periods")
-    axs2[0].set_ylabel("Data Value")
-    axs2[0].plot(range(len(prediction)-recent_len, len(prediction)), \
-                   d2r.testY[len(prediction)-recent_len : ], \
-                   label='Test series')
-    axs2[0].plot(range(len(prediction)-recent_len, len(prediction)), \
-                   prediction[len(prediction)-recent_len : , FORECAST], \
-                   linestyle='dashed', label='Prediction - 1 period')
-    axs2[0].legend()
-
-    axs2[1].set_title("Data series vs. Predictions")
-    axs2[1].set_xlabel("time periods")
-    axs2[1].set_ylabel("Data Value")
-    axs2[1].plot(range(len(prediction)), d2r.testY[:], label='Test series')
-    axs2[1].plot(range(len(prediction)), prediction[:, FORECAST], linestyle='dashed', label='Prediction - 1 period')
-    visualize_anomalies(d2r, axs2[1])
-
     plt.tight_layout()
     plt.show()
     
+    '''
+    Screen 3
+        Distribution of prediction errors
+        Test data with samples generating the largest errors highlighted
+    '''
     fig3, axs3 = plt.subplots(1, 2)
     fig3.suptitle(d2r.mlNode, fontsize=14, fontweight='bold')
     
-    axs3[0].set_title("Data series anomaly distribution")
-    axs3[0].set_xlabel("prediction error")
-    axs3[0].set_ylabel("error count")
-        
-    axs3[1].set_title("Data series anomalies")
-    axs3[1].set_xlabel("time periods")
-    axs3[1].set_ylabel("Data Value")
-    axs3[1].plot(range(len(prediction)), d2r.testY[:], label='Test series')
-    visualize_anomalies(d2r, axs3[1])    
+    visualizeAnomalyDistribution(d2r, prediction, axs3[0])
 
+    ''' =======================WIP ==================== '''
+    print("\n=======================WIP ====================\n\tinverse_transform to display test target value")
+    if d2r.normalized == True:
+        data = d2r.scaler.inverse_transform(d2r.normalizedData)
+    else:
+        data = d2r.data
+    ''' =============================================== '''
+        
+    ''' d2r.testY is normalized '''
+    axs3[1].plot(range(len(prediction)), d2r.testY[:], label='Test series')
+    axs3[1].grid(True)
+    
+    testData = d2r.data.iloc[(len(d2r.data) - len(d2r.testY)) : ]
+    testDateTimes = testData.iloc[:, 0]
+    tmark, tmarkDates = selectDateAxisLabels(testDateTimes)
+    plt.xticks(tmark, tmarkDates, rotation=20)
+    #fig3.autofmt_xdate()
+    
     plt.tight_layout()
     plt.show()
     return 

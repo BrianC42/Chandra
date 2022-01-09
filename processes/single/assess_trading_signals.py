@@ -4,8 +4,11 @@ Created on Jul 17, 2020
 @author: Brian
 
 ********************************************************************
-scan TD Ameritrade watch lists and assess symbols against actionable
-trade triggers and option strategies of interest
+scan TD Ameritrade watch lists:
+1. Assess symbols against actionable trade triggers
+2. evaluate ML predictive models
+3. Option strategies of interest
+
 ********************************************************************
 '''
 import os
@@ -21,6 +24,8 @@ from tda_api_library import tda_get_authentication_details
 from tda_api_library import tda_read_watch_lists
 from tda_api_library import tda_read_option_chain
 from tda_api_library import format_tda_datetime
+
+from tradingIndicationsML import tradingIndications
 
 from macd import trade_on_macd
 from macd import macd_trade_analysis
@@ -207,10 +212,13 @@ def assess_trading_signals(symbol, df_data):
     return guidance
 
 def search_for_trading_opportunities(f_out, authentication_parameters, analysis_dir, json_config):
+    print("\nScanning for technical analysis trading opportunities")
     logger.info('searching for trading opportunities ---->')
     guidance = pd.DataFrame()
     df_potential_strategies = pd.DataFrame()
-    
+    '''
+    Trading signals based on technical analysis
+    '''
     json_authentication = tda_get_authentication_details(authentication_parameters)
     potential_option_trades = json_config['potentialoptionstrades']
     for symbol in tda_read_watch_lists(json_authentication):
@@ -227,8 +235,15 @@ def search_for_trading_opportunities(f_out, authentication_parameters, analysis_
                 '''
                 Additional trading strategy identification goes here
                 '''
-
-    print("Analyzing potential covered calls")
+    '''
+    Machine learning models
+    '''
+    tradingIndications()
+                
+    '''
+    Covered call options
+    '''
+    print("\nAnalyzing potential covered calls")
     for symbol in tda_read_watch_lists(json_authentication, watch_list='Combined Holding'):
         df_options, options_json = tda_read_option_chain(authentication_parameters, symbol)
         filename = analysis_dir + '\\' + symbol + '.csv'
@@ -238,7 +253,10 @@ def search_for_trading_opportunities(f_out, authentication_parameters, analysis_
         if df_covered_calls.shape[0] > 0:
             df_potential_strategies = df_potential_strategies.append(df_covered_calls)
 
-    print("Analyzing potential cash secured puts")
+    '''
+    Cash secured put options
+    '''
+    print("\nAnalyzing potential cash secured puts")
     for symbol in tda_read_watch_lists(json_authentication, watch_list='Potential Buy'):
         df_options, options_json = tda_read_option_chain(authentication_parameters, symbol)
         filename = analysis_dir + '\\' + symbol + '.csv'

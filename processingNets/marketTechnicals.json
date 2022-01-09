@@ -8,7 +8,7 @@
 			"comments: supported values - processType" : ["dataLoad", "dataPrep", "Tensorflow"],
 			"inputFlows" : [],
 			"outputFlow" : "marketData",
-			"comment outputFile" : "",
+			"outputFile" : "",
 			"logFile" : ""
 		},
 		"conditionalFields" : {
@@ -29,7 +29,7 @@
 		"conditionalFields" : {
 			"dataPrepCtrl" : {
 				"oneHotEncoding" : {
-					"field" : "close",
+					"field" : "Close",
 					"categoryType" : "seriesTrend",
 					"categories" : ["increasingSeries" , "decreasingSeries"],
 					"outputFields" : ["closeIncreasing", "closeDecreasing"]
@@ -38,7 +38,7 @@
 		}
 	},
 	{
-		"processNodeName" : "GMmkt",
+		"processNodeName" : "mktData",
 		"requiredFields" : {
 			"processType" : "Tensorflow",
 			"inputFlows" : ["Prepared"],
@@ -52,10 +52,10 @@
 			"normalize" : "standard",
 			"modelLayers" : [
 				{
-				"layerName" : "GM-lstm",
+				"layerName" : "mktData",
 				"layerType" : "lstm",
 				"timeSteps" : 20,
-				"featureCount": 1,
+				"featureCount": 5,
 				"layerUnits" : 50,
 				"returnSequences" : true,
 				"outputActivation" : "tanh"
@@ -64,7 +64,7 @@
 				"layerName" : "hidden-lstm",
 				"layerType" : "lstm",
 				"comment timeSteps" : 50,
-				"comment featureCount": 1,
+				"comment featureCount": 5,
 				"layerUnits" : 50,
 				"returnSequences" : false,
 				"outputActivation" : "tanh"
@@ -86,7 +86,7 @@
 				"denseRegularation" : false,
 				"regularationValue" : 0.0,
 				"batchSize" : 32,
-				"epochs" : 10,
+				"epochs" : 6,
 				"useBias" : true,
 				"validationSplit" : 0.1,
 				"testSplit" : 0.2,
@@ -112,7 +112,7 @@
 	"conditionalFields" : {
 		"TensorflowData" : {
 			"ignoreBlanks" : true,
-			"features" : ["DateTime"],
+			"features" : ["DateTime", "Close", "Open", "High", "Low", "Volume"],
 			"targets" : ["Close"]
 			}
 		}
@@ -121,12 +121,12 @@
 	"flowName" : "Prepared",
 	"requiredFields" : {
 		"flowFrom" : "PrepData",
-		"flowTo" : "GMmkt",
+		"flowTo" : "mktData",
 		"flowDataFile" : "d:\\brian\\AI Projects\\internal_flows\\preparedMktData.csv"
 		},
 	"conditionalFields" : {
 		"TensorflowData" : {
-			"features" : ["DateTime"],
+			"features" : ["DateTime", "Close", "Open", "High", "Low", "Volume"],
 			"targets" : ["Close"]
 			}
 		}

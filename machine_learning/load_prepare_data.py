@@ -42,8 +42,21 @@ from TrainingDataAndResults import INPUT_LAYERTYPE_DENSE
 from TrainingDataAndResults import INPUT_LAYERTYPE_RNN
 from TrainingDataAndResults import INPUT_LAYERTYPE_CNN
 
-
 from pickle import FALSE
+
+def generate1hot(d2r, nx_1hotConfig):
+    nx_1hotCategoryType = nx_1hotConfig[JSON_1HOT_CATEGORYTYPE]
+    if nx_1hotCategoryType == JSON_1HOT_SERIESTREND:
+        nx_1hotField = nx_1hotConfig[JSON_1HOT_FIELD]
+        nx_1hotCategories = nx_1hotConfig[JSON_1HOT_CATEGORIES]
+        nx_1hotOutputFields = nx_1hotConfig[JSON_1HOT_OUTPUTFIELDS]
+        print("Encoding %s as 1hot %s" % (nx_1hotField, JSON_1HOT_SERIESTREND))
+        print(nx_1hotCategories)
+        print(nx_1hotOutputFields)
+    else:
+        ex_txt = d2r.mlNode + ", prep type " + nx_1hotCategoryType + " is not supported"
+        raise NameError(ex_txt)
+    return
 
 def prepareTrainingData(d2r):
     print("============== WIP =============\n\tPreparing data\n================================")
@@ -59,6 +72,8 @@ def prepareTrainingData(d2r):
                 nx_outputFlow = nx.get_node_attributes(d2r.graph, JSON_OUTPUT_FLOW)
                 output_flow = nx_outputFlow[node_i]
 
+                nx_output_data_file = ""
+                nx_input_data_file = ""
                 nx_inputFlows = nx.get_node_attributes(d2r.graph, JSON_INPUT_FLOWS)
                 for input_flow in nx_inputFlows[node_i]:
                     for edge_i in d2r.graph.edges():
@@ -82,19 +97,10 @@ def prepareTrainingData(d2r):
                     ex_txt = node_i + ", input file " + nx_input_data_file + " does not exist"
                     raise NameError(ex_txt)
                 
-                nx_1hotConfig = nx.get_node_attributes(d2r.graph, JSON_1HOT_ENCODING)[node_i]
-                nx_1hotCategoryType = nx_1hotConfig[JSON_1HOT_CATEGORYTYPE]
-                if nx_1hotCategoryType == JSON_1HOT_SERIESTREND:
-                    nx_1hotField = nx_1hotConfig[JSON_1HOT_FIELD]
-                    nx_1hotCategories = nx_1hotConfig[JSON_1HOT_CATEGORIES]
-                    nx_1hotOutputFields = nx_1hotConfig[JSON_1HOT_OUTPUTFIELDS]
-                    print("Encoding %s as 1hot %s" % (nx_1hotField, JSON_1HOT_SERIESTREND))
-                    print(nx_1hotCategories)
-                    print(nx_1hotOutputFields)
-                else:
-                    ex_txt = d2r.mlNode + ", prep type " + nx_read_attr[d2r.mlNode] + " is not supported"
-                    raise NameError(ex_txt)
-
+                if node_i in nx.get_node_attributes(d2r.graph, JSON_1HOT_ENCODING):
+                    nx_1hotConfig = nx.get_node_attributes(d2r.graph, JSON_1HOT_ENCODING)[node_i]
+                    generate1hot(d2r, nx_1hotConfig)
+                
                 d2r.archiveData(nx_output_data_file)
         
     except Exception:
@@ -141,21 +147,6 @@ def loadTrainingData(d2r):
 
     return
 
-'''
-def to_sequences(x, y, seq_size=1):
-    return dataframe inputs as numpy arrays of shapes
-    x: (samples, seq_size, 1)
-    y: (samples, )
-    x_values = []
-    y_values = []
-
-    for i in range(len(x) - seq_size):
-        x_values.append(x.iloc[i:(i+seq_size)].values)
-        y_values.append(y.iloc[i+seq_size])
-
-    return np.array(x_values), np.array(y_values)
-'''
-
 def id_columns(data, features, targets):
     feature_cols = []
     target_cols= []
@@ -170,13 +161,13 @@ def id_columns(data, features, targets):
     
     return feature_cols, target_cols
 
-def np_to_sequence(data, sequence_step_id, targets, seq_size=1):
-    npx = np.empty([len(data) - (seq_size+1), seq_size, len(targets)], dtype=float)
+def np_to_sequence(data, features, targets, seq_size=1):
+    npx = np.empty([len(data) - (seq_size+1), seq_size, len(features)], dtype=float)
     npy = np.empty([len(data) - (seq_size+1),                       ], dtype=float)
 
     for i in range(len(data) - (seq_size+1)):
-        npx[i, :, :]    = data[i : i+seq_size, targets[:]]
-        npy[i]          = data[i+seq_size+1, targets[0]]
+        npx[i, :, :]    = data[i : i+seq_size, features[:]]
+        npy[i]          = data[i+seq_size+1, targets[:]]
 
     return npx, npy
 
@@ -204,9 +195,9 @@ def arrangeDataForTraining(d2r):
         print("Preparing the data for training: %s" % d2r.mlNode)
         nx_data_precision = nx.get_node_attributes(d2r.graph, JSON_PRECISION)[d2r.mlNode]
         
-        len_train = int(len(d2r.data) * (1-(nx_test_split+nx_validation_split)))
-        len_validate = int(len(d2r.data) * nx_validation_split)
-        len_test = int(len(d2r.data) * nx_test_split)
+        d2r.trainLen = int(len(d2r.data) * (1-(nx_test_split+nx_validation_split)))
+        d2r.validateLen = int(len(d2r.data) * nx_validation_split)
+        d2r.testLen = int(len(d2r.data) * nx_test_split)
         
         nx_normalize = nx.get_node_attributes(d2r.graph, JSON_NORMALIZE_DATA)[d2r.mlNode]
 
@@ -222,9 +213,9 @@ def arrangeDataForTraining(d2r):
                 ex_txt = 'Normalization {:s} is not supported'.format(nx_normalize)
                 raise NameError(ex_txt)
 
-            train       = d2r.data.loc[                         : len_train]
-            validation  = d2r.data.loc[len_train                : (len_train + len_validate)]
-            test        = d2r.data.loc[len_train + len_validate : ]
+            train       = d2r.data.loc[                         : d2r.trainLen]
+            validation  = d2r.data.loc[d2r.trainLen                : (d2r.trainLen + d2r.validateLen)]
+            test        = d2r.data.loc[d2r.trainLen + d2r.validateLen : ]
             
             d2r.trainX = train[nx_features[0]]
             d2r.trainY = train[nx_targets[0]]
@@ -232,6 +223,7 @@ def arrangeDataForTraining(d2r):
             d2r.validateY = validation[nx_targets[0]]
             d2r.testX = test[nx_features[0]]
             d2r.testY = test[nx_targets[0]]
+            
         elif nx_model_type == INPUT_LAYERTYPE_RNN:
             nx_time_steps = nx.get_node_attributes(d2r.graph, JSON_TIMESTEPS)[d2r.mlNode]
             
@@ -240,15 +232,19 @@ def arrangeDataForTraining(d2r):
                 d2r.scaler = StandardScaler()
                 d2r.scaler = d2r.scaler.fit(d2r.data)
 
-                data = d2r.scaler.transform(d2r.data)
+                d2r.normalizedData = d2r.scaler.transform(d2r.data)
                 d2r.normalized = True
+
+                data = d2r.normalizedData
             elif nx_normalize == 'minmax':
                 print("\n\tnormalization - minmax")
                 d2r.scaler = MinMaxScaler()
                 d2r.scaler = d2r.scaler.fit(d2r.data)
 
-                data = d2r.scaler.transform(d2r.data)
+                d2r.normalizedData = d2r.scaler.transform(d2r.data)
                 d2r.normalized = True
+
+                data = d2r.normalizedData
             elif nx_normalize == 'none':
                 print("\nData is not normalized ...")
                 data = np.array(d2r.data, dtype=nx_data_precision)
@@ -256,13 +252,19 @@ def arrangeDataForTraining(d2r):
                 ex_txt = 'Normalization {:s} is not supported'.format(nx_normalize)
                 raise NameError(ex_txt)
 
-            train       = data[                         : len_train]
-            validation  = data[len_train                : len_train + len_validate]
-            test        = data[len_train + len_validate : ]
+            train       = data[                               : d2r.trainLen]
+            validation  = data[d2r.trainLen                   : d2r.trainLen + d2r.validateLen]
+            test        = data[d2r.trainLen + d2r.validateLen : ]
 
             d2r.trainX,    d2r.trainY    = np_to_sequence(train, feature_cols, target_cols, nx_time_steps)
             d2r.validateX, d2r.validateY = np_to_sequence(validation, feature_cols, target_cols, nx_time_steps)
-            d2r.testX,     d2r.testY     = np_to_sequence(test, feature_cols, target_cols, nx_time_steps)        
+            d2r.testX,     d2r.testY     = np_to_sequence(test, feature_cols, target_cols, nx_time_steps)
+            
+            ''' for RNN models train target against series of features after dropping sequence identifier field '''
+            d2r.trainX = d2r.trainX[:, :, 1 :]
+            d2r.validateX = d2r.validateX[:, :, 1 :]
+            d2r.testX = d2r.testX[:, :, 1 :]
+            
         elif nx_model_type == INPUT_LAYERTYPE_CNN:
             print("\n*************************************************\nWORK IN PROGRESS\n\tCNN preparation is not implemented\n*************************************************\n")
             pass
