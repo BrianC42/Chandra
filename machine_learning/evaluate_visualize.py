@@ -69,7 +69,7 @@ def visualizeAnomalyDistribution(d2r, prediction, plot_on_axis):
     #testMAE = np.mean(np.abs(prediction[:, 0] - d2r.testY))
     testError = np.abs(prediction[:, 0] - d2r.testY)
     n, bins, patches = plot_on_axis.hist(testError, bins=50)
-    plot_on_axis.set_xticks(np.arange(0, max(testError), max(testError)/10))
+    #plot_on_axis.set_xticks(np.arange(0, max(testError), max(testError)/10))
     '''
     max_trainMAE = 0.2  #or Define 90% value of max as threshold.
 
@@ -213,7 +213,9 @@ def visualize_rnn(d2r):
     fig3, axs3 = plt.subplots(1, 2)
     fig3.suptitle(d2r.mlNode, fontsize=14, fontweight='bold')
     
+    '''
     visualizeAnomalyDistribution(d2r, prediction, axs3[0])
+    '''
 
     ''' =======================WIP ==================== '''
     print("\n=======================WIP ====================\n\tinverse_transform to display test target value")
@@ -230,7 +232,7 @@ def visualize_rnn(d2r):
     testData = d2r.data.iloc[(len(d2r.data) - len(d2r.testY)) : ]
     testDateTimes = testData.iloc[:, 0]
     tmark, tmarkDates = selectDateAxisLabels(testDateTimes)
-    plt.xticks(tmark, tmarkDates, rotation=20)
+    #plt.xticks(tmark, tmarkDates, rotation=20)
     #fig3.autofmt_xdate()
     
     plt.tight_layout()
