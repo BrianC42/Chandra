@@ -27,11 +27,11 @@
 			"processType" : "???",
 			"inputFlows" : ["???"],
 			"outputFlow" : "",
-			"outputFile" : "d:\\brian\\AI Projects\\models\\???",
-			"logFile" : "d:\\brian\\AI Projects\\logs\\???.txt"
+			"outputFile" : "d:\\brian\\AI-Projects\\models\\???",
+			"logFile" : "d:\\brian\\AI-Projects\\logs\\???.txt"
 		},
 		"conditionalFields" : {
-			"modelFile" : "d:\\brian\\AI Projects\\models\\???",
+			"modelFile" : "d:\\brian\\AI-Projects\\models\\???",
 			"dataPrecision" : "float32",
 			"modelLayers" : [
 				{
@@ -85,7 +85,7 @@
 	"requiredFields" : {
 		"flowFrom" : "???",
 		"flowTo" : "???",
-		"flowDataFile" : "d:\\brian\\AI Projects\\internal_flows\\???.csv"
+		"flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\???.csv"
 		},
 	"conditionalFields" : {
 		"TensorflowData" : {

@@ -13,7 +13,7 @@
 		},
 		"conditionalFields" : {
 			"dataLoadCtrl" : {
-				"inputFile" : ["d:\\brian\\AI Projects\\tda\\market_analysis_data\\gm.csv"]
+				"inputFile" : ["d:\\brian\\AI-Projects\\tda\\market_analysis_data\\gm.csv"]
 			}
 		}
 	},
@@ -44,11 +44,11 @@
 			"processType" : "Tensorflow",
 			"inputFlows" : ["Prepared"],
 			"outputFlow" : "",
-			"outputFile" : "d:\\brian\\AI Projects\\models\\mkt_multi",
-			"logFile" : "d:\\brian\\AI Projects\\logs\\mkt_multi.txt"
+			"outputFile" : "d:\\brian\\AI-Projects\\models\\mkt_multi",
+			"logFile" : "d:\\brian\\AI-Projects\\logs\\mkt_multi.txt"
 		},
 		"conditionalFields" : {
-			"modelFile" : "d:\\brian\\AI Projects\\models\\mkt_multi",
+			"modelFile" : "d:\\brian\\AI-Projects\\models\\mkt_multi",
 			"dataPrecision" : "float32",
 			"normalize" : "standard",
 			"modelLayers" : [
@@ -106,7 +106,7 @@
 	"requiredFields" : {
 		"flowFrom" : "dataIn",
 		"flowTo" : "PrepData",
-		"flowDataFile" : "d:\\brian\\AI Projects\\internal_flows\\mktDataMulti.csv"
+		"flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\mktDataMulti.csv"
 		},
 	"conditionalFields" : {
 		"TensorflowData" : {
@@ -126,7 +126,7 @@
 	"requiredFields" : {
 		"flowFrom" : "PrepData",
 		"flowTo" : "mktMulti",
-		"flowDataFile" : "d:\\brian\\AI Projects\\internal_flows\\preparedMktDataMulti.csv"
+		"flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\preparedMktDataMulti.csv"
 		},
 	"conditionalFields" : {
 		"TensorflowData" : {

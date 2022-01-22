@@ -13,7 +13,7 @@
 		"conditionalFields" : {
 			"dataLoadCtrl" : {
 				"comment symbols" : ["gm", "eog", "gild"],
-				"inputFile" : ["d:\\brian\\AI Projects\\tda\\market_analysis_data\\gm.csv"]
+				"inputFile" : ["d:\\brian\\AI-Projects\\tda\\market_analysis_data\\gm.csv"]
 			}
 		}
 	},
@@ -23,11 +23,11 @@
 			"processType" : "Tensorflow",
 			"inputFlows" : ["gmAutoEncode"],
 			"outputFlow" : "",
-			"outputFile" : "d:\\brian\\AI Projects\\models\\gmMktAE",
-			"logFile" : "d:\\brian\\AI Projects\\logs\\gmMktAE.txt"
+			"outputFile" : "d:\\brian\\AI-Projects\\models\\gmMktAE",
+			"logFile" : "d:\\brian\\AI-Projects\\logs\\gmMktAE.txt"
 		},
 		"conditionalFields" : {
-			"modelFile" : "d:\\brian\\AI Projects\\models\\gmMktAE",
+			"modelFile" : "d:\\brian\\AI-Projects\\models\\gmMktAE",
 			"dataPrecision" : "float32",
 			"normalize" : "minmax",
 			"modelLayers" : [
@@ -95,7 +95,7 @@
 	"requiredFields" : {
 		"flowFrom" : "gmIn",
 		"flowTo" : "gmMktAE",
-		"flowDataFile" : "d:\\brian\\AI Projects\\internal_flows\\gmAutoEncode.csv"
+		"flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\gmAutoEncode.csv"
 		},
 	"conditionalFields" : {
 		"TensorflowData" : {

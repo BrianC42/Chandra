@@ -13,7 +13,7 @@
 		},
 		"conditionalFields" : {
 			"dataPrepCtrl" : {
-				"inputFile" : ["d:\\brian\\AI Projects\\Datasets\\linear regression.csv"]
+				"inputFile" : ["d:\\brian\\AI-Projects\\Datasets\\linear regression.csv"]
 			},
 			"removeOutliers" : [
 				{"commented - featureName - none" : "", "outlierPct" : 0.02}
@@ -27,11 +27,11 @@
 			"processType" : "Tensorflow",
 			"inputFlows" : ["LRdata"],
 			"outputFlow" : "",
-			"outputFile" : "d:\\brian\\AI Projects\\models\\LRmodel",
-			"logFile" : "d:\\brian\\AI Projects\\logs\\LRmodel.txt"
+			"outputFile" : "d:\\brian\\AI-Projects\\models\\LRmodel",
+			"logFile" : "d:\\brian\\AI-Projects\\logs\\LRmodel.txt"
 		},
 		"conditionalFields" : {
-			"modelFile" : "d:\\brian\\AI Projects\\models\\LRmodel",
+			"modelFile" : "d:\\brian\\AI-Projects\\models\\LRmodel",
 			"dataPrecision" : "float64",
 			"normalize" : "none",
 			"preprocessingLayers" : {
@@ -96,7 +96,7 @@
 	"requiredFields" : {
 		"flowFrom" : "LoadData",
 		"flowTo" : "LRmodel",
-		"flowDataFile" : "d:\\brian\\AI Projects\\temp\\linear regression.csv"
+		"flowDataFile" : "d:\\brian\\AI-Projects\\temp\\linear regression.csv"
 		},
 	"conditionalFields" : {
 		"TensorflowData" : {

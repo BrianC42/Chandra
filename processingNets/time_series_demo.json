@@ -13,7 +13,7 @@
 		},
 		"conditionalFields" : {
 			"dataPrepCtrl" : {
-				"inputFile" : ["d:\\brian\\AI Projects\\Datasets\\regression - sine 10.csv"]
+				"inputFile" : ["d:\\brian\\AI-Projects\\Datasets\\regression - sine 10.csv"]
 			},
 			"removeOutliers" : [
 				{"commented - featureName - none" : "", "outlierPct" : 0.02}
@@ -27,11 +27,11 @@
 			"processType" : "Tensorflow",
 			"inputFlows" : ["SinWave"],
 			"outputFlow" : "",
-			"outputFile" : "d:\\brian\\AI Projects\\models\\TimeSeriesDemo_LSTM",
-			"logFile" : "d:\\brian\\AI Projects\\logs\\TimeSeriesDemo_LSTM.txt"
+			"outputFile" : "d:\\brian\\AI-Projects\\models\\TimeSeriesDemo_LSTM",
+			"logFile" : "d:\\brian\\AI-Projects\\logs\\TimeSeriesDemo_LSTM.txt"
 		},
 		"conditionalFields" : {
-			"modelFile" : "d:\\brian\\AI Projects\\models\\SineWave",
+			"modelFile" : "d:\\brian\\AI-Projects\\models\\SineWave",
 			"dataPrecision" : "float32",
 			"normalize" : "none",
 			"modelLayers" : [
@@ -96,7 +96,7 @@
 	"requiredFields" : {
 		"flowFrom" : "LoadData",
 		"flowTo" : "SineWaveRegression",
-		"flowDataFile" : "d:\\brian\\AI Projects\\internal_flows\\regression - sine 10.csv"
+		"flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\regression - sine 10.csv"
 		},
 	"conditionalFields" : {
 		"TensorflowData" : {

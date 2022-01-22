@@ -1,9 +1,9 @@
 {
 "logFile" : "\\logs\\chandra_log.txt",
-"analysislogFile" : "d:\\brian\\AI Projects\\logs\\AnalyzeSampleevaluationlog.txt",
-"analysisoutputFile" : "d:\\brian\\AI Projects\\logs\\AnalysisSampleevaluation.txt",
-"evaluateoutputFile" : "d:\\brian\\AI Projects\\logs\\Evaluation_output",
-"evaluatesegmentationfile" : "d:\\brian\\AI Projects\\logs\\segmentation.csv",
+"analysislogFile" : "d:\\brian\\AI-Projects\\logs\\AnalyzeSampleevaluationlog.txt",
+"analysisoutputFile" : "d:\\brian\\AI-Projects\\logs\\AnalysisSampleevaluation.txt",
+"evaluateoutputFile" : "d:\\brian\\AI-Projects\\logs\\Evaluation_output",
+"evaluatesegmentationfile" : "d:\\brian\\AI-Projects\\logs\\segmentation.csv",
 "outputFile" : "\\logs\\chandra_output",
 "loggingLevel" : "debug",
 "loggingFormat" : "%(asctime)s: %(levelname)s: %(message)s",
