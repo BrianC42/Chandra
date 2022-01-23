@@ -35,7 +35,7 @@ def tda_get_authentication_details(auth_file):
 def tda_update_authentication_details(json_authentication):
     logging.debug('tda_update_authentication_details ---->\n')
     
-    json_f = open('d:\\brian\\AI Projects\\tda_local.json', "w")
+    json_f = open('d:\\brian\\AI-Projects\\tda_local.json', "w")
     json.dump(json_authentication, json_f, indent=0)
     json_f.close
     
@@ -287,7 +287,7 @@ def tda_read_watch_lists(json_authentication, watch_list=None):
 def update_tda_eod_data(authentication_parameters):
     logging.debug('update_tda_eod_data ---->')
     
-    eod_data_dir = 'd:\\brian\\AI Projects\\tda\\market_data\\'
+    eod_data_dir = 'd:\\brian\\AI-Projects\\tda\\market_data\\'
     json_authentication = tda_get_authentication_details(authentication_parameters)
     tda_throttle_time = time.time()
     tda_throttle_count = 0

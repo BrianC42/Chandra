@@ -46,7 +46,7 @@ def tda_derivative_data_child(mpipe_feed):
                 df_data = aroon_indicator(df_data)
                 df_data = average_directional_index(df_data)
                 df_data = stochastic_oscillator(df_data)
-                df_data = relative_strength(df_data, value_label="Close", relative_to='d:\\brian\AI Projects\\tda\\market_data\\$spx.x.csv')
+                df_data = relative_strength(df_data, value_label="Close", relative_to='d:\\brian\AI-Projects\\tda\\market_data\\$spx.x.csv')
                 df_data.to_csv(file_out, index=False)
 
             '''================ Return processed data ====================='''
