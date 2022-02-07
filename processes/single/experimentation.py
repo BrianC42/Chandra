@@ -34,7 +34,7 @@ from sklearn.preprocessing import MinMaxScaler, StandardScaler
 import seaborn as sns
 
 def linear_regression():
-    df_data = pd.read_csv('d:/Brian/AI Projects/Datasets/linear regression.csv')
+    df_data = pd.read_csv('d:/Brian/AI-Projects/Datasets/linear regression.csv')
     TRAINPCT = 0.8
     train = df_data.loc[ : (len(df_data) * TRAINPCT)]
     test = df_data.loc[(len(df_data) * TRAINPCT) :]
@@ -69,7 +69,7 @@ def create_dataset(X, y, time_steps=1):
     return np.array(Xs), np.array(ys)
 
 def sine_wave_regression():
-    df_data = pd.read_csv('d:/Brian/AI Projects/Datasets/regression - sine 10.csv')
+    df_data = pd.read_csv('d:/Brian/AI-Projects/Datasets/regression - sine 10.csv')
     print(df_data.head())
     plt.plot(df_data['FeatureX'], df_data['TargetY'])
     plt.show()
@@ -117,7 +117,7 @@ def to_sequences(x, y, seq_size=1):
 
 def digitalSreeni_180():
     dataDir = 'g:/My Drive/Colab Notebooks/data/'
-    dataDir = 'd:/Brian/AI Projects/Datasets/'
+    dataDir = 'd:/Brian/AI-Projects/Datasets/'
     
     dataframe = pd.read_csv(dataDir + 'GE - Yahoo.csv')
     df = dataframe[['Date', 'Close']]
