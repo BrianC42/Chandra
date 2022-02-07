@@ -18,20 +18,110 @@ Also try S&P: https://finance.yahoo.com/quote/%5EGSPC/history?p=%5EGSPC
 
 
 import numpy as np
+import pandas as pd
+
+from matplotlib import pyplot as plt
+import seaborn as sns
+
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
+from sklearn.datasets import fetch_california_housing
 
 import tensorflow as tf
 from tensorflow import keras
+import autokeras as ak
 
-#from keras.models import Sequential
-#from keras.layers import LSTM, Input, Dropout
-#from keras.layers import Dense
-#from keras.layers import RepeatVector
-#from keras.layers import TimeDistributed
-import pandas as pd
-from matplotlib import pyplot as plt
-from sklearn.preprocessing import MinMaxScaler, StandardScaler
-#from keras.models import Model
-import seaborn as sns
+def autoKeras():
+    
+    house_dataset = fetch_california_housing()
+    df = pd.DataFrame(np.concatenate((house_dataset.data, house_dataset.target.reshape(-1, 1)), axis=1), \
+                      columns=house_dataset.feature_names + ["Price"], )
+    train_size = int(df.shape[0] * 0.9)
+    df[:train_size].to_csv("train.csv", index=False)
+    df[train_size:].to_csv("eval.csv", index=False)
+    train_file_path = "train.csv"
+    test_file_path = "eval.csv"
+    
+    # Initialize the structured data regressor.
+    reg = ak.StructuredDataRegressor(overwrite=True, max_trials=3)  # It tries 3 different models.
+    # Feed the structured data regressor with training data.
+    # The path to the train.csv file.
+    # The name of the label column.
+    reg.fit(train_file_path,"Price",epochs=10,)
+    # Predict with the best model.
+    predicted_y = reg.predict(test_file_path)
+    # Evaluate the best model with testing data.
+    print(reg.evaluate(test_file_path, "Price"))
+    
+    '''
+    Data Format
+    The AutoKeras StructuredDataRegressor is quite flexible for the data format.
+
+    The example above shows how to use the CSV files directly. Besides CSV files, 
+    it also supports numpy.ndarray, pandas.DataFrame or tf.data.Dataset. 
+    The data should be two-dimensional with numerical or categorical values.
+
+    For the regression targets, it should be a vector of numerical values. 
+    AutoKeras accepts numpy.ndarray, pandas.DataFrame, or pandas.Series.
+
+    The following examples show how the data can be prepared with 
+    numpy.ndarray, pandas.DataFrame, and tensorflow.data.Dataset.
+    '''
+    # x_train as pandas.DataFrame, y_train as pandas.Series
+    x_train = pd.read_csv(train_file_path)
+    print(type(x_train))  # pandas.DataFrame
+    y_train = x_train.pop("Price")
+    print(type(y_train))  # pandas.Series
+
+    # You can also use pandas.DataFrame for y_train.
+    y_train = pd.DataFrame(y_train)
+    print(type(y_train))  # pandas.DataFrame
+
+    # You can also use numpy.ndarray for x_train and y_train.
+    x_train = x_train.to_numpy()
+    y_train = y_train.to_numpy()
+    print(type(x_train))  # numpy.ndarray
+    print(type(y_train))  # numpy.ndarray
+
+    # Preparing testing data.
+    x_test = pd.read_csv(test_file_path)
+    y_test = x_test.pop("Price")
+
+    # It tries 10 different models.
+    reg = ak.StructuredDataRegressor(max_trials=3, overwrite=True)
+    # Feed the structured data regressor with training data.
+    reg.fit(x_train, y_train, epochs=10)
+    # Predict with the best model.
+    predicted_y = reg.predict(x_test)
+    # Evaluate the best model with testing data.
+    print(reg.evaluate(x_test, y_test))   
+    
+    ''' The following code shows how to convert numpy.ndarray to tf.data.Dataset. '''
+    train_set = tf.data.Dataset.from_tensor_slices((x_train, y_train))
+    test_set = tf.data.Dataset.from_tensor_slices((x_test, y_test))
+
+    reg = ak.StructuredDataRegressor(max_trials=3, overwrite=True)
+    # Feed the tensorflow Dataset to the regressor.
+    reg.fit(train_set, epochs=10)
+    # Predict with the best model.
+    predicted_y = reg.predict(test_set)
+    # Evaluate the best model with testing data.
+    print(reg.evaluate(test_set))
+    
+    '''
+    You can also specify the column names and types for the data as follows. 
+    The column_names is optional if the training data already have the column names, 
+    e.g. pandas.DataFrame, CSV file. 
+    Any column, whose type is not specified will be inferred from the training data.
+    '''
+    # Initialize the structured data regressor.
+    reg = ak.StructuredDataRegressor(
+        column_names=["MedInc","HouseAge","AveRooms","AveBedrms","Population","AveOccup","Latitude","Longitude",],
+        column_types={"MedInc": "numerical", "Latitude": "numerical"},
+        max_trials=10,  # It tries 10 different models.
+        overwrite=True,
+        )
+    
+    return
 
 def linear_regression():
     df_data = pd.read_csv('d:/Brian/AI-Projects/Datasets/linear regression.csv')
@@ -232,4 +322,5 @@ if __name__ == '__main__':
     #digitalSreeni_180()
     linear_regression()
     sine_wave_regression()
+    autoKeras()
     
