@@ -242,7 +242,7 @@ def tda_read_option_chain(authentication_parameters, p_symbol):
                         df_tda.at[ndx, "markChange"] = tda_strike["markChange"]
                         df_tda.at[ndx, "markPercentChange"] = tda_strike["markPercentChange"]
                         ndx += 1
-            df_tda_options = df_tda_options.append(df_tda, ignore_index=True)
+            df_tda_options = pd.concat([df_tda_options, df_tda], ignore_index=True)
     else:
         print("Unable to get option chains, response code=%s, reason %s, %s" % (response.status_code, response.reason, response.text))
         logging.info("Unable to get option chains, response code=%s, reason %s, %s" % (response.status_code, response.reason, response.text))

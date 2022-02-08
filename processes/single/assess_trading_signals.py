@@ -251,7 +251,7 @@ def search_for_trading_opportunities(f_out, authentication_parameters, analysis_
             df_data = pd.read_csv(filename)
         df_covered_calls = covered_call(symbol, df_data, df_options)
         if df_covered_calls.shape[0] > 0:
-            df_potential_strategies = df_potential_strategies.append(df_covered_calls)
+            df_potential_strategies = pd.concat([df_potential_strategies, df_covered_calls])
 
     '''
     Cash secured put options
@@ -264,7 +264,7 @@ def search_for_trading_opportunities(f_out, authentication_parameters, analysis_
             df_data = pd.read_csv(filename)
         df_cash_secured_puts = cash_secured_put(symbol, df_data, df_options)
         if df_cash_secured_puts.shape[0] > 0:
-            df_potential_strategies = df_potential_strategies.append(df_cash_secured_puts)
+            df_potential_strategies = pd.concat([df_potential_strategies, df_cash_secured_puts])
               
     df_potential_strategies.to_csv(potential_option_trades + "potential_option_trades.csv", index=False)
     logger.info('<---- searching for trading opportunities done')
