@@ -99,7 +99,10 @@ def trade_on_macd(guidance, symbol, df_data):
             trade = True
             close = df_data.at[day3, 'Close']
             trigger_status = "negative Divergence"
-            guidance = guidance.append([[trade, symbol, 'MACD', trigger_date, trigger_status, close]])
+            #df_test = guidance
+            df_concat = pd.DataFrame(data=[[trade, symbol, 'MACD', trigger_date, trigger_status, close]])
+            guidance = pd.concat([guidance, df_concat])
+            #guidance = guidance.append([[trade, symbol, 'MACD', trigger_date, trigger_status, close]])
     
     return guidance
 
