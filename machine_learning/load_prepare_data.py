@@ -25,6 +25,7 @@ from configuration_constants import JSON_PROCESS_TYPE
 from configuration_constants import JSON_DATA_LOAD_PROCESS
 from configuration_constants import JSON_DATA_PREP_PROCESS
 from configuration_constants import JSON_TENSORFLOW
+from configuration_constants import JSON_AUTOKERAS
 from configuration_constants import JSON_FEATURE_FIELDS
 from configuration_constants import JSON_TARGET_FIELDS
 from configuration_constants import JSON_VALIDATION_SPLIT
@@ -59,7 +60,7 @@ def generate1hot(d2r, nx_1hotConfig):
     return
 
 def prepareTrainingData(d2r):
-    print("============== WIP =============\n\tPreparing data\n================================")
+    print("\n============== WIP =============\n\tPreparing data\n================================\n")
     ''' error handling '''
     try:
         err_txt = "*** An exception occurred preparing the training data ***"
@@ -204,9 +205,9 @@ def arrangeDataForTraining(d2r):
         nx_model_type = nx.get_node_attributes(d2r.graph, MODEL_TYPE)[d2r.mlNode]
         if nx_model_type == INPUT_LAYERTYPE_DENSE:
             if nx_normalize == 'standard':
-                print("========= WIP ===========\n\tnormalization - standard\n\tnot implemented\n=========================")
+                print("\n========= WIP ===========\n\tnormalization - standard\n\tnot implemented\n=========================\n")
             elif nx_normalize == 'minmax':
-                print("========= WIP ===========\n\tnormalization - minmax\n\tnot implemented\n=========================")
+                print("\n========= WIP ===========\n\tnormalization - minmax\n\tnot implemented\n=========================\n")
             elif nx_normalize == 'none':
                 print("\nData is not normalized ...")
             else:
@@ -268,6 +269,35 @@ def arrangeDataForTraining(d2r):
         elif nx_model_type == INPUT_LAYERTYPE_CNN:
             print("\n*************************************************\nWORK IN PROGRESS\n\tCNN preparation is not implemented\n*************************************************\n")
             pass
+        
+    elif nx_read_attr[d2r.mlNode] == JSON_AUTOKERAS:    
+        print("\n*************************************************\nWORK IN PROGRESS\n\tloading data for AutoKeras\n*************************************************\n")
+        print("Preparing the data for training: %s" % d2r.mlNode)
+        nx_data_precision = nx.get_node_attributes(d2r.graph, JSON_PRECISION)[d2r.mlNode]
+        
+        d2r.trainLen = int(len(d2r.data) * (1-(nx_test_split+nx_validation_split)))
+        d2r.validateLen = int(len(d2r.data) * nx_validation_split)
+        d2r.testLen = int(len(d2r.data) * nx_test_split)
+        
+        nx_normalize = nx.get_node_attributes(d2r.graph, JSON_NORMALIZE_DATA)[d2r.mlNode]
+
+        train       = d2r.data.loc[                         : d2r.trainLen]
+        validation  = d2r.data.loc[d2r.trainLen                : (d2r.trainLen + d2r.validateLen)]
+        test        = d2r.data.loc[d2r.trainLen + d2r.validateLen : ]
+            
+        d2r.trainX = train[nx_features[0]]
+        d2r.trainY = train[nx_targets[0]]
+        d2r.validateX = validation[nx_features[0]]
+        d2r.validateY = validation[nx_targets[0]]
+        d2r.testX = test[nx_features[0]]
+        d2r.testY = test[nx_targets[0]]
+
+        d2r.trainX = d2r.trainX.to_frame()
+        d2r.trainY = d2r.trainY.to_frame()
+        d2r.validateX = d2r.validateX.to_frame()
+        d2r.validateY = d2r.validateY.to_frame()
+        d2r.testX = d2r.testX.to_frame()
+        d2r.testY = d2r.testY.to_frame()
 
     return
 

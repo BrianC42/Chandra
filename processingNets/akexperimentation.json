@@ -1,0 +1,101 @@
+{
+"comment - processing node section" : "Speciification details  for the processing nodes",
+"processNodes" : [
+	{
+		"processNodeName" : "LoadData",
+		"requiredFields" : {
+			"processType" : "dataLoad",
+			"inputFlows" : [],
+			"outputFlow" : "AKdata",
+			"outputFile" : "",
+			"logFile" : ""
+		},
+		"conditionalFields" : {
+			"dataLoadCtrl" : {
+				"inputFile" : ["d:\\Brian\\AI-Projects\\tda\\market_analysis_data\\gm.csv"]
+			}
+		}
+	},
+	{
+		"processNodeName" : "AKexperiment",
+		"requiredFields" : {
+			"processType" : "AutoKeras",
+			"inputFlows" : ["AKdata"],
+			"outputFlow" : "",
+			"outputFile" : "d:\\brian\\AI-Projects\\models\\AKexp",
+			"logFile" : "d:\\brian\\AI-Projects\\logs\\AKexp.txt"
+		},
+		"conditionalFields" : {
+			"modelFile" : "d:\\brian\\AI-Projects\\models\\AKexp",
+			"dataPrecision" : "float32",
+			"normalize" : "none",
+			"preprocessingLayers" : {
+				"normalize" : false
+				},
+			"comment - not required - modelLayers" : [
+				{
+				"layerName" : "input",
+				"layerType" : "dense",
+				"featureCount": 1,
+				"layerUnits" : 64,
+				"outputActivation" : "linear"
+				},
+				{
+				"layerName" : "dropout",
+				"layerType" : "dropout",
+				"dropoutRate" : 0.2
+				},
+				{
+				"layerName" : "hidden",
+				"layerType" : "dense",
+				"layerUnits" : 64,
+				"outputActivation" : "linear"
+				},
+				{
+				"layerName" : "output",
+				"layerType" : "dense",
+				"layerUnits" : 1,
+				"outputActivation" : "linear"
+				}
+			],
+			"training" : {
+				"lossWeights" : [1.0],
+				"denseRegularation" : false,
+				"regularationValue" : 0.0,
+				"batchSize" : 32,
+				"epochs" : 6,
+				"useBias" : true,
+				"validationSplit" : 0.1,
+				"testSplit" : 0.2,
+				"shuffle" : true,
+				"verbose" : 2,
+				"balanceClasses" : true,
+				"compilationLoss" : "mae",
+				"compilationMetrics" : ["accuracy"],
+				"optimizer" : "adam"
+			}
+		}
+	}
+],
+"comment - dataflow section" : "Specification details  for the flows of data between processing nodes",
+"dataFlows" : [
+	{
+	"flowName" : "AKdata",
+	"requiredFields" : {
+		"flowFrom" : "LoadData",
+		"flowTo" : "AKexperiment",
+		"flowDataFile" : "d:\\brian\\AI-Projects\\temp\\AK experimentation.csv"
+		},
+	"conditionalFields" : {
+		"TensorflowData" : {
+			"timeSequence" : true,
+			"balanceClasses" : false,
+			"ignoreBlanks" : true,
+			"features" : ["DateTime", "Close", "Open", "High", "Low", "Volume"],
+			"targets" : ["Close"]
+			}
+		}
+	}
+],
+"comment end of specification" : "------------------------------------------------------------------------------------"
+}

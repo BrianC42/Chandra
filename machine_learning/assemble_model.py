@@ -10,8 +10,10 @@ import logging
 import networkx as nx
 import tensorflow as tf
 from tensorflow import keras
+import autokeras as ak
 
 from configuration_constants import JSON_TENSORFLOW
+from configuration_constants import JSON_AUTOKERAS
 from configuration_constants import JSON_PRECISION
 from configuration_constants import JSON_PROCESS_TYPE
 from configuration_constants import JSON_LAYERS
@@ -28,6 +30,8 @@ from configuration_constants import JSON_LOSS_WTS
 from configuration_constants import JSON_OPTIMIZER
 from configuration_constants import JSON_MODEL_FILE
 
+from TrainingDataAndResults import TRAINING_TENSORFLOW
+from TrainingDataAndResults import TRAINING_AUTO_KERAS
 from TrainingDataAndResults import MODEL_TYPE
 from TrainingDataAndResults import INPUT_LAYERTYPE_DENSE
 from TrainingDataAndResults import INPUT_LAYERTYPE_RNN
@@ -110,7 +114,6 @@ def build_layer(d2r, layer_type, layer_definition, input_layer):
     return k_layer
 
 def assemble_layers(d2r):
-
     logging.info('====> ================================================')
     logging.info('====> build_model: building the machine learning model')
     logging.info('====> ================================================')
@@ -126,7 +129,7 @@ def assemble_layers(d2r):
         nx_layers = nx.get_node_attributes(d2r.graph, JSON_LAYERS)[d2r.mlNode]
         nx_data_precision = nx.get_node_attributes(d2r.graph, JSON_PRECISION)[d2r.mlNode]
         keras.backend.set_floatx(nx_data_precision)
-        k_model = keras.Sequential()
+        d2r.model = keras.Sequential()
         
         for nx_layer_definition in nx_layers:
             ''' layer type is required '''
@@ -136,10 +139,10 @@ def assemble_layers(d2r):
                 TimeDistributed layer type specification is not defined - future support required
                 '''
                 k_layer = build_layer(d2r, nx_layer_type, nx_layer_definition, input_layer)
-                k_model.add(keras.layers.TimeDistributed(k_layer))
+                d2r.model.add(keras.layers.TimeDistributed(k_layer))
             else:
                 k_layer = build_layer(d2r, nx_layer_type, nx_layer_definition, input_layer)
-                k_model.add(k_layer)
+                d2r.model.add(k_layer)
             input_layer = False
             
         err_txt = "*** An exception occurred compiling the model ***"
@@ -148,14 +151,14 @@ def assemble_layers(d2r):
         nx_optimizer = nx.get_node_attributes(d2r.graph, JSON_OPTIMIZER)[d2r.mlNode]
         nx_loss_weights = nx.get_node_attributes(d2r.graph, JSON_LOSS_WTS)[d2r.mlNode]
         
-        k_model.compile(optimizer=nx_optimizer, loss=nx_loss, metrics=nx_metrics, loss_weights=nx_loss_weights)
+        d2r.model.compile(optimizer=nx_optimizer, loss=nx_loss, metrics=nx_metrics, loss_weights=nx_loss_weights)
         print("compile optimizer:%s loss:%s metrics:%s loss_weights:%s" % \
               (nx_optimizer, nx_loss, nx_metrics, nx_loss_weights))
-        k_model.summary()
+        d2r.model.summary()
         nx_model_file = nx.get_node_attributes(d2r.graph, JSON_MODEL_FILE)[d2r.mlNode]
 
         err_txt = "*** An exception occurred plotting the model ***"
-        keras.utils.plot_model(k_model, to_file=nx_model_file + '.png', show_shapes=True)
+        keras.utils.plot_model(d2r.model, to_file=nx_model_file + '.png', show_shapes=True)
 
     except Exception:
         exc_info = sys.exc_info()
@@ -172,8 +175,28 @@ def assemble_layers(d2r):
     logging.info('<---- ----------------------------------------------')
     logging.info('<---- build_model: done')
     logging.info('<---- ----------------------------------------------')    
-    #return k_model, x_features, y_targets, df_training_data, np_x_norm, np_y_norm, np_x_test, np_y_test
-    return k_model
+    return
+
+def build_autokeras_model(d2r):
+    # error handling
+    try:
+        print("\n============== WIP =============\n\tBuilding / configuring AutoKeras model\n================================\n")
+        err_txt = "*** An exception occurred building the AutoKeras model ***"
+        d2r.model = ak.StructuredDataRegressor(overwrite=True, max_trials=5)
+        
+    except Exception:
+        exc_info = sys.exc_info()
+        exc_str = exc_info[1].args[0]
+        if isinstance(exc_str, str):
+            exc_txt = err_txt + "\n\t" + exc_str
+        elif isinstance(exc_str, tuple):
+            exc_txt = err_txt + "\n\t"
+            for s in exc_str:
+                exc_txt += s
+        logging.debug(exc_txt)
+        sys.exit(exc_txt)
+    
+    return
 
 def buildModel(d2r):
     nx_edges = nx.edges(d2r.graph)
@@ -185,7 +208,17 @@ def buildModel(d2r):
                 if nx_edge[1] == node_i:
                     d2r.mlNode = node_i
                     d2r.mlEdgeIn = nx_edge
+                    d2r.trainer = TRAINING_TENSORFLOW
                     d2r.model = assemble_layers(d2r)
+                    break
+            break
+        elif nx_read_attr[node_i] == JSON_AUTOKERAS:
+            for nx_edge in nx_edges:
+                if nx_edge[1] == node_i:
+                    d2r.mlNode = node_i
+                    d2r.mlEdgeIn = nx_edge
+                    d2r.trainer = TRAINING_AUTO_KERAS
+                    build_autokeras_model(d2r)
                     break
             break
 

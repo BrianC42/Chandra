@@ -11,11 +11,15 @@ import seaborn as sns
 
 from tda_api_library import format_tda_datetime
 
+from configuration_constants import JSON_TENSORFLOW
+from configuration_constants import JSON_AUTOKERAS
 from configuration_constants import JSON_OPTIMIZER
 from configuration_constants import JSON_LOSS
 from configuration_constants import JSON_METRICS
 from configuration_constants import JSON_NORMALIZE_DATA
 
+from TrainingDataAndResults import TRAINING_TENSORFLOW
+from TrainingDataAndResults import TRAINING_AUTO_KERAS
 from TrainingDataAndResults import INPUT_LAYERTYPE_DENSE
 from TrainingDataAndResults import INPUT_LAYERTYPE_RNN
 from TrainingDataAndResults import INPUT_LAYERTYPE_CNN
@@ -48,14 +52,13 @@ def visualize_parameters(d2r, plot_on_axis):
     str_p8 = '\nnormalization:{:s}'.format(nx_normalize)
     str_params = str_l7 + str_p4 + str_p6 + str_p7 + str_p8
     
-    #plot_on_axis.set_title("ML Parameters Used")
     plot_on_axis.set_title(str_params)
     '''
     plot_on_axis.text(0.5, 0.5, str_model + '\n' + str_params, horizontalalignment='center', \
                       verticalalignment='center', wrap=True)
     '''
-    plot_on_axis.plot(d2r.fitting.epoch, d2r.fitting.history['accuracy'], label='accuracy')
-    plot_on_axis.plot(d2r.fitting.epoch, d2r.fitting.history['val_accuracy'], label='Validation accuracy')
+    #plot_on_axis.plot(d2r.fitting.epoch, d2r.fitting.history['accuracy'], label='accuracy')
+    #plot_on_axis.plot(d2r.fitting.epoch, d2r.fitting.history['val_accuracy'], label='Validation accuracy')
     plot_on_axis.legend()
 
     return
@@ -140,11 +143,14 @@ def visualizeTestVsForecast(d2r, prediction, axis1, axis2):
     return
 
 def visualize_dense(d2r):
-    fig, axs = plt.subplots(3, 3)
+    prediction = d2r.model.predict(x=d2r.testX)
+
+    fig, axs = plt.subplots(2, 3)
     fig.suptitle(d2r.mlNode, fontsize=14, fontweight='bold')
     visualize_parameters(d2r, axs[0, 0])
     visualize_fit(d2r, axs[1, 0])
-    
+
+    '''
     axs[0, 1].set_title("Training Data")
     axs[0, 1].scatter(d2r.trainX, d2r.trainY)
         
@@ -156,11 +162,13 @@ def visualize_dense(d2r):
     axs[1, 1].set_title("Prediction")
     axs[1, 1].set_xlabel("Feature")
     axs[1, 1].set_ylabel("Target")
-    prediction = d2r.model.predict(x=d2r.testX)
     axs[1, 1].scatter(d2r.testX, prediction, label='Prediction', linestyle='dashed')
     axs[1, 1].scatter(d2r.testX, d2r.testY, label='Test data')
     axs[1, 1].legend()
+    '''
 
+    visualizeTestVsForecast(d2r, prediction, axs[0, 1], axs[1, 1])
+        
     axs[1, 2].set_title("Extrapolation")
     x_min = np.min(d2r.testX)
     x_max = np.max(d2r.testX)
@@ -248,14 +256,35 @@ def visualize_cnn(d2r):
     plt.show()
     return 
 
+def visualize_ak(d2r):
+    print("\n=======================WIP ====================\n\tAutoKeras evaluation and visualization")
+    d2r.testY=d2r.testY['Close'].to_numpy()
+    
+    d2r.model = d2r.model.export_model()
+    d2r.model.summary()
+    prediction = d2r.model.predict(x=d2r.testX)
+
+    fig, axs = plt.subplots(2, 2)
+    fig.suptitle(d2r.mlNode, fontsize=14, fontweight='bold')
+    visualize_parameters(d2r, axs[0, 0])
+    visualize_fit(d2r, axs[1, 0])
+    visualizeTestVsForecast(d2r, prediction, axs[0, 1], axs[1, 1])
+    
+    plt.tight_layout()
+    plt.show()
+    return
+
 def evaluate_and_visualize(d2r):
     d2r.evaluation = d2r.model.evaluate(x=d2r.testX, y=d2r.testY)
     
-    if d2r.modelType == INPUT_LAYERTYPE_DENSE:
-        visualize_dense(d2r)
-    elif d2r.modelType == INPUT_LAYERTYPE_RNN:
-        visualize_rnn(d2r)
-    elif d2r.modelType == INPUT_LAYERTYPE_CNN:
-        visualize_cnn(d2r)
+    if d2r.trainer == TRAINING_TENSORFLOW:
+        if d2r.modelType == INPUT_LAYERTYPE_DENSE:
+            visualize_dense(d2r)
+        elif d2r.modelType == INPUT_LAYERTYPE_RNN:
+            visualize_rnn(d2r)
+        elif d2r.modelType == INPUT_LAYERTYPE_CNN:
+            visualize_cnn(d2r)
+    elif d2r.trainer == TRAINING_AUTO_KERAS:
+        visualize_ak(d2r)
         
     return

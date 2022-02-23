@@ -13,7 +13,9 @@ from configuration_constants import JSON_REQUIRED
 from configuration_constants import JSON_CONDITIONAL
 from configuration_constants import JSON_DATA_LOAD_PROCESS
 from configuration_constants import JSON_DATA_PREP_PROCESS
+from configuration_constants import JSON_TRAIN
 from configuration_constants import JSON_TENSORFLOW
+from configuration_constants import JSON_AUTOKERAS
 from configuration_constants import JSON_TENSORFLOW_DATA
 from configuration_constants import JSON_1HOT_ENCODING
 from configuration_constants import JSON_PRECISION
@@ -188,11 +190,30 @@ def add_meta_process_node (js_config, nx_graph) :
         js_data_prep_ctrl = js_conditional[JSON_DATA_PREPARATION_CTRL]
         add_data_prep_details(js_data_prep_ctrl, nx_graph, nx_process_name)
     elif nx_processType == JSON_TENSORFLOW:
+        nx.set_node_attributes(nx_graph, {nx_process_name:nx_processType}, JSON_TRAIN)
         nx_model_file = js_conditional[JSON_MODEL_FILE]
         nx.set_node_attributes(nx_graph, {nx_process_name:nx_model_file}, JSON_MODEL_FILE)
         nx_dataPrecision = js_conditional[JSON_PRECISION]
         nx.set_node_attributes(nx_graph, {nx_process_name:nx_dataPrecision}, JSON_PRECISION)
         
+        if JSON_NORMALIZE_DATA in js_conditional:
+            nx_normalize = js_conditional[JSON_NORMALIZE_DATA]
+            nx.set_node_attributes(nx_graph, {nx_process_name:nx_normalize}, JSON_NORMALIZE_DATA)
+        
+        if JSON_LAYERS in js_conditional:
+            nx_layers = js_conditional[JSON_LAYERS]
+            nx.set_node_attributes(nx_graph, {nx_process_name:nx_layers}, JSON_LAYERS)
+            
+        if JSON_TRAINING in js_conditional:
+            add_training_controls(js_conditional[JSON_TRAINING], nx_graph, nx_process_name)
+    elif nx_processType == JSON_AUTOKERAS:
+        print("============== WIP =============\n\tAuto Keras node details\n================================")
+        nx.set_node_attributes(nx_graph, {nx_process_name:nx_processType}, JSON_TRAIN)
+        nx_model_file = js_conditional[JSON_MODEL_FILE]
+        nx.set_node_attributes(nx_graph, {nx_process_name:nx_model_file}, JSON_MODEL_FILE)
+        nx_dataPrecision = js_conditional[JSON_PRECISION]
+        nx.set_node_attributes(nx_graph, {nx_process_name:nx_dataPrecision}, JSON_PRECISION)
+
         if JSON_NORMALIZE_DATA in js_conditional:
             nx_normalize = js_conditional[JSON_NORMALIZE_DATA]
             nx.set_node_attributes(nx_graph, {nx_process_name:nx_normalize}, JSON_NORMALIZE_DATA)

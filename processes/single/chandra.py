@@ -53,6 +53,9 @@ from evaluate_visualize import evaluate_and_visualize
 
 from configuration_constants import JSON_MODEL_FILE
 
+from TrainingDataAndResults import TRAINING_TENSORFLOW
+from TrainingDataAndResults import TRAINING_AUTO_KERAS
+
 if __name__ == '__main__':
     print ("Good morning Dr. Chandra. I am ready for my next lesson.\n\tI'm currently running Tensorflow version %s\n" % tf.__version__)
     
@@ -155,7 +158,10 @@ if __name__ == '__main__':
     step4 = time.time()
     print ("\nStep 4 - clean up, archive")
     nx_model_file = nx.get_node_attributes(d2r.graph, JSON_MODEL_FILE)[d2r.mlNode]
-    d2r.model.save(nx_model_file)
+    if d2r.trainer == TRAINING_TENSORFLOW:
+        d2r.model.save(nx_model_file)
+    elif d2r.trainer == TRAINING_AUTO_KERAS:
+        print("\n=======================WIP ====================\n\tAutoKeras save")
 
     end = time.time()
     print ("")

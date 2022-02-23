@@ -4,7 +4,7 @@
 	{
 		"processNodeName" : "LoadData",
 		"requiredFields" : {
-			"processType" : "dataPrep",
+			"processType" : "dataLoad",
 			"comments: supported values - processType" : ["dataPrep", "KerasDense"],
 			"inputFlows" : [],
 			"outputFlow" : "LRdata",
@@ -12,7 +12,7 @@
 			"logFile" : ""
 		},
 		"conditionalFields" : {
-			"dataPrepCtrl" : {
+			"dataLoadCtrl" : {
 				"inputFile" : ["d:\\brian\\AI-Projects\\Datasets\\linear regression.csv"]
 			},
 			"removeOutliers" : [

@@ -17,10 +17,11 @@
 "comment use below" : "",
 "GM processNet" : "\\chandra\\processingNets\\gmAutoEncoder.json",
 "comment active development below" : "",
+"comment AutoKeras processNet" : "\\chandra\\processingNets\\akexperimentation.json",
 "comment marketTchnicals processNet" : "\\chandra\\processingNets\\marketTechnicals.json",
 "comment marketTchnicalsMV processNet" : "\\chandra\\processingNets\\marketTechnicalsMultiVariant.json",
 "comment LSTMmarketTchnicals processNet" : "\\chandra\\processingNets\\LSTMAutoEncoder.json",
 "comment active processing network" : "",
-"processNet" : "\\chandra\\processingNets\\gmAutoEncoder.json",
+"processNet" : "\\chandra\\processingNets\\akexperimentation.json",
 "comment end of specification" : "--------------------------------------------------------",
 "end of file" : ""}

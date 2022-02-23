@@ -8,6 +8,9 @@ Git access error problem
 import networkx as nx
 import matplotlib.pyplot as plt
 
+TRAINING_TENSORFLOW = 'Tensorflow'
+TRAINING_AUTO_KERAS = 'AutoKeras'
+
 MODEL_TYPE = 'modelType'
 INPUT_LAYERTYPE_DENSE = 'dense'
 INPUT_LAYERTYPE_RNN = 'rnn'
@@ -70,7 +73,15 @@ class Data2Results():
     
     '''
     machine learning properties
-    '''    
+    '''
+    @property
+    def trainer(self):
+        return self._trainer
+    
+    @trainer.setter
+    def trainer(self, trainer):
+        self._trainer = trainer
+        
     @property
     def model(self):
         return self._model
