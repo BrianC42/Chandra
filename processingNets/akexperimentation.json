@@ -32,38 +32,17 @@
 			"preprocessingLayers" : {
 				"normalize" : false
 				},
-			"comment - not required - modelLayers" : [
-				{
-				"layerName" : "input",
-				"layerType" : "dense",
-				"featureCount": 1,
-				"layerUnits" : 64,
-				"outputActivation" : "linear"
-				},
-				{
-				"layerName" : "dropout",
-				"layerType" : "dropout",
-				"dropoutRate" : 0.2
-				},
-				{
-				"layerName" : "hidden",
-				"layerType" : "dense",
-				"layerUnits" : 64,
-				"outputActivation" : "linear"
-				},
-				{
-				"layerName" : "output",
-				"layerType" : "dense",
-				"layerUnits" : 1,
-				"outputActivation" : "linear"
-				}
-			],
+			"autoKeras" : {
+				"akTask" : "akStructuredDataRegressor",
+				"akDirectory" : "d:\\brian\\AI-Projects\\temp",
+				"maxTrials" : 50
+			},
 			"training" : {
 				"lossWeights" : [1.0],
 				"denseRegularation" : false,
 				"regularationValue" : 0.0,
 				"batchSize" : 32,
-				"epochs" : 6,
+				"epochs" : 20,
 				"useBias" : true,
 				"validationSplit" : 0.1,
 				"testSplit" : 0.2,

@@ -14,6 +14,18 @@ import autokeras as ak
 
 from configuration_constants import JSON_TENSORFLOW
 from configuration_constants import JSON_AUTOKERAS
+from configuration_constants import JSON_AUTOKERAS_PARAMETERS
+from configuration_constants import JSON_AK_TASK
+from configuration_constants import JSON_AK_IMAGE_CLASSIFIER
+from configuration_constants import JSON_AK_IMAGE_REGRESSOR
+from configuration_constants import JSON_AK_TEXT_CLASSIFIER
+from configuration_constants import JSON_AK_TEXT_REGRESSOR
+from configuration_constants import JSON_AK_STRUCTURED_DATA_CLASSIFIER
+from configuration_constants import JSON_AK_STRUCTURED_DATA_REGRESSOR
+from configuration_constants import JSON_AK_MULTI
+from configuration_constants import JSON_AK_CUSTOM
+from configuration_constants import JSON_AK_DIR
+from configuration_constants import JSON_AK_MAX_TRIALS
 from configuration_constants import JSON_PRECISION
 from configuration_constants import JSON_PROCESS_TYPE
 from configuration_constants import JSON_LAYERS
@@ -182,7 +194,37 @@ def build_autokeras_model(d2r):
     try:
         print("\n============== WIP =============\n\tBuilding / configuring AutoKeras model\n================================\n")
         err_txt = "*** An exception occurred building the AutoKeras model ***"
-        d2r.model = ak.StructuredDataRegressor(overwrite=True, max_trials=5)
+
+        autoKeras = nx.get_node_attributes(d2r.graph, JSON_AUTOKERAS_PARAMETERS)[d2r.mlNode]
+        
+        akTask = autoKeras[JSON_AK_TASK]
+        akMaxTrials = autoKeras[JSON_AK_MAX_TRIALS]
+        akDirectory = autoKeras[JSON_AK_DIR]
+        if akTask == JSON_AK_IMAGE_CLASSIFIER:
+            err_msg = 'AutoKeras task not yet implemented: ' + akTask
+            raise NameError(err_msg)
+        elif akTask == JSON_AK_IMAGE_REGRESSOR:
+            d2r.model = ak.ImageRegressor(overwrite=True, max_trials=akMaxTrials, directory=akDirectory)
+        elif akTask == JSON_AK_TEXT_CLASSIFIER:
+            err_msg = 'AutoKeras task not yet implemented: ' + akTask
+            raise NameError(err_msg)
+        elif akTask == JSON_AK_TEXT_REGRESSOR:
+            err_msg = 'AutoKeras task not yet implemented: ' + akTask
+            raise NameError(err_msg)
+        elif akTask == JSON_AK_STRUCTURED_DATA_CLASSIFIER:
+            err_msg = 'AutoKeras task not yet implemented: ' + akTask
+            raise NameError(err_msg)
+        elif akTask == JSON_AK_STRUCTURED_DATA_REGRESSOR:
+            d2r.model = ak.StructuredDataRegressor(overwrite=True, max_trials=akMaxTrials, directory=akDirectory)
+        elif akTask == JSON_AK_MULTI:
+            err_msg = 'AutoKeras task not yet implemented: ' + akTask
+            raise NameError(err_msg)
+        elif akTask == JSON_AK_CUSTOM:
+            err_msg = 'AutoKeras task not yet implemented: ' + akTask
+            raise NameError(err_msg)
+        else:
+            err_msg = 'AutoKeras task is not valid: ' + akTask
+            raise NameError(err_msg)
         
     except Exception:
         exc_info = sys.exc_info()

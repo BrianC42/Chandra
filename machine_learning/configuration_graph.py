@@ -17,6 +17,10 @@ from configuration_constants import JSON_TRAIN
 from configuration_constants import JSON_TENSORFLOW
 from configuration_constants import JSON_AUTOKERAS
 from configuration_constants import JSON_TENSORFLOW_DATA
+from configuration_constants import JSON_AUTOKERAS_PARAMETERS
+from configuration_constants import JSON_AK_TASK
+from configuration_constants import JSON_AK_DIR
+from configuration_constants import JSON_AK_MAX_TRIALS
 from configuration_constants import JSON_1HOT_ENCODING
 from configuration_constants import JSON_PRECISION
 from configuration_constants import JSON_NODE_NAME
@@ -27,7 +31,6 @@ from configuration_constants import JSON_FLOW_FROM
 from configuration_constants import JSON_FLOW_TO
 from configuration_constants import JSON_INPUT_FLOWS
 from configuration_constants import JSON_OUTPUT_FLOW
-#from configuration_constants import JSON_OUTPUT_FILE
 from configuration_constants import JSON_LOG_FILE
 from configuration_constants import JSON_INPUT_DATA_FILE
 from configuration_constants import JSON_INPUT_DATA_PREPARATION
@@ -214,6 +217,10 @@ def add_meta_process_node (js_config, nx_graph) :
         nx_dataPrecision = js_conditional[JSON_PRECISION]
         nx.set_node_attributes(nx_graph, {nx_process_name:nx_dataPrecision}, JSON_PRECISION)
 
+        if JSON_AUTOKERAS_PARAMETERS in js_conditional:
+            nx_akParameters = js_conditional[JSON_AUTOKERAS_PARAMETERS]
+            nx.set_node_attributes(nx_graph, {nx_process_name:nx_akParameters}, JSON_AUTOKERAS_PARAMETERS)
+            
         if JSON_NORMALIZE_DATA in js_conditional:
             nx_normalize = js_conditional[JSON_NORMALIZE_DATA]
             nx.set_node_attributes(nx_graph, {nx_process_name:nx_normalize}, JSON_NORMALIZE_DATA)

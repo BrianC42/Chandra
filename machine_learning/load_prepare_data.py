@@ -37,7 +37,6 @@ from configuration_constants import JSON_1HOT_CATEGORYTYPE
 from configuration_constants import JSON_1HOT_SERIESTREND
 from configuration_constants import JSON_1HOT_CATEGORIES
 from configuration_constants import JSON_1HOT_OUTPUTFIELDS
-
 from TrainingDataAndResults import MODEL_TYPE
 from TrainingDataAndResults import INPUT_LAYERTYPE_DENSE
 from TrainingDataAndResults import INPUT_LAYERTYPE_RNN
