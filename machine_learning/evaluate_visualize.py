@@ -16,7 +16,6 @@ from configuration_constants import JSON_AUTOKERAS
 from configuration_constants import JSON_OPTIMIZER
 from configuration_constants import JSON_LOSS
 from configuration_constants import JSON_METRICS
-from configuration_constants import JSON_NORMALIZE_DATA
 
 from TrainingDataAndResults import TRAINING_TENSORFLOW
 from TrainingDataAndResults import TRAINING_AUTO_KERAS
@@ -38,7 +37,6 @@ def visualize_parameters(d2r, plot_on_axis):
     nx_optimizer = nx.get_node_attributes(d2r.graph, JSON_OPTIMIZER)[d2r.mlNode]
     nx_loss = nx.get_node_attributes(d2r.graph, JSON_LOSS)[d2r.mlNode]
     nx_metrics = nx.get_node_attributes(d2r.graph, JSON_METRICS)[d2r.mlNode]
-    nx_normalize = nx.get_node_attributes(d2r.graph, JSON_NORMALIZE_DATA)[d2r.mlNode]
 
     str_l1 = 'Model parameters'
     str_l7 = 'Opt:{:s}'.format(nx_optimizer)
@@ -49,8 +47,8 @@ def visualize_parameters(d2r, plot_on_axis):
     str_p5 = ',metrics:{:s}'.format(nx_metrics[0])
     str_p6 = ',epochs:{:d}'.format(d2r.fitting.params['epochs'])
     str_p7 = ',steps:{:d}'.format(d2r.fitting.params['steps'])
-    str_p8 = '\nnormalization:{:s}'.format(nx_normalize)
-    str_params = str_l7 + str_p4 + str_p6 + str_p7 + str_p8
+    #str_p8 = '\nnormalization:{:s}'.format(nx_normalize)
+    str_params = str_l7 + str_p4 + str_p6 + str_p7
     
     plot_on_axis.set_title(str_params)
     '''

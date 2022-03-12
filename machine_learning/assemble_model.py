@@ -251,7 +251,7 @@ def buildModel(d2r):
                     d2r.mlNode = node_i
                     d2r.mlEdgeIn = nx_edge
                     d2r.trainer = TRAINING_TENSORFLOW
-                    d2r.model = assemble_layers(d2r)
+                    assemble_layers(d2r)
                     break
             break
         elif nx_read_attr[node_i] == JSON_AUTOKERAS:

@@ -25,6 +25,7 @@ For future use of the models
 
 '''
 import os
+import sys
 import logging
 import datetime as dt
 import time
@@ -91,7 +92,12 @@ if __name__ == '__main__':
         #logging.debug("Global parameters")
     
     except Exception:
-        print("\nAn exception occurred - log file details are missing from json configuration")
+        exc_txt = "\nAn exception occurred - log file details are missing from json configuration"
+        exc_info = sys.exc_info()
+        exc_str = exc_info[1].args[0]
+        exc_txt = exc_txt + " " + exc_str
+        logging.debug(exc_txt)
+        sys.exit(exc_txt)
         
     # Set python path for executing stand alone scripts
     pPath = gitdir + "\\chandra\\processes\\single"

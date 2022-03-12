@@ -20,20 +20,6 @@ class Data2Results():
     '''
     Class to prepare training data, store training results and plot results
     
-    Properties:
-        graph - graph of nodes and edges defining the information flow and processing
-        mlNode - the node in the graph containing the machine learning definition
-        model - the compiled Keras / Tensorflow model
-        fitting - Tensorflow fit results
-        
-        Data:
-            data - Source data samples
-            trainX - sample data used to train the model
-            trainY - values matching the trainX samples
-            testX -  sample data used to test the model
-            testY -  values matching the testX samples
-            validateX -  sample data used to validateuate the model
-            validateY -  values matching the validateX samples
         
     Functions
         plotGraph
@@ -73,6 +59,10 @@ class Data2Results():
     
     '''
     machine learning properties
+        graph - graph of nodes and edges defining the information flow and processing
+        mlNode - the node in the graph containing the machine learning definition
+        model - the compiled Keras / Tensorflow model
+        fitting - Tensorflow fit results
     '''
     @property
     def trainer(self):
@@ -115,18 +105,20 @@ class Data2Results():
         self._modelType = modelType
     
     '''
-    machine learning data samples
-        data - Source data samples
-        trainX - sample data used to train the model
+    training data properties
+        rawData - source data for samples
+        data - Source data samples, modified by preparation step and used to train, evaluate and test
+        trainX - sample data used to train the model. Number of samples = trainLen
         trainY - values matching the trainX samples
-        testX -  sample data used to test the model
+        testX -  sample data used to test the model. Number of samples = testLen
         testY -  values matching the testX samples
-        validateX -  sample data used to validate the model
+        validateX -  sample data used to validateuate the model. Number of samples = validateLen
         validateY -  values matching the validateX samples
-        trainLen
-        validateLen
-        testLen
         sequenceIDCol
+        rawFeatures - list of features
+        rawTargets - List of targets
+        preparedFeatures - modified list of data elements (columns) to be input to the model
+        preparedTargets - modified list of data elements (columns) to be input to the model for identification or prediction
     '''
     @property
     def data(self):
@@ -136,63 +128,13 @@ class Data2Results():
     def data(self, data):
         self._data = data
         
-    '''
     @property
-    def normalizedData(self):
-        return self._normalizedData
+    def rawData(self):
+        return self.rawData
     
-    @normalizedData.setter
-    def normalizedData(self, normalizedData):
-        self._normalizedData = normalizedData
-    '''
-        
-    @property
-    def trainLen(self):
-        return self._trainLen
-    
-    @trainLen.setter
-    def trainLen(self, trainLen):
-        self._trainLen = trainLen
-        
-    @property
-    def validateLen(self):
-        return self._validateLen
-    
-    @validateLen.setter
-    def validateLen(self, validateLen):
-        self._validateLen = validateLen
-        
-    @property
-    def testLen(self):
-        return self._testLen
-    
-    @testLen.setter
-    def testLen(self, testLen):
-        self._testLen = testLen
-        
-    @property
-    def sequenceIDCol(self):
-        return self._sequenceIDCol
-    
-    @sequenceIDCol.setter
-    def sequenceIDCol(self, sequenceIDCol):
-        self._sequenceIDCol = sequenceIDCol
-
-    @property
-    def scaler(self):
-        return self._scaler
-    
-    @scaler.setter
-    def scaler(self, scaler):
-        self._scaler = scaler
-        
-    @property
-    def normalized(self):
-        return self._normalized
-    
-    @normalized.setter
-    def normalized(self, normalized):
-        self._normalized = normalized
+    @rawData.setter
+    def rawData(self, rawData):
+        self._rawData = rawData
         
     @property
     def trainX(self):
@@ -211,6 +153,14 @@ class Data2Results():
         self._trainY = trainY
         
     @property
+    def trainLen(self):
+        return self._trainLen
+    
+    @trainLen.setter
+    def trainLen(self, trainLen):
+        self._trainLen = trainLen
+        
+    @property
     def testX(self):
         return self._testX
     
@@ -225,6 +175,14 @@ class Data2Results():
     @testY.setter
     def testY(self, testY):
         self._testY = testY
+        
+    @property
+    def testLen(self):
+        return self._testLen
+    
+    @testLen.setter
+    def testLen(self, testLen):
+        self._testLen = testLen
         
     @property
     def validateX(self):
@@ -242,12 +200,76 @@ class Data2Results():
     def validateY(self, validateY):
         self._validateY = validateY
         
+    @property
+    def validateLen(self):
+        return self._validateLen
+    
+    @validateLen.setter
+    def validateLen(self, validateLen):
+        self._validateLen = validateLen
+        
+    @property
+    def sequenceIDCol(self):
+        return self._sequenceIDCol
+    
+    @sequenceIDCol.setter
+    def sequenceIDCol(self, sequenceIDCol):
+        self._sequenceIDCol = sequenceIDCol
+
+    @property
+    def rawFeatures(self):
+        return self._rawFeatures
+    
+    @rawFeatures.setter
+    def rawFeatures(self, rawFeatures):
+        self._rawFeatures = rawFeatures
+
+    @property
+    def rawTargets(self):
+        return self._rawTargets
+    
+    @rawTargets.setter
+    def rawTargets(self, rawTargets):
+        self._rawTargets = rawTargets
+
+    @property
+    def preparedFeatures(self):
+        return self._preparedFeatures
+    
+    @preparedFeatures.setter
+    def preparedFeatures(self, preparedFeatures):
+        self._preparedFeatures = preparedFeatures
+
+    @property
+    def preparedTargets(self):
+        return self._preparedTargets
+    
+    @preparedTargets.setter
+    def preparedTargets(self, preparedTargets):
+        self._preparedTargets = preparedTargets
+
+    '''
+    data preparation properties
+    '''
+    @property
+    def scaler(self):
+        return self._scaler
+    
+    @scaler.setter
+    def scaler(self, scaler):
+        self._scaler = scaler
+        
+    @property
+    def normalized(self):
+        return self._normalized
+    
+    @normalized.setter
+    def normalized(self, normalized):
+        self._normalized = normalized
+        
     '''
     Functions ...
     '''
-    def reportIn(self):
-        print("d2r reporting in")
-        
     def archiveData(self, location):
         print("\nData \n%s\nwritten to %s for training\n" % (self.data.describe().transpose(), location))
         self.data.to_csv(location, index=False)

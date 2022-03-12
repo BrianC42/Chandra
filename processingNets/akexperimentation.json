@@ -35,14 +35,14 @@
 			"autoKeras" : {
 				"akTask" : "akStructuredDataRegressor",
 				"akDirectory" : "d:\\brian\\AI-Projects\\temp",
-				"maxTrials" : 50
+				"maxTrials" : 10
 			},
 			"training" : {
 				"lossWeights" : [1.0],
 				"denseRegularation" : false,
 				"regularationValue" : 0.0,
 				"batchSize" : 32,
-				"epochs" : 20,
+				"epochs" : 10,
 				"useBias" : true,
 				"validationSplit" : 0.1,
 				"testSplit" : 0.2,

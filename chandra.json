@@ -7,21 +7,25 @@
 "outputFile" : "\\logs\\chandra_output",
 "loggingLevel" : "debug",
 "loggingFormat" : "%(asctime)s: %(levelname)s: %(message)s",
-"comment invalid (prior) formats" : true,
-"comment densePolynomial" : "\\chandra\\processingNets\\densePolynomial.json",
-"comment denseWaveForm" : "\\chandra\\processingNets\\denseWaveForm.json",
-"comment conv1DWaveForm" : "\\chandra\\processingNets\\conv1DWaveForm.json",
-"comment goals achieved below" : true,
-"comment denseLinearRegression processNet" : "\\chandra\\processingNets\\denseLinearRegression.json",
-"comment sinWaveRegression processNet" : "\\chandra\\processingNets\\time_series_demo.json",
-"comment use below" : "",
-"GM processNet" : "\\chandra\\processingNets\\gmAutoEncoder.json",
-"comment active development below" : "",
-"comment AutoKeras processNet" : "\\chandra\\processingNets\\akexperimentation.json",
-"comment marketTchnicals processNet" : "\\chandra\\processingNets\\marketTechnicals.json",
-"comment marketTchnicalsMV processNet" : "\\chandra\\processingNets\\marketTechnicalsMultiVariant.json",
-"comment LSTMmarketTchnicals processNet" : "\\chandra\\processingNets\\LSTMAutoEncoder.json",
-"comment active processing network" : "",
-"processNet" : "\\chandra\\processingNets\\akexperimentation.json",
+"processNet" : "\\chandra\\processingNets\\marketTechnicalsMultiVariant.json",
 "comment end of specification" : "--------------------------------------------------------",
+"Comment use" : {
+	"1" : "\\chandra\\processingNets\\gmAutoEncoder.json"
+},
+
+"Comment active experimentation" : {
+	"2" : "\\chandra\\processingNets\\marketTechnicals.json",
+	"3" : "\\chandra\\processingNets\\marketTechnicalsMultiVariant.json",
+	"4" : "\\chandra\\processingNets\\LSTMAutoEncoder.json"	
+},
+"Comment goals achieved" : {
+	"1" : "\\chandra\\processingNets\\denseLinearRegression.json",
+	"2" : "\\chandra\\processingNets\\time_series_demo.json",
+	"3" : "\\chandra\\processingNets\\akexperimentation.json"
+},
+"Comment legacy formats no longer match configuration rules" : {
+	"1" : "\\chandra\\processingNets\\densePolynomial.json",
+	"2" : "\\chandra\\processingNets\\denseWaveForm.json",
+	"3" : "\\chandra\\processingNets\\conv1DWaveForm.json"
+},
 "end of file" : ""}

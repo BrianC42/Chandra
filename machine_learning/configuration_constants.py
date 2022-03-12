@@ -35,7 +35,6 @@ JSON_TRAIN = "Trainer"
 JSON_TENSORFLOW = "Tensorflow"
 JSON_AUTOKERAS = "AutoKeras"
 JSON_INPUT_DATA_PREPARATION = "dataLoadCtrl"
-JSON_DATA_PREPARATION_CTRL = "dataPrepCtrl"
 JSON_AUTOKERAS_PARAMETERS = "autoKeras"
 JSON_AK_TASK = "akTask"
 JSON_AK_IMAGE_CLASSIFIER = 'akImageClassifier'
@@ -48,12 +47,27 @@ JSON_AK_MULTI = 'akMulti'
 JSON_AK_CUSTOM = 'akCustom'
 JSON_AK_DIR = "akDirectory"
 JSON_AK_MAX_TRIALS = "maxTrials"
+
+JSON_DATA_PREPARATION_CTRL = "dataPrepCtrl"
+JSON_DATA_PREP_SEQ = "preparationSequence"
+JSON_DATA_PREP_FEATURES = "features"
+JSON_DATA_PREP_FEATURE = "feature"
+JSON_DATA_PREP_NORMALIZATION_TYPE = "type"
+JSON_DATA_PREP_PASSTHRU = "passThru"
+JSON_DATA_PREP_NORMALIZE = 'normalize'
+JSON_DATA_PREP_ENCODING = "oneHotEncoding"
+
+JSON_NORMALIZE_DATA = 'normalize'
+JSON_DATA_PREP_NORMALIZE_DATA = 'normalize'
+
+JSON_DATA_PREP_CATEGORIZE = "categorize"
 JSON_1HOT_ENCODING = "oneHotEncoding"
 JSON_1HOT_FIELD = "field"
 JSON_1HOT_CATEGORYTYPE = "categoryType"
 JSON_1HOT_SERIESTREND = "seriesTrend"
 JSON_1HOT_CATEGORIES = "categories"
 JSON_1HOT_OUTPUTFIELDS = "outputFields"
+
 JSON_INPUT_DATA_FILE= "inputFile"
 JSON_DATA_FLOWS = 'dataFlows'
 JSON_FLOW_NAME = 'flowName'
@@ -75,7 +89,6 @@ JSON_TARGET_FIELDS = "targets"
 JSON_TIMESTEPS = 'timeSteps'
 JSON_FEATURE_COUNT = 'featureCount'
 JSON_MODEL_OUTPUT_ACTIVATION = 'outputActivation'
-JSON_NORMALIZE_DATA = 'normalize'
 JSON_SHUFFLE_DATA = 'shuffle'
 JSON_ELEMENTS = 'dataElements'
 JSON_LOSS_WTS = 'lossWeights'

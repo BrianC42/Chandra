@@ -18,10 +18,9 @@ from configuration_constants import JSON_TENSORFLOW
 from configuration_constants import JSON_AUTOKERAS
 from configuration_constants import JSON_TENSORFLOW_DATA
 from configuration_constants import JSON_AUTOKERAS_PARAMETERS
-from configuration_constants import JSON_AK_TASK
-from configuration_constants import JSON_AK_DIR
-from configuration_constants import JSON_AK_MAX_TRIALS
-from configuration_constants import JSON_1HOT_ENCODING
+#from configuration_constants import JSON_AK_TASK
+#from configuration_constants import JSON_AK_DIR
+#from configuration_constants import JSON_AK_MAX_TRIALS
 from configuration_constants import JSON_PRECISION
 from configuration_constants import JSON_NODE_NAME
 from configuration_constants import JSON_PROCESS_TYPE
@@ -35,6 +34,9 @@ from configuration_constants import JSON_LOG_FILE
 from configuration_constants import JSON_INPUT_DATA_FILE
 from configuration_constants import JSON_INPUT_DATA_PREPARATION
 from configuration_constants import JSON_DATA_PREPARATION_CTRL
+from configuration_constants import JSON_DATA_PREP_PASSTHRU
+from configuration_constants import JSON_DATA_PREP_NORMALIZE_DATA
+from configuration_constants import JSON_1HOT_ENCODING
 from configuration_constants import JSON_MODEL_FILE
 from configuration_constants import JSON_LAYERS
 from configuration_constants import JSON_BALANCED
@@ -59,16 +61,23 @@ from configuration_constants import JSON_LOSS_WTS
 from configuration_constants import JSON_METRICS
 from configuration_constants import JSON_OPTIMIZER
 
+'''
 def add_data_prep_details(jsPrepDetails, nx_graph, nx_process_name):
     for node_i in nx_graph.nodes():
         if node_i == nx_process_name:
-            if JSON_1HOT_ENCODING in jsPrepDetails:
-                print("1 hot encoding")
+            if JSON_DATA_PREP_PASSTHRU in jsPrepDetails:
+                js_passthru = jsPrepDetails[JSON_DATA_PREP_PASSTHRU]
+                nx.set_node_attributes(nx_graph, {nx_process_name:js_passthru}, JSON_DATA_PREP_PASSTHRU)
+            elif JSON_DATA_PREP_NORMALIZE_DATA in jsPrepDetails:
+                js_normalize = jsPrepDetails[JSON_DATA_PREP_NORMALIZE_DATA]
+                nx.set_node_attributes(nx_graph, {nx_process_name:js_normalize}, JSON_DATA_PREP_NORMALIZE_DATA)
+            elif JSON_1HOT_ENCODING in jsPrepDetails:
                 js_1hot = jsPrepDetails[JSON_1HOT_ENCODING]
                 nx.set_node_attributes(nx_graph, {nx_process_name:js_1hot}, JSON_1HOT_ENCODING)
             break
     
     return
+'''
 
 def add_data_flow_details(js_flow_conditional, nx_graph, nx_edge_key):
 
@@ -190,8 +199,12 @@ def add_meta_process_node (js_config, nx_graph) :
         js_data_prep_ctrl = js_conditional[JSON_INPUT_DATA_PREPARATION]
         add_data_source_details(js_data_prep_ctrl, nx_graph, nx_process_name)
     elif nx_processType == JSON_DATA_PREP_PROCESS:
+        nx_prepCtrl = js_conditional[JSON_DATA_PREPARATION_CTRL]
+        nx.set_node_attributes(nx_graph, {nx_process_name:nx_prepCtrl}, JSON_DATA_PREPARATION_CTRL)
+        '''
         js_data_prep_ctrl = js_conditional[JSON_DATA_PREPARATION_CTRL]
         add_data_prep_details(js_data_prep_ctrl, nx_graph, nx_process_name)
+        '''
     elif nx_processType == JSON_TENSORFLOW:
         nx.set_node_attributes(nx_graph, {nx_process_name:nx_processType}, JSON_TRAIN)
         nx_model_file = js_conditional[JSON_MODEL_FILE]

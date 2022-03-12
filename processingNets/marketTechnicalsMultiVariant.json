@@ -2,101 +2,152 @@
 "comment - processing node section" : "Specification details for the processing nodes",
 "processNodes" : [
 	{
-		"processNodeName" : "dataIn",
-		"requiredFields" : {
-			"processType" : "dataLoad",
-			"comments: supported values - processType" : ["dataLoad", "dataPrep", "Tensorflow"],
-			"inputFlows" : [],
-			"outputFlow" : "marketDataMulti",
-			"outputFile" : "",
-			"logFile" : ""
-		},
-		"conditionalFields" : {
-			"dataLoadCtrl" : {
-				"inputFile" : ["d:\\brian\\AI-Projects\\tda\\market_analysis_data\\gm.csv"]
-			}
+	"processNodeName" : "dataIn",
+	"requiredFields" : {
+		"processType" : "dataLoad",
+		"comments: supported values - processType" : ["dataLoad", "dataPrep", "Tensorflow"],
+		"inputFlows" : [],
+		"outputFlow" : "marketDataMulti",
+		"outputFile" : "",
+		"logFile" : ""
+	},
+	"conditionalFields" : {
+		"dataLoadCtrl" : {
+			"inputFile" : ["d:\\brian\\AI-Projects\\tda\\market_analysis_data\\gm.csv"]
 		}
+	}
 	},
 	{
-		"processNodeName" : "PrepData",
-		"requiredFields" : {
-			"processType" : "dataPrep",
-			"inputFlows" : ["marketDataMulti"],
-			"outputFlow" : "Prepared",
-			"comment outputFile" : "",
-			"logFile" : ""
-		},
-		"conditionalFields" : {
-			"dataPrepCtrl" : {
-				"oneHotEncoding" : {
-					"field" : "Close",
-					"categoryType" : "seriesTrend",
-					"categories" : ["increasingSeries" , "decreasingSeries"],
-					"outputFields" : ["closeIncreasing", "closeDecreasing"]
-				}
+	"processNodeName" : "PrepData",
+	"requiredFields" : {
+		"processType" : "dataPrep",
+		"inputFlows" : ["marketDataMulti"],
+		"outputFlow" : "Prepared",
+		"logFile" : ""
+	},
+	"conditionalFields" : {
+		"dataPrepCtrl" : {
+			"preparationSequence" : ["normalize", "oneHotEncoding"],
+			"normalize" : {
+				"type" : "minmax",
+				"features" : [
+					{
+					"feature" : "Volume"
+					},
+					{
+					"feature" : "Relative Strength"
+					},
+					{
+					"feature" : "ADX"
+					},
+					{
+					"feature" : "AccumulationDistribution"
+					}
+				]
+			},
+			"oneHotEncoding" : {
+				"features" : [
+					{
+					"feature" : "Close",
+					"categoryType" : "seriesChangeUpDown",
+					"categories" : ["Up" , "Down"],
+					"outputFields" : ["closeUp", "closeDown"]
+					},
+					{
+					"feature" : "Open",
+					"categoryType" : "seriesChangeUpDown",
+					"categories" : ["Up" , "Down"],
+					"outputFields" : ["openUp", "openDown"]
+					},
+					{
+					"feature" : "High",
+					"categoryType" : "seriesChangeUpDown",
+					"categories" : ["Up" , "Down"],
+					"outputFields" : ["highUp", "highDown"]
+					},
+					{
+					"feature" : "Low",
+					"categoryType" : "seriesChangeUpDown",
+					"categories" : ["Up" , "Down"],
+					"outputFields" : ["lowUp", "lowDown"]
+					},
+					{
+					"feature" : "OBV",
+					"categoryType" : "seriesChangeUpDown",
+					"categories" : ["Up" , "Down"],
+					"outputFields" : ["OBVUp", "OBVDown"]
+					},
+					{
+					"feature" : "MACD",
+					"categoryType" : "seriesChangeUpDown",
+					"categories" : ["Up" , "Down"],
+					"outputFields" : ["MACDUp", "MACDDown"]
+					}
+				]
 			}
 		}
+	}
 	},
 	{
-		"processNodeName" : "mktMulti",
-		"requiredFields" : {
-			"comments: supported values - processType" : ["dataPrep", "Tensorflow"],
-			"processType" : "Tensorflow",
-			"inputFlows" : ["Prepared"],
-			"outputFlow" : "",
-			"outputFile" : "d:\\brian\\AI-Projects\\models\\mkt_multi",
-			"logFile" : "d:\\brian\\AI-Projects\\logs\\mkt_multi.txt"
-		},
-		"conditionalFields" : {
-			"modelFile" : "d:\\brian\\AI-Projects\\models\\mkt_multi",
-			"dataPrecision" : "float32",
-			"normalize" : "standard",
-			"modelLayers" : [
-				{
-				"layerName" : "lstmIn",
-				"layerType" : "lstm",
-				"timeSteps" : 20,
-				"featureCount": 5,
-				"layerUnits" : 64,
-				"returnSequences" : true,
-				"outputActivation" : "tanh"
-				},
-				{
-				"layerName" : "hidden-lstm",
-				"layerType" : "lstm",
-				"layerUnits" : 32,
-				"returnSequences" : false,
-				"outputActivation" : "tanh"
-				},
-				{
-				"layerName" : "hidden-dense",
-				"layerType" : "dense",
-				"layerUnits" : 64
-				},
-				{
-				"layerName" : "output",
-				"layerType" : "dense",
-				"layerUnits" : 1,
-				"comment outputActivation" : "linear"
-				}
-			],
-			"training" : {
-				"lossWeights" : [1.0],
-				"denseRegularation" : false,
-				"regularationValue" : 0.0,
-				"batchSize" : 32,
-				"epochs" : 6,
-				"useBias" : true,
-				"validationSplit" : 0.1,
-				"testSplit" : 0.2,
-				"shuffle" : false,
-				"verbose" : 2,
-				"balanceClasses" : true,
-				"compilationLoss" : "mae",
-				"compilationMetrics" : ["accuracy"],
-				"optimizer" : "adam"
+	"processNodeName" : "mktMulti",
+	"requiredFields" : {
+		"comments: supported values - processType" : ["dataPrep", "Tensorflow"],
+		"processType" : "Tensorflow",
+		"inputFlows" : ["Prepared"],
+		"outputFlow" : "",
+		"outputFile" : "d:\\brian\\AI-Projects\\models\\mkt_multi",
+		"logFile" : "d:\\brian\\AI-Projects\\logs\\mkt_multi.txt"
+	},
+	"conditionalFields" : {
+		"modelFile" : "d:\\brian\\AI-Projects\\models\\mkt_multi",
+		"dataPrecision" : "float32",
+		"modelLayers" : [
+			{
+			"layerName" : "lstmIn",
+			"layerType" : "lstm",
+			"timeSteps" : 20,
+			"featureCount": 15,
+			"comment featureCount" : "needs to be set to the number of features after data preparartion step",
+			"layerUnits" : 1024,
+			"returnSequences" : true,
+			"outputActivation" : "tanh"
+			},
+			{
+			"layerName" : "hidden-lstm",
+			"layerType" : "lstm",
+			"layerUnits" : 256,
+			"returnSequences" : false,
+			"outputActivation" : "tanh"
+			},
+			{
+			"layerName" : "hidden-dense",
+			"layerType" : "dense",
+			"layerUnits" : 256
+			},
+			{
+			"layerName" : "output",
+			"layerType" : "dense",
+			"layerUnits" : 2,
+			"outputActivation" : "softmax"
 			}
+		],
+		"training" : {
+			"lossWeights" : [1.0],
+			"denseRegularation" : false,
+			"regularationValue" : 0.0,
+			"batchSize" : 32,
+			"epochs" : 6,
+			"useBias" : true,
+			"validationSplit" : 0.1,
+			"testSplit" : 0.2,
+			"shuffle" : false,
+			"verbose" : 2,
+			"balanceClasses" : true,
+			"compilationLoss" : "mae",
+			"compilationMetrics" : ["accuracy"],
+			"optimizer" : "adam"
 		}
+	}
 	}
 ],
 "comment - wave form dataflow section" : "Specification details for the flows of data between processing nodes",
@@ -113,10 +164,7 @@
 			"timeSequence" : true,
 			"balanceClasses" : false,
 			"ignoreBlanks" : true,
-			"features" : ["DateTime", "Close", "Open", "High", "Low", "Volume"],
-			"comment" : "List the variable to forecast first",
-			"comment featureCount above" : "needs to be set to the number of targets",
-			"comment targets" : ["Close", "Open", "OBV", "Relative Strength", "AccumulationDistribution", "MACD", "MACD_flag", "Aroon Indicator", "BB_Lower", "BB_Upper"],
+			"features" : ["Open", "High", "Low", "Volume", "OBV", "Relative Strength", "ADX", "AccumulationDistribution", "MACD", "MACD_flag"],
 			"targets" : ["Close"]
 			}
 		}
@@ -130,7 +178,7 @@
 		},
 	"conditionalFields" : {
 		"TensorflowData" : {
-			"features" : ["DateTime", "Close", "Open", "High", "Low", "Volume"],
+			"features" : ["Open", "High", "Low", "Volume", "OBV", "Relative Strength", "ADX", "AccumulationDistribution", "MACD", "MACD_flag"],
 			"targets" : ["Close"]
 			}
 		}

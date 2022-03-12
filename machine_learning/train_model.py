@@ -17,10 +17,6 @@ from configuration_constants import JSON_VERBOSE
 from configuration_constants import JSON_SHUFFLE_DATA
 
 def trainModel(d2r):
-    logging.info('====> ================================================')
-    logging.info('====> trainModels models')
-    logging.info('====> ================================================')
-    
     try:
         print("\nTraining shapes x:%s y:%s, testing shapes x:%s y:%s" % (d2r.trainX.shape, d2r.trainY.shape, d2r.testX.shape, d2r.testY.shape))
         
@@ -54,7 +50,4 @@ def trainModel(d2r):
         logging.debug(exc_txt)
         sys.exit(exc_txt)        
     
-    logging.info('<---- ----------------------------------------------')
-    logging.info('<---- trainModels: done')
-    logging.info('<---- ----------------------------------------------')    
     return
