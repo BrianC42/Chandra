@@ -145,7 +145,7 @@ if __name__ == '__main__':
     ''' ................... Step 2 - Build Model ............................
     ========================================================================= '''
     step2 = time.time()
-    print ('\nStep 2 - Build and train the Model')
+    print ('\nStep 2 - Structure the data as required by the model, build and train the Model')
     #node_i, k_model, x_features, y_targets, x_test, y_test, fitting = build_and_train_model(nx_graph)
     buildModel(d2r)
     loadTrainingData(d2r)
@@ -171,10 +171,10 @@ if __name__ == '__main__':
 
     end = time.time()
     print ("")
-    print ("\tStep 1 took %.1f secs to Load and prepare the data for analysis" % (step2 - step1)) 
-    print ("\tStep 2 took %.1f secs to Build and train the Model" % (step3 - step2)) 
-    print ("\tStep 3 took %.1f secs to Evaluate the model" % (step4 - step3)) 
-    print ("\tStep 5 took %.1f secs to Visualize accuracy, clean up and archive" % (end - step4))    
+    print ("\tStep 1 took %.1f secs to Load and prepare the data for training and evaluation" % (step2 - step1)) 
+    print ("\tStep 2 took %.1f secs to Arrange the data for the model, build and train the Model" % (step3 - step2)) 
+    print ("\tStep 3 took %.1f secs to Evaluate the model and visualize the training results" % (step4 - step3)) 
+    print ("\tStep 5 took %.1f secs to Clean up and archive" % (end - step4))    
 
     '''
     clean up and prepare to exit

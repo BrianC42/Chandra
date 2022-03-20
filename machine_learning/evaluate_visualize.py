@@ -16,6 +16,9 @@ from configuration_constants import JSON_AUTOKERAS
 from configuration_constants import JSON_OPTIMIZER
 from configuration_constants import JSON_LOSS
 from configuration_constants import JSON_METRICS
+from configuration_constants import JSON_VISUALIZATIONS
+from configuration_constants import JSON_VISUALIZE_TRAINING_FIT
+from configuration_constants import JSON_VISUALIZE_TARGET_SERIES
 
 from TrainingDataAndResults import TRAINING_TENSORFLOW
 from TrainingDataAndResults import TRAINING_AUTO_KERAS
@@ -24,7 +27,18 @@ from TrainingDataAndResults import INPUT_LAYERTYPE_RNN
 from TrainingDataAndResults import INPUT_LAYERTYPE_CNN
 
 def visualize_fit(d2r, plot_on_axis):
-    plot_on_axis.set_title("Fitting history")
+    nx_optimizer = nx.get_node_attributes(d2r.graph, JSON_OPTIMIZER)[d2r.mlNode]
+    nx_loss = nx.get_node_attributes(d2r.graph, JSON_LOSS)[d2r.mlNode]
+    nx_metrics = nx.get_node_attributes(d2r.graph, JSON_METRICS)[d2r.mlNode]
+
+    str_l7 = 'Opt:{:s}'.format(nx_optimizer)    
+    str_p4 = ',loss:{:s}'.format(nx_loss)
+    str_p5 = ',metrics:{:s}'.format(nx_metrics[0])
+    str_p6 = ',epochs:{:d}'.format(d2r.fitting.params['epochs'])
+    str_p7 = ',steps:{:d}'.format(d2r.fitting.params['steps'])
+    str_params = "\n" + str_l7 + str_p4 + str_p5 + str_p6 + str_p7
+    
+    plot_on_axis.set_title("Fitting history" + str_params)
     plot_on_axis.plot(d2r.fitting.epoch, d2r.fitting.history['loss'], label='Training loss')
     plot_on_axis.plot(d2r.fitting.epoch, d2r.fitting.history['val_loss'], label='Validation loss')
     plot_on_axis.set_xlabel("Epochs")
@@ -33,33 +47,40 @@ def visualize_fit(d2r, plot_on_axis):
         
     return
     
-def visualize_parameters(d2r, plot_on_axis):
-    nx_optimizer = nx.get_node_attributes(d2r.graph, JSON_OPTIMIZER)[d2r.mlNode]
-    nx_loss = nx.get_node_attributes(d2r.graph, JSON_LOSS)[d2r.mlNode]
-    nx_metrics = nx.get_node_attributes(d2r.graph, JSON_METRICS)[d2r.mlNode]
+def plotTargetValues(d2r, plot_on_axis):
+    plot_on_axis.set_title("Target data series")
+    plot_on_axis.set_xlabel("time periods")
+    plot_on_axis.set_ylabel("Data Values")
+    if d2r.seriesDataType == "TDADateTime":
+        '''
+        x_tdaDatesStr = []
+        for tdaDate in d2r.rawData['DateTime']:
+            x_tdaDatesStr.append(format_tda_datetime(tdaDate))
+        '''
+        x_dates = d2r.rawData['DateTime'].copy()
+        x_dates2 = x_dates[range(0, len(x_dates), int(len(x_dates)/10))]
+        x_ticks = []
+        x_tickLabels = []
+        for tdaDate in x_dates2:
+            x_ticks.append(tdaDate)
+            x_tickLabels.append(format_tda_datetime(tdaDate))
+        #x_ticks = d2r.rawData['DateTime'][range(0, len(), 100)]
+        y_targets = d2r.rawData['Close']
+        label=d2r.dataSeriesIDFields[0]
+        plot_on_axis.xaxis.set_ticks(x_ticks)
+        plot_on_axis.xaxis.set_ticklabels(x_tickLabels)
+        plot_on_axis.plot(x_dates, y_targets, label=label, linestyle='solid')
 
-    str_l1 = 'Model parameters'
-    str_l7 = 'Opt:{:s}'.format(nx_optimizer)
-    str_model = str_l7
-    
-    str_p0 = '\nFitting Parameters'
-    str_p4 = ',loss:{:s}'.format(nx_loss)
-    str_p5 = ',metrics:{:s}'.format(nx_metrics[0])
-    str_p6 = ',epochs:{:d}'.format(d2r.fitting.params['epochs'])
-    str_p7 = ',steps:{:d}'.format(d2r.fitting.params['steps'])
-    #str_p8 = '\nnormalization:{:s}'.format(nx_normalize)
-    str_params = str_l7 + str_p4 + str_p6 + str_p7
-    
-    plot_on_axis.set_title(str_params)
     '''
-    plot_on_axis.text(0.5, 0.5, str_model + '\n' + str_params, horizontalalignment='center', \
-                      verticalalignment='center', wrap=True)
-    '''
-    #plot_on_axis.plot(d2r.fitting.epoch, d2r.fitting.history['accuracy'], label='accuracy')
-    #plot_on_axis.plot(d2r.fitting.epoch, d2r.fitting.history['val_accuracy'], label='Validation accuracy')
+    plot_on_axis.plot(range(len(d2r.rawTargets)), d2r.rawTargets[:], label='Test series')
+    testData = d2r.rawData.iloc[(len(d2r.rawTargets) - len(d2r.testY)) : ]
+    testDateTimes = testData.iloc[:, 0]
+    tmark, tmarkDates = selectDateAxisLabels(testDateTimes)
+    plt.xticks(tmark, tmarkDates, rotation=20)
     plot_on_axis.legend()
-
-    return
+    plot_on_axis.grid(True)
+    '''
+    return 
 
 def visualizeAnomalyDistribution(d2r, prediction, plot_on_axis):
     print("\n=======================WIP ====================\n\tdisplay distribution of forecast error")
@@ -145,7 +166,6 @@ def visualize_dense(d2r):
 
     fig, axs = plt.subplots(2, 3)
     fig.suptitle(d2r.mlNode, fontsize=14, fontweight='bold')
-    visualize_parameters(d2r, axs[0, 0])
     visualize_fit(d2r, axs[1, 0])
 
     '''
@@ -192,7 +212,6 @@ def visualize_rnn(d2r):
     fig1, axs1 = plt.subplots(2, 1)
     fig1.suptitle(d2r.mlNode, fontsize=14, fontweight='bold')
     
-    visualize_parameters(d2r, axs1[0])
     visualize_fit(d2r, axs1[1])
     
     plt.tight_layout()
@@ -264,7 +283,6 @@ def visualize_ak(d2r):
 
     fig, axs = plt.subplots(2, 2)
     fig.suptitle(d2r.mlNode, fontsize=14, fontweight='bold')
-    visualize_parameters(d2r, axs[0, 0])
     visualize_fit(d2r, axs[1, 0])
     visualizeTestVsForecast(d2r, prediction, axs[0, 1], axs[1, 1])
     
@@ -274,15 +292,36 @@ def visualize_ak(d2r):
 
 def evaluate_and_visualize(d2r):
     d2r.evaluation = d2r.model.evaluate(x=d2r.testX, y=d2r.testY)
-    
+    prediction = d2r.model.predict(d2r.testX)
+
     if d2r.trainer == TRAINING_TENSORFLOW:
         if d2r.modelType == INPUT_LAYERTYPE_DENSE:
-            visualize_dense(d2r)
+            pass
+            #visualize_dense(d2r)
         elif d2r.modelType == INPUT_LAYERTYPE_RNN:
-            visualize_rnn(d2r)
+            pass
+            #visualize_rnn(d2r)
         elif d2r.modelType == INPUT_LAYERTYPE_CNN:
-            visualize_cnn(d2r)
+            pass
+            #visualize_cnn(d2r)
     elif d2r.trainer == TRAINING_AUTO_KERAS:
-        visualize_ak(d2r)
+        d2r.model = d2r.model.export_model()
+        d2r.model.summary()
+        #visualize_ak(d2r)
         
+    nx_visualizations = nx.get_node_attributes(d2r.graph, JSON_VISUALIZATIONS)[d2r.mlNode]
+    for vizualize in nx_visualizations:
+        if vizualize == JSON_VISUALIZE_TRAINING_FIT:
+            fig1, axs1 = plt.subplots(1, 1)
+            fig1.suptitle("Training results of: " + d2r.mlNode, fontsize=14, fontweight='bold')
+            visualize_fit(d2r, axs1)
+            plt.tight_layout()
+            plt.show()
+        elif vizualize == JSON_VISUALIZE_TARGET_SERIES:
+            fig1, axs1 = plt.subplots(1, 1)
+            fig1.suptitle("Training targets for: " + d2r.mlNode, fontsize=14, fontweight='bold')
+            plotTargetValues(d2r, axs1)
+            plt.tight_layout()
+            plt.show()
+    
     return

@@ -28,6 +28,7 @@
 		"conditionalFields" : {
 			"modelFile" : "d:\\brian\\AI-Projects\\models\\AKexp",
 			"dataPrecision" : "float32",
+			"visualizations" : ["trainingFit", "targetSeries"],
 			"normalize" : "none",
 			"preprocessingLayers" : {
 				"normalize" : false

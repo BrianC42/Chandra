@@ -28,6 +28,7 @@
 		},
 		"conditionalFields" : {
 			"modelFile" : "d:\\brian\\AI-Projects\\models\\gmMktAE",
+			"visualizations" : ["trainingFit", "targetSeries"],
 			"dataPrecision" : "float32",
 			"normalize" : "minmax",
 			"modelLayers" : [
@@ -35,7 +36,7 @@
 				"layerName" : "lstmIn",
 				"layerType" : "lstm",
 				"timeSteps" : 20,
-				"featureCount": 1,
+				"featureCount": 2,
 				"layerUnits" : 128,
 				"returnSequences" : false,
 				"outputActivation" : "tanh"

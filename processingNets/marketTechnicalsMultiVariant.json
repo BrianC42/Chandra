@@ -13,7 +13,7 @@
 	},
 	"conditionalFields" : {
 		"dataLoadCtrl" : {
-			"inputFile" : ["d:\\brian\\AI-Projects\\tda\\market_analysis_data\\gm.csv"]
+			"inputFile" : ["d:\\brian\\AI-Projects\\tda\\market_analysis_data\\f.csv"]
 		}
 	}
 	},
@@ -101,6 +101,8 @@
 	"conditionalFields" : {
 		"modelFile" : "d:\\brian\\AI-Projects\\models\\mkt_multi",
 		"dataPrecision" : "float32",
+		"visualizations" : ["trainingFit", "targetSeries"],
+		"supported visualizations" : ["trainingFit", "targetSeries"],
 		"modelLayers" : [
 			{
 			"layerName" : "lstmIn",
@@ -108,21 +110,21 @@
 			"timeSteps" : 20,
 			"featureCount": 15,
 			"comment featureCount" : "needs to be set to the number of features after data preparartion step",
-			"layerUnits" : 1024,
+			"layerUnits" : 128,
 			"returnSequences" : true,
 			"outputActivation" : "tanh"
 			},
 			{
 			"layerName" : "hidden-lstm",
 			"layerType" : "lstm",
-			"layerUnits" : 256,
+			"layerUnits" : 32,
 			"returnSequences" : false,
 			"outputActivation" : "tanh"
 			},
 			{
 			"layerName" : "hidden-dense",
 			"layerType" : "dense",
-			"layerUnits" : 256
+			"layerUnits" : 32
 			},
 			{
 			"layerName" : "output",
@@ -150,7 +152,7 @@
 	}
 	}
 ],
-"comment - wave form dataflow section" : "Specification details for the flows of data between processing nodes",
+"comment - dataflow section" : "Specification details for the flows of data between processing nodes",
 "dataFlows" : [
 	{
 	"flowName" : "marketDataMulti",
@@ -165,7 +167,9 @@
 			"balanceClasses" : false,
 			"ignoreBlanks" : true,
 			"features" : ["Open", "High", "Low", "Volume", "OBV", "Relative Strength", "ADX", "AccumulationDistribution", "MACD", "MACD_flag"],
-			"targets" : ["Close"]
+			"targets" : ["Close"],
+			"seriesStepIDField" : ["DateTime"],
+			"seriesDataType" : "TDADateTime"
 			}
 		}
 	},
@@ -178,8 +182,10 @@
 		},
 	"conditionalFields" : {
 		"TensorflowData" : {
-			"features" : ["Open", "High", "Low", "Volume", "OBV", "Relative Strength", "ADX", "AccumulationDistribution", "MACD", "MACD_flag"],
-			"targets" : ["Close"]
+			"features" : ["DateTime", "Open", "High", "Low", "Volume", "OBV", "Relative Strength", "ADX", "AccumulationDistribution", "MACD", "MACD_flag"],
+			"targets" : ["Close"],
+			"seriesStepIDField" : ["DateTime"],
+			"seriesDataType" : "TDADateTime"
 			}
 		}
 	}

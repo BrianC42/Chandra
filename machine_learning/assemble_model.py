@@ -126,10 +126,6 @@ def build_layer(d2r, layer_type, layer_definition, input_layer):
     return k_layer
 
 def assemble_layers(d2r):
-    logging.info('====> ================================================')
-    logging.info('====> build_model: building the machine learning model')
-    logging.info('====> ================================================')
-
     # error handling
     try:
         # inputs                
@@ -184,9 +180,6 @@ def assemble_layers(d2r):
         logging.debug(exc_txt)
         sys.exit(exc_txt)
     
-    logging.info('<---- ----------------------------------------------')
-    logging.info('<---- build_model: done')
-    logging.info('<---- ----------------------------------------------')    
     return
 
 def build_autokeras_model(d2r):

@@ -5,6 +5,7 @@ Created on Apr 7, 2020
 '''
 import sys
 import os
+import time
 import glob
 import logging
 import networkx as nx
@@ -12,7 +13,6 @@ import pandas as pd
 import numpy as np
 import tensorflow as tf
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
-from sklearn.preprocessing import OneHotEncoder
 
 from configuration_constants import JSON_PRECISION
 from configuration_constants import JSON_OUTPUT_FLOW
@@ -27,15 +27,9 @@ from configuration_constants import JSON_DATA_PREP_PROCESS
 from configuration_constants import JSON_DATA_PREPARATION_CTRL
 from configuration_constants import JSON_DATA_PREP_FEATURES
 from configuration_constants import JSON_DATA_PREP_FEATURE
-from configuration_constants import JSON_DATA_PREP_NORMALIZATION_TYPE
 from configuration_constants import JSON_DATA_PREP_NORMALIZE
-from configuration_constants import JSON_DATA_PREP_PASSTHRU
 from configuration_constants import JSON_DATA_PREP_SEQ
 from configuration_constants import JSON_DATA_PREP_ENCODING
-from configuration_constants import JSON_DATA_PREP_CATEGORIZE
-
-from configuration_constants import JSON_NORMALIZE_DATA
-
 from configuration_constants import JSON_TENSORFLOW
 from configuration_constants import JSON_AUTOKERAS
 from configuration_constants import JSON_FEATURE_FIELDS
@@ -43,19 +37,11 @@ from configuration_constants import JSON_TARGET_FIELDS
 from configuration_constants import JSON_VALIDATION_SPLIT
 from configuration_constants import JSON_TEST_SPLIT
 from configuration_constants import JSON_TIMESTEPS
-from configuration_constants import JSON_1HOT_ENCODING
-from configuration_constants import JSON_1HOT_FIELD
-from configuration_constants import JSON_1HOT_CATEGORYTYPE
-from configuration_constants import JSON_1HOT_SERIESTREND
-from configuration_constants import JSON_1HOT_CATEGORIES
-from configuration_constants import JSON_1HOT_OUTPUTFIELDS
 
 from TrainingDataAndResults import MODEL_TYPE
 from TrainingDataAndResults import INPUT_LAYERTYPE_DENSE
 from TrainingDataAndResults import INPUT_LAYERTYPE_RNN
 from TrainingDataAndResults import INPUT_LAYERTYPE_CNN
-
-from pickle import FALSE
 
 def generate1hot(d2r, fields, fieldPrepCtrl):
     categorizedData = pd.DataFrame()
@@ -81,6 +67,11 @@ def generate1hot(d2r, fields, fieldPrepCtrl):
                 else:
                     row = pd.DataFrame(data=[[0, 0]], columns=outputFields)
                 oneHot = pd.concat([oneHot, row])
+            '''
+            twoHot = pd.DataFrame([[0,0]], columns=outputFields)
+            row = pd.DataFrame(data=[[1, 0]])
+            twoHot = pd.concat([twoHot, row])
+            '''
         else:
             pass
 
@@ -116,7 +107,6 @@ def normalizeFeature(d2r, fields, fieldPrepCtrl, normalizeType):
     return
 
 def prepareTrainingData(d2r):
-    print("\n============== WIP =============\n\tPreparing training data\n================================\n")
     ''' error handling '''
     try:
         err_txt = "*** An exception occurred preparing the training data ***"
@@ -142,8 +132,11 @@ def prepareTrainingData(d2r):
                         if edge_i[1] == node_i:
                             nx_input_data_files = nx.get_edge_attributes(d2r.graph, JSON_FLOW_DATA_FILE)
                             nx_input_data_file = nx_input_data_files[edge_i[0], edge_i[1], input_flow]    
+                            nx_seriesDataType = nx.get_edge_attributes(d2r.graph, "seriesDataType")
+                            d2r.seriesDataType = nx_seriesDataType[edge_i[0], edge_i[1], input_flow]
                 if os.path.isfile(nx_input_data_file):
                     d2r.data = pd.read_csv(nx_input_data_file)
+                    d2r.rawData = d2r.data.copy()
                 else:
                     ex_txt = node_i + ", input file " + nx_input_data_file + " does not exist"
                     raise NameError(ex_txt)
@@ -152,6 +145,10 @@ def prepareTrainingData(d2r):
                 if JSON_DATA_PREP_SEQ in js_prepCtrl:
                     normalizeFields = []
                     categorizeFields = []
+                    '''
+                    time2normailze = 0.0
+                    time2categorize = 0.0
+                    '''
                     for prep in js_prepCtrl[JSON_DATA_PREP_SEQ]:
                         prepCtrl = js_prepCtrl[prep]
                         fieldPrepCtrl = []
@@ -160,18 +157,27 @@ def prepareTrainingData(d2r):
                                 normalizeFields.append(feature[JSON_DATA_PREP_FEATURE])
                                 fieldPrepCtrl.append(feature)
                             elif prep == JSON_DATA_PREP_ENCODING:
+                                start = time.time()
                                 categorizeFields.append(feature[JSON_DATA_PREP_FEATURE])
                                 fieldPrepCtrl.append(feature)
                             else:
                                 ex_txt = node_i + ", prep type is not specified"
                                 raise NameError(ex_txt)
                         if prep == JSON_DATA_PREP_NORMALIZE:
+                            #start = time.time()
                             normalizeFeature(d2r, normalizeFields, fieldPrepCtrl, prepCtrl['type'])
+                            #time2normailze += time.time() - start
                         elif prep == JSON_DATA_PREP_ENCODING:
+                            #start = time.time()
                             generate1hot(d2r, categorizeFields, fieldPrepCtrl)
+                            #time2categorize += time.time() - start
                         else:
                             ex_txt = node_i + ", prep type is not specified"
                             raise NameError(ex_txt)
+                    '''
+                    print("\nData preparation times\n\tNormalization: %s\n\t1 Hot Encoding: %s" % \
+                          (time2normailze, time2categorize))
+                    '''
                 else:
                     err_txt = "No preparation sequence specified"
                     raise NameError(ex_txt)
@@ -206,7 +212,6 @@ def loadTrainingData(d2r):
         inputData = nx_data_file[d2r.mlEdgeIn[0], d2r.mlEdgeIn[1], nx_input_flow[0]]    
         if os.path.isfile(inputData):
             d2r.data = pd.read_csv(inputData)
-            d2r.rawData = d2r.data
         
     except Exception:
         exc_info = sys.exc_info()
@@ -338,7 +343,10 @@ def selectTrainingData(d2r, node_name, nx_edge):
     nx_targetFields = nx.get_edge_attributes(d2r.graph, JSON_TARGET_FIELDS)
     d2r.rawTargets = nx_targetFields[nx_edge[0], nx_edge[1], output_flow]
     d2r.preparedTargets = d2r.rawTargets
-            
+    
+    nx_seriesStepIDs = nx.get_edge_attributes(d2r.graph, "seriesStepIDField")
+    d2r.dataSeriesIDFields = nx_seriesStepIDs[nx_edge[0], nx_edge[1], output_flow]
+    
     df_combined = pd.DataFrame()
     nx_data_file = nx.get_node_attributes(d2r.graph, JSON_INPUT_DATA_FILE)
     for dataFile in nx_data_file[node_name]:
@@ -355,6 +363,8 @@ def selectTrainingData(d2r, node_name, nx_edge):
                 for fld in d2r.rawFeatures:
                     l_filter.append(fld)
                 for fld in d2r.rawTargets:
+                    l_filter.append(fld)
+                for fld in d2r.dataSeriesIDFields:
                     l_filter.append(fld)
                 df_inputs = df_data.filter(l_filter)
                 df_combined = pd.concat([df_combined, df_inputs], ignore_index=True)
@@ -374,10 +384,6 @@ def selectTrainingData(d2r, node_name, nx_edge):
     return df_combined
 
 def collect_and_select_data(d2r):
-    logging.info('====> ================================================')
-    logging.info('====> load_and_prepare_data: loading data for input to models')
-    logging.info('====> ================================================')
-    
     ''' error handling '''
     try:
         err_txt = "*** An exception occurred collecting and selecting the data ***"
@@ -408,7 +414,4 @@ def collect_and_select_data(d2r):
         logging.debug(exc_txt)
         sys.exit(exc_txt)
         
-    logging.info('<---- ----------------------------------------------')
-    logging.info('<---- load_and_prepare_data: done')
-    logging.info('<---- ----------------------------------------------')    
     return

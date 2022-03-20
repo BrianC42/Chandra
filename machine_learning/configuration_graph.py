@@ -18,10 +18,8 @@ from configuration_constants import JSON_TENSORFLOW
 from configuration_constants import JSON_AUTOKERAS
 from configuration_constants import JSON_TENSORFLOW_DATA
 from configuration_constants import JSON_AUTOKERAS_PARAMETERS
-#from configuration_constants import JSON_AK_TASK
-#from configuration_constants import JSON_AK_DIR
-#from configuration_constants import JSON_AK_MAX_TRIALS
 from configuration_constants import JSON_PRECISION
+from configuration_constants import JSON_VISUALIZATIONS
 from configuration_constants import JSON_NODE_NAME
 from configuration_constants import JSON_PROCESS_TYPE
 from configuration_constants import JSON_DATA_FLOWS
@@ -34,9 +32,6 @@ from configuration_constants import JSON_LOG_FILE
 from configuration_constants import JSON_INPUT_DATA_FILE
 from configuration_constants import JSON_INPUT_DATA_PREPARATION
 from configuration_constants import JSON_DATA_PREPARATION_CTRL
-from configuration_constants import JSON_DATA_PREP_PASSTHRU
-from configuration_constants import JSON_DATA_PREP_NORMALIZE_DATA
-from configuration_constants import JSON_1HOT_ENCODING
 from configuration_constants import JSON_MODEL_FILE
 from configuration_constants import JSON_LAYERS
 from configuration_constants import JSON_BALANCED
@@ -60,24 +55,6 @@ from configuration_constants import JSON_LOSS
 from configuration_constants import JSON_LOSS_WTS
 from configuration_constants import JSON_METRICS
 from configuration_constants import JSON_OPTIMIZER
-
-'''
-def add_data_prep_details(jsPrepDetails, nx_graph, nx_process_name):
-    for node_i in nx_graph.nodes():
-        if node_i == nx_process_name:
-            if JSON_DATA_PREP_PASSTHRU in jsPrepDetails:
-                js_passthru = jsPrepDetails[JSON_DATA_PREP_PASSTHRU]
-                nx.set_node_attributes(nx_graph, {nx_process_name:js_passthru}, JSON_DATA_PREP_PASSTHRU)
-            elif JSON_DATA_PREP_NORMALIZE_DATA in jsPrepDetails:
-                js_normalize = jsPrepDetails[JSON_DATA_PREP_NORMALIZE_DATA]
-                nx.set_node_attributes(nx_graph, {nx_process_name:js_normalize}, JSON_DATA_PREP_NORMALIZE_DATA)
-            elif JSON_1HOT_ENCODING in jsPrepDetails:
-                js_1hot = jsPrepDetails[JSON_1HOT_ENCODING]
-                nx.set_node_attributes(nx_graph, {nx_process_name:js_1hot}, JSON_1HOT_ENCODING)
-            break
-    
-    return
-'''
 
 def add_data_flow_details(js_flow_conditional, nx_graph, nx_edge_key):
 
@@ -105,6 +82,14 @@ def add_data_flow_details(js_flow_conditional, nx_graph, nx_edge_key):
                 if JSON_TARGET_FIELDS in js_tensorflow_data:
                     nx_target_fields = js_tensorflow_data[JSON_TARGET_FIELDS]
                     nx.set_edge_attributes(nx_graph, {nx_edge_key:nx_target_fields}, JSON_TARGET_FIELDS)
+
+                if "seriesStepIDField" in js_tensorflow_data:
+                    nx_seriesStepID = js_tensorflow_data["seriesStepIDField"]
+                    nx.set_edge_attributes(nx_graph, {nx_edge_key:nx_seriesStepID}, "seriesStepIDField")
+
+                if "seriesDataType" in js_tensorflow_data:
+                    nx_seriesDataType = js_tensorflow_data["seriesDataType"]
+                    nx.set_edge_attributes(nx_graph, {nx_edge_key:nx_seriesDataType}, "seriesDataType")
 
     return 
 
@@ -211,6 +196,8 @@ def add_meta_process_node (js_config, nx_graph) :
         nx.set_node_attributes(nx_graph, {nx_process_name:nx_model_file}, JSON_MODEL_FILE)
         nx_dataPrecision = js_conditional[JSON_PRECISION]
         nx.set_node_attributes(nx_graph, {nx_process_name:nx_dataPrecision}, JSON_PRECISION)
+        nx_visualizations = js_conditional[JSON_VISUALIZATIONS]
+        nx.set_node_attributes(nx_graph, {nx_process_name:nx_visualizations}, JSON_VISUALIZATIONS)
         
         if JSON_NORMALIZE_DATA in js_conditional:
             nx_normalize = js_conditional[JSON_NORMALIZE_DATA]
@@ -229,6 +216,8 @@ def add_meta_process_node (js_config, nx_graph) :
         nx.set_node_attributes(nx_graph, {nx_process_name:nx_model_file}, JSON_MODEL_FILE)
         nx_dataPrecision = js_conditional[JSON_PRECISION]
         nx.set_node_attributes(nx_graph, {nx_process_name:nx_dataPrecision}, JSON_PRECISION)
+        nx_visualizations = js_conditional[JSON_VISUALIZATIONS]
+        nx.set_node_attributes(nx_graph, {nx_process_name:nx_visualizations}, JSON_VISUALIZATIONS)
 
         if JSON_AUTOKERAS_PARAMETERS in js_conditional:
             nx_akParameters = js_conditional[JSON_AUTOKERAS_PARAMETERS]

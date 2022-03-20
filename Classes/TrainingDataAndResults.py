@@ -32,6 +32,8 @@ class Data2Results():
         '''
     '''
     definition graph properties
+        graph - graph of nodes and edges defining the information flow and processing
+        mlNode - the node in the graph containing the machine learning definition
     '''        
     @property
     def graph(self):
@@ -59,8 +61,6 @@ class Data2Results():
     
     '''
     machine learning properties
-        graph - graph of nodes and edges defining the information flow and processing
-        mlNode - the node in the graph containing the machine learning definition
         model - the compiled Keras / Tensorflow model
         fitting - Tensorflow fit results
     '''
@@ -130,7 +130,7 @@ class Data2Results():
         
     @property
     def rawData(self):
-        return self.rawData
+        return self._rawData
     
     @rawData.setter
     def rawData(self, rawData):
@@ -231,6 +231,22 @@ class Data2Results():
     @rawTargets.setter
     def rawTargets(self, rawTargets):
         self._rawTargets = rawTargets
+
+    @property
+    def dataSeriesIDFields(self):
+        return self._dataSeriesIDFields
+    
+    @dataSeriesIDFields.setter
+    def dataSeriesIDFields(self, dataSeriesIDFields):
+        self._dataSeriesIDFields = dataSeriesIDFields
+
+    @property
+    def seriesDataType(self):
+        return self._seriesDataType
+    
+    @seriesDataType.setter
+    def seriesDataType(self, seriesDataType):
+        self._seriesDataType = seriesDataType
 
     @property
     def preparedFeatures(self):
