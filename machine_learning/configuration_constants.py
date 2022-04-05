@@ -59,12 +59,16 @@ JSON_DATA_PREP_ENCODING = "oneHotEncoding"
 
 JSON_NORMALIZE_DATA = 'normalize'
 JSON_DATA_PREP_NORMALIZE_DATA = 'normalize'
+JSON_DATA_PREP_NORMALIZE_STANDARD = 'standard'
+JSON_DATA_PREP_NORMALIZE_MINMAX = 'minmax'
 
 JSON_DATA_PREP_CATEGORIZE = "categorize"
 JSON_1HOT_ENCODING = "oneHotEncoding"
 JSON_1HOT_FIELD = "field"
 JSON_1HOT_CATEGORYTYPE = "categoryType"
 JSON_1HOT_SERIESTREND = "seriesTrend"
+JSON_1HOT_SERIES_UP_DOWN = "seriesChangeUpDown"
+JSON_1HOT_CATEGORYTYPE = "categoryType"
 JSON_1HOT_CATEGORIES = "categories"
 JSON_1HOT_OUTPUTFIELDS = "outputFields"
 
@@ -90,6 +94,8 @@ JSON_FLOW_DATA_FILE = "flowDataFile"
 JSON_FEATURE_FIELDS = "features"
 JSON_TARGET_FIELDS = "targets"
 JSON_TIMESTEPS = 'timeSteps'
+JSON_SERIES_ID = "seriesStepIDField"
+JSON_SERIES_DATA_TYPE = "seriesDataType"
 JSON_FEATURE_COUNT = 'featureCount'
 JSON_MODEL_OUTPUT_ACTIVATION = 'outputActivation'
 JSON_SHUFFLE_DATA = 'shuffle'

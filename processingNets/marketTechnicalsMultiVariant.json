@@ -13,7 +13,7 @@
 	},
 	"conditionalFields" : {
 		"dataLoadCtrl" : {
-			"inputFile" : ["d:\\brian\\AI-Projects\\tda\\market_analysis_data\\f.csv"]
+			"inputFile" : ["d:\\brian\\AI-Projects\\tda\\market_analysis_data\\gm.csv"]
 		}
 	}
 	},
@@ -28,21 +28,26 @@
 	"conditionalFields" : {
 		"dataPrepCtrl" : {
 			"preparationSequence" : ["normalize", "oneHotEncoding"],
+			"noPreparation" : {
+				"features" : [
+					{"feature" : "MACD_flag"}
+				]
+			},
 			"normalize" : {
 				"type" : "minmax",
 				"features" : [
-					{
-					"feature" : "Volume"
-					},
-					{
-					"feature" : "Relative Strength"
-					},
-					{
-					"feature" : "ADX"
-					},
-					{
-					"feature" : "AccumulationDistribution"
-					}
+					{"feature" : "OBV"}
+				],
+				"comment normalize holding features" : [
+					{"feature" : "Volume"},
+					{"feature" : "Relative Strength"},
+					{"feature" : "ADX"},
+					{"feature" : "AccumulationDistribution"},
+					{"feature" : "Open"},
+					{"feature" : "High"},
+					{"feature" : "Low"},
+					{"feature" : "OBV"},
+					{"feature" : "MACD"}
 				]
 			},
 			"oneHotEncoding" : {
@@ -53,6 +58,14 @@
 					"categories" : ["Up" , "Down"],
 					"outputFields" : ["closeUp", "closeDown"]
 					},
+					{
+					"feature" : "MACD",
+					"categoryType" : "seriesChangeUpDown",
+					"categories" : ["Up" , "Down"],
+					"outputFields" : ["MACDUp", "MACDDown"]
+					}
+				],
+				"comment oneHot hoding definitions" : [
 					{
 					"feature" : "Open",
 					"categoryType" : "seriesChangeUpDown",
@@ -101,36 +114,50 @@
 	"conditionalFields" : {
 		"modelFile" : "d:\\brian\\AI-Projects\\models\\mkt_multi",
 		"dataPrecision" : "float32",
-		"visualizations" : ["trainingFit", "targetSeries"],
+		"visualizations" : ["targetSeries", "dataGroups", "normalizationCategorization", "summary", "trainingFit"],
 		"supported visualizations" : ["trainingFit", "targetSeries"],
 		"modelLayers" : [
 			{
 			"layerName" : "lstmIn",
 			"layerType" : "lstm",
 			"timeSteps" : 20,
-			"featureCount": 15,
+			"featureCount": 4,
 			"comment featureCount" : "needs to be set to the number of features after data preparartion step",
 			"layerUnits" : 128,
-			"returnSequences" : true,
-			"outputActivation" : "tanh"
+			"returnSequences" : false,
+			"comment returnSequences" : "true if the next layer is also an RNN layer",
+			"outputActivation" : "relu"
 			},
 			{
-			"layerName" : "hidden-lstm",
-			"layerType" : "lstm",
-			"layerUnits" : 32,
-			"returnSequences" : false,
-			"outputActivation" : "tanh"
+			"layerName" : "dropout1",
+			"layerType" : "dropout",
+			"dropoutRate" : 0.2
 			},
 			{
 			"layerName" : "hidden-dense",
 			"layerType" : "dense",
-			"layerUnits" : 32
+			"layerUnits" : 32,
+			"outputActivation" : "relu"
+			},
+			{
+			"layerName" : "dropout2",
+			"layerType" : "dropout",
+			"dropoutRate" : 0.2
 			},
 			{
 			"layerName" : "output",
 			"layerType" : "dense",
 			"layerUnits" : 2,
 			"outputActivation" : "softmax"
+			}
+		],
+		"layer holding group" : [
+			{
+			"layerName" : "hidden-lstm",
+			"layerType" : "lstm",
+			"layerUnits" : 32,
+			"returnSequences" : false,
+			"outputActivation" : "tanh"
 			}
 		],
 		"training" : {
@@ -147,7 +174,11 @@
 			"balanceClasses" : true,
 			"compilationLoss" : "mae",
 			"compilationMetrics" : ["accuracy"],
-			"optimizer" : "adam"
+			"optimizer" : "adam",
+			"optimizers - adam" : "fast, tends to overfit",
+			"optimizers - SGD" : "slow, great results",
+			"optimizers - RMSProp" : "sometimes works best",
+			"optimizers - SWA" : "can easily improve qualiy"
 		}
 	}
 	}
@@ -166,7 +197,8 @@
 			"timeSequence" : true,
 			"balanceClasses" : false,
 			"ignoreBlanks" : true,
-			"features" : ["Open", "High", "Low", "Volume", "OBV", "Relative Strength", "ADX", "AccumulationDistribution", "MACD", "MACD_flag"],
+			"features" : ["MACD_flag", "OBV", "MACD"],
+			"comment features" : ["Open", "High", "Low", "Volume", "OBV", "Relative Strength", "ADX", "AccumulationDistribution", "MACD", "MACD_flag"],
 			"targets" : ["Close"],
 			"seriesStepIDField" : ["DateTime"],
 			"seriesDataType" : "TDADateTime"
@@ -182,8 +214,8 @@
 		},
 	"conditionalFields" : {
 		"TensorflowData" : {
-			"features" : ["DateTime", "Open", "High", "Low", "Volume", "OBV", "Relative Strength", "ADX", "AccumulationDistribution", "MACD", "MACD_flag"],
-			"targets" : ["Close"],
+			"features" : ["MACD_flag", "MACDUp", "MACDDown", "OBV"],
+			"targets" : ["closeUp", "closeDown"],
 			"seriesStepIDField" : ["DateTime"],
 			"seriesDataType" : "TDADateTime"
 			}

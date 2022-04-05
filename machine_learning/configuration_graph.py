@@ -36,6 +36,12 @@ from configuration_constants import JSON_MODEL_FILE
 from configuration_constants import JSON_LAYERS
 from configuration_constants import JSON_BALANCED
 from configuration_constants import JSON_TIME_SEQ
+from configuration_constants import JSON_SERIES_ID
+from configuration_constants import JSON_SERIES_DATA_TYPE
+from configuration_constants import JSON_1HOT_CATEGORYTYPE
+from configuration_constants import JSON_1HOT_CATEGORIES
+from configuration_constants import JSON_1HOT_OUTPUTFIELDS
+from configuration_constants import JSON_1HOT_SERIES_UP_DOWN
 from configuration_constants import JSON_IGNORE_BLANKS
 from configuration_constants import JSON_FLOW_DATA_FILE
 from configuration_constants import JSON_FEATURE_FIELDS
@@ -83,13 +89,13 @@ def add_data_flow_details(js_flow_conditional, nx_graph, nx_edge_key):
                     nx_target_fields = js_tensorflow_data[JSON_TARGET_FIELDS]
                     nx.set_edge_attributes(nx_graph, {nx_edge_key:nx_target_fields}, JSON_TARGET_FIELDS)
 
-                if "seriesStepIDField" in js_tensorflow_data:
-                    nx_seriesStepID = js_tensorflow_data["seriesStepIDField"]
-                    nx.set_edge_attributes(nx_graph, {nx_edge_key:nx_seriesStepID}, "seriesStepIDField")
+                if JSON_SERIES_ID in js_tensorflow_data:
+                    nx_seriesStepID = js_tensorflow_data[JSON_SERIES_ID]
+                    nx.set_edge_attributes(nx_graph, {nx_edge_key:nx_seriesStepID}, JSON_SERIES_ID)
 
-                if "seriesDataType" in js_tensorflow_data:
-                    nx_seriesDataType = js_tensorflow_data["seriesDataType"]
-                    nx.set_edge_attributes(nx_graph, {nx_edge_key:nx_seriesDataType}, "seriesDataType")
+                if JSON_SERIES_DATA_TYPE in js_tensorflow_data:
+                    nx_seriesDataType = js_tensorflow_data[JSON_SERIES_DATA_TYPE]
+                    nx.set_edge_attributes(nx_graph, {nx_edge_key:nx_seriesDataType}, JSON_SERIES_DATA_TYPE)
 
     return 
 
