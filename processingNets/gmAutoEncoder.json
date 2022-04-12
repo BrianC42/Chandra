@@ -18,25 +18,44 @@
 		}
 	},
 	{
+	"processNodeName" : "passThruPrep",
+	"requiredFields" : {
+		"processType" : "dataPrep",
+		"inputFlows" : ["gmAutoEncode"],
+		"outputFlow" : "gmPrepared",
+		"logFile" : ""
+	},
+	"conditionalFields" : {
+		"dataPrepCtrl" : {
+			"preparationSequence" : [],
+			"noPreparation" : {
+				"features" : [
+					{"feature" : "Close"},
+					{"feature" : "DateTime"}
+				]
+			}
+		}
+	}
+	},
+	{
 		"processNodeName" : "gmMktAE",
 		"requiredFields" : {
 			"processType" : "Tensorflow",
-			"inputFlows" : ["gmAutoEncode"],
+			"inputFlows" : ["gmPrepared"],
 			"outputFlow" : "",
 			"outputFile" : "d:\\brian\\AI-Projects\\models\\gmMktAE",
 			"logFile" : "d:\\brian\\AI-Projects\\logs\\gmMktAE.txt"
 		},
 		"conditionalFields" : {
 			"modelFile" : "d:\\brian\\AI-Projects\\models\\gmMktAE",
-			"visualizations" : ["trainingFit", "targetSeries"],
+			"visualizations" : ["targetSeries", "dataGroups", "summary", "trainingFit"],
 			"dataPrecision" : "float32",
-			"normalize" : "minmax",
 			"modelLayers" : [
 				{
 				"layerName" : "lstmIn",
 				"layerType" : "lstm",
 				"timeSteps" : 20,
-				"featureCount": 2,
+				"featureCount": 1,
 				"layerUnits" : 128,
 				"returnSequences" : false,
 				"outputActivation" : "tanh"
@@ -95,7 +114,7 @@
 	"flowName" : "gmAutoEncode",
 	"requiredFields" : {
 		"flowFrom" : "gmIn",
-		"flowTo" : "gmMktAE",
+		"flowTo" : "passThruPrep",
 		"flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\gmAutoEncode.csv"
 		},
 	"conditionalFields" : {
@@ -103,9 +122,27 @@
 			"timeSequence" : true,
 			"balanceClasses" : false,
 			"ignoreBlanks" : true,
-			"comment features" : ["DateTime", "Close", "Open", "High", "Low", "Volume"],
-			"features" : ["DateTime", "Close"],
-			"targets" : ["Close"]
+			"comment features" : ["Close", "Open", "High", "Low", "Volume"],
+			"features" : ["Close"],
+			"targets" : ["Close"],
+			"seriesStepIDField" : ["DateTime"],
+			"seriesDataType" : "TDADateTime"
+			}
+		}
+	},
+	{
+	"flowName" : "gmPrepared",
+	"requiredFields" : {
+		"flowFrom" : "passThruPrep",
+		"flowTo" : "gmMktAE",
+		"flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\gmAutoEncodePrep.csv"
+		},
+	"conditionalFields" : {
+		"TensorflowData" : {
+			"features" : ["Close"],
+			"targets" : ["Close"],
+			"seriesStepIDField" : ["DateTime"],
+			"seriesDataType" : "TDADateTime"
 			}
 		}
 	}

@@ -57,14 +57,19 @@ def plotTargetValues(d2r, axis):
     axis.set_xlabel("time periods")
     axis.set_ylabel("Data Values")
     if d2r.seriesDataType == "TDADateTime":
-        x_dates = d2r.rawData['DateTime'].copy()
+        '''
+        d2r.dataSeriesIDFields and d2r.rawTargets are lists.
+        d2r.dataSeriesIDFields returns a dataframe (including column header)
+        d2r.dataSeriesIDFields[0] returns a list without header
+        '''
+        x_dates = d2r.rawData[d2r.dataSeriesIDFields[0]].copy()
         x_dates2 = x_dates[range(0, len(x_dates), int(len(x_dates)/10))]
         x_ticks = []
         x_tickLabels = []
         for tdaDate in x_dates2:
             x_ticks.append(tdaDate)
             x_tickLabels.append(format_tda_datetime(tdaDate))
-        y_targets = d2r.rawData['Close']
+        y_targets = d2r.rawData[d2r.rawTargets[0]]
         label=d2r.dataSeriesIDFields[0]
         axis.xaxis.set_ticks(x_ticks)
         axis.xaxis.set_ticklabels(x_tickLabels)
@@ -75,31 +80,42 @@ def plotTargetValues(d2r, axis):
 def plotDataGroups(d2r):
 
     if d2r.seriesDataType == "TDADateTime":
+        featureCount = max(d2r.rawData.shape[1], d2r.trainX.shape[2])
+        seriesLen = len(d2r.trainX[0, :, 0])
+        
         fig = plt.figure(tight_layout=True)
-        fig.suptitle("Data groups for: " + d2r.mlNode, fontsize=14, fontweight='bold')
-    
-        gs = gridspec.GridSpec(2, 3)
+        gs = gridspec.GridSpec(4, featureCount)
 
+        fig.suptitle("Data preparation for: " + d2r.mlNode, fontsize=14, fontweight='bold')
+
+        axRawTarget = fig.add_subplot(gs[0, :])
+        axPrepTarget = fig.add_subplot(gs[1, :])
+
+        axs = pd.DataFrame()
+        for ndx in range(0, featureCount):
+            axs.insert( 0, ndx, \
+                        [fig.add_subplot(gs[2, ndx]), \
+                        fig.add_subplot(gs[3, ndx])])
+            
         label=d2r.dataSeriesIDFields[0]
 
         ''' Full raw data '''        
-        x_dates = d2r.rawData['DateTime'].copy()
+        x_dates = d2r.rawData[d2r.dataSeriesIDFields[0]].copy()
         x_dates2 = x_dates[range(0, len(x_dates), int(len(x_dates)/10))]
-        y_targets = d2r.rawData['Close']
+        y_targets = d2r.rawData[d2r.rawTargets]
         x_ticks = []
         x_tickLabels = []
         for tdaDate in x_dates2:
             x_ticks.append(tdaDate)
             x_tickLabels.append(format_tda_datetime(tdaDate))
             
-        ''' Full prepared data '''        
-
         ''' Training data '''        
-        x_trainDates = d2r.rawData['DateTime'][ : d2r.trainLen].copy()
+        x_trainDates = d2r.rawData[d2r.dataSeriesIDFields[0]][ : d2r.trainLen].copy()
         x_trainDates2 = x_trainDates    [range( 0, \
                                                 d2r.trainLen, \
                                                 int(d2r.trainLen / 3))]
-        y_trainTargets = d2r.rawData['Close'][ : d2r.trainLen].copy()
+        y_preparedTrainTargets = d2r.data[d2r.preparedTargets][ : d2r.trainLen].to_numpy()
+        y_rawTrainTargets = d2r.rawData[d2r.rawTargets[0]][ : d2r.trainLen].copy()
         x_ticksTrain = []
         x_tickLabelsTrain = []
         for tdaDate in x_trainDates2:
@@ -107,11 +123,12 @@ def plotDataGroups(d2r):
             x_tickLabelsTrain.append(format_tda_datetime(tdaDate))
 
         ''' Validation data '''        
-        x_validateDates = d2r.rawData['DateTime'][d2r.trainLen : (d2r.trainLen + d2r.validateLen)].copy()
+        x_validateDates = d2r.rawData[d2r.dataSeriesIDFields[0]][d2r.trainLen : (d2r.trainLen + d2r.validateLen)].copy()
         x_validateDates2 = x_validateDates  [range( d2r.trainLen, \
                                                     d2r.trainLen + d2r.validateLen, \
                                                     int(d2r.validateLen / 3))]
-        y_validateTargets = d2r.rawData['Close'][d2r.trainLen : (d2r.trainLen + d2r.validateLen)].copy()
+        y_rawValidateTargets = d2r.rawData[d2r.rawTargets[0]][d2r.trainLen : (d2r.trainLen + d2r.validateLen)].copy()
+        y_preparedValidateTargets = d2r.data[d2r.preparedTargets][d2r.trainLen : (d2r.trainLen + d2r.validateLen)].to_numpy()
         x_ticksVal = []
         x_tickLabelsVal = []
         for tdaDate in x_validateDates2:
@@ -119,50 +136,62 @@ def plotDataGroups(d2r):
             x_tickLabelsVal.append(format_tda_datetime(tdaDate))
 
         ''' Testing data '''        
-        x_testDates = d2r.rawData['DateTime'][(d2r.trainLen + d2r.validateLen) : ].copy()
+        x_testDates = d2r.rawData[d2r.dataSeriesIDFields[0]][(d2r.trainLen + d2r.validateLen) : ].copy()
         x_testDates2 = x_testDates  [range(d2r.trainLen + d2r.validateLen, \
                                            len(x_dates), \
                                            int(d2r.testLen / 3))]
-        y_testTargets = d2r.rawData['Close'][(d2r.trainLen + d2r.validateLen) : ].copy()
+        y_rawTestTargets = d2r.rawData[d2r.rawTargets[0]][(d2r.trainLen + d2r.validateLen) : ].copy()
+        y_preparedTestTargets = d2r.data[d2r.preparedTargets][(d2r.trainLen + d2r.validateLen) : ].to_numpy()
         x_ticksTest = []
         x_tickLabelsTest = []
         for tdaDate in x_testDates2:
             x_ticksTest.append(tdaDate)
             x_tickLabelsTest.append(format_tda_datetime(tdaDate))
 
-        axRaw = fig.add_subplot(gs[0, :])
-        axRaw.set_title("Target raw data")
-        axRaw.set_xlabel("time periods")
-        axRaw.set_ylabel("Data Values")
-        axRaw.xaxis.set_ticks(x_ticks)
-        axRaw.xaxis.set_ticklabels(x_tickLabels)
-        lineTrain, = axRaw.plot(x_trainDates, y_trainTargets, label=label, linestyle='solid')
-        lineVal, = axRaw.plot(x_validateDates, y_validateTargets, label=label, linestyle='solid')
-        lineTest, = axRaw.plot(x_testDates, y_testTargets, label=label, linestyle='solid')
-        axRaw.legend([lineTrain, lineVal, lineTest], ['Training', 'Validation', 'Testing'], loc='upper center')
+        axRawTarget.set_title("Target raw data")
+        axRawTarget.set_xlabel("time periods")
+        axRawTarget.set_ylabel("Data Values")
+        axRawTarget.xaxis.set_ticks(x_ticks)
+        axRawTarget.xaxis.set_ticklabels(x_tickLabels)
+        lineTrain, = axRawTarget.plot(x_trainDates, y_rawTrainTargets, label=label, linestyle='solid')
+        lineVal, = axRawTarget.plot(x_validateDates, y_rawValidateTargets, label=label, linestyle='solid')
+        lineTest, = axRawTarget.plot(x_testDates, y_rawTestTargets, label=label, linestyle='solid')
+        axRawTarget.legend([lineTrain, lineVal, lineTest], ['Training', 'Validation', 'Testing'], loc='upper center')
         
-        ''' Example training series data '''
-        seriesLen = 20
-        axLeft = fig.add_subplot(gs[1, 0])
-        axLeft.set_title("Normalized data series")
-        axLeft.set_xlabel("time periods")
-        axLeft.set_ylabel("Data Values")
-        axLeft.xaxis.set_ticks(range(seriesLen))
-        axLeft.plot(range(seriesLen), d2r.trainX[0, :, :], label=label, linestyle='solid')
-        
-        axCenter = fig.add_subplot(gs[1, 1])
-        axCenter.set_title("Targets")
-        axCenter.set_xlabel("time periods")
-        axCenter.set_ylabel("Data Values")
-        axCenter.xaxis.set_ticks(range(20))
-        axCenter.plot(range(seriesLen), d2r.trainY[0 : seriesLen, :], label=label, linestyle='solid')
-    
-        axRight = fig.add_subplot(gs[1, 2])
-        axRight.set_title("Categorized data series")
-        axRight.set_xlabel("time periods")
-        axRight.set_ylabel("Data Values")
-        axRight.xaxis.set_ticks(range(20))
+        axPrepTarget.set_title("Target prepared data")
+        axPrepTarget.set_xlabel("time periods")
+        axPrepTarget.set_ylabel("Data Values")
+        axPrepTarget.xaxis.set_ticks(x_ticks)
+        axPrepTarget.xaxis.set_ticklabels(x_tickLabels)
+        lineTrain, = axPrepTarget.plot(x_trainDates, y_preparedTrainTargets[:, 0], label=label, linestyle='solid')
+        lineVal, = axPrepTarget.plot(x_validateDates, y_preparedValidateTargets[:, 0], label=label, linestyle='solid')
+        lineTest, = axPrepTarget.plot(x_testDates, y_preparedTestTargets[:, 0], label=label, linestyle='solid')
+        axPrepTarget.legend([lineTrain, lineVal, lineTest], ['Training', 'Validation', 'Testing'], loc='upper center')
 
+        ndx = 0
+        for col in d2r.rawData.columns:
+            title = "Raw data series: " + col
+            axs.iat[0, ndx].set_title(title)
+            axs.iat[0, ndx].set_xlabel("time periods")
+            axs.iat[0, ndx].set_ylabel("Data Values")
+            axs.iat[0, ndx].xaxis.set_ticks(range(seriesLen))
+            axs.iat[0, ndx].plot(range(seriesLen), d2r.rawData[col][0: seriesLen], label=col, linestyle='solid')
+            
+            ndx += 1
+
+        #ndx = 0
+        #for col in d2r.data.columns:
+        for ndx in range(0, d2r.trainX.shape[2]):
+            title = "Prepared data series: "
+            axs.iat[1, ndx].set_title(title)
+            axs.iat[1, ndx].set_xlabel("time periods")
+            axs.iat[1, ndx].set_ylabel("Data Values")
+            axs.iat[1, ndx].xaxis.set_ticks(range(seriesLen))
+            #axs.iat[1, ndx].plot(range(seriesLen), d2r.data[col][0: seriesLen], label=col, linestyle='solid')
+            axs.iat[1, ndx].plot(range(seriesLen), d2r.trainX[ndx, :, ndx], label=col, linestyle='solid')
+            
+            ndx += 1
+        
         plt.tight_layout()
         plt.show()
 
