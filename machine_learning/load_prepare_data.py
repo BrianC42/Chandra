@@ -238,12 +238,15 @@ def normalizeFeature(d2r, fields, fieldPrepCtrl, normalizeType):
     elif normalizeType == JSON_DATA_PREP_NORMALIZE_MINMAX:
         d2r.scaler = MinMaxScaler(feature_range=(0,1))
 
-    normalizedFields = d2r.data[fields]
-    d2r.scaler = d2r.scaler.fit(normalizedFields)
-    normalizedFields = d2r.scaler.transform(normalizedFields)
-    df_normalizedFields = pd.DataFrame(normalizedFields, columns=fields)
-    d2r.data[fields] = df_normalizedFields
-    d2r.normalized = True
+    if len(fields) > 0:
+        normalizedFields = d2r.data[fields]
+        d2r.scaler = d2r.scaler.fit(normalizedFields)
+        normalizedFields = d2r.scaler.transform(normalizedFields)
+        df_normalizedFields = pd.DataFrame(normalizedFields, columns=fields)
+        d2r.data[fields] = df_normalizedFields
+        d2r.normalized = True
+    else:
+        d2r.normalized = False
 
     return
 

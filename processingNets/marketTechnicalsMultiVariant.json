@@ -36,9 +36,9 @@
 			"normalize" : {
 				"type" : "minmax",
 				"features" : [
-					{"feature" : "OBV"}
 				],
 				"comment normalize holding features" : [
+					{"feature" : "OBV"},
 					{"feature" : "Volume"},
 					{"feature" : "Relative Strength"},
 					{"feature" : "ADX"},
@@ -121,15 +121,27 @@
 			"layerName" : "lstmIn",
 			"layerType" : "lstm",
 			"timeSteps" : 20,
-			"featureCount": 4,
+			"featureCount": 3,
 			"comment featureCount" : "needs to be set to the number of features after data preparartion step",
 			"layerUnits" : 128,
-			"returnSequences" : false,
+			"returnSequences" : true,
 			"comment returnSequences" : "true if the next layer is also an RNN layer",
-			"outputActivation" : "relu"
+			"outputActivation" : "tanh"
 			},
 			{
 			"layerName" : "dropout1",
+			"layerType" : "dropout",
+			"dropoutRate" : 0.2
+			},
+			{
+			"layerName" : "hidden-lstm-1",
+			"layerType" : "lstm",
+			"layerUnits" : 128,
+			"returnSequences" : false,
+			"outputActivation" : "tanh"
+			},
+			{
+			"layerName" : "dropout2",
 			"layerType" : "dropout",
 			"dropoutRate" : 0.2
 			},
@@ -140,7 +152,7 @@
 			"outputActivation" : "relu"
 			},
 			{
-			"layerName" : "dropout2",
+			"layerName" : "dropout3",
 			"layerType" : "dropout",
 			"dropoutRate" : 0.2
 			},
@@ -152,6 +164,43 @@
 			}
 		],
 		"layer holding group" : [
+			{
+			"layerName" : "lstmIn",
+			"layerType" : "lstm",
+			"timeSteps" : 20,
+			"featureCount": 1,
+			"layerUnits" : 128,
+			"returnSequences" : false,
+			"outputActivation" : "tanh"
+			},
+			{
+			"layerName" : "Dropout1",
+			"layerType" : "dropout",
+			"dropoutRate" : 0.2
+			},
+			{
+			"layerName" : "RepeatVector",
+			"layerType" : "RepeatVector",
+			"repeatCount" : 20
+			},
+			{
+			"layerName" : "hidden-lstm-1",
+			"layerType" : "lstm",
+			"comment timeSteps" : 20,
+			"layerUnits" : 128,
+			"returnSequences" : true,
+			"outputActivation" : "tanh"
+			},
+			{
+			"layerName" : "Dropout2",
+			"layerType" : "dropout",
+			"dropoutRate" : 0.2
+			},
+			{
+			"layerName" : "output",
+			"layerType" : "TimeDistributed",
+			"featureCount": 1
+			},
 			{
 			"layerName" : "hidden-lstm",
 			"layerType" : "lstm",
@@ -197,7 +246,7 @@
 			"timeSequence" : true,
 			"balanceClasses" : false,
 			"ignoreBlanks" : true,
-			"features" : ["MACD_flag", "OBV", "MACD"],
+			"features" : ["MACD_flag", "MACD"],
 			"comment features" : ["Open", "High", "Low", "Volume", "OBV", "Relative Strength", "ADX", "AccumulationDistribution", "MACD", "MACD_flag"],
 			"targets" : ["Close"],
 			"seriesStepIDField" : ["DateTime"],
@@ -214,7 +263,7 @@
 		},
 	"conditionalFields" : {
 		"TensorflowData" : {
-			"features" : ["MACD_flag", "MACDUp", "MACDDown", "OBV"],
+			"features" : ["MACD_flag", "MACDUp", "MACDDown"],
 			"targets" : ["closeUp", "closeDown"],
 			"seriesStepIDField" : ["DateTime"],
 			"seriesDataType" : "TDADateTime"
