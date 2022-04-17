@@ -30,12 +30,19 @@
 			"preparationSequence" : ["normalize", "oneHotEncoding"],
 			"noPreparation" : {
 				"features" : [
+					{"feature" : "Relative Strength"},
 					{"feature" : "MACD_flag"}
 				]
 			},
 			"normalize" : {
 				"type" : "minmax",
 				"features" : [
+					{"feature" : "OBV"},
+					{"feature" : "Volume"},
+					{"feature" : "ADX"},
+					{"feature" : "AccumulationDistribution"},
+					{"feature" : "MACD"},
+					{"feature" : "Close"}
 				],
 				"comment normalize holding features" : [
 					{"feature" : "OBV"},
@@ -47,11 +54,14 @@
 					{"feature" : "High"},
 					{"feature" : "Low"},
 					{"feature" : "OBV"},
-					{"feature" : "MACD"}
+					{"feature" : "MACD"},
+					{"feature" : "Close"}
 				]
 			},
 			"oneHotEncoding" : {
 				"features" : [
+				],
+				"comment oneHot hoding definitions" : [
 					{
 					"feature" : "Close",
 					"categoryType" : "seriesChangeUpDown",
@@ -63,9 +73,7 @@
 					"categoryType" : "seriesChangeUpDown",
 					"categories" : ["Up" , "Down"],
 					"outputFields" : ["MACDUp", "MACDDown"]
-					}
-				],
-				"comment oneHot hoding definitions" : [
+					},
 					{
 					"feature" : "Open",
 					"categoryType" : "seriesChangeUpDown",
@@ -89,12 +97,6 @@
 					"categoryType" : "seriesChangeUpDown",
 					"categories" : ["Up" , "Down"],
 					"outputFields" : ["OBVUp", "OBVDown"]
-					},
-					{
-					"feature" : "MACD",
-					"categoryType" : "seriesChangeUpDown",
-					"categories" : ["Up" , "Down"],
-					"outputFields" : ["MACDUp", "MACDDown"]
 					}
 				]
 			}
@@ -114,15 +116,15 @@
 	"conditionalFields" : {
 		"modelFile" : "d:\\brian\\AI-Projects\\models\\mkt_multi",
 		"dataPrecision" : "float32",
-		"visualizations" : ["targetSeries", "dataGroups", "normalizationCategorization", "summary", "trainingFit"],
-		"supported visualizations" : ["trainingFit", "targetSeries"],
+		"visualizations" : ["targetSeries", "dataGroups", "normalizationCategorization", "summary", "trainingFit", "testVsPrediction"],
+		"supported visualizations" : ["targetSeries", "dataGroups", "normalizationCategorization", "summary", "trainingFit", "testVsPrediction"],
 		"modelLayers" : [
 			{
 			"layerName" : "lstmIn",
 			"layerType" : "lstm",
 			"timeSteps" : 20,
-			"featureCount": 3,
-			"comment featureCount" : "needs to be set to the number of features after data preparartion step",
+			"features" : ["Volume", "OBV", "Relative Strength", "ADX", "AccumulationDistribution", "MACD", "MACD_flag"],
+			"featureCount": 8,
 			"layerUnits" : 128,
 			"returnSequences" : true,
 			"comment returnSequences" : "true if the next layer is also an RNN layer",
@@ -137,7 +139,7 @@
 			"layerName" : "hidden-lstm-1",
 			"layerType" : "lstm",
 			"layerUnits" : 128,
-			"returnSequences" : false,
+			"returnSequences" : true,
 			"outputActivation" : "tanh"
 			},
 			{
@@ -145,6 +147,13 @@
 			"layerType" : "dropout",
 			"dropoutRate" : 0.2
 			},
+			{
+			"layerName" : "output",
+			"layerType" : "TimeDistributed",
+			"featureCount": 1
+			}
+		],
+		"layer holding group" : [
 			{
 			"layerName" : "hidden-dense",
 			"layerType" : "dense",
@@ -155,58 +164,6 @@
 			"layerName" : "dropout3",
 			"layerType" : "dropout",
 			"dropoutRate" : 0.2
-			},
-			{
-			"layerName" : "output",
-			"layerType" : "dense",
-			"layerUnits" : 2,
-			"outputActivation" : "softmax"
-			}
-		],
-		"layer holding group" : [
-			{
-			"layerName" : "lstmIn",
-			"layerType" : "lstm",
-			"timeSteps" : 20,
-			"featureCount": 1,
-			"layerUnits" : 128,
-			"returnSequences" : false,
-			"outputActivation" : "tanh"
-			},
-			{
-			"layerName" : "Dropout1",
-			"layerType" : "dropout",
-			"dropoutRate" : 0.2
-			},
-			{
-			"layerName" : "RepeatVector",
-			"layerType" : "RepeatVector",
-			"repeatCount" : 20
-			},
-			{
-			"layerName" : "hidden-lstm-1",
-			"layerType" : "lstm",
-			"comment timeSteps" : 20,
-			"layerUnits" : 128,
-			"returnSequences" : true,
-			"outputActivation" : "tanh"
-			},
-			{
-			"layerName" : "Dropout2",
-			"layerType" : "dropout",
-			"dropoutRate" : 0.2
-			},
-			{
-			"layerName" : "output",
-			"layerType" : "TimeDistributed",
-			"featureCount": 1
-			},
-			{
-			"layerName" : "hidden-lstm",
-			"layerType" : "lstm",
-			"layerUnits" : 32,
-			"returnSequences" : false,
-			"outputActivation" : "tanh"
 			}
 		],
 		"training" : {
@@ -214,7 +171,7 @@
 			"denseRegularation" : false,
 			"regularationValue" : 0.0,
 			"batchSize" : 32,
-			"epochs" : 6,
+			"epochs" : 7,
 			"useBias" : true,
 			"validationSplit" : 0.1,
 			"testSplit" : 0.2,
@@ -246,7 +203,7 @@
 			"timeSequence" : true,
 			"balanceClasses" : false,
 			"ignoreBlanks" : true,
-			"features" : ["MACD_flag", "MACD"],
+			"features" : ["Close", "Volume", "OBV", "Relative Strength", "ADX", "AccumulationDistribution", "MACD", "MACD_flag"],
 			"comment features" : ["Open", "High", "Low", "Volume", "OBV", "Relative Strength", "ADX", "AccumulationDistribution", "MACD", "MACD_flag"],
 			"targets" : ["Close"],
 			"seriesStepIDField" : ["DateTime"],
@@ -263,8 +220,8 @@
 		},
 	"conditionalFields" : {
 		"TensorflowData" : {
-			"features" : ["MACD_flag", "MACDUp", "MACDDown"],
-			"targets" : ["closeUp", "closeDown"],
+			"features" : ["Close", "Volume", "OBV", "Relative Strength", "ADX", "AccumulationDistribution", "MACD", "MACD_flag"],
+			"targets" : ["Close"],
 			"seriesStepIDField" : ["DateTime"],
 			"seriesDataType" : "TDADateTime"
 			}

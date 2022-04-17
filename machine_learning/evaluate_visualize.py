@@ -340,9 +340,9 @@ def visualizeAnomalyDistribution(d2r, prediction, plot_on_axis):
     return
 
 def selectDateAxisLabels(dateTimes):
-    testDates = []    
-    for dt in dateTimes:
-        testDates.append(format_tda_datetime(dt))
+    testDates = []
+    for ndx in range(0, len(dateTimes)):
+        testDates.append(format_tda_datetime(dateTimes.iat[ndx, 0]))
         
     tmark = list(range(0, len(testDates), int(len(testDates)/10)))
     
@@ -354,7 +354,7 @@ def selectDateAxisLabels(dateTimes):
     return tmark, tmarkDates
 
 def visualizeTestVsForecast(d2r, prediction, axis1, axis2):
-    RECENT = 40
+    RECENT = len(d2r.trainX[0, :, 0]) * 3
     FORECAST = 0
     
     axis1.set_title("WIP")
@@ -367,7 +367,7 @@ def visualizeTestVsForecast(d2r, prediction, axis1, axis2):
                prediction[len(prediction)-RECENT : , FORECAST], \
                linestyle='dashed', label='Prediction - 1 period')
     testData = d2r.data.iloc[(len(d2r.data) - RECENT) : ]
-    testDateTimes = testData.iloc[:, 0]
+    testDateTimes = testData.loc[:, d2r.dataSeriesIDFields]
     tmark, tmarkDates = selectDateAxisLabels(testDateTimes)
     axis1.legend()
     axis1.grid(True)
@@ -378,7 +378,7 @@ def visualizeTestVsForecast(d2r, prediction, axis1, axis2):
     axis2.plot(range(len(prediction)), d2r.testY[:], label='Test series')
     axis2.plot(range(len(prediction)), prediction[:, FORECAST], linestyle='dashed', label='Prediction - 1 period')
     testData = d2r.data.iloc[(len(d2r.data) - len(d2r.testY)) : ]
-    testDateTimes = testData.iloc[:, 0]
+    testDateTimes = testData.loc[:, d2r.dataSeriesIDFields]
     tmark, tmarkDates = selectDateAxisLabels(testDateTimes)
     plt.xticks(tmark, tmarkDates, rotation=20)
     axis2.legend()
@@ -559,6 +559,27 @@ def evaluate_and_visualize(d2r):
             plotDataGroups(d2r)
         elif vizualize == "normalizationCategorization":
             showNormalizationCategorization(d2r)
+        elif vizualize == "testVsPrediction":
+            fig1, axs1 = plt.subplots(2, 1)
+            fig1.suptitle(d2r.mlNode, fontsize=14, fontweight='bold')
+    
+            visualize_fit(d2r, axs1[1])
+    
+            plt.tight_layout()
+            plt.show()
+
+            '''
+            Screen 2
+            Testing data and model predictions
+            Two timeframes with focus on the most recent period
+            '''
+            fig2, axs2 = plt.subplots(2, 1)
+            fig2.suptitle(d2r.mlNode, fontsize=14, fontweight='bold')
+    
+            visualizeTestVsForecast(d2r, prediction, axs2[0], axs2[1])
+    
+            plt.tight_layout()
+            plt.show()
             
     
     return
