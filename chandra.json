@@ -15,7 +15,8 @@
 "Comment active experimentation" : {
 	"2" : "\\chandra\\processingNets\\marketTechnicals.json",
 	"3" : "\\chandra\\processingNets\\marketTechnicalsMultiVariant.json",
-	"4" : "\\chandra\\processingNets\\LSTMAutoEncoder.json"	
+	"4" : "\\chandra\\processingNets\\LSTMAutoEncoder.json",
+	"5" : "Time series characterization"
 },
 "Comment goals achieved" : {
 	"1" : "\\chandra\\processingNets\\denseLinearRegression.json",

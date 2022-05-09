@@ -13,7 +13,10 @@
 	},
 	"conditionalFields" : {
 		"dataLoadCtrl" : {
-			"inputFile" : ["d:\\brian\\AI-Projects\\tda\\market_analysis_data\\gm.csv"]
+			"inputFile" : [
+			"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\[a-b]*.csv",
+			"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\[y-z]*.csv"
+			]
 		}
 	}
 	},
@@ -30,31 +33,45 @@
 			"preparationSequence" : ["normalize", "oneHotEncoding"],
 			"noPreparation" : {
 				"features" : [
-					{"feature" : "Relative Strength"},
-					{"feature" : "MACD_flag"}
+					{"feature" : "MACD"},
+					{"feature" : "MACD_Signal"},
+					{"feature" : "MACD_flag"},
+					{"feature" : "DateTime"}
+				],
+				"comment holding noPreparation features" : [
+					{"feature" : "MACD_flag"},
+					{"feature" : "DateTime"}
 				]
 			},
 			"normalize" : {
-				"type" : "minmax",
+				"comment types supported" : ["standard", "minmax"],
+				"type" : "standard",
 				"features" : [
-					{"feature" : "OBV"},
-					{"feature" : "Volume"},
-					{"feature" : "ADX"},
-					{"feature" : "AccumulationDistribution"},
-					{"feature" : "MACD"},
+					{"feature" : "EMA26"},
+					{"feature" : "EMA20"},
+					{"feature" : "EMA12"},
 					{"feature" : "Close"}
 				],
-				"comment normalize holding features" : [
+				"comment normalize - minmax - holding features" : [
 					{"feature" : "OBV"},
 					{"feature" : "Volume"},
 					{"feature" : "Relative Strength"},
 					{"feature" : "ADX"},
 					{"feature" : "AccumulationDistribution"},
+					{"feature" : "OBV"},
+					{"feature" : "MACD"},
+					{"feature" : "MACD_Signal"},
+					{"feature" : "SMA20"},
+					{"feature" : "EMA26"},
+					{"feature" : "EMA20"},
+					{"feature" : "EMA12"},
+					{"feature" : "40 day change"},
+					{"feature" : "20 day change"},
+					{"feature" : "10 day change"},
+					{"feature" : "5 day change"},
 					{"feature" : "Open"},
 					{"feature" : "High"},
 					{"feature" : "Low"},
-					{"feature" : "OBV"},
-					{"feature" : "MACD"},
 					{"feature" : "Close"}
 				]
 			},
@@ -62,36 +79,6 @@
 				"features" : [
 				],
 				"comment oneHot hoding definitions" : [
-					{
-					"feature" : "Close",
-					"categoryType" : "seriesChangeUpDown",
-					"categories" : ["Up" , "Down"],
-					"outputFields" : ["closeUp", "closeDown"]
-					},
-					{
-					"feature" : "MACD",
-					"categoryType" : "seriesChangeUpDown",
-					"categories" : ["Up" , "Down"],
-					"outputFields" : ["MACDUp", "MACDDown"]
-					},
-					{
-					"feature" : "Open",
-					"categoryType" : "seriesChangeUpDown",
-					"categories" : ["Up" , "Down"],
-					"outputFields" : ["openUp", "openDown"]
-					},
-					{
-					"feature" : "High",
-					"categoryType" : "seriesChangeUpDown",
-					"categories" : ["Up" , "Down"],
-					"outputFields" : ["highUp", "highDown"]
-					},
-					{
-					"feature" : "Low",
-					"categoryType" : "seriesChangeUpDown",
-					"categories" : ["Up" , "Down"],
-					"outputFields" : ["lowUp", "lowDown"]
-					},
 					{
 					"feature" : "OBV",
 					"categoryType" : "seriesChangeUpDown",
@@ -116,62 +103,60 @@
 	"conditionalFields" : {
 		"modelFile" : "d:\\brian\\AI-Projects\\models\\mkt_multi",
 		"dataPrecision" : "float32",
-		"visualizations" : ["targetSeries", "dataGroups", "normalizationCategorization", "summary", "trainingFit", "testVsPrediction"],
+		"visualizations" : ["summary", "trainingFit"],
 		"supported visualizations" : ["targetSeries", "dataGroups", "normalizationCategorization", "summary", "trainingFit", "testVsPrediction"],
-		"modelLayers" : [
+		"comment model specification values supported" : [
 			{
-			"layerName" : "lstmIn",
-			"layerType" : "lstm",
-			"timeSteps" : 20,
-			"features" : ["Volume", "OBV", "Relative Strength", "ADX", "AccumulationDistribution", "MACD", "MACD_flag"],
-			"featureCount": 8,
-			"layerUnits" : 128,
-			"returnSequences" : true,
-			"comment returnSequences" : "true if the next layer is also an RNN layer",
-			"outputActivation" : "tanh"
-			},
-			{
-			"layerName" : "dropout1",
-			"layerType" : "dropout",
-			"dropoutRate" : 0.2
-			},
-			{
-			"layerName" : "hidden-lstm-1",
-			"layerType" : "lstm",
-			"layerUnits" : 128,
-			"returnSequences" : true,
-			"outputActivation" : "tanh"
-			},
-			{
-			"layerName" : "dropout2",
-			"layerType" : "dropout",
-			"dropoutRate" : 0.2
-			},
-			{
-			"layerName" : "output",
-			"layerType" : "TimeDistributed",
-			"featureCount": 1
+			"layerType" : ["lstm", "dropout", "dense", "TimeDistributed"],
+			"returnSequences" : "true if the next layer is also an RNN layer",
+			"outputActivation" : ["linear", "relu", "tanh", "softmax", "sigmoid", "softplus", "softsign", "selu", "elu", "exponential"]
 			}
 		],
-		"layer holding group" : [
-			{
-			"layerName" : "hidden-dense",
-			"layerType" : "dense",
-			"layerUnits" : 32,
-			"outputActivation" : "relu"
-			},
-			{
-			"layerName" : "dropout3",
-			"layerType" : "dropout",
-			"dropoutRate" : 0.2
-			}
+		"modelLayers lstm trial" : [
+			{"layerType" : "lstm", "layerName" : "lstmIn",  "timeSteps" : 5, "featureCount": 7, "layerUnits" : 32, "returnSequences" : false, "outputActivation" : "relu"},
+			{"layerType" : "dropout", "layerName" : "dropout1", "dropoutRate" : 0.2},
+			{"layerType" : "dense", "layerName" : "output", "layerUnits" : 2, "outputActivation" : "softmax" }
+		],
+		"modelLayers trial 1" : [
+			{"layerType" : "lstm", "layerName" : "hidden-lstm-1", "layerUnits" : 16, "returnSequences" : false, "outputActivation" : "relu"},
+			{"layerType" : "dropout", "layerName" : "dropout2", "dropoutRate" : 0.2},
+			{"layerType" : "TimeDistributed", "comment" : "implied dense layer parameters", "layerUnits" : 1, "outputActivation" : "linear"}
+		],
+		"modelLayers trial 2" : [
+    		{"layerType" : "lstm", "layerName" : "lstmIn", "timeSteps" : 5, "featureCount": 7, "layerUnits" : 64, "returnSequences" : false, "outputActivation" : "relu"},
+    		{"layerType" : "dropout", "layerName" : "dropout1", "dropoutRate" : 0.2},
+    		{"layerType" : "dense", "layerName" : "dense1", "layerUnits": 16, "outputActivation" : "relu"},
+    		{"layerType" : "dropout", "layerName" : "dropout2", "dropoutRate" : 0.2},
+    		{"layerType" : "dense", "layerName" : "output", "layerUnits": 3, "outputActivation" : "linear"}
+		],
+		"modelLayers dense 1 validation accuracy 88% with RMSProp 100 epochs" : [
+    		{"layerType" : "dense", "layerName" : "input", "featureCount": 18, "layerUnits" : 512, "outputActivation" : "tanh"},
+    		{"layerType" : "dropout", "layerName" : "dropoutIn", "dropoutRate" : 0.2},
+    		{"layerType" : "dense", "layerName" : "dense1", "layerUnits": 256, "outputActivation" : "tanh"},
+    		{"layerType" : "dropout", "layerName" : "dropout1", "dropoutRate" : 0.2},
+    		{"layerType" : "dense", "layerName" : "dense2", "layerUnits": 32, "outputActivation" : "tanh"},
+    		{"layerType" : "dropout", "layerName" : "dropout2", "dropoutRate" : 0.2},
+    		{"layerType" : "dense", "layerName" : "dense3", "layerUnits": 64, "outputActivation" : "tanh"},
+    		{"layerType" : "dropout", "layerName" : "dropout3", "dropoutRate" : 0.2},
+    		{"layerType" : "dense", "layerName" : "output", "layerUnits": 2, "outputActivation" : "softmax"}
+		],
+		"modelLayers" : [
+    		{"layerType" : "dense", "layerName" : "input", "featureCount": 18, "layerUnits" : 512, "outputActivation" : "tanh"},
+    		{"layerType" : "dropout", "layerName" : "dropoutIn", "dropoutRate" : 0.2},
+    		{"layerType" : "dense", "layerName" : "dense1", "layerUnits": 256, "outputActivation" : "tanh"},
+    		{"layerType" : "dropout", "layerName" : "dropout1", "dropoutRate" : 0.2},
+    		{"layerType" : "dense", "layerName" : "dense2", "layerUnits": 32, "outputActivation" : "tanh"},
+    		{"layerType" : "dropout", "layerName" : "dropout2", "dropoutRate" : 0.2},
+    		{"layerType" : "dense", "layerName" : "dense3", "layerUnits": 64, "outputActivation" : "tanh"},
+    		{"layerType" : "dropout", "layerName" : "dropout3", "dropoutRate" : 0.2},
+    		{"layerType" : "dense", "layerName" : "output", "layerUnits": 2, "outputActivation" : "softmax"}
 		],
 		"training" : {
 			"lossWeights" : [1.0],
 			"denseRegularation" : false,
 			"regularationValue" : 0.0,
 			"batchSize" : 32,
-			"epochs" : 7,
+			"epochs" : 20,
 			"useBias" : true,
 			"validationSplit" : 0.1,
 			"testSplit" : 0.2,
@@ -184,7 +169,7 @@
 			"optimizers - adam" : "fast, tends to overfit",
 			"optimizers - SGD" : "slow, great results",
 			"optimizers - RMSProp" : "sometimes works best",
-			"optimizers - SWA" : "can easily improve qualiy"
+			"optimizers - SWA" : "Unknown optimizer - can easily improve qualiy"
 		}
 	}
 	}
@@ -200,14 +185,13 @@
 		},
 	"conditionalFields" : {
 		"TensorflowData" : {
-			"timeSequence" : true,
 			"balanceClasses" : false,
 			"ignoreBlanks" : true,
-			"features" : ["Close", "Volume", "OBV", "Relative Strength", "ADX", "AccumulationDistribution", "MACD", "MACD_flag"],
-			"comment features" : ["Open", "High", "Low", "Volume", "OBV", "Relative Strength", "ADX", "AccumulationDistribution", "MACD", "MACD_flag"],
-			"targets" : ["Close"],
-			"seriesStepIDField" : ["DateTime"],
-			"seriesDataType" : "TDADateTime"
+			"features" : ["EMA26", "EMA20", "EMA12", "MACD", "Close", "MACD_Signal"],
+			"targets" : ["MACD_flag"],
+			"timeSequence" : false,
+			"comment seriesStepIDField" : ["DateTime"],
+			"comment seriesDataType" : "TDADateTime"
 			}
 		}
 	},
@@ -220,10 +204,11 @@
 		},
 	"conditionalFields" : {
 		"TensorflowData" : {
-			"features" : ["Close", "Volume", "OBV", "Relative Strength", "ADX", "AccumulationDistribution", "MACD", "MACD_flag"],
-			"targets" : ["Close"],
-			"seriesStepIDField" : ["DateTime"],
-			"seriesDataType" : "TDADateTime"
+			"features" : ["EMA26", "EMA20", "EMA12", "MACD", "Close", "MACD_Signal"],
+			"targets" : ["MACD_flag"],
+			"timeSequence" : false,
+			"comment seriesStepIDField" : ["DateTime"],
+			"comment seriesDataType" : "TDADateTime"
 			}
 		}
 	}

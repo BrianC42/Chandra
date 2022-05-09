@@ -39,6 +39,9 @@ from configuration_constants import JSON_FEATURE_FIELDS
 from configuration_constants import JSON_TARGET_FIELDS
 from configuration_constants import JSON_VALIDATION_SPLIT
 from configuration_constants import JSON_TEST_SPLIT
+
+from configuration_constants import JSON_TIME_SEQ
+from configuration_constants import JSON_SERIES_ID
 from configuration_constants import JSON_SERIES_DATA_TYPE
 from configuration_constants import JSON_TIMESTEPS
 
@@ -94,6 +97,110 @@ def loadTrainingData(d2r):
 
     return
 
+def balance_classes(d2r, model_type):
+    print("\n*****************\nWORK IN PROGRESS\n\tbalance_classes hard coded for LSTM MACD_signal\n*****************\n")
+    
+    categorization = [-1, 1]
+    
+    if model_type == INPUT_LAYERTYPE_RNN:
+        count = 0
+        for ndx in range(0, d2r.trainY.shape[0]):
+            if d2r.trainY[ndx, d2r.trainY.shape[1]-1] in categorization:
+                count += 1
+        train = np.empty([count, d2r.trainX.shape[1], d2r.trainX.shape[2]], dtype=float)
+        target = np.empty([count, d2r.trainY.shape[1]], dtype=float)
+        count = 0
+        for ndx in range(0, d2r.trainY.shape[0] - 1):
+            if d2r.trainY[ndx, d2r.trainY.shape[1]-1] in categorization:
+                train[count] = d2r.trainX[ndx+1, :, :]
+                target[count] = d2r.trainY[ndx, :]
+                count += 1
+        d2r.trainX = train
+        d2r.trainY = target
+
+        count = 0
+        for ndx in range(0, d2r.validateY.shape[0]):
+            if d2r.validateY[ndx, d2r.validateY.shape[1]-1] in categorization:
+                count += 1
+        validate = np.empty([count, d2r.validateX.shape[1], d2r.validateX.shape[2]], dtype=float)
+        target = np.empty([count, d2r.validateY.shape[1]], dtype=float)
+        count = 0
+        for ndx in range(0, d2r.validateY.shape[0] - 1):
+            if d2r.validateY[ndx, d2r.validateY.shape[1]-1] in categorization:
+                validate[count] = d2r.validateX[ndx+1, :, :]
+                target[count] = d2r.validateY[ndx, :]
+                count += 1
+        d2r.validateX = validate
+        d2r.validateY = target
+
+        count = 0
+        for ndx in range(0, d2r.testY.shape[0]):
+            if d2r.testY[ndx, d2r.testY.shape[1]-1] in categorization:
+                count += 1
+        test = np.empty([count, d2r.testX.shape[1], d2r.testX.shape[2]], dtype=float)
+        target = np.empty([count, d2r.testY.shape[1]], dtype=float)
+        count = 0
+        for ndx in range(0, d2r.testY.shape[0] - 1):
+            if d2r.testY[ndx, d2r.testY.shape[1]-1] in categorization:
+                test[count] = d2r.testX[ndx+1, :, :]
+                target[count] = d2r.testY[ndx, :]
+                count += 1
+        d2r.testX = test
+        d2r.testY = target
+        
+    elif model_type == INPUT_LAYERTYPE_DENSE:
+        STEPS = 3
+        cols = d2r.trainX.shape[1]
+        count = 0
+        for ndx in range(STEPS, d2r.trainY.shape[0]):
+            if d2r.trainY[ndx, d2r.trainY.shape[1]-1] in categorization:
+                count += 1
+        train = np.empty([count, d2r.trainX.shape[1] * STEPS], dtype=float)
+        target = np.empty([count, d2r.trainY.shape[1]], dtype=float)
+        count = 0
+        for ndx in range(STEPS, d2r.trainY.shape[0]):
+            if d2r.trainY[ndx, d2r.trainY.shape[1]-1] in categorization:
+                for stepndx in range(0, STEPS):
+                    train[count, stepndx * cols : (stepndx * cols) + cols] = d2r.trainX[ndx - stepndx, :]
+                target[count] = d2r.trainY[ndx - stepndx, :]
+                count += 1
+        d2r.trainX = train
+        d2r.trainY = target
+
+        count = 0
+        for ndx in range(STEPS, d2r.validateY.shape[0]):
+            if d2r.validateY[ndx, d2r.validateY.shape[1]-1] in categorization:
+                count += 1
+        validate = np.empty([count, d2r.validateX.shape[1] * STEPS], dtype=float)
+        target = np.empty([count, d2r.validateY.shape[1]], dtype=float)
+        count = 0
+        for ndx in range(STEPS, d2r.validateY.shape[0]):
+            if d2r.validateY[ndx, d2r.validateY.shape[1]-1] in categorization:
+                for stepndx in range(0, STEPS):
+                    validate[count, stepndx * cols : (stepndx * cols) + cols] = d2r.validateX[ndx - stepndx, :]
+                target[count] = d2r.validateY[ndx - stepndx, :]
+                count += 1
+        d2r.validateX = validate
+        d2r.validateY = target
+
+        count = 0
+        for ndx in range(STEPS, d2r.testY.shape[0]):
+            if d2r.testY[ndx, d2r.testY.shape[1]-1] in categorization:
+                count += 1
+        test = np.empty([count, d2r.testX.shape[1] * STEPS], dtype=float)
+        target = np.empty([count, d2r.testY.shape[1]], dtype=float)
+        count = 0
+        for ndx in range(STEPS, d2r.testY.shape[0]):
+            if d2r.testY[ndx, d2r.testY.shape[1]-1] in categorization:
+                for stepndx in range(0, STEPS):
+                    test[count, stepndx * cols : (stepndx * cols) + cols] = d2r.testX[ndx - stepndx, :]
+                target[count] = d2r.testY[ndx - stepndx, :]
+                count += 1
+        d2r.testX = test
+        d2r.testY = target
+
+    return
+
 def id_columns(data, features, targets):
     feature_cols = []
     target_cols= []
@@ -114,7 +221,7 @@ def np_to_sequence(data, features, targets, seq_size=1):
 
     for i in range(len(data) - (seq_size+1)):
         npx[i, :, :]    = data[i : i+seq_size, features[:]]
-        npy[i]          = data[i+seq_size+1, targets[:]]
+        npy[i]          = data[    i+seq_size, targets[:]]
 
     return npx, npy
 
@@ -144,12 +251,12 @@ def arrangeDataForTraining(d2r):
         nx_model_type = nx.get_node_attributes(d2r.graph, MODEL_TYPE)[d2r.mlNode]
 
         if nx_model_type == INPUT_LAYERTYPE_DENSE:
-            d2r.trainX = train[features[0]]
-            d2r.trainY = train[targets[0]]
-            d2r.validateX = validation[features[0]]
-            d2r.validateY = validation[targets[0]]
-            d2r.testX = test[features[0]]
-            d2r.testY = test[targets[0]]
+            d2r.trainX = train[: , feature_cols]
+            d2r.trainY = train[: , target_cols]
+            d2r.validateX = validation[: , feature_cols]
+            d2r.validateY = validation[: , target_cols]
+            d2r.testX = test[: , feature_cols]
+            d2r.testY = test[: , target_cols]
             
         elif nx_model_type == INPUT_LAYERTYPE_RNN:
             nx_time_steps = nx.get_node_attributes(d2r.graph, JSON_TIMESTEPS)[d2r.mlNode]
@@ -157,10 +264,10 @@ def arrangeDataForTraining(d2r):
             d2r.trainX,    d2r.trainY    = np_to_sequence(train, feature_cols, target_cols, nx_time_steps)
             d2r.validateX, d2r.validateY = np_to_sequence(validation, feature_cols, target_cols, nx_time_steps)
             d2r.testX,     d2r.testY     = np_to_sequence(test, feature_cols, target_cols, nx_time_steps)
-            
+
         elif nx_model_type == INPUT_LAYERTYPE_CNN:
-            print("\n*************************************************\nWORK IN PROGRESS\n\tCNN preparation is not implemented\n*************************************************\n")
-            pass
+            err_txt = "Models of type CNN are not yet supported"
+            raise NameError(err_txt)
         
     elif nx_read_attr[d2r.mlNode] == JSON_AUTOKERAS:    
         nx_data_precision = nx.get_node_attributes(d2r.graph, JSON_PRECISION)[d2r.mlNode]
@@ -186,18 +293,11 @@ def arrangeDataForTraining(d2r):
         d2r.validateY = d2r.validateY.to_frame()
         d2r.testX = d2r.testX.to_frame()
         d2r.testY = d2r.testY.to_frame()
-
+    
+    balance_classes(d2r, nx_model_type)
+            
     return
 
-'''
-Data pipeline step 1
-====================
-collect_and_select_data
-    selectTrainingData
-prepareTrainingData
-    generate1hot
-    normalizeFeature
-'''
 def generate1hot(d2r, fields, fieldPrepCtrl):
     categorizedData = pd.DataFrame()
     ndxField = 0
@@ -287,7 +387,10 @@ def prepareTrainingData(d2r):
                             nx_input_data_files = nx.get_edge_attributes(d2r.graph, JSON_FLOW_DATA_FILE)
                             nx_input_data_file = nx_input_data_files[edge_i[0], edge_i[1], input_flow]    
                             nx_seriesDataType = nx.get_edge_attributes(d2r.graph, JSON_SERIES_DATA_TYPE)
-                            d2r.seriesDataType = nx_seriesDataType[edge_i[0], edge_i[1], input_flow]
+                            if nx_seriesDataType == {}:
+                                d2r.seriesDataType = ""
+                            else:
+                                d2r.seriesDataType = nx_seriesDataType[edge_i[0], edge_i[1], input_flow]
                 if os.path.isfile(nx_input_data_file):
                     d2r.rawData = pd.read_csv(nx_input_data_file)
                     d2r.data = d2r.rawData.copy()
@@ -352,8 +455,18 @@ def selectTrainingData(d2r, node_name, nx_edge):
     nx_targetFields = nx.get_edge_attributes(d2r.graph, JSON_TARGET_FIELDS)
     d2r.rawTargets = nx_targetFields[nx_edge[0], nx_edge[1], output_flow]
     
-    nx_seriesStepIDs = nx.get_edge_attributes(d2r.graph, "seriesStepIDField")
-    d2r.dataSeriesIDFields = nx_seriesStepIDs[nx_edge[0], nx_edge[1], output_flow]
+    nx_timeSeries = nx.get_edge_attributes(d2r.graph, JSON_TIME_SEQ)
+    d2r.timeSeries = nx_timeSeries[nx_edge[0], nx_edge[1], output_flow]
+    if d2r.timeSeries:
+        nx_seriesStepIDs = nx.get_edge_attributes(d2r.graph, JSON_SERIES_ID)
+        d2r.dataSeriesIDFields = nx_seriesStepIDs[nx_edge[0], nx_edge[1], output_flow]
+        '''
+        if JSON_SERIES_ID in d2r.graph:
+            nx_seriesStepIDs = nx.get_edge_attributes(d2r.graph, JSON_SERIES_ID)
+            d2r.dataSeriesIDFields = nx_seriesStepIDs[nx_edge[0], nx_edge[1], output_flow]
+        else:
+            d2r.dataSeriesIDFields = ''
+        '''
     
     df_combined = pd.DataFrame()
     nx_data_file = nx.get_node_attributes(d2r.graph, JSON_INPUT_DATA_FILE)
@@ -372,8 +485,9 @@ def selectTrainingData(d2r, node_name, nx_edge):
                     l_filter.append(fld)
                 for fld in d2r.rawTargets:
                     l_filter.append(fld)
-                for fld in d2r.dataSeriesIDFields:
-                    l_filter.append(fld)
+                if d2r.timeSeries:
+                    for fld in d2r.dataSeriesIDFields:
+                        l_filter.append(fld)
                 df_inputs = df_data.filter(l_filter)
                 df_combined = pd.concat([df_combined, df_inputs], ignore_index=True)
             else:

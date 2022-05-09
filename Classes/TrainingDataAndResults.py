@@ -209,6 +209,14 @@ class Data2Results():
         self._validateLen = validateLen
         
     @property
+    def timeSeries(self):
+        return self._timeSeries
+    
+    @timeSeries.setter
+    def timeSeries(self, timeSeries):
+        self._timeSeries = timeSeries
+
+    @property
     def sequenceIDCol(self):
         return self._sequenceIDCol
     

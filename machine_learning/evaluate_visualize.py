@@ -28,7 +28,20 @@ from TrainingDataAndResults import INPUT_LAYERTYPE_RNN
 from TrainingDataAndResults import INPUT_LAYERTYPE_CNN
 from matplotlib.pyplot import tight_layout
 
-def visualize_fit(d2r, plot_on_axis):
+def visualize_fit(d2r):
+    '''
+    fig1, axs1 = plt.subplots(2, 1)
+    fig1.suptitle(d2r.mlNode, fontsize=14, fontweight='bold')
+    
+    fig = plt.figure(tight_layout=True)
+    '''
+    fig = plt.figure(tight_layout=True)
+    gs = gridspec.GridSpec(2, 1)
+    fig.suptitle("Training results", fontsize=14, fontweight='bold')
+
+    axLoss = fig.add_subplot(gs[0, 0])
+    axAccuracy = fig.add_subplot(gs[1, 0])
+    
     nx_optimizer = nx.get_node_attributes(d2r.graph, JSON_OPTIMIZER)[d2r.mlNode]
     nx_loss = nx.get_node_attributes(d2r.graph, JSON_LOSS)[d2r.mlNode]
     nx_metrics = nx.get_node_attributes(d2r.graph, JSON_METRICS)[d2r.mlNode]
@@ -39,17 +52,26 @@ def visualize_fit(d2r, plot_on_axis):
     str_p6 = ',epochs:{:d}'.format(d2r.fitting.params['epochs'])
     str_p7 = ',steps:{:d}'.format(d2r.fitting.params['steps'])
     str_params = "\n" + str_l7 + str_p4 + str_p5 + str_p6 + str_p7
-    plot_on_axis.set_title("Fitting history" + str_params)
-    
+    axLoss.set_title("Fitting history" + str_params)
+    '''
     evaluationLoss = d2r.evaluation[0]
     evaluationAccuracy = d2r.evaluation[1]
+    '''
+    axLoss.plot(d2r.fitting.epoch, d2r.fitting.history['loss'], label='Training loss')
+    axLoss.plot(d2r.fitting.epoch, d2r.fitting.history['val_loss'], label='Validation loss')
+    axLoss.set_xlabel("Epochs")
+    axLoss.set_ylabel("loss")
+    axLoss.legend()
+
+    axAccuracy.plot(d2r.fitting.epoch, d2r.fitting.history['accuracy'], label='Training accuracy')
+    axAccuracy.plot(d2r.fitting.epoch, d2r.fitting.history['val_accuracy'], label='Validation accuracy')
+    axAccuracy.set_xlabel("Epochs")
+    axAccuracy.set_ylabel("Accuracy")
+    axAccuracy.legend()
+
+    plt.tight_layout()
+    plt.show()
     
-    plot_on_axis.plot(d2r.fitting.epoch, d2r.fitting.history['loss'], label='Training loss')
-    plot_on_axis.plot(d2r.fitting.epoch, d2r.fitting.history['val_loss'], label='Validation loss')
-    plot_on_axis.set_xlabel("Epochs")
-    plot_on_axis.set_ylabel("loss")
-    plot_on_axis.legend()
-        
     return
     
 def plotTargetValues(d2r, axis):
@@ -78,6 +100,8 @@ def plotTargetValues(d2r, axis):
     return 
 
 def plotDataGroups(d2r):
+
+    print("\nTraining shapes x:%s y:%s, validating shapes x:%s y:%s, testing shapes x:%s y:%s" % (d2r.trainX.shape, d2r.trainY.shape, d2r.validateX.shape, d2r.validateY.shape, d2r.testX.shape, d2r.testY.shape))
 
     if d2r.seriesDataType == "TDADateTime":
         targetCount = len(d2r.preparedTargets)
@@ -181,27 +205,27 @@ def plotDataGroups(d2r):
 
         for ndx in range(0, targetCount):
             title = "Prepared Target: " + d2r.preparedTargets[ndx]
-            axsTargets.iat[0, ndx].set_title(title)
+            axsTargets.iat[0, ndx].set_title(title, fontsize=8)
             axsTargets.iat[0, ndx].set_xlabel("time periods (training samples)")
             axsTargets.iat[0, ndx].set_ylabel("Data Values")
             axsTargets.iat[0, ndx].xaxis.set_ticks(range(seriesLen))
             axsTargets.iat[0, ndx].plot(range(seriesLen), d2r.data[d2r.preparedTargets[ndx]][0: seriesLen], label=ndx, linestyle='solid')
             
         for ndx in range(0, rawFeatureCount):
-            title = "Raw data series (1st training sample): " + d2r.rawFeatures[ndx]
-            axRawFeature.iat[0, ndx].set_title(title)
+            title = "Raw: " + d2r.rawFeatures[ndx]
+            axRawFeature.iat[0, ndx].set_title(title, fontsize=8)
             axRawFeature.iat[0, ndx].set_xlabel("time periods")
             axRawFeature.iat[0, ndx].set_ylabel("Data Values")
             axRawFeature.iat[0, ndx].xaxis.set_ticks(range(seriesLen))
             axRawFeature.iat[0, ndx].plot(range(seriesLen), d2r.rawData[d2r.rawFeatures[ndx]][0: seriesLen], label=d2r.rawFeatures[ndx], linestyle='solid')
             
         for ndx in range(0, trainingFeatureCount):
-            title = "1st training sample: " + d2r.preparedFeatures[ndx]
+            title = "Prepared: " + d2r.preparedFeatures[ndx]
             '''
             for tgtndx in range(0, targetCount):
                 axPreparedFeatures.iat[0, ndx].text(0.5, 0.5 - (tgtndx * 0.1), "Training target value " + "a" + " = " + "1.0")
             '''
-            axPreparedFeatures.iat[0, ndx].set_title(title)
+            axPreparedFeatures.iat[0, ndx].set_title(title, fontsize=8)
             axPreparedFeatures.iat[0, ndx].set_xlabel("time periods")
             axPreparedFeatures.iat[0, ndx].set_ylabel("Data Values")
             axPreparedFeatures.iat[0, ndx].xaxis.set_ticks(range(seriesLen))
@@ -386,41 +410,53 @@ def visualizeTestVsForecast(d2r, prediction, axis1, axis2):
 
     return
 
-def visualize_dense(d2r):
-    prediction = d2r.model.predict(x=d2r.testX)
-
+def visualize_dense(d2r, prediction):
     fig, axs = plt.subplots(2, 3)
     fig.suptitle(d2r.mlNode, fontsize=14, fontweight='bold')
-    visualize_fit(d2r, axs[1, 0])
 
-    '''
-    axs[0, 1].set_title("Training Data")
-    axs[0, 1].scatter(d2r.trainX, d2r.trainY)
+    axs[0, 0].set_title("Training Data")
+    axs[0, 0].set_xlabel("Sample")
+    axs[0, 0].set_ylabel("Values")
+    lines = []
+    for featureNdx in range (0, d2r.trainX.shape[1]):
+        lines.append(axs[0, 0].scatter(range(0, d2r.trainX.shape[0]), d2r.trainX[:, featureNdx], s=0.1))
+    lines.append(axs[0, 0].scatter(range(0, d2r.trainX.shape[0]), d2r.trainY, s=0.1))
+    axs[0, 0].legend(lines, d2r.preparedFeatures, loc='upper center')
         
+    axs[0, 1].set_title("Evaluation Data")
+    axs[0, 1].set_xlabel("Sample")
+    axs[0, 1].set_ylabel("Values")
+    lines = []
+    for featureNdx in range (0, d2r.testX.shape[1]):
+        lines.append(axs[0, 1].scatter(range(0, d2r.validateX.shape[0]), d2r.validateX[:, featureNdx], s=0.1))
+    lines.append(axs[0, 1].scatter(range(0, d2r.validateX.shape[0]), d2r.validateY, s=0.1))
+    axs[0, 1].legend(lines, d2r.preparedFeatures, loc='upper center')
+    
     axs[0, 2].set_title("Testing Data")
-    axs[0, 2].set_xlabel("Feature")
-    axs[0, 2].set_ylabel("Target")
-    axs[0, 2].scatter(d2r.testX, d2r.testY)
+    axs[0, 2].set_xlabel("Sample")
+    axs[0, 2].set_ylabel("Values")
+    lines = []
+    for featureNdx in range (0, d2r.testX.shape[1]):
+        lines.append(axs[0, 2].scatter(range(0, d2r.testX.shape[0]), d2r.testX[:, featureNdx], s=0.1))
+    lines.append(axs[0, 2].scatter(range(0, d2r.testX.shape[0]), d2r.testY, s=0.1))
+    axs[0, 2].legend(lines, d2r.preparedFeatures, loc='upper center')
     
     axs[1, 1].set_title("Prediction")
-    axs[1, 1].set_xlabel("Feature")
-    axs[1, 1].set_ylabel("Target")
-    axs[1, 1].scatter(d2r.testX, prediction, label='Prediction', linestyle='dashed')
-    axs[1, 1].scatter(d2r.testX, d2r.testY, label='Test data')
-    axs[1, 1].legend()
-    '''
+    axs[1, 1].set_xlabel("Sample")
+    axs[1, 1].set_ylabel("Values")
+    #axs[1, 1].scatter(d2r.testX, prediction, label='Prediction', linestyle='dashed')
+    #axs[1, 1].scatter(d2r.testX, d2r.testY, label='Test data')
+    #axs[1, 1].legend()
 
-    visualizeTestVsForecast(d2r, prediction, axs[0, 1], axs[1, 1])
-        
     axs[1, 2].set_title("Extrapolation")
     x_min = np.min(d2r.testX)
     x_max = np.max(d2r.testX)
     iterable = ((x_max + (((x_max - x_min) / 10) * x)) for x in range(100))
-    x_predict = np.fromiter(iterable, float)
-    y_predict = d2r.model.predict(x=x_predict)
-    axs[1, 2].scatter(x_predict, y_predict)
-    axs[1, 2].set_xlabel("Feature")
-    axs[1, 2].set_ylabel("Target")
+    #x_predict = np.fromiter(iterable, float)
+    #y_predict = d2r.model.predict(x=x_predict)
+    #axs[1, 2].scatter(x_predict, y_predict)
+    #axs[1, 2].set_xlabel("Feature")
+    #axs[1, 2].set_ylabel("Target")
 
     plt.tight_layout()
     plt.show()
@@ -542,11 +578,7 @@ def evaluate_and_visualize(d2r):
     nx_visualizations = nx.get_node_attributes(d2r.graph, JSON_VISUALIZATIONS)[d2r.mlNode]
     for vizualize in nx_visualizations:
         if vizualize == JSON_VISUALIZE_TRAINING_FIT:
-            fig1, axs1 = plt.subplots(1, 1)
-            fig1.suptitle("Training results of: " + d2r.mlNode, fontsize=14, fontweight='bold')
-            visualize_fit(d2r, axs1)
-            plt.tight_layout()
-            plt.show()
+            visualize_fit(d2r)
         elif vizualize == JSON_VISUALIZE_TARGET_SERIES:
             fig1, axs1 = plt.subplots(1, 1)
             fig1.suptitle("Training targets for: " + d2r.mlNode, fontsize=14, fontweight='bold')
@@ -560,13 +592,7 @@ def evaluate_and_visualize(d2r):
         elif vizualize == "normalizationCategorization":
             showNormalizationCategorization(d2r)
         elif vizualize == "testVsPrediction":
-            fig1, axs1 = plt.subplots(2, 1)
-            fig1.suptitle(d2r.mlNode, fontsize=14, fontweight='bold')
-    
-            visualize_fit(d2r, axs1[1])
-    
-            plt.tight_layout()
-            plt.show()
+            visualize_fit(d2r)
 
             '''
             Screen 2
@@ -580,6 +606,7 @@ def evaluate_and_visualize(d2r):
     
             plt.tight_layout()
             plt.show()
-            
+        elif vizualize == "denseCategorization":
+            visualize_dense(d2r, prediction)
     
     return

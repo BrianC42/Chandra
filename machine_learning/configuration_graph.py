@@ -73,10 +73,6 @@ def add_data_flow_details(js_flow_conditional, nx_graph, nx_edge_key):
                     nx_balanced = js_tensorflow_data[JSON_BALANCED]
                     nx.set_edge_attributes(nx_graph, {nx_edge_key:nx_balanced}, JSON_BALANCED)
         
-                if JSON_TIME_SEQ in js_tensorflow_data:
-                    nx_time_seq = js_tensorflow_data[JSON_TIME_SEQ]
-                    nx.set_edge_attributes(nx_graph, {nx_edge_key:nx_time_seq}, JSON_TIME_SEQ)
-
                 if JSON_IGNORE_BLANKS in js_tensorflow_data:
                     nx_ignore_blanks = js_tensorflow_data[JSON_IGNORE_BLANKS]
                     nx.set_edge_attributes(nx_graph, {nx_edge_key:nx_ignore_blanks}, JSON_IGNORE_BLANKS)
@@ -89,11 +85,14 @@ def add_data_flow_details(js_flow_conditional, nx_graph, nx_edge_key):
                     nx_target_fields = js_tensorflow_data[JSON_TARGET_FIELDS]
                     nx.set_edge_attributes(nx_graph, {nx_edge_key:nx_target_fields}, JSON_TARGET_FIELDS)
 
-                if JSON_SERIES_ID in js_tensorflow_data:
+                if JSON_TIME_SEQ in js_tensorflow_data:
+                    nx_time_seq = js_tensorflow_data[JSON_TIME_SEQ]
+                    nx.set_edge_attributes(nx_graph, {nx_edge_key:nx_time_seq}, JSON_TIME_SEQ)
+
+                if nx_time_seq:
                     nx_seriesStepID = js_tensorflow_data[JSON_SERIES_ID]
                     nx.set_edge_attributes(nx_graph, {nx_edge_key:nx_seriesStepID}, JSON_SERIES_ID)
 
-                if JSON_SERIES_DATA_TYPE in js_tensorflow_data:
                     nx_seriesDataType = js_tensorflow_data[JSON_SERIES_DATA_TYPE]
                     nx.set_edge_attributes(nx_graph, {nx_edge_key:nx_seriesDataType}, JSON_SERIES_DATA_TYPE)
 

@@ -29,6 +29,13 @@ from configuration_constants import JSON_AK_MAX_TRIALS
 from configuration_constants import JSON_PRECISION
 from configuration_constants import JSON_PROCESS_TYPE
 from configuration_constants import JSON_LAYERS
+from configuration_constants import JSON_LAYER_TYPE
+from configuration_constants import JSON_LAYER_DENSE
+from configuration_constants import JSON_LAYER_LSTM
+from configuration_constants import JSON_LAYER_NAME
+from configuration_constants import JSON_LAYER_UNITS
+from configuration_constants import JSON_LAYER_REPEAT_VECTOR
+from configuration_constants import JSON_LAYER_TIME_DISTRIBUTED
 from configuration_constants import JSON_MODEL_OUTPUT_ACTIVATION
 from configuration_constants import JSON_TIMESTEPS
 from configuration_constants import JSON_FEATURE_COUNT
@@ -52,19 +59,18 @@ from TrainingDataAndResults import INPUT_LAYERTYPE_CNN
 def build_layer(d2r, layer_type, layer_definition, input_layer):
     ''' some parameters are common across multiple layer type '''
     nx_layer_name = None
-    if 'layerName' in layer_definition:
-        nx_layer_name = layer_definition['layerName']
+    if JSON_LAYER_NAME in layer_definition:
+        nx_layer_name = layer_definition[JSON_LAYER_NAME]
                 
     nx_layer_units = None
-    if 'layerUnits' in layer_definition:
-        nx_layer_units = layer_definition['layerUnits']
+    if JSON_LAYER_UNITS in layer_definition:
+        nx_layer_units = layer_definition[JSON_LAYER_UNITS]
 
-    #nx_activation = 'tanh'
     nx_activation = None
     if JSON_MODEL_OUTPUT_ACTIVATION in layer_definition:
         nx_activation = layer_definition[JSON_MODEL_OUTPUT_ACTIVATION]
                 
-    if layer_type == 'dense':
+    if layer_type == JSON_LAYER_DENSE:
         if input_layer:
             d2r.modelType = INPUT_LAYERTYPE_DENSE
             nx.set_node_attributes(d2r.graph, {d2r.mlNode:INPUT_LAYERTYPE_DENSE}, MODEL_TYPE)
@@ -78,7 +84,7 @@ def build_layer(d2r, layer_type, layer_definition, input_layer):
                                          activation = nx_activation, \
                                          units=nx_layer_units)
             
-    elif layer_type == 'lstm':
+    elif layer_type == JSON_LAYER_LSTM:
         nx.set_node_attributes(d2r.graph, {d2r.mlNode:INPUT_LAYERTYPE_RNN}, MODEL_TYPE)
         nx_return_sequences = False
         if JSON_RETURN_SEQUENCES in layer_definition:
@@ -99,13 +105,12 @@ def build_layer(d2r, layer_type, layer_definition, input_layer):
                                            activation = nx_activation, \
                                            return_sequences = nx_return_sequences)
     elif layer_type == 'cnn':
-        '''
-        Future support required
-        '''
+        err_msg = 'cnn layer type not yet implemented:'
+        raise NameError(err_msg)
         if input_layer:
             d2r.modelType = INPUT_LAYERTYPE_CNN
             nx.set_node_attributes(d2r.graph, {d2r.mlNode:INPUT_LAYERTYPE_CNN}, MODEL_TYPE)
-    elif layer_type == 'RepeatVector':
+    elif layer_type == JSON_LAYER_REPEAT_VECTOR:
         nx_repeat_count = 1
         if JSON_REPEAT_COUNT in layer_definition:
             nx_repeat_count = layer_definition[JSON_REPEAT_COUNT]
@@ -115,9 +120,10 @@ def build_layer(d2r, layer_type, layer_definition, input_layer):
         if JSON_DROPOUT_RATE in layer_definition:
             nx_dropout_rate = layer_definition[JSON_DROPOUT_RATE]
         k_layer = keras.layers.Dropout(rate=nx_dropout_rate)
-    elif layer_type == 'TimeDistributed':
-        nx_feature_count = layer_definition[JSON_FEATURE_COUNT]
-        TD_layer = keras.layers.Dense(nx_feature_count)
+    elif layer_type == JSON_LAYER_TIME_DISTRIBUTED:
+        print("\n============== WIP =============\n\tTimeDistributed layer type assumes a dense layer\n================================\n")
+        #nx_feature_count = layer_definition[JSON_FEATURE_COUNT]
+        TD_layer = keras.layers.Dense(units=nx_layer_units, activation = nx_activation)
         k_layer = keras.layers.TimeDistributed(TD_layer)
     else:
         err_msg = 'Layer type not yet implemented: ' + layer_type
@@ -141,16 +147,17 @@ def assemble_layers(d2r):
         
         for nx_layer_definition in nx_layers:
             ''' layer type is required '''
-            nx_layer_type = nx_layer_definition['layerType']
-            if nx_layer_type == 'timeDistributed':
-                '''
-                TimeDistributed layer type specification is not defined - future support required
-                '''
+            nx_layer_type = nx_layer_definition[JSON_LAYER_TYPE]
+            '''
+            if nx_layer_type == JSON_LAYER_TIME_DISTRIBUTED:
                 k_layer = build_layer(d2r, nx_layer_type, nx_layer_definition, input_layer)
                 d2r.model.add(keras.layers.TimeDistributed(k_layer))
             else:
                 k_layer = build_layer(d2r, nx_layer_type, nx_layer_definition, input_layer)
                 d2r.model.add(k_layer)
+            '''
+            k_layer = build_layer(d2r, nx_layer_type, nx_layer_definition, input_layer)
+            d2r.model.add(k_layer)
             input_layer = False
             
         err_txt = "*** An exception occurred compiling the model ***"
