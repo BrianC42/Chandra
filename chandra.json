@@ -7,21 +7,22 @@
 "outputFile" : "\\logs\\chandra_output",
 "loggingLevel" : "debug",
 "loggingFormat" : "%(asctime)s: %(levelname)s: %(message)s",
-"processNet" : "\\chandra\\processingNets\\marketTechnicalsMultiVariant.json",
+"processNet" : "\\chandra\\processingNets\\conv1DWaveForm.json",
 "comment end of specification" : "--------------------------------------------------------",
 "Comment use" : {
 	"1" : "\\chandra\\processingNets\\gmAutoEncoder.json"
 },
 "Comment active experimentation" : {
+	"1" : "\\chandra\\processingNets\\conv1DWaveForm.json",
 	"2" : "\\chandra\\processingNets\\marketTechnicals.json",
-	"3" : "\\chandra\\processingNets\\marketTechnicalsMultiVariant.json",
 	"4" : "\\chandra\\processingNets\\LSTMAutoEncoder.json",
 	"5" : "Time series characterization"
 },
 "Comment goals achieved" : {
 	"1" : "\\chandra\\processingNets\\denseLinearRegression.json",
 	"2" : "\\chandra\\processingNets\\time_series_demo.json",
-	"3" : "\\chandra\\processingNets\\akexperimentation.json"
+	"3" : "\\chandra\\processingNets\\akexperimentation.json",
+	"4" : "\\chandra\\processingNets\\marketTechnicalsMultiVariant.json"
 },
 "Comment legacy formats no longer match configuration rules" : {
 	"1" : "\\chandra\\processingNets\\densePolynomial.json",

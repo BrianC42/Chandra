@@ -1,0 +1,184 @@
+{
+"comment - processing node section" : "Specification details for the processing nodes",
+"processNodes" : [
+	{
+	"processNodeName" : "dataIn",
+	"requiredFields" : {
+		"processType" : "dataLoad",
+		"comments: supported values - processType" : ["dataLoad", "dataPrep", "Tensorflow"],
+		"inputFlows" : [],
+		"outputFlow" : "conv2D",
+		"outputFile" : "",
+		"logFile" : ""
+	},
+	"conditionalFields" : {
+		"dataLoadCtrl" : {
+			"comment 1" : "do not concatenate multiple symbols due to time sequencing",
+			"inputFile" : [
+			"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\c.csv"
+			]
+		}
+	}
+	},
+	{
+	"processNodeName" : "PrepData",
+	"requiredFields" : {
+		"processType" : "dataPrep",
+		"inputFlows" : ["conv2D"],
+		"outputFlow" : "conv2DPrepared",
+		"logFile" : ""
+	},
+	"conditionalFields" : {
+		"dataPrepCtrl" : {
+			"preparationSequence" : ["normalize", "oneHotEncoding"],
+			"noPreparation" : {
+				"features" : [
+					{"feature" : "MACD_flag"}
+				],
+				"comment holding noPreparation features" : [
+					{"feature" : "MACD"},
+					{"feature" : "MACD_Signal"},
+					{"feature" : "MACD_flag"},
+					{"feature" : "DateTime"}
+				]
+			},
+			"normalize" : {
+				"comment types supported" : ["standard", "minmax"],
+				"type" : "standard",
+				"features" : [
+					{"feature" : "Open"},
+					{"feature" : "High"},
+					{"feature" : "Low"},
+					{"feature" : "Close"}
+				],
+				"comment normalize - minmax - holding features" : [
+					{"feature" : "OBV"},
+					{"feature" : "Volume"},
+					{"feature" : "Relative Strength"},
+					{"feature" : "ADX"},
+					{"feature" : "AccumulationDistribution"},
+					{"feature" : "OBV"},
+					{"feature" : "MACD"},
+					{"feature" : "MACD_Signal"},
+					{"feature" : "SMA20"},
+					{"feature" : "EMA12"},
+					{"feature" : "EMA20"},
+					{"feature" : "EMA26"},
+					{"feature" : "40 day change"},
+					{"feature" : "20 day change"},
+					{"feature" : "10 day change"},
+					{"feature" : "5 day change"},
+					{"feature" : "Open"},
+					{"feature" : "High"},
+					{"feature" : "Low"},
+					{"feature" : "Close"}
+				]
+			},
+			"oneHotEncoding" : {
+				"features" : [
+				],
+				"comment oneHot hoding definitions" : [
+					{
+					"feature" : "OBV",
+					"categoryType" : "seriesChangeUpDown",
+					"categories" : ["Up" , "Down"],
+					"outputFields" : ["OBVUp", "OBVDown"]
+					}
+				]
+			}
+		}
+	}
+	},
+	{
+	"processNodeName" : "mktConv2D",
+	"requiredFields" : {
+		"comments: supported values - processType" : ["dataPrep", "Tensorflow"],
+		"processType" : "Tensorflow",
+		"inputFlows" : ["conv2DPrepared"],
+		"outputFlow" : "",
+		"outputFile" : "d:\\brian\\AI-Projects\\models\\Conv2D",
+		"logFile" : "d:\\brian\\AI-Projects\\logs\\Conv2D.txt"
+	},
+	"conditionalFields" : {
+		"modelFile" : "d:\\brian\\AI-Projects\\models\\Conv2D",
+		"dataPrecision" : "float32",
+		"visualizations" : ["summary", "trainingFit"],
+		"supported visualizations" : ["targetSeries", "dataGroups", "normalizationCategorization", "summary", "trainingFit", "testVsPrediction"],
+		"comment model specification values supported" : [
+			{
+			"layerType" : ["conv2d", "lstm", "dense", "TimeDistributed", "dropout"],
+			"returnSequences" : "true if the next layer is also an RNN layer",
+			"outputActivation" : ["linear", "relu", "tanh", "softmax", "sigmoid", "softplus", "softsign", "selu", "elu", "exponential"]
+			}
+		],
+		"modelLayers trial 1" : [
+		],
+		"modelLayers" : [
+    		{"layerType" : "conv2d", "layerName" : "input", "featureCount": 5, "layerUnits" : 128, "outputActivation" : "tanh"},
+    		{"layerType" : "dropout", "layerName" : "dropoutIn", "dropoutRate" : 0.2},
+    		{"layerType" : "dense", "layerName" : "output", "layerUnits": 2, "outputActivation" : "softmax"}
+		],
+		"training" : {
+			"lossWeights" : [1.0],
+			"denseRegularation" : false,
+			"regularationValue" : 0.0,
+			"batchSize" : 32,
+			"epochs" : 20,
+			"useBias" : true,
+			"validationSplit" : 0.1,
+			"testSplit" : 0.2,
+			"shuffle" : false,
+			"verbose" : 2,
+			"balanceClasses" : true,
+			"compilationLoss" : "mae",
+			"compilationMetrics" : ["accuracy"],
+			"optimizer" : "adam",
+			"optimizers - adam" : "fast, tends to overfit",
+			"optimizers - SGD" : "slow, great results",
+			"optimizers - RMSProp" : "sometimes works best",
+			"optimizers - SWA" : "Unknown optimizer - can easily improve qualiy"
+		}
+	}
+	}
+],
+"comment - dataflow section" : "Specification details for the flows of data between processing nodes",
+"dataFlows" : [
+	{
+	"flowName" : "conv2D",
+	"requiredFields" : {
+		"flowFrom" : "dataIn",
+		"flowTo" : "PrepData",
+		"flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\conv2D.csv"
+		},
+	"conditionalFields" : {
+		"TensorflowData" : {
+			"balanceClasses" : false,
+			"ignoreBlanks" : true,
+			"features" : ["Open", "High", "Low", "Close"],
+			"targets" : ["MACD_flag"],
+			"timeSequence" : false,
+			"comment seriesStepIDField" : ["DateTime"],
+			"comment seriesDataType" : "TDADateTime"
+			}
+		}
+	},
+	{
+	"flowName" : "conv2DPrepared",
+	"requiredFields" : {
+		"flowFrom" : "PrepData",
+		"flowTo" : "mktConv2D",
+		"flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\conv2DPrepared.csv"
+		},
+	"conditionalFields" : {
+		"TensorflowData" : {
+			"features" : ["Open", "High", "Low", "Close"],
+			"targets" : ["MACD_flag"],
+			"timeSequence" : false,
+			"comment seriesStepIDField" : ["DateTime"],
+			"comment seriesDataType" : "TDADateTime"
+			}
+		}
+	}
+],
+"comment end of specification" : "------------------------------------------------------------------------------------"
+}

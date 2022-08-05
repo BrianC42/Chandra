@@ -61,6 +61,9 @@ from configuration_constants import JSON_LOSS
 from configuration_constants import JSON_LOSS_WTS
 from configuration_constants import JSON_METRICS
 from configuration_constants import JSON_OPTIMIZER
+from configuration_constants import JSON_CONV1D
+from configuration_constants import JSON_FILTER_COUNT
+from configuration_constants import JSON_FILTER_SIZE
 
 def add_data_flow_details(js_flow_conditional, nx_graph, nx_edge_key):
 

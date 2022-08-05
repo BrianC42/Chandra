@@ -54,6 +54,10 @@ from configuration_constants import JSON_1HOT_CATEGORIES
 from configuration_constants import JSON_1HOT_OUTPUTFIELDS
 from configuration_constants import JSON_1HOT_SERIES_UP_DOWN
 
+from configuration_constants import JSON_CONV1D
+from configuration_constants import JSON_FILTER_COUNT
+from configuration_constants import JSON_FILTER_SIZE
+
 from TrainingDataAndResults import MODEL_TYPE
 from TrainingDataAndResults import INPUT_LAYERTYPE_DENSE
 from TrainingDataAndResults import INPUT_LAYERTYPE_RNN
@@ -98,7 +102,7 @@ def loadTrainingData(d2r):
     return
 
 def balance_classes(d2r, model_type):
-    print("\n*****************\nWORK IN PROGRESS\n\tbalance_classes hard coded for LSTM MACD_signal\n*****************\n")
+    print("\n============== WIP =============\nWORK IN PROGRESS\n\tbalance_classes hard coded for LSTM MACD_signal\n================================\n")
     
     categorization = [-1, 1]
     
@@ -215,6 +219,16 @@ def id_columns(data, features, targets):
     
     return feature_cols, target_cols
 
+def np_to_conv1d(data, features, targets, d2r):
+    npx = np.empty([d2r.batches, len(data), len(features)]  , dtype=float)
+    npy = np.empty([d2r.batches, len(data), len(targets)]   , dtype=float)
+    
+    for batch in range(d2r.batches):
+        npx[batch, :, :]    = data[: , features[:]]
+        npy[batch]          = data[: , targets[:]]
+    
+    return npx, npy
+
 def np_to_sequence(data, features, targets, seq_size=1):
     npx = np.empty([len(data) - (seq_size+1), seq_size, len(features)], dtype=float)
     npy = np.empty([len(data) - (seq_size+1),           len(targets)], dtype=float)
@@ -226,75 +240,96 @@ def np_to_sequence(data, features, targets, seq_size=1):
     return npx, npy
 
 def arrangeDataForTraining(d2r):
-    features = d2r.preparedFeatures
-    targets = d2r.preparedTargets
+    try:
+        err_txt = "\nError arranging data for training"
+        
+        features = d2r.preparedFeatures
+        targets = d2r.preparedTargets
+        
+        feature_cols, target_cols = id_columns(d2r.data, features, targets)
     
-    feature_cols, target_cols = id_columns(d2r.data, features, targets)
-
-    nx_test_split = nx.get_node_attributes(d2r.graph, JSON_TEST_SPLIT)[d2r.mlNode]
-    nx_validation_split = nx.get_node_attributes(d2r.graph, JSON_VALIDATION_SPLIT)[d2r.mlNode]
-
-    nx_read_attr = nx.get_node_attributes(d2r.graph, JSON_PROCESS_TYPE)
-    if nx_read_attr[d2r.mlNode] == JSON_TENSORFLOW:    
-        print("Preparing the data for training: %s" % d2r.mlNode)
-        d2r.trainLen = int(len(d2r.data) * (1-(nx_test_split+nx_validation_split)))
-        d2r.validateLen = int(len(d2r.data) * nx_validation_split)
-        d2r.testLen = int(len(d2r.data) * nx_test_split)
-
-        nx_data_precision = nx.get_node_attributes(d2r.graph, JSON_PRECISION)[d2r.mlNode]
-        ''' Create Numpy arrays suitable for training, training validation and later testing from Pandas dataframe '''
-        data = np.array(d2r.data, dtype=nx_data_precision)
-        train       = data[                                 : d2r.trainLen]
-        validation  = data[d2r.trainLen                     : (d2r.trainLen + d2r.validateLen)]
-        test        = data[d2r.trainLen + d2r.validateLen   : ]
-        
-        nx_model_type = nx.get_node_attributes(d2r.graph, MODEL_TYPE)[d2r.mlNode]
-
-        if nx_model_type == INPUT_LAYERTYPE_DENSE:
-            d2r.trainX = train[: , feature_cols]
-            d2r.trainY = train[: , target_cols]
-            d2r.validateX = validation[: , feature_cols]
-            d2r.validateY = validation[: , target_cols]
-            d2r.testX = test[: , feature_cols]
-            d2r.testY = test[: , target_cols]
-            
-        elif nx_model_type == INPUT_LAYERTYPE_RNN:
-            nx_time_steps = nx.get_node_attributes(d2r.graph, JSON_TIMESTEPS)[d2r.mlNode]
-            
-            d2r.trainX,    d2r.trainY    = np_to_sequence(train, feature_cols, target_cols, nx_time_steps)
-            d2r.validateX, d2r.validateY = np_to_sequence(validation, feature_cols, target_cols, nx_time_steps)
-            d2r.testX,     d2r.testY     = np_to_sequence(test, feature_cols, target_cols, nx_time_steps)
-
-        elif nx_model_type == INPUT_LAYERTYPE_CNN:
-            err_txt = "Models of type CNN are not yet supported"
-            raise NameError(err_txt)
-        
-    elif nx_read_attr[d2r.mlNode] == JSON_AUTOKERAS:    
-        nx_data_precision = nx.get_node_attributes(d2r.graph, JSON_PRECISION)[d2r.mlNode]
-        
-        d2r.trainLen = int(len(d2r.data) * (1-(nx_test_split+nx_validation_split)))
-        d2r.validateLen = int(len(d2r.data) * nx_validation_split)
-        d2r.testLen = int(len(d2r.data) * nx_test_split)
-        
-        train       = d2r.data.loc[                         : d2r.trainLen]
-        validation  = d2r.data.loc[d2r.trainLen                : (d2r.trainLen + d2r.validateLen)]
-        test        = d2r.data.loc[d2r.trainLen + d2r.validateLen : ]
-            
-        d2r.trainX = train[features[0]]
-        d2r.trainY = train[targets[0]]
-        d2r.validateX = validation[features[0]]
-        d2r.validateY = validation[targets[0]]
-        d2r.testX = test[features[0]]
-        d2r.testY = test[targets[0]]
-
-        d2r.trainX = d2r.trainX.to_frame()
-        d2r.trainY = d2r.trainY.to_frame()
-        d2r.validateX = d2r.validateX.to_frame()
-        d2r.validateY = d2r.validateY.to_frame()
-        d2r.testX = d2r.testX.to_frame()
-        d2r.testY = d2r.testY.to_frame()
+        nx_test_split = nx.get_node_attributes(d2r.graph, JSON_TEST_SPLIT)[d2r.mlNode]
+        nx_validation_split = nx.get_node_attributes(d2r.graph, JSON_VALIDATION_SPLIT)[d2r.mlNode]
     
-    balance_classes(d2r, nx_model_type)
+        nx_read_attr = nx.get_node_attributes(d2r.graph, JSON_PROCESS_TYPE)
+        if nx_read_attr[d2r.mlNode] == JSON_TENSORFLOW:    
+            print("Preparing the data for training: %s" % d2r.mlNode)
+            d2r.trainLen = int(len(d2r.data) * (1-(nx_test_split+nx_validation_split)))
+            d2r.validateLen = int(len(d2r.data) * nx_validation_split)
+            d2r.testLen = int(len(d2r.data) * nx_test_split)
+    
+            nx_data_precision = nx.get_node_attributes(d2r.graph, JSON_PRECISION)[d2r.mlNode]
+            ''' Create Numpy arrays suitable for training, training validation and later testing from Pandas dataframe '''
+            data        = np.array(d2r.data, dtype=nx_data_precision)
+            train       = data[                                 : d2r.trainLen]
+            validation  = data[d2r.trainLen                     : (d2r.trainLen + d2r.validateLen)]
+            test        = data[d2r.trainLen + d2r.validateLen   : ]
+            
+            nx_model_type = nx.get_node_attributes(d2r.graph, MODEL_TYPE)[d2r.mlNode]
+    
+            if nx_model_type == INPUT_LAYERTYPE_DENSE:
+                d2r.trainX = train[: , feature_cols]
+                d2r.trainY = train[: , target_cols]
+                d2r.validateX = validation[: , feature_cols]
+                d2r.validateY = validation[: , target_cols]
+                d2r.testX = test[: , feature_cols]
+                d2r.testY = test[: , target_cols]
+                
+            elif nx_model_type == INPUT_LAYERTYPE_RNN:
+                nx_time_steps = nx.get_node_attributes(d2r.graph, JSON_TIMESTEPS)[d2r.mlNode]
+                
+                d2r.trainX,    d2r.trainY    = np_to_sequence(train, feature_cols, target_cols, nx_time_steps)
+                d2r.validateX, d2r.validateY = np_to_sequence(validation, feature_cols, target_cols, nx_time_steps)
+                d2r.testX,     d2r.testY     = np_to_sequence(test, feature_cols, target_cols, nx_time_steps)
+    
+            elif nx_model_type == INPUT_LAYERTYPE_CNN:
+                print("\n============== WIP =============\n\tconv1d layer - arrangeDataForTraining\n================================\n")
+                d2r.trainX,    d2r.trainY    = np_to_conv1d(train, feature_cols, target_cols, d2r)
+                d2r.validateX, d2r.validateY = np_to_conv1d(validation, feature_cols, target_cols, d2r)
+                d2r.testX,     d2r.testY     = np_to_conv1d(test, feature_cols, target_cols, d2r)
+                '''
+                err_txt = "CNN data arrangement in process of implementation"
+                raise NameError(err_txt)
+                '''
+            
+        elif nx_read_attr[d2r.mlNode] == JSON_AUTOKERAS:    
+            nx_data_precision = nx.get_node_attributes(d2r.graph, JSON_PRECISION)[d2r.mlNode]
+            
+            d2r.trainLen = int(len(d2r.data) * (1-(nx_test_split+nx_validation_split)))
+            d2r.validateLen = int(len(d2r.data) * nx_validation_split)
+            d2r.testLen = int(len(d2r.data) * nx_test_split)
+            
+            train       = d2r.data.loc[                         : d2r.trainLen]
+            validation  = d2r.data.loc[d2r.trainLen                : (d2r.trainLen + d2r.validateLen)]
+            test        = d2r.data.loc[d2r.trainLen + d2r.validateLen : ]
+                
+            d2r.trainX = train[features[0]]
+            d2r.trainY = train[targets[0]]
+            d2r.validateX = validation[features[0]]
+            d2r.validateY = validation[targets[0]]
+            d2r.testX = test[features[0]]
+            d2r.testY = test[targets[0]]
+    
+            d2r.trainX = d2r.trainX.to_frame()
+            d2r.trainY = d2r.trainY.to_frame()
+            d2r.validateX = d2r.validateX.to_frame()
+            d2r.validateY = d2r.validateY.to_frame()
+            d2r.testX = d2r.testX.to_frame()
+            d2r.testY = d2r.testY.to_frame()
+        
+        balance_classes(d2r, nx_model_type)
+
+    except Exception:
+        exc_info = sys.exc_info()
+        exc_str = exc_info[1].args[0]
+        if isinstance(exc_str, str):
+            exc_txt = err_txt + "\n\t" + exc_str
+        elif isinstance(exc_str, tuple):
+            exc_txt = err_txt + "\n\t"
+            for s in exc_str:
+                exc_txt += " " + s
+        logging.debug(exc_txt)
+        sys.exit(exc_txt)
             
     return
 

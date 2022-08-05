@@ -91,6 +91,11 @@ JSON_TIME_SEQ = 'timeSequence'
 JSON_SERIES_ID = "seriesStepIDField"
 JSON_SERIES_DATA_TYPE = "seriesDataType"
 
+JSON_CONV1D = "conv1d"
+JSON_BATCHES = "batches"
+JSON_FILTER_COUNT = "filterCount" 
+JSON_FILTER_SIZE = "filterSize"
+
 JSON_IGNORE_BLANKS = "ignoreBlanks"
 JSON_FLOW_DATA_FILE = "flowDataFile"
 JSON_FEATURE_FIELDS = "features"

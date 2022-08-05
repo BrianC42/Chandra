@@ -7,6 +7,7 @@ Git access error problem
 '''
 import networkx as nx
 import matplotlib.pyplot as plt
+from executing.executing import get_setter
 
 TRAINING_TENSORFLOW = 'Tensorflow'
 TRAINING_AUTO_KERAS = 'AutoKeras'
@@ -290,7 +291,47 @@ class Data2Results():
     @normalized.setter
     def normalized(self, normalized):
         self._normalized = normalized
-        
+
+    @property
+    def batches(self):
+        return self._batches
+    
+    @batches.setter
+    def batches(self, batches):
+        self._batches = batches
+             
+    @property
+    def timesteps(self):
+        return self._timesteps
+    
+    @timesteps.setter
+    def timesteps(self, timesteps):
+        self._timesteps = timesteps
+             
+    @property
+    def feature_count(self):
+        return self._feature_count
+    
+    @feature_count.setter
+    def feature_count(self, feature_count):
+        self._feature_count = feature_count
+
+    @property
+    def filter_count(self):
+        return self._filter_count
+    
+    @filter_count.setter
+    def filter_count(self, filter_count):
+        self._filter_count = filter_count
+
+    @property
+    def filter_size(self):
+        return self._filter_size
+    
+    @filter_size.setter
+    def filter_size(self, filter_size):
+        self._filter_size = filter_size
+
     '''
     Functions ...
     '''

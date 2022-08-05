@@ -525,10 +525,85 @@ def visualize_rnn(d2r):
     plt.show()
     return 
 
-def visualize_cnn(d2r):
-    fig, axs = plt.subplots(2, 3)
-    fig.suptitle(d2r.mlNode, fontsize=14, fontweight='bold')
-    visualize_fit(d2r, axs[0, 0])
+def visualize_cnn(d2r, prediction):
+    fig, axs = plt.subplots(2, 2)
+    fig.suptitle("CNN Test Results for - " + d2r.mlNode, fontsize=14, fontweight='bold')
+    
+    featureAxis = axs[0, 0]
+    featureAxis.set_title("Feature Data series")
+    featureAxis.set_xlabel("time periods")
+    featureAxis.set_ylabel("Data Value")
+
+    lines = []
+    dataPoints = d2r.testX.shape[1]
+    for batch in range(0, d2r.batches):
+        for featureNdx in range (0, d2r.feature_count):
+            lines.append(featureAxis.scatter(range(0, dataPoints), d2r.testX[batch, :, featureNdx], s=0.1))
+        #lines.append(featureAxis.scatter(range(0, dataPoints), d2r.testY[batch, :], s=0.1))
+        featureAxis.legend(lines, d2r.preparedFeatures, loc='upper center')
+
+    predictionAxis = axs[1, 0]
+    predictionAxis.set_title("Prediction series")
+    predictionAxis.set_xlabel("time periods")
+    predictionAxis.set_ylabel("Prediction Value")
+
+    lines = []
+    targets = prediction.shape[0]
+    dataPoints = prediction.shape[1]
+    categories = prediction.shape[2]
+    for target in range(0, targets):
+        for category in range(0, categories):
+            lines.append(predictionAxis.scatter(range(0, dataPoints), prediction[target, :, category], s=0.1))
+            #lines.append(featureAxis.scatter(range(0, dataPoints), d2r.testY[batch, :], s=0.1))
+    #predictionAxis.legend(lines, d2r.preparedFeatures, loc='upper center')
+
+    print("\n=======================WIP ====================\n\tvisualize_cnn visualization")
+    accurate = 0
+    false_positive = 0
+    false_negative = 0
+    for batch in range(0, d2r.batches):
+        for period in range(0, dataPoints):
+            for target in range(0, d2r.testY.shape[2]):
+                if prediction[batch, period, target] == d2r.testY[batch, period, target]:
+                    accurate += 1
+                elif prediction[batch, period, target] == 1:
+                    false_positive += 1
+                elif d2r.testY[batch, period, target] == 1:
+                    false_negative += 1
+    print("Accurate: %s, false negative: %s, false positive: %s" % (accurate, false_negative, false_positive))
+
+    categories = 3
+    results = np.zeros([categories, categories]  , dtype=int)
+    for batch in range(0, d2r.batches):
+        for period in range(0, dataPoints):
+            for target in range(0, d2r.testY.shape[2]):
+                
+                if d2r.testY[batch, period, target] == -1:
+                    if prediction[batch, period, target] == -1:
+                        results[0, 0] += 1
+                    elif prediction[batch, period, target] == 0:
+                        results[0, 1] += 1
+                    elif prediction[batch, period, target] == 1:
+                        results[0, 2] += 1
+
+                if d2r.testY[batch, period, target] == 0:
+                    if prediction[batch, period, target] == -1:
+                        results[1, 0] += 1
+                    elif prediction[batch, period, target] == 0:
+                        results[1, 1] += 1
+                    elif prediction[batch, period, target] == 1:
+                        results[1, 2] += 1
+
+                if d2r.testY[batch, period, target] == 1:
+                    if prediction[batch, period, target] == -1:
+                        results[2, 0] += 1
+                    elif prediction[batch, period, target] == 0:
+                        results[2, 1] += 1
+                    elif prediction[batch, period, target] == 1:
+                        results[2, 2] += 1
+
+    df_results = pd.DataFrame(results)
+    print("\nPrediction result statistics\n%s\n" % (df_results.describe().transpose()))
     
     plt.tight_layout()
     plt.show()
@@ -591,6 +666,8 @@ def evaluate_and_visualize(d2r):
             plotDataGroups(d2r)
         elif vizualize == "normalizationCategorization":
             showNormalizationCategorization(d2r)
+        elif vizualize == "cnnResult":
+            visualize_cnn(d2r, prediction)
         elif vizualize == "testVsPrediction":
             visualize_fit(d2r)
 

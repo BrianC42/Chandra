@@ -48,6 +48,10 @@ from configuration_constants import JSON_METRICS
 from configuration_constants import JSON_LOSS_WTS
 from configuration_constants import JSON_OPTIMIZER
 from configuration_constants import JSON_MODEL_FILE
+from configuration_constants import JSON_CONV1D
+from configuration_constants import JSON_FILTER_COUNT
+from configuration_constants import JSON_FILTER_SIZE
+from configuration_constants import JSON_BATCHES
 
 from TrainingDataAndResults import TRAINING_TENSORFLOW
 from TrainingDataAndResults import TRAINING_AUTO_KERAS
@@ -98,18 +102,43 @@ def build_layer(d2r, layer_type, layer_definition, input_layer):
                                            units=nx_layer_units, \
                                            activation = nx_activation, \
                                            return_sequences = nx_return_sequences, \
-                                           input_shape=(nx_time_steps, nx_feature_count))
+                                           input_shape=(nx_time_steps, nx_feature_count) \
+                                           )
         else:
             k_layer = keras.layers.LSTM(name=nx_layer_name, \
                                            units=nx_layer_units, \
                                            activation = nx_activation, \
                                            return_sequences = nx_return_sequences)
-    elif layer_type == 'cnn':
-        err_msg = 'cnn layer type not yet implemented:'
-        raise NameError(err_msg)
+    elif layer_type == JSON_CONV1D:
+        print("\n============== WIP =============\n\tconv1d layer type parameters hard coded\n================================\n")
         if input_layer:
             d2r.modelType = INPUT_LAYERTYPE_CNN
             nx.set_node_attributes(d2r.graph, {d2r.mlNode:INPUT_LAYERTYPE_CNN}, MODEL_TYPE)
+            d2r.filter_count = layer_definition[JSON_FILTER_COUNT]
+            d2r.filter_size = layer_definition[JSON_FILTER_SIZE]
+
+            d2r.batches = layer_definition[JSON_BATCHES]
+            d2r.timesteps = layer_definition[JSON_TIMESTEPS]
+            d2r.feature_count = layer_definition[JSON_FEATURE_COUNT]
+            nx_input_shape = (d2r.batches, None, d2r.feature_count)
+            
+            nx_strides = 1
+            nx_dilation_rate = 1
+            nx_padding = 'causal'
+
+            k_layer = keras.layers.Conv1D(d2r.filter_count, \
+                                          d2r.filter_size, \
+                                          input_shape = nx_input_shape[1:], \
+                                          name = nx_layer_name, \
+                                          strides = nx_strides, \
+                                          padding = nx_padding, \
+                                          activation = nx_activation, \
+                                          dilation_rate = nx_dilation_rate \
+                                          )
+        else:
+            k_layer = keras.layers.Conv1D(name=nx_layer_name, \
+                                         activation = nx_activation, \
+                                         units=nx_layer_units)
     elif layer_type == JSON_LAYER_REPEAT_VECTOR:
         nx_repeat_count = 1
         if JSON_REPEAT_COUNT in layer_definition:
