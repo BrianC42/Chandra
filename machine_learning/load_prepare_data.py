@@ -33,6 +33,7 @@ from configuration_constants import JSON_DATA_PREP_NORMALIZE_STANDARD
 from configuration_constants import JSON_DATA_PREP_NORMALIZE_MINMAX
 from configuration_constants import JSON_DATA_PREP_SEQ
 from configuration_constants import JSON_DATA_PREP_ENCODING
+from configuration_constants import JSON_BALANCED
 from configuration_constants import JSON_TENSORFLOW
 from configuration_constants import JSON_AUTOKERAS
 from configuration_constants import JSON_FEATURE_FIELDS
@@ -102,11 +103,11 @@ def loadTrainingData(d2r):
     return
 
 def balance_classes(d2r, model_type):
-    print("\n============== WIP =============\nWORK IN PROGRESS\n\tbalance_classes hard coded for LSTM MACD_signal\n================================\n")
-    
     categorization = [-1, 1]
     
     if model_type == INPUT_LAYERTYPE_RNN:
+        print("\n============== WIP =============\nWORK IN PROGRESS\n\tbalance_classes hard coded for LSTM MACD_signal\n================================\n")
+    
         count = 0
         for ndx in range(0, d2r.trainY.shape[0]):
             if d2r.trainY[ndx, d2r.trainY.shape[1]-1] in categorization:
@@ -153,6 +154,7 @@ def balance_classes(d2r, model_type):
         d2r.testY = target
         
     elif model_type == INPUT_LAYERTYPE_DENSE:
+        print("\n============== WIP =============\n\tWORK IN PROGRESS\n\tINPUT_LAYERTYPE_DENSE hard coded STEPS\n================================\n")
         STEPS = 3
         cols = d2r.trainX.shape[1]
         count = 0
@@ -202,6 +204,9 @@ def balance_classes(d2r, model_type):
                 count += 1
         d2r.testX = test
         d2r.testY = target
+        
+    elif model_type == INPUT_LAYERTYPE_CNN:
+        print("\n============== WIP =============\n\tWORK IN PROGRESS\n\tbalance_classes for CNN\n================================\n")
 
     return
 
@@ -220,12 +225,12 @@ def id_columns(data, features, targets):
     return feature_cols, target_cols
 
 def np_to_conv1d(data, features, targets, d2r):
-    npx = np.empty([d2r.batches, len(data), len(features)]  , dtype=float)
-    npy = np.empty([d2r.batches, len(data), len(targets)]   , dtype=float)
+    npx = np.empty([1, len(data), len(features)]  , dtype=float)
+    npy = np.empty([1, len(data), len(targets)]   , dtype=float)
     
-    for batch in range(d2r.batches):
-        npx[batch, :, :]    = data[: , features[:]]
-        npy[batch]          = data[: , targets[:]]
+    ''' create 3D [batch,time period/data elements] array '''
+    npx[0, :, :]    = data[: , features[:]]
+    npy[0]          = data[: , targets[:]]
     
     return npx, npy
 
@@ -284,14 +289,101 @@ def arrangeDataForTraining(d2r):
     
             elif nx_model_type == INPUT_LAYERTYPE_CNN:
                 print("\n============== WIP =============\n\tconv1d layer - arrangeDataForTraining\n================================\n")
-                d2r.trainX,    d2r.trainY    = np_to_conv1d(train, feature_cols, target_cols, d2r)
-                d2r.validateX, d2r.validateY = np_to_conv1d(validation, feature_cols, target_cols, d2r)
-                d2r.testX,     d2r.testY     = np_to_conv1d(test, feature_cols, target_cols, d2r)
                 '''
-                err_txt = "CNN data arrangement in process of implementation"
-                raise NameError(err_txt)
+                data arranged as 3D batch/sequence elements/data elements
+                ...X represent causation features
+                ...Y represent effect targets
                 '''
-            
+                dTrainX = dict()
+                dTrainY = dict()
+                dValidationX = dict()
+                dValidationY = dict()
+                dTestX = dict()
+                dTestY = dict()
+
+                for dKey in list(d2r.dataDict):
+                    data = np.array(d2r.dataDict[dKey], dtype=nx_data_precision)
+                    d2r.trainLen = int(len(data) * (1-(nx_test_split+nx_validation_split)))
+                    d2r.validateLen = int(len(data) * nx_validation_split)
+                    d2r.testLen = int(len(data) * nx_test_split)
+                    
+                    train = data[ : d2r.trainLen]
+                    x, y = np_to_conv1d(train, feature_cols, target_cols, d2r)
+                    dTrainX[dKey] = x
+                    dTrainY[dKey] = y
+                    
+                    validation  = data[d2r.trainLen : (d2r.trainLen + d2r.validateLen)]
+                    x, y = np_to_conv1d(validation, feature_cols, target_cols, d2r)
+                    dValidationX[dKey] = x
+                    dValidationY[dKey] = y
+                    
+                    test = data[d2r.trainLen + d2r.validateLen : ]
+                    x, y = np_to_conv1d(test, feature_cols, target_cols, d2r)
+                    dTestX[dKey] = x
+                    dTestY[dKey] = y
+
+                '''
+                d2r.trainX = dTrainX    
+                d2r.trainY = dTrainY
+                d2r.validateX = dValidationX
+                d2r.validateY = dValidationY
+                d2r.testX = dTestX
+                d2r.testY = dTestY
+                '''
+
+                '''
+                train, validate, test dicts contain variable length(?) 3D arrays, 1 batch per data source
+                '''
+                d2r.batches = len(d2r.dataDict)
+                trainLen = 0
+                validateLen = 0
+                testLen = 0
+    
+                for dKey in d2r.dataDict:
+                    if dTrainX[dKey].shape[1] > trainLen:
+                        trainLen = dTrainX[dKey].shape[1]
+                    if dValidationX[dKey].shape[1] > validateLen:
+                        validateLen = dValidationX[dKey].shape[1]
+                    if dTestX[dKey].shape[1] > testLen:
+                        testLen = dTestX[dKey].shape[1]
+                    
+                for dKey in d2r.dataDict:
+                    if dTrainX[dKey].shape[1] < trainLen:
+                        trainLen = dTrainX[dKey].shape[1]
+                    if dValidationX[dKey].shape[1] < validateLen:
+                        validateLen = dValidationX[dKey].shape[1]
+                    if dTestX[dKey].shape[1] < testLen:
+                        testLen = dTestX[dKey].shape[1]
+                    
+                npTrainX = np.empty([d2r.batches, trainLen, d2r.feature_count], dtype=float)
+                npTrainY = np.empty([d2r.batches, trainLen, 1], dtype=float)
+                npValidateX = np.empty([d2r.batches, validateLen, d2r.feature_count], dtype=float)
+                npValidateY = np.empty([d2r.batches, validateLen, 1], dtype=float)
+                npTestX = np.empty([d2r.batches, testLen, d2r.feature_count], dtype=float)
+                npTestY = np.empty([d2r.batches, testLen, 1], dtype=float)
+                    
+                batch = 0
+                for dKey in d2r.dataDict:
+                    npTrainX[batch, :, :] = dTrainX[dKey][0, -trainLen:, :]
+                    npTrainY[batch, :, :] = dTrainY[dKey][0, -trainLen:, :]
+                    npValidateX[batch, :, :] = dValidationX[dKey][0, -validateLen:, :]
+                    npValidateY[batch, :, :] = dValidationY[dKey][0, -validateLen:, :]
+                    npTestX[batch, :, :] = dTestX[dKey][0, -testLen:, :]
+                    npTestY[batch, :, :] = dTestY[dKey][0, -testLen:, :]
+                    
+                    batch += 1
+                    
+                d2r.batches = batch
+                d2r.trainX = npTrainX[:, :, :]
+                d2r.trainY = npTrainY[:, :, :]
+                d2r.validateX = npValidateX[:, :, :]
+                d2r.validateY = npValidateY[:, :, :]
+                d2r.testX = npTestX[:, :, :]
+                d2r.testY = npTestY[:, :, :]
+                '''
+                train, validate, test contain 3D arrays
+                '''
+
         elif nx_read_attr[d2r.mlNode] == JSON_AUTOKERAS:    
             nx_data_precision = nx.get_node_attributes(d2r.graph, JSON_PRECISION)[d2r.mlNode]
             
@@ -520,11 +612,13 @@ def selectTrainingData(d2r, node_name, nx_edge):
                     l_filter.append(fld)
                 for fld in d2r.rawTargets:
                     l_filter.append(fld)
+                    
                 if d2r.timeSeries:
                     for fld in d2r.dataSeriesIDFields:
                         l_filter.append(fld)
                 df_inputs = df_data.filter(l_filter)
                 df_combined = pd.concat([df_combined, df_inputs], ignore_index=True)
+                d2r.dataDict[FileSpec] = df_inputs
             else:
                 raise NameError('Data file does not exist')
             count += 1

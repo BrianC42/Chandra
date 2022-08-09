@@ -14,8 +14,10 @@
 	"conditionalFields" : {
 		"dataLoadCtrl" : {
 			"comment 1" : "do not concatenate multiple symbols due to time sequencing",
+			"comment file spec" : "d:\\brian\\AI-Projects\\tda\\market_analysis_data\\[a-c]*.csv",
 			"inputFile" : [
-			"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\c.csv"
+				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\c.csv",
+				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\ge.csv"
 			]
 		}
 	}
@@ -109,12 +111,12 @@
 			}
 		],
 		"modelLayers trial 1" : [
-    		{"layerType" : "conv1d", "layerName" : "input", "batches" : 3, "timeSteps" : 5, "featureCount": 1, "filterCount" : 10, "filterSize" : 5, "layerUnits" : 128, "outputActivation" : "tanh"},
+    		{"layerType" : "conv1d", "layerName" : "input", "batches" : 1, "timeSteps" : 5, "featureCount": 1, "filterCount" : 10, "filterSize" : 5, "layerUnits" : 128, "outputActivation" : "tanh"},
     		{"comment - dropout - layerType" : "dropout", "layerName" : "dropoutIn", "dropoutRate" : 0.2},
     		{"comment - output - layerType" : "dense", "layerName" : "output", "layerUnits": 2, "outputActivation" : "softmax"}
 		],
 		"modelLayers" : [
-    		{"layerType" : "conv1d", "layerName" : "input", "batches" : 1, "timeSteps" : 5, "featureCount": 1, "filterCount" : 10, "filterSize" : 7, "layerUnits" : 128, "outputActivation" : "tanh"},
+    		{"layerType" : "conv1d", "layerName" : "input", "featureCount": 1, "filterCount" : 10, "filterSize" : 7, "layerUnits" : 128, "outputActivation" : "tanh"},
     		{"layerType" : "dense", "layerName" : "hidden", "layerUnits": 10, "outputActivation" : "linear"},
     		{"layerType" : "dense", "layerName" : "output", "layerUnits": 1, "outputActivation" : "linear"}
 		],
@@ -152,7 +154,7 @@
 		},
 	"conditionalFields" : {
 		"TensorflowData" : {
-			"balanceClasses" : false,
+			"balanceClasses" : true,
 			"ignoreBlanks" : true,
 			"features" : ["EMA20"],
 			"targets" : ["MACD_flag"],

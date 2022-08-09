@@ -29,8 +29,19 @@ class Data2Results():
     def __init__(self):
         '''
         Constructor
-        self.nxGraph = nx_graph
         '''
+        self.dataDict = dict()
+        self.maxDictLength = 0
+        self.minDictLength = 99999999
+        
+    @property
+    def dataDict(self):
+        return self._dataDict
+    
+    @dataDict.setter
+    def dataDict(self, dataDict):
+        self._dataDict = dataDict
+    
     '''
     definition graph properties
         graph - graph of nodes and edges defining the information flow and processing

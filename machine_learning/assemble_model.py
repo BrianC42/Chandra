@@ -117,8 +117,9 @@ def build_layer(d2r, layer_type, layer_definition, input_layer):
             d2r.filter_count = layer_definition[JSON_FILTER_COUNT]
             d2r.filter_size = layer_definition[JSON_FILTER_SIZE]
 
-            d2r.batches = layer_definition[JSON_BATCHES]
-            d2r.timesteps = layer_definition[JSON_TIMESTEPS]
+            d2r.batches = 1
+            #d2r.batches = layer_definition[JSON_BATCHES]
+            #d2r.timesteps = layer_definition[JSON_TIMESTEPS]
             d2r.feature_count = layer_definition[JSON_FEATURE_COUNT]
             nx_input_shape = (d2r.batches, None, d2r.feature_count)
             
