@@ -48,10 +48,17 @@ from configuration_constants import JSON_METRICS
 from configuration_constants import JSON_LOSS_WTS
 from configuration_constants import JSON_OPTIMIZER
 from configuration_constants import JSON_MODEL_FILE
+
 from configuration_constants import JSON_CONV1D
 from configuration_constants import JSON_FILTER_COUNT
 from configuration_constants import JSON_FILTER_SIZE
 from configuration_constants import JSON_BATCHES
+
+from configuration_constants import JSON_MAXPOOLING_1D
+from configuration_constants import JSON_GLOBAL_MAXPOOLING_1D
+from configuration_constants import JSON_POOL_SIZE
+
+from configuration_constants import JSON_FLATTEN
 
 from TrainingDataAndResults import TRAINING_TENSORFLOW
 from TrainingDataAndResults import TRAINING_AUTO_KERAS
@@ -121,7 +128,7 @@ def build_layer(d2r, layer_type, layer_definition, input_layer):
             #d2r.batches = layer_definition[JSON_BATCHES]
             #d2r.timesteps = layer_definition[JSON_TIMESTEPS]
             d2r.feature_count = layer_definition[JSON_FEATURE_COUNT]
-            nx_input_shape = (d2r.batches, None, d2r.feature_count)
+            nx_input_shape = (None, d2r.feature_count)
             
             nx_strides = 1
             nx_dilation_rate = 1
@@ -129,7 +136,7 @@ def build_layer(d2r, layer_type, layer_definition, input_layer):
 
             k_layer = keras.layers.Conv1D(d2r.filter_count, \
                                           d2r.filter_size, \
-                                          input_shape = nx_input_shape[1:], \
+                                          input_shape = nx_input_shape, \
                                           name = nx_layer_name, \
                                           strides = nx_strides, \
                                           padding = nx_padding, \
@@ -155,6 +162,15 @@ def build_layer(d2r, layer_type, layer_definition, input_layer):
         #nx_feature_count = layer_definition[JSON_FEATURE_COUNT]
         TD_layer = keras.layers.Dense(units=nx_layer_units, activation = nx_activation)
         k_layer = keras.layers.TimeDistributed(TD_layer)
+    elif layer_type == JSON_MAXPOOLING_1D:
+        print("\n============== WIP =============\n\tWIP MaxPooling1D layer type - pool_size hard coded\n================================\n")
+        k_layer = keras.layers.MaxPooling1D(name=nx_layer_name, pool_size=2)
+    elif layer_type == JSON_GLOBAL_MAXPOOLING_1D:
+        print("\n============== WIP =============\n\tWIP GlobalMaxPool1D layer type\n================================\n")
+        k_layer = keras.layers.GlobalMaxPool1D(name=nx_layer_name)
+    elif layer_type == JSON_FLATTEN:
+        print("\n============== WIP =============\n\tWIP Flatten layer type\n================================\n")
+        k_layer = keras.layers.Flatten(name=nx_layer_name)
     else:
         err_msg = 'Layer type not yet implemented: ' + layer_type
         raise NameError(err_msg)
@@ -178,14 +194,6 @@ def assemble_layers(d2r):
         for nx_layer_definition in nx_layers:
             ''' layer type is required '''
             nx_layer_type = nx_layer_definition[JSON_LAYER_TYPE]
-            '''
-            if nx_layer_type == JSON_LAYER_TIME_DISTRIBUTED:
-                k_layer = build_layer(d2r, nx_layer_type, nx_layer_definition, input_layer)
-                d2r.model.add(keras.layers.TimeDistributed(k_layer))
-            else:
-                k_layer = build_layer(d2r, nx_layer_type, nx_layer_definition, input_layer)
-                d2r.model.add(k_layer)
-            '''
             k_layer = build_layer(d2r, nx_layer_type, nx_layer_definition, input_layer)
             d2r.model.add(k_layer)
             input_layer = False
@@ -209,7 +217,10 @@ def assemble_layers(d2r):
         exc_info = sys.exc_info()
         exc_str = exc_info[1].args[0]
         if isinstance(exc_str, str):
-            exc_txt = err_txt + "\n\t" + exc_str
+            nx_layer_name = None
+            if JSON_LAYER_NAME in nx_layer_definition:
+                nx_layer_name = nx_layer_definition[JSON_LAYER_NAME]
+            exc_txt = err_txt + "\n\t" + nx_layer_name + "\n\t" +exc_str
         elif isinstance(exc_str, tuple):
             exc_txt = err_txt + "\n\t"
             for s in exc_str:

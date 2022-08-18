@@ -16,8 +16,7 @@
 			"comment 1" : "do not concatenate multiple symbols due to time sequencing",
 			"comment file spec" : "d:\\brian\\AI-Projects\\tda\\market_analysis_data\\[a-c]*.csv",
 			"inputFile" : [
-				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\c.csv",
-				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\ge.csv"
+				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\[a-z]*.csv"
 			]
 		}
 	}
@@ -48,7 +47,8 @@
 				"comment types supported" : ["standard", "minmax"],
 				"type" : "standard",
 				"features" : [
-					{"feature" : "EMA20"}
+					{"feature" : "EMA12"},
+					{"feature" : "EMA26"}
 				],
 				"comment normalize - minmax - holding features" : [
 					{"feature" : "OBV"},
@@ -102,7 +102,7 @@
 		"modelFile" : "d:\\brian\\AI-Projects\\models\\Conv1D",
 		"dataPrecision" : "float32",
 		"visualizations" : ["summary", "trainingFit", "cnnResult"],
-		"supported visualizations" : ["targetSeries", "dataGroups", "normalizationCategorization", "summary", "trainingFit", "testVsPrediction"],
+		"supported visualizations" : ["summary", "trainingFit", "targetSeries", "dataGroups", "normalizationCategorization", "cnnResult", "testVsPrediction"],
 		"comment model specification values supported" : [
 			{
 			"layerType" : ["conv1d", "lstm", "dense", "TimeDistributed", "dropout"],
@@ -110,22 +110,26 @@
 			"outputActivation" : ["linear", "relu", "tanh", "softmax", "sigmoid", "softplus", "softsign", "selu", "elu", "exponential"]
 			}
 		],
-		"modelLayers trial 1" : [
-    		{"layerType" : "conv1d", "layerName" : "input", "batches" : 1, "timeSteps" : 5, "featureCount": 1, "filterCount" : 10, "filterSize" : 5, "layerUnits" : 128, "outputActivation" : "tanh"},
-    		{"comment - dropout - layerType" : "dropout", "layerName" : "dropoutIn", "dropoutRate" : 0.2},
-    		{"comment - output - layerType" : "dense", "layerName" : "output", "layerUnits": 2, "outputActivation" : "softmax"}
+		"modelLayers saved layers" : [
+    		{"layerType" : "conv1d", "layerName" : "input", "featureCount": 2, "filterCount" : 10, "filterSize" : 7, "layerUnits" : 128, "outputActivation" : "tanh"},
+    		{"layerType" : "dropout", "layerName" : "dropoutIn", "dropoutRate" : 0.2},
+    		{"layerType" : "dense", "layerName" : "output", "layerUnits": 2, "outputActivation" : "softmax"},
+    		{"layerType" : "flatten", "layerName" : "Flatten"},
+    		{"layerType" : "dense", "layerName" : "hiddenDense", "layerUnits": 10, "outputActivation" : "relu"},
+    		{"layerType" : "dense", "layerName" : "hiddenDense", "layerUnits": 128, "outputActivation" : "relu"},
+    		{"layerType" : "dense", "layerName" : "output", "layerUnits": 1, "outputActivation" : "relu"}
 		],
 		"modelLayers" : [
-    		{"layerType" : "conv1d", "layerName" : "input", "featureCount": 1, "filterCount" : 10, "filterSize" : 7, "layerUnits" : 128, "outputActivation" : "tanh"},
-    		{"layerType" : "dense", "layerName" : "hidden", "layerUnits": 10, "outputActivation" : "linear"},
-    		{"layerType" : "dense", "layerName" : "output", "layerUnits": 1, "outputActivation" : "linear"}
+    		{"layerType" : "conv1d", "layerName" : "input", "featureCount": 2, "filterCount" : 20, "filterSize" : 9, "outputActivation" : "relu"},
+    		{"layerType" : "GlobalMaxPool1D", "layerName" : "GMP1D"},
+    		{"layerType" : "dense", "layerName" : "output", "layerUnits": 3, "outputActivation" : "softmax"}
 		],
 		"training" : {
 			"lossWeights" : [1.0],
 			"denseRegularation" : false,
 			"regularationValue" : 0.0,
 			"batchSize" : 32,
-			"epochs" : 5,
+			"epochs" : 80,
 			"useBias" : true,
 			"validationSplit" : 0.1,
 			"testSplit" : 0.2,
@@ -156,7 +160,7 @@
 		"TensorflowData" : {
 			"balanceClasses" : true,
 			"ignoreBlanks" : true,
-			"features" : ["EMA20"],
+			"features" : ["EMA12", "EMA26"],
 			"targets" : ["MACD_flag"],
 			"timeSequence" : false
 			}
@@ -171,7 +175,7 @@
 		},
 	"conditionalFields" : {
 		"TensorflowData" : {
-			"features" : ["EMA20"],
+			"features" : ["EMA12", "EMA26"],
 			"targets" : ["MACD_flag"],
 			"timeSequence" : false
 			}

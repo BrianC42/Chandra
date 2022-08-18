@@ -3,6 +3,9 @@ Created on Jan 15, 2021
 
 @author: Brian
 '''
+import sys
+import logging
+
 import numpy as np
 import pandas as pd
 import networkx as nx
@@ -526,87 +529,136 @@ def visualize_rnn(d2r):
     return 
 
 def visualize_cnn(d2r, prediction):
-    fig, axs = plt.subplots(2, 2)
-    fig.suptitle("CNN Test Results for - " + d2r.mlNode, fontsize=14, fontweight='bold')
+
+    try:
+        err_txt = "*** An exception occurred visualizing CNN results ***"
     
-    featureAxis = axs[0, 0]
-    featureAxis.set_title("Feature Data series")
-    featureAxis.set_xlabel("time periods")
-    featureAxis.set_ylabel("Data Value")
-
-    lines = []
-    dataPoints = d2r.testX.shape[1]
-    for batch in range(0, d2r.batches):
-        for featureNdx in range (0, d2r.feature_count):
-            lines.append(featureAxis.scatter(range(0, dataPoints), d2r.testX[batch, :, featureNdx], s=0.1))
-        #lines.append(featureAxis.scatter(range(0, dataPoints), d2r.testY[batch, :], s=0.1))
-        featureAxis.legend(lines, d2r.preparedFeatures, loc='upper center')
-
-    predictionAxis = axs[1, 0]
-    predictionAxis.set_title("Prediction series")
-    predictionAxis.set_xlabel("time periods")
-    predictionAxis.set_ylabel("Prediction Value")
-
-    lines = []
-    targets = prediction.shape[0]
-    dataPoints = prediction.shape[1]
-    categories = prediction.shape[2]
-    for target in range(0, targets):
-        for category in range(0, categories):
-            lines.append(predictionAxis.scatter(range(0, dataPoints), prediction[target, :, category], s=0.1))
-            #lines.append(featureAxis.scatter(range(0, dataPoints), d2r.testY[batch, :], s=0.1))
-    #predictionAxis.legend(lines, d2r.preparedFeatures, loc='upper center')
-
-    print("\n=======================WIP ====================\n\tvisualize_cnn visualization")
-    accurate = 0
-    false_positive = 0
-    false_negative = 0
-    for batch in range(0, d2r.batches):
-        for period in range(0, dataPoints):
-            for target in range(0, d2r.testY.shape[2]):
-                if prediction[batch, period, target] == d2r.testY[batch, period, target]:
-                    accurate += 1
-                elif prediction[batch, period, target] == 1:
-                    false_positive += 1
-                elif d2r.testY[batch, period, target] == 1:
-                    false_negative += 1
-    print("Accurate: %s, false negative: %s, false positive: %s" % (accurate, false_negative, false_positive))
-
-    categories = 3
-    results = np.zeros([categories, categories]  , dtype=int)
-    for batch in range(0, d2r.batches):
-        for period in range(0, dataPoints):
-            for target in range(0, d2r.testY.shape[2]):
+        print("\n=======================WIP ====================\n\tvisualize_cnn visualization")
+        if len(prediction.shape) == 2:
+            categories = prediction.shape[1]
+            if categories == 1:
+                print("\nevaluation prediction shape is [%s, %s] - regression" % (prediction.shape[0], prediction.shape[1]))
+            else:
+                print("\nevaluation prediction shape is [%s, %s] - categorization" % (prediction.shape[0], prediction.shape[1]))
                 
-                if d2r.testY[batch, period, target] == -1:
-                    if prediction[batch, period, target] == -1:
-                        results[0, 0] += 1
-                    elif prediction[batch, period, target] == 0:
-                        results[0, 1] += 1
-                    elif prediction[batch, period, target] == 1:
-                        results[0, 2] += 1
+                results = np.zeros([categories, categories], dtype=float)                
 
-                if d2r.testY[batch, period, target] == 0:
-                    if prediction[batch, period, target] == -1:
-                        results[1, 0] += 1
-                    elif prediction[batch, period, target] == 0:
-                        results[1, 1] += 1
-                    elif prediction[batch, period, target] == 1:
-                        results[1, 2] += 1
+                for batch in range(0, len(d2r.testY)):
+                    maxndx = np.argmax(prediction[batch])
+                    if d2r.testY[batch, 0] == -1:
+                        results[0, maxndx] += 1
+                    elif d2r.testY[batch, 0] == 0:
+                        results[1, maxndx] += 1
+                    elif d2r.testY[batch, 0] == 1:
+                        results[2, maxndx] += 1
 
-                if d2r.testY[batch, period, target] == 1:
-                    if prediction[batch, period, target] == -1:
-                        results[2, 0] += 1
-                    elif prediction[batch, period, target] == 0:
-                        results[2, 1] += 1
+                #np.set_printoptions()
+                print(np.array_str(results))
+                pdResults = pd.DataFrame(data=results, index=['-1', '0', '1'], columns=['-1', '0', '1'])
+                print("Rows represent test label values, Columns the predicted most likely choice")
+                print(pdResults)
+        else:
+            err_txt = "No preparation sequence specified"
+            raise NameError(err_txt)
+        
+        '''
+        accurate = 0
+        false_positive = 0
+        false_negative = 0
+        for batch in range(0, d2r.batches):
+            for period in range(0, dataPoints):
+                for target in range(0, d2r.testY.shape[2]):
+                    if prediction[batch, period, target] == d2r.testY[batch, period, target]:
+                        accurate += 1
                     elif prediction[batch, period, target] == 1:
-                        results[2, 2] += 1
-
-    df_results = pd.DataFrame(results)
-    print("\nPrediction result statistics\n%s\n" % (df_results.describe().transpose()))
+                        false_positive += 1
+                    elif d2r.testY[batch, period, target] == 1:
+                        false_negative += 1
+        print("Accurate: %s, false negative: %s, false positive: %s" % (accurate, false_negative, false_positive))
     
-    plt.tight_layout()
-    plt.show()
+        categories = 3
+        results = np.zeros([categories, categories]  , dtype=int)
+        for batch in range(0, d2r.batches):
+            for period in range(0, dataPoints):
+                for target in range(0, d2r.testY.shape[2]):
+                    
+                    if d2r.testY[batch, period, target] == -1:
+                        if prediction[batch, period, target] == -1:
+                            results[0, 0] += 1
+                        elif prediction[batch, period, target] == 0:
+                            results[0, 1] += 1
+                        elif prediction[batch, period, target] == 1:
+                            results[0, 2] += 1
+    
+                    if d2r.testY[batch, period, target] == 0:
+                        if prediction[batch, period, target] == -1:
+                            results[1, 0] += 1
+                        elif prediction[batch, period, target] == 0:
+                            results[1, 1] += 1
+                        elif prediction[batch, period, target] == 1:
+                            results[1, 2] += 1
+    
+                    if d2r.testY[batch, period, target] == 1:
+                        if prediction[batch, period, target] == -1:
+                            results[2, 0] += 1
+                        elif prediction[batch, period, target] == 0:
+                            results[2, 1] += 1
+                        elif prediction[batch, period, target] == 1:
+                            results[2, 2] += 1
+    
+        df_results = pd.DataFrame(results)
+        print("\nPrediction result statistics\n%s\n" % (df_results.describe().transpose()))
+        '''
+        
+        fig, axs = plt.subplots(2, 2)
+        fig.suptitle("CNN Test Results for - " + d2r.mlNode, fontsize=14, fontweight='bold')
+        
+        featureAxis = axs[0, 0]
+        featureAxis.set_title("Feature Data series")
+        featureAxis.set_xlabel("time periods")
+        featureAxis.set_ylabel("Data Value")
+    
+        lines = []
+        dataPoints = d2r.testX.shape[1]
+        '''
+        for batch in range(0, d2r.batches):
+            for featureNdx in range (0, d2r.feature_count):
+                lines.append(featureAxis.scatter(range(0, dataPoints), d2r.testX[batch, :, featureNdx], s=0.1))
+            #lines.append(featureAxis.scatter(range(0, dataPoints), d2r.testY[batch, :], s=0.1))
+            featureAxis.legend(lines, d2r.preparedFeatures, loc='upper center')
+        '''
+    
+        predictionAxis = axs[1, 0]
+        predictionAxis.set_title("Prediction series")
+        predictionAxis.set_xlabel("time periods")
+        predictionAxis.set_ylabel("Prediction Value")
+    
+        lines = []
+        targets = prediction.shape[0]
+        dataPoints = prediction.shape[1]
+        '''
+        for target in range(0, targets):
+            for category in range(0, categories):
+                lines.append(predictionAxis.scatter(range(0, dataPoints), prediction[target, :, category], s=0.1))
+                #lines.append(featureAxis.scatter(range(0, dataPoints), d2r.testY[batch, :], s=0.1))
+        #predictionAxis.legend(lines, d2r.preparedFeatures, loc='upper center')
+        '''
+    
+        plt.tight_layout()
+        plt.show()
+    
+    except Exception:
+        exc_info = sys.exc_info()
+        exc_str = exc_info[1].args[0]
+        if isinstance(exc_str, str):
+            exc_txt = err_txt + "\n\t" +exc_str
+        elif isinstance(exc_str, tuple):
+            exc_txt = err_txt + "\n\t"
+            for s in exc_str:
+                exc_txt += s
+        logging.debug(exc_txt)
+        sys.exit(exc_txt)
+
     return 
 
 def visualize_ak(d2r):
@@ -632,6 +684,10 @@ def evaluate_and_visualize(d2r):
         d2r.model = d2r.model.export_model()
     d2r.evaluation = d2r.model.evaluate(x=d2r.testX, y=d2r.testY)
     prediction = d2r.model.predict(d2r.testX)
+    if len(prediction.shape) == 2:
+        print("\nevaluation prediction shape is [%s, %s]" % (prediction.shape[0], prediction.shape[1]))
+    elif len(prediction.shape) == 3:
+        print("\nevaluation prediction shape is [%s, %s, %s]" % (prediction.shape[0], prediction.shape[1], prediction.shape[2]))
 
     '''
     if d2r.trainer == TRAINING_TENSORFLOW:

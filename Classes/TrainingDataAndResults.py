@@ -31,6 +31,7 @@ class Data2Results():
         Constructor
         '''
         self.dataDict = dict()
+        self.normDataDict = dict()
         self.maxDictLength = 0
         self.minDictLength = 99999999
         
@@ -41,6 +42,14 @@ class Data2Results():
     @dataDict.setter
     def dataDict(self, dataDict):
         self._dataDict = dataDict
+    
+    @property
+    def normDataDict(self):
+        return self._normDataDict
+    
+    @normDataDict.setter
+    def normDataDict(self, normDataDict):
+        self._normDataDict = normDataDict
     
     '''
     definition graph properties

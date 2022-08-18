@@ -96,6 +96,12 @@ JSON_BATCHES = "batches"
 JSON_FILTER_COUNT = "filterCount" 
 JSON_FILTER_SIZE = "filterSize"
 
+JSON_MAXPOOLING_1D = "MaxPooling1D"
+JSON_GLOBAL_MAXPOOLING_1D = "GlobalMaxPool1D"
+JSON_POOL_SIZE = "poolSize"
+
+JSON_FLATTEN = "flatten"
+
 JSON_IGNORE_BLANKS = "ignoreBlanks"
 JSON_FLOW_DATA_FILE = "flowDataFile"
 JSON_FEATURE_FIELDS = "features"

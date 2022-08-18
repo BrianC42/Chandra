@@ -208,6 +208,33 @@ def balance_classes(d2r, model_type):
     elif model_type == INPUT_LAYERTYPE_CNN:
         print("\n============== WIP =============\n\tWORK IN PROGRESS\n\tbalance_classes for CNN\n================================\n")
 
+        categories, counts = np.unique(d2r.trainY, return_counts=True)
+        minCount = min(counts)
+        batches = minCount * len(categories)
+        
+        ''' equal number of batches for each category '''
+        npX = np.zeros([batches, d2r.trainX.shape[1], d2r.feature_count], dtype=float)
+        npY = np.zeros([batches, d2r.trainY.shape[1], d2r.trainY.shape[2]], dtype=float)
+        
+        batch = 0
+        catCount = np.zeros(len(categories))
+        catStep = np.zeros(len(categories))
+        for cat in range (0, len(counts)):
+            catStep[cat] = counts[cat] / minCount
+            
+        for srcBatch in range(0, len(d2r.trainY)):
+            for cat in range(0, len(categories)):
+                if catCount[cat] == minCount:
+                    pass
+                else:
+                    npX[batch, :, :] = d2r.trainX[int(srcBatch*catStep[cat]), :, :]
+                    npY[batch, :, :] = d2r.trainY[int(srcBatch*catStep[cat]), :, :]
+                    batch += 1
+                    catCount[cat] += 1
+        
+        d2r.trainX = npX
+        d2r.trainY = npY
+
     return
 
 def id_columns(data, features, targets):
@@ -294,92 +321,31 @@ def arrangeDataForTraining(d2r):
                 ...X represent causation features
                 ...Y represent effect targets
                 '''
-                dTrainX = dict()
-                dTrainY = dict()
-                dValidationX = dict()
-                dValidationY = dict()
-                dTestX = dict()
-                dTestY = dict()
 
-                for dKey in list(d2r.dataDict):
-                    data = np.array(d2r.dataDict[dKey], dtype=nx_data_precision)
-                    d2r.trainLen = int(len(data) * (1-(nx_test_split+nx_validation_split)))
-                    d2r.validateLen = int(len(data) * nx_validation_split)
-                    d2r.testLen = int(len(data) * nx_test_split)
-                    
-                    train = data[ : d2r.trainLen]
-                    x, y = np_to_conv1d(train, feature_cols, target_cols, d2r)
-                    dTrainX[dKey] = x
-                    dTrainY[dKey] = y
-                    
-                    validation  = data[d2r.trainLen : (d2r.trainLen + d2r.validateLen)]
-                    x, y = np_to_conv1d(validation, feature_cols, target_cols, d2r)
-                    dValidationX[dKey] = x
-                    dValidationY[dKey] = y
-                    
-                    test = data[d2r.trainLen + d2r.validateLen : ]
-                    x, y = np_to_conv1d(test, feature_cols, target_cols, d2r)
-                    dTestX[dKey] = x
-                    dTestY[dKey] = y
+                BATCHLEN = 26
+                TARGETWINDDOW = 1
+                
+                batches = 0
+                for dKey in list(d2r.normDataDict):
+                    batches += d2r.normDataDict[dKey].shape[0] - BATCHLEN
 
-                '''
-                d2r.trainX = dTrainX    
-                d2r.trainY = dTrainY
-                d2r.validateX = dValidationX
-                d2r.validateY = dValidationY
-                d2r.testX = dTestX
-                d2r.testY = dTestY
-                '''
+                npX = np.zeros([batches, BATCHLEN, len(feature_cols)], dtype=float)
+                npY = np.zeros([batches, TARGETWINDDOW, len(target_cols)], dtype=float)
 
-                '''
-                train, validate, test dicts contain variable length(?) 3D arrays, 1 batch per data source
-                '''
-                d2r.batches = len(d2r.dataDict)
-                trainLen = 0
-                validateLen = 0
-                testLen = 0
-    
-                for dKey in d2r.dataDict:
-                    if dTrainX[dKey].shape[1] > trainLen:
-                        trainLen = dTrainX[dKey].shape[1]
-                    if dValidationX[dKey].shape[1] > validateLen:
-                        validateLen = dValidationX[dKey].shape[1]
-                    if dTestX[dKey].shape[1] > testLen:
-                        testLen = dTestX[dKey].shape[1]
-                    
-                for dKey in d2r.dataDict:
-                    if dTrainX[dKey].shape[1] < trainLen:
-                        trainLen = dTrainX[dKey].shape[1]
-                    if dValidationX[dKey].shape[1] < validateLen:
-                        validateLen = dValidationX[dKey].shape[1]
-                    if dTestX[dKey].shape[1] < testLen:
-                        testLen = dTestX[dKey].shape[1]
-                    
-                npTrainX = np.empty([d2r.batches, trainLen, d2r.feature_count], dtype=float)
-                npTrainY = np.empty([d2r.batches, trainLen, 1], dtype=float)
-                npValidateX = np.empty([d2r.batches, validateLen, d2r.feature_count], dtype=float)
-                npValidateY = np.empty([d2r.batches, validateLen, 1], dtype=float)
-                npTestX = np.empty([d2r.batches, testLen, d2r.feature_count], dtype=float)
-                npTestY = np.empty([d2r.batches, testLen, 1], dtype=float)
-                    
                 batch = 0
-                for dKey in d2r.dataDict:
-                    npTrainX[batch, :, :] = dTrainX[dKey][0, -trainLen:, :]
-                    npTrainY[batch, :, :] = dTrainY[dKey][0, -trainLen:, :]
-                    npValidateX[batch, :, :] = dValidationX[dKey][0, -validateLen:, :]
-                    npValidateY[batch, :, :] = dValidationY[dKey][0, -validateLen:, :]
-                    npTestX[batch, :, :] = dTestX[dKey][0, -testLen:, :]
-                    npTestY[batch, :, :] = dTestY[dKey][0, -testLen:, :]
-                    
-                    batch += 1
-                    
-                d2r.batches = batch
-                d2r.trainX = npTrainX[:, :, :]
-                d2r.trainY = npTrainY[:, :, :]
-                d2r.validateX = npValidateX[:, :, :]
-                d2r.validateY = npValidateY[:, :, :]
-                d2r.testX = npTestX[:, :, :]
-                d2r.testY = npTestY[:, :, :]
+                for dKey in list(d2r.normDataDict):
+                    for srcPeriod in range(BATCHLEN, d2r.normDataDict[dKey].shape[0]):
+                        npX[batch, :, :] = d2r.normDataDict[dKey].to_numpy()[srcPeriod-BATCHLEN:srcPeriod, feature_cols]
+                        npY[batch, :, :] = d2r.normDataDict[dKey].to_numpy()[srcPeriod, target_cols]
+                        batch += 1
+                                
+                d2r.batches = batches
+                d2r.trainX    = npX[:d2r.trainLen, :, :]
+                d2r.trainY    = npY[:d2r.trainLen, :, :]
+                d2r.validateX = npX[d2r.trainLen:(d2r.trainLen + d2r.validateLen),:,  :]
+                d2r.validateY = npY[d2r.trainLen:(d2r.trainLen + d2r.validateLen),:,  :]
+                d2r.testX     = npX[d2r.trainLen + d2r.validateLen:, :,  :]
+                d2r.testY     = npY[d2r.trainLen + d2r.validateLen:, :,  :]
                 '''
                 train, validate, test contain 3D arrays
                 '''
@@ -464,13 +430,27 @@ def normalizeFeature(d2r, fields, fieldPrepCtrl, normalizeType):
         d2r.scaler = StandardScaler()
     elif normalizeType == JSON_DATA_PREP_NORMALIZE_MINMAX:
         d2r.scaler = MinMaxScaler(feature_range=(0,1))
-
+        
     if len(fields) > 0:
         normalizedFields = d2r.data[fields]
         d2r.scaler = d2r.scaler.fit(normalizedFields)
         normalizedFields = d2r.scaler.transform(normalizedFields)
         df_normalizedFields = pd.DataFrame(normalizedFields, columns=fields)
         d2r.data[fields] = df_normalizedFields
+        
+        print("\n============== WIP =============\n\tnormalizing data for multiple batches\n================================\n")
+        for dKey in list(d2r.dataDict):
+            if d2r.dataDict[dKey].shape[0] == 0:
+                print("Skipping and removing %s" % dKey)
+                del d2r.dataDict[dKey]
+            else:
+                d2r.normDataDict[dKey] = d2r.dataDict[dKey]
+                normalizedFields = d2r.dataDict[dKey][fields]
+                d2r.scaler = d2r.scaler.fit(normalizedFields)
+                normalizedFields = d2r.scaler.transform(normalizedFields)
+                df_normalizedFields = pd.DataFrame(normalizedFields, columns=fields)
+                d2r.dataDict[dKey][fields] = df_normalizedFields
+
         d2r.normalized = True
     else:
         d2r.normalized = False
@@ -551,7 +531,7 @@ def prepareTrainingData(d2r):
                             raise NameError(ex_txt)
                 else:
                     err_txt = "No preparation sequence specified"
-                    raise NameError(ex_txt)
+                    raise NameError(err_txt)
 
                 d2r.archiveData(nx_output_data_file)
         
