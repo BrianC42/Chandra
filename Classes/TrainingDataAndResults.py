@@ -5,6 +5,8 @@ Created on Nov 15, 2021
 
 Git access error problem
 '''
+import numpy as np
+import pandas as pd
 import networkx as nx
 import matplotlib.pyplot as plt
 from executing.executing import get_setter
@@ -363,3 +365,53 @@ class Data2Results():
         nx.draw_circular(self.graph, arrows=True, with_labels=True, font_weight='bold')
         plt.show()        
         
+    def visualize_categorization_samples(self):
+        TRAIN_NDX = 0
+        VALIDATE_NDX = 1
+        TEST_NDX = 2
+        trainCategories, trainIndices, trainCounts = np.unique(self.trainY, return_index=True, return_counts=True)
+        validateCategories, validateIndices, validateCounts = np.unique(self.validateY, return_index=True, return_counts=True)
+        testCategories, testIndices, testCounts = np.unique(self.testY, return_index=True, return_counts=True)
+    
+        categories = len(trainCategories)
+        fig, axs = plt.subplots(categories, 3)
+        fig.suptitle("CNN Test Results for - " + self.mlNode, fontsize=14, fontweight='bold')
+        
+        for ndx in range (0, categories):
+            featureAxis = axs[ndx, TRAIN_NDX]
+            featureAxis.set_title("Feature Training Data series - category %s" % trainCategories[ndx])
+            featureAxis.set_xlabel("time periods")
+            featureAxis.set_ylabel("Feature Values")
+            lines = []
+            for feature in range(0, self.trainX.shape[2]):
+                x = range(0, len(self.trainX[trainIndices[ndx], :, feature]))
+                y = self.trainX[trainIndices[ndx], :, feature]
+                lines.append(featureAxis.plot(x, y, label=self.preparedFeatures[feature]))
+            featureAxis.legend()
+    
+            featureAxis = axs[ndx, VALIDATE_NDX]
+            featureAxis.set_title("Feature Validation Data series - category %s" % validateCategories[ndx])
+            featureAxis.set_xlabel("time periods")
+            featureAxis.set_ylabel("Feature Values")
+            lines = []
+            for feature in range(0, self.validateX.shape[2]):
+                x = range(0, len(self.validateX[validateIndices[ndx], :, feature]))
+                y = self.validateX[validateIndices[ndx], :, feature]
+                lines.append(featureAxis.plot(x, y, label=self.preparedFeatures[feature]))
+            featureAxis.legend()
+    
+            featureAxis = axs[ndx, TEST_NDX]
+            featureAxis.set_title("Feature Testing Data series - category %s" % testCategories[ndx])
+            featureAxis.set_xlabel("time periods")
+            featureAxis.set_ylabel("Feature Values")
+            lines = []
+            for feature in range(0, self.testX.shape[2]):
+                x = range(0, len(self.testX[testIndices[ndx], :, feature]))
+                y = self.testX[testIndices[ndx], :, feature]
+                lines.append(featureAxis.plot(x, y, label=self.preparedFeatures[feature]))
+            featureAxis.legend()
+    
+        plt.tight_layout()
+        plt.show()
+            
+        return

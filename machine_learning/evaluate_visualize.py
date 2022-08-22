@@ -31,6 +31,136 @@ from TrainingDataAndResults import INPUT_LAYERTYPE_RNN
 from TrainingDataAndResults import INPUT_LAYERTYPE_CNN
 from matplotlib.pyplot import tight_layout
 
+def sanityCheckMACD(combined=None, npX=None, npY=None, verbose=False):
+    print("\nSanity check of MACD data")
+    
+    LOOKBACK = 1
+    NEGCROSS = 0
+    NEUTRAL = 1
+    POSCROSS = 2
+    nanCnt = 0
+    MACD = 0
+    MACD_SIGNAL = 1
+    MACD_FLAG = 0
+    macdFlagCnts = [0, 0, 0]
+    correctFlags = [0, 0, 0]
+    errFlags = [0, 0, 0]
+    if combined is None:
+        for batch in range (0, npX.shape[0]):
+            '''
+            for ndx in range (LOOKBACK, npX.shape[1]):
+                if npX[batch, ndx, :].any().isnan() or npY[batch, ndx, :].any().isnan():
+                    pass
+                else:
+            '''
+            ndx = npX.shape[1] - 1
+            dayDiff = npX[batch, ndx, MACD] - npX[batch, ndx, MACD_SIGNAL]
+            priorDiff = npX[batch, ndx-1, MACD] - npX[batch, ndx-1, MACD_SIGNAL]
+            if npY[batch, 0, MACD_FLAG] == 0:
+                macdFlagCnts[NEUTRAL] += 1
+                if priorDiff > 0 and dayDiff > 0:
+                    correctFlags[NEUTRAL] += 1
+                elif priorDiff < 0 and dayDiff < 0:
+                    correctFlags[NEUTRAL] += 1
+                else:
+                    if verbose:
+                        print("\nMACD flag: %s" % npY[batch, 0, MACD_FLAG])
+                        print("MACD        batch/ndx-1: %s/%s\t%s\t\tndx  : %s" % (batch, ndx, npX[batch, ndx-1, MACD], npX[batch, ndx, MACD]))
+                        print("MACD Signal batch/ndx-1: %s/%s\t%s\t\tndx  : %s" % (batch, ndx, npX[batch, ndx-1, MACD_SIGNAL], npX[batch, ndx, MACD_SIGNAL]))
+                        print("batch/day %s/%s difference: %s day %s difference: %s" % (batch, ndx-1, priorDiff, ndx, dayDiff))
+                    errFlags[NEUTRAL] += 1
+            elif npY[batch, 0, MACD_FLAG] == -1:
+                macdFlagCnts[NEGCROSS] += 1
+                if (npX[batch, ndx, MACD] < npX[batch, ndx, MACD_SIGNAL]):
+                    if priorDiff > 0 and dayDiff < 0:
+                        correctFlags[NEGCROSS] += 1
+                    else:
+                        if verbose:
+                            print("\nMACD flag: %s" % npY[batch, 0, MACD_FLAG])
+                            print("MACD        batch/ndx-1: %s/%s\t%s\t\tndx  : %s" % (batch, ndx, npX[batch, ndx-1, MACD], npX[batch, ndx, MACD]))
+                            print("MACD Signal batch/ndx-1: %s/%s\t%s\t\tndx  : %s" % (batch, ndx, npX[batch, ndx-1, MACD_SIGNAL], npX[batch, ndx, MACD_SIGNAL]))
+                            print("batch/day %s/%s difference: %s day %s difference: %s" % (batch, ndx-1, priorDiff, ndx, dayDiff))
+                        errFlags[NEGCROSS] += 1
+                else:
+                    if verbose:
+                        print("\nMACD flag: %s" % npY[batch, 0, MACD_FLAG])
+                        print("MACD        batch/ndx-1: %s/%s\t%s\t\tndx  : %s" % (batch, ndx, npX[batch, ndx-1, MACD], npX[batch, ndx, MACD]))
+                        print("MACD Signal batch/ndx-1: %s/%s\t%s\t\tndx  : %s" % (batch, ndx, npX[batch, ndx-1, MACD_SIGNAL], npX[batch, ndx, MACD_SIGNAL]))
+                        print("batch/day %s/%s difference: %s day %s difference: %s" % (batch, ndx-1, priorDiff, ndx, dayDiff))
+                    errFlags[NEGCROSS] += 1
+            elif npY[batch, 0, MACD_FLAG] == 1:
+                macdFlagCnts[POSCROSS] += 1
+                if (npX[batch, ndx, MACD] > npX[batch, ndx, MACD_SIGNAL]):
+                    if priorDiff < 0 and dayDiff > 0:
+                        correctFlags[POSCROSS] += 1
+                    else:
+                        if verbose:
+                            print("\nMACD flag: %s" % npY[batch, 0, MACD_FLAG])
+                            print("MACD        batch/ndx-1: %s/%s\t%s\t\tndx  : %s" % (batch, ndx, npX[batch, ndx-1, MACD], npX[batch, ndx, MACD]))
+                            print("MACD Signal batch/ndx-1: %s/%s\t%s\t\tndx  : %s" % (batch, ndx, npX[batch, ndx-1, MACD_SIGNAL], npX[batch, ndx, MACD_SIGNAL]))
+                            print("batch/day %s/%s difference: %s day %s difference: %s" % (batch, ndx-1, priorDiff, ndx, dayDiff))
+                        errFlags[POSCROSS] += 1
+                else:
+                    if verbose:
+                        print("\nMACD flag: %s" % npY[batch, 0, MACD_FLAG])
+                        print("MACD        batch/ndx-1: %s/%s\t%s\t\tndx  : %s" % (batch, ndx, npX[batch, ndx-1, MACD], npX[batch, ndx, MACD]))
+                        print("MACD Signal batch/ndx-1: %s/%s\t%s\t\tndx  : %s" % (batch, ndx, npX[batch, ndx-1, MACD_SIGNAL], npX[batch, ndx, MACD_SIGNAL]))
+                        print("batch/day %s/%s difference: %s day %s difference: %s" % (batch, ndx-1, priorDiff, ndx, dayDiff))
+                    errFlags[POSCROSS] += 1
+                    
+        print("\nMACD flags count:%s\nCorrect %s\nIncorrect %s" % (macdFlagCnts, correctFlags, errFlags))
+    else:
+        dfData = combined
+    
+        for ndx in range (LOOKBACK, len(dfData)):
+            if pd.isna(dfData.at[ndx, 'MACD_flag']) or pd.isna(dfData.at[ndx-LOOKBACK, 'MACD_flag']):
+                pass
+            else:
+                dayDiff = dfData.at[ndx, 'MACD'] - dfData.at[ndx, 'MACD_Signal']
+                priorDiff = dfData.at[ndx-1, 'MACD'] - dfData.at[ndx-1, 'MACD_Signal']
+                if dfData.at[ndx, 'MACD_flag'] == 0:
+                    macdFlagCnts[NEUTRAL] += 1
+                    if priorDiff > 0 and dayDiff > 0:
+                        correctFlags[NEUTRAL] += 1
+                    elif priorDiff < 0 and dayDiff < 0:
+                        correctFlags[NEUTRAL] += 1
+                    else:
+                        print("\nMACD flag: %s" % dfData.at[ndx, 'MACD_flag'])
+                        print("MACD        ndx-1: %s\t%s\t\tndx  : %s" % (ndx, dfData.at[ndx-1, 'MACD'], dfData.at[ndx, 'MACD']))
+                        print("MACD Signal ndx-1: %s\t%s\t\tndx  : %s" % (ndx, dfData.at[ndx-1, 'MACD_Signal'], dfData.at[ndx, 'MACD_Signal']))
+                        print("day %s difference: %s day %s difference: %s" % (ndx-1, priorDiff, ndx, dayDiff))
+                        errFlags[NEUTRAL] += 1
+                elif dfData.at[ndx, 'MACD_flag'] == -1:
+                    macdFlagCnts[NEGCROSS] += 1
+                    if (dfData.at[ndx, 'MACD'] < dfData.at[ndx, 'MACD_Signal']):
+                        if priorDiff > 0 and dayDiff < 0:
+                            correctFlags[NEGCROSS] += 1
+                        else:
+                            print("\nMACD flag: %s" % dfData.at[ndx, 'MACD_flag'])
+                            print("MACD        ndx-1: %s\t%s\t\tndx  : %s" % (ndx, dfData.at[ndx-1, 'MACD'], dfData.at[ndx, 'MACD']))
+                            print("MACD Signal ndx-1: %s\t%s\t\tndx  : %s" % (ndx, dfData.at[ndx-1, 'MACD_Signal'], dfData.at[ndx, 'MACD_Signal']))
+                            print("day %s difference: %s day %s difference: %s" % (ndx-1, priorDiff, ndx, dayDiff))
+                            errFlags[NEGCROSS] += 1
+                    else:
+                        errFlags[NEGCROSS] += 1
+                elif dfData.at[ndx, 'MACD_flag'] == 1:
+                    macdFlagCnts[POSCROSS] += 1
+                    if (dfData.at[ndx, 'MACD'] > dfData.at[ndx, 'MACD_Signal']):
+                        if priorDiff < 0 and dayDiff > 0:
+                            correctFlags[POSCROSS] += 1
+                        else:
+                            print("\nMACD flag: %s" % dfData.at[ndx, 'MACD_flag'])
+                            print("MACD        ndx-1: %s\t%s\t\tndx  : %s" % (ndx, dfData.at[ndx-1, 'MACD'], dfData.at[ndx, 'MACD']))
+                            print("MACD Signal ndx-1: %s\t%s\t\tndx  : %s" % (ndx, dfData.at[ndx-1, 'MACD_Signal'], dfData.at[ndx, 'MACD_Signal']))
+                            print("day %s difference: %s day %s difference: %s" % (ndx-1, priorDiff, ndx, dayDiff))
+                            errFlags[POSCROSS] += 1
+                    else:
+                        errFlags[POSCROSS] += 1
+                
+        print("\nMACD flags count:%s\nCorrect %s\nIncorrect %s" % (macdFlagCnts, correctFlags, errFlags))
+    
+    return
+
 def visualize_fit(d2r):
     '''
     fig1, axs1 = plt.subplots(2, 1)
@@ -528,20 +658,25 @@ def visualize_rnn(d2r):
     plt.show()
     return 
 
+
 def visualize_cnn(d2r, prediction):
 
     try:
         err_txt = "*** An exception occurred visualizing CNN results ***"
     
-        print("\n=======================WIP ====================\n\tvisualize_cnn visualization")
+        print("\n=======================WIP ====================\n\tvisualize_cnn visualization - hard coded category count(3)")
         if len(prediction.shape) == 2:
             categories = prediction.shape[1]
             if categories == 1:
-                print("\nevaluation prediction shape is [%s, %s] - regression" % (prediction.shape[0], prediction.shape[1]))
+                dfPrediction = pd.DataFrame(prediction)
+                print("\nprediction\n%s" % (dfPrediction.describe().transpose()))
             else:
                 print("\nevaluation prediction shape is [%s, %s] - categorization" % (prediction.shape[0], prediction.shape[1]))
+                #print(prediction)
                 
-                results = np.zeros([categories, categories], dtype=float)                
+                THRESHOLD = 0.66
+                results = np.zeros([categories, categories], dtype=float)
+                thresholdResults = np.zeros([categories, categories], dtype=float)
 
                 for batch in range(0, len(d2r.testY)):
                     maxndx = np.argmax(prediction[batch])
@@ -552,100 +687,31 @@ def visualize_cnn(d2r, prediction):
                     elif d2r.testY[batch, 0] == 1:
                         results[2, maxndx] += 1
 
-                #np.set_printoptions()
-                print(np.array_str(results))
-                pdResults = pd.DataFrame(data=results, index=['-1', '0', '1'], columns=['-1', '0', '1'])
+                    if prediction[batch, maxndx] > THRESHOLD:
+                        if d2r.testY[batch, 0] == -1:
+                            thresholdResults[0, maxndx] += 1
+                        elif d2r.testY[batch, 0] == 0:
+                            thresholdResults[1, maxndx] += 1
+                        elif d2r.testY[batch, 0] == 1:
+                            thresholdResults[2, maxndx] += 1
+
+                testCategories, testCounts = np.unique(d2r.testY, return_counts=True)
+                print("Testing labels are %s with %s distribution" % (testCategories, testCounts))
+                print("All results")
                 print("Rows represent test label values, Columns the predicted most likely choice")
+                pdResults = pd.DataFrame(data=results, index=['-1', '0', '1'], columns=['-1', '0', '1'])
                 print(pdResults)
+                
+                print("\nResults above probability threshold value of %s" % THRESHOLD)
+                print("Rows represent test label values, Columns the predicted most likely choice")
+                pdResults = pd.DataFrame(data=thresholdResults, index=['-1', '0', '1'], columns=['-1', '0', '1'])
+                print(pdResults)
+                
+                d2r.visualize_categorization_samples()
+                
         else:
             err_txt = "No preparation sequence specified"
-            raise NameError(err_txt)
-        
-        '''
-        accurate = 0
-        false_positive = 0
-        false_negative = 0
-        for batch in range(0, d2r.batches):
-            for period in range(0, dataPoints):
-                for target in range(0, d2r.testY.shape[2]):
-                    if prediction[batch, period, target] == d2r.testY[batch, period, target]:
-                        accurate += 1
-                    elif prediction[batch, period, target] == 1:
-                        false_positive += 1
-                    elif d2r.testY[batch, period, target] == 1:
-                        false_negative += 1
-        print("Accurate: %s, false negative: %s, false positive: %s" % (accurate, false_negative, false_positive))
-    
-        categories = 3
-        results = np.zeros([categories, categories]  , dtype=int)
-        for batch in range(0, d2r.batches):
-            for period in range(0, dataPoints):
-                for target in range(0, d2r.testY.shape[2]):
-                    
-                    if d2r.testY[batch, period, target] == -1:
-                        if prediction[batch, period, target] == -1:
-                            results[0, 0] += 1
-                        elif prediction[batch, period, target] == 0:
-                            results[0, 1] += 1
-                        elif prediction[batch, period, target] == 1:
-                            results[0, 2] += 1
-    
-                    if d2r.testY[batch, period, target] == 0:
-                        if prediction[batch, period, target] == -1:
-                            results[1, 0] += 1
-                        elif prediction[batch, period, target] == 0:
-                            results[1, 1] += 1
-                        elif prediction[batch, period, target] == 1:
-                            results[1, 2] += 1
-    
-                    if d2r.testY[batch, period, target] == 1:
-                        if prediction[batch, period, target] == -1:
-                            results[2, 0] += 1
-                        elif prediction[batch, period, target] == 0:
-                            results[2, 1] += 1
-                        elif prediction[batch, period, target] == 1:
-                            results[2, 2] += 1
-    
-        df_results = pd.DataFrame(results)
-        print("\nPrediction result statistics\n%s\n" % (df_results.describe().transpose()))
-        '''
-        
-        fig, axs = plt.subplots(2, 2)
-        fig.suptitle("CNN Test Results for - " + d2r.mlNode, fontsize=14, fontweight='bold')
-        
-        featureAxis = axs[0, 0]
-        featureAxis.set_title("Feature Data series")
-        featureAxis.set_xlabel("time periods")
-        featureAxis.set_ylabel("Data Value")
-    
-        lines = []
-        dataPoints = d2r.testX.shape[1]
-        '''
-        for batch in range(0, d2r.batches):
-            for featureNdx in range (0, d2r.feature_count):
-                lines.append(featureAxis.scatter(range(0, dataPoints), d2r.testX[batch, :, featureNdx], s=0.1))
-            #lines.append(featureAxis.scatter(range(0, dataPoints), d2r.testY[batch, :], s=0.1))
-            featureAxis.legend(lines, d2r.preparedFeatures, loc='upper center')
-        '''
-    
-        predictionAxis = axs[1, 0]
-        predictionAxis.set_title("Prediction series")
-        predictionAxis.set_xlabel("time periods")
-        predictionAxis.set_ylabel("Prediction Value")
-    
-        lines = []
-        targets = prediction.shape[0]
-        dataPoints = prediction.shape[1]
-        '''
-        for target in range(0, targets):
-            for category in range(0, categories):
-                lines.append(predictionAxis.scatter(range(0, dataPoints), prediction[target, :, category], s=0.1))
-                #lines.append(featureAxis.scatter(range(0, dataPoints), d2r.testY[batch, :], s=0.1))
-        #predictionAxis.legend(lines, d2r.preparedFeatures, loc='upper center')
-        '''
-    
-        plt.tight_layout()
-        plt.show()
+            raise NameError(err_txt)                
     
     except Exception:
         exc_info = sys.exc_info()
@@ -682,30 +748,15 @@ def evaluate_and_visualize(d2r):
 
     if d2r.trainer == TRAINING_AUTO_KERAS:
         d2r.model = d2r.model.export_model()
-    d2r.evaluation = d2r.model.evaluate(x=d2r.testX, y=d2r.testY)
-    prediction = d2r.model.predict(d2r.testX)
-    if len(prediction.shape) == 2:
-        print("\nevaluation prediction shape is [%s, %s]" % (prediction.shape[0], prediction.shape[1]))
-    elif len(prediction.shape) == 3:
-        print("\nevaluation prediction shape is [%s, %s, %s]" % (prediction.shape[0], prediction.shape[1], prediction.shape[2]))
 
-    '''
-    if d2r.trainer == TRAINING_TENSORFLOW:
-        if d2r.modelType == INPUT_LAYERTYPE_DENSE:
-            pass
-            #visualize_dense(d2r)
-        elif d2r.modelType == INPUT_LAYERTYPE_RNN:
-            pass
-            #visualize_rnn(d2r)
-        elif d2r.modelType == INPUT_LAYERTYPE_CNN:
-            pass
-            #visualize_cnn(d2r)
-    elif d2r.trainer == TRAINING_AUTO_KERAS:
-        d2r.model = d2r.model.export_model()
-        d2r.model.summary()
-        #visualize_ak(d2r)
-    '''
-    
+    d2r.evaluation = d2r.model.evaluate(x=d2r.testX, y=d2r.testY)
+    prediction = d2r.model.predict(d2r.testX, verbose=0)
+
+    if len(prediction.shape) == 2:
+        print("\nevaluation prediction shape is [%s, %s]\n" % (prediction.shape[0], prediction.shape[1]))
+    elif len(prediction.shape) == 3:
+        print("\nevaluation prediction shape is [%s, %s, %s]\n" % (prediction.shape[0], prediction.shape[1], prediction.shape[2]))
+
     nx_visualizations = nx.get_node_attributes(d2r.graph, JSON_VISUALIZATIONS)[d2r.mlNode]
     for vizualize in nx_visualizations:
         if vizualize == JSON_VISUALIZE_TRAINING_FIT:

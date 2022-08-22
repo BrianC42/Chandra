@@ -34,6 +34,8 @@
 			"preparationSequence" : ["normalize", "oneHotEncoding"],
 			"noPreparation" : {
 				"features" : [
+					{"feature" : "MACD"},
+					{"feature" : "MACD_Signal"},
 					{"feature" : "MACD_flag"}
 				],
 				"comment holding noPreparation features" : [
@@ -45,10 +47,8 @@
 			},
 			"normalize" : {
 				"comment types supported" : ["standard", "minmax"],
-				"type" : "standard",
+				"type" : "minmax",
 				"features" : [
-					{"feature" : "EMA12"},
-					{"feature" : "EMA26"}
 				],
 				"comment normalize - minmax - holding features" : [
 					{"feature" : "OBV"},
@@ -117,10 +117,12 @@
     		{"layerType" : "flatten", "layerName" : "Flatten"},
     		{"layerType" : "dense", "layerName" : "hiddenDense", "layerUnits": 10, "outputActivation" : "relu"},
     		{"layerType" : "dense", "layerName" : "hiddenDense", "layerUnits": 128, "outputActivation" : "relu"},
-    		{"layerType" : "dense", "layerName" : "output", "layerUnits": 1, "outputActivation" : "relu"}
+    		{"layerType" : "dense", "layerName" : "output", "layerUnits": 1, "outputActivation" : "relu"},
+    		{"layerType" : "GlobalMaxPool1D", "layerName" : "GMP1D"},
+    		{"layerType" : "dense", "layerName" : "output", "layerUnits": 1, "outputActivation" : "tanh"}
 		],
 		"modelLayers" : [
-    		{"layerType" : "conv1d", "layerName" : "input", "featureCount": 2, "filterCount" : 20, "filterSize" : 9, "outputActivation" : "relu"},
+    		{"layerType" : "conv1d", "layerName" : "input", "featureCount": 2, "timeSteps": 5, "filterCount" : 3, "filterSize" : 2, "outputActivation" : "linear"},
     		{"layerType" : "GlobalMaxPool1D", "layerName" : "GMP1D"},
     		{"layerType" : "dense", "layerName" : "output", "layerUnits": 3, "outputActivation" : "softmax"}
 		],
@@ -129,7 +131,7 @@
 			"denseRegularation" : false,
 			"regularationValue" : 0.0,
 			"batchSize" : 32,
-			"epochs" : 80,
+			"epochs" : 5,
 			"useBias" : true,
 			"validationSplit" : 0.1,
 			"testSplit" : 0.2,
@@ -137,6 +139,7 @@
 			"verbose" : 2,
 			"balanceClasses" : true,
 			"compilationLoss" : "mae",
+			"Compilation Loss metrics" : ["mae", "sparse_categorical_crossentropy"],
 			"compilationMetrics" : ["accuracy"],
 			"optimizer" : "adam",
 			"optimizers - adam" : "fast, tends to overfit",
@@ -160,7 +163,7 @@
 		"TensorflowData" : {
 			"balanceClasses" : true,
 			"ignoreBlanks" : true,
-			"features" : ["EMA12", "EMA26"],
+			"features" : ["MACD", "MACD_Signal"],
 			"targets" : ["MACD_flag"],
 			"timeSequence" : false
 			}
@@ -175,7 +178,7 @@
 		},
 	"conditionalFields" : {
 		"TensorflowData" : {
-			"features" : ["EMA12", "EMA26"],
+			"features" : ["MACD", "MACD_Signal"],
 			"targets" : ["MACD_flag"],
 			"timeSequence" : false
 			}

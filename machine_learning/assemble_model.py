@@ -121,6 +121,7 @@ def build_layer(d2r, layer_type, layer_definition, input_layer):
         if input_layer:
             d2r.modelType = INPUT_LAYERTYPE_CNN
             nx.set_node_attributes(d2r.graph, {d2r.mlNode:INPUT_LAYERTYPE_CNN}, MODEL_TYPE)
+            d2r.timesteps = layer_definition[JSON_TIMESTEPS]
             d2r.filter_count = layer_definition[JSON_FILTER_COUNT]
             d2r.filter_size = layer_definition[JSON_FILTER_SIZE]
 

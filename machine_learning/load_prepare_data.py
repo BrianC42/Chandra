@@ -64,6 +64,8 @@ from TrainingDataAndResults import INPUT_LAYERTYPE_DENSE
 from TrainingDataAndResults import INPUT_LAYERTYPE_RNN
 from TrainingDataAndResults import INPUT_LAYERTYPE_CNN
 
+from evaluate_visualize import sanityCheckMACD
+
 '''
 Data pipeline step 2
 ====================
@@ -106,7 +108,7 @@ def balance_classes(d2r, model_type):
     categorization = [-1, 1]
     
     if model_type == INPUT_LAYERTYPE_RNN:
-        print("\n============== WIP =============\nWORK IN PROGRESS\n\tbalance_classes hard coded for LSTM MACD_signal\n================================\n")
+        print("\n============== WIP =============\n\tbalance_classes hard coded for LSTM MACD_signal\n================================\n")
     
         count = 0
         for ndx in range(0, d2r.trainY.shape[0]):
@@ -154,7 +156,7 @@ def balance_classes(d2r, model_type):
         d2r.testY = target
         
     elif model_type == INPUT_LAYERTYPE_DENSE:
-        print("\n============== WIP =============\n\tWORK IN PROGRESS\n\tINPUT_LAYERTYPE_DENSE hard coded STEPS\n================================\n")
+        print("\n============== WIP =============\n\tINPUT_LAYERTYPE_DENSE hard coded STEPS\n================================\n")
         STEPS = 3
         cols = d2r.trainX.shape[1]
         count = 0
@@ -206,9 +208,12 @@ def balance_classes(d2r, model_type):
         d2r.testY = target
         
     elif model_type == INPUT_LAYERTYPE_CNN:
-        print("\n============== WIP =============\n\tWORK IN PROGRESS\n\tbalance_classes for CNN\n================================\n")
+        print("\n============== WIP =============\n\tbalance_classes for CNN\n================================\n")
 
+        print("Training shapes x:%s y:%s\nvalidating shapes x:%s y:%s\ntesting shapes x:%s y:%s" % (d2r.trainX.shape, d2r.trainY.shape, d2r.validateX.shape, d2r.validateY.shape, d2r.testX.shape, d2r.testY.shape))
         categories, counts = np.unique(d2r.trainY, return_counts=True)
+        #sanityCheckMACD(npX=d2r.trainX, npY=d2r.trainY)
+        print("Prior to balancing training labels are %s with %s distribution" % (categories, counts))
         minCount = min(counts)
         batches = minCount * len(categories)
         
@@ -216,24 +221,28 @@ def balance_classes(d2r, model_type):
         npX = np.zeros([batches, d2r.trainX.shape[1], d2r.feature_count], dtype=float)
         npY = np.zeros([batches, d2r.trainY.shape[1], d2r.trainY.shape[2]], dtype=float)
         
-        batch = 0
-        catCount = np.zeros(len(categories))
         catStep = np.zeros(len(categories))
         for cat in range (0, len(counts)):
             catStep[cat] = counts[cat] / minCount
-            
-        for srcBatch in range(0, len(d2r.trainY)):
-            for cat in range(0, len(categories)):
-                if catCount[cat] == minCount:
-                    pass
-                else:
-                    npX[batch, :, :] = d2r.trainX[int(srcBatch*catStep[cat]), :, :]
-                    npY[batch, :, :] = d2r.trainY[int(srcBatch*catStep[cat]), :, :]
-                    batch += 1
-                    catCount[cat] += 1
+
+        catCount = np.zeros(len(categories))
+        nextCatNdx = np.zeros(len(categories))
         
+        for sample in range (0, minCount):
+            for cat in range (0, len(categories)):
+                for offset in range (0, len(d2r.trainY)-int(nextCatNdx[cat])):
+                    srcNdx = int(nextCatNdx[cat]) + offset
+                    if d2r.trainY[srcNdx, 0, 0] == categories[cat]:
+                        npX[(sample * len(counts)) + cat, :, :] = d2r.trainX[srcNdx, :, :]
+                        npY[(sample * len(counts)) + cat, :, :] = d2r.trainY[srcNdx, :, :]
+                        catCount[cat] += 1
+                        nextCatNdx[cat] = srcNdx + int(catStep[cat])
+                        break                            
+                    
         d2r.trainX = npX
         d2r.trainY = npY
+        categories, counts = np.unique(d2r.trainY, return_counts=True)
+        print("After balancing training labels are %s with %s distribution" % (categories, counts))
 
     return
 
@@ -297,6 +306,9 @@ def arrangeDataForTraining(d2r):
             validation  = data[d2r.trainLen                     : (d2r.trainLen + d2r.validateLen)]
             test        = data[d2r.trainLen + d2r.validateLen   : ]
             
+            if len(list(d2r.normDataDict)) == 0:
+                d2r.normDataDict = d2r.dataDict
+            
             nx_model_type = nx.get_node_attributes(d2r.graph, MODEL_TYPE)[d2r.mlNode]
     
             if nx_model_type == INPUT_LAYERTYPE_DENSE:
@@ -322,24 +334,24 @@ def arrangeDataForTraining(d2r):
                 ...Y represent effect targets
                 '''
 
-                BATCHLEN = 26
                 TARGETWINDDOW = 1
                 
                 batches = 0
                 for dKey in list(d2r.normDataDict):
-                    batches += d2r.normDataDict[dKey].shape[0] - BATCHLEN
+                    batches += d2r.normDataDict[dKey].shape[0] - d2r.timesteps
 
-                npX = np.zeros([batches, BATCHLEN, len(feature_cols)], dtype=float)
+                npX = np.zeros([batches, d2r.timesteps, len(feature_cols)], dtype=float)
                 npY = np.zeros([batches, TARGETWINDDOW, len(target_cols)], dtype=float)
 
                 batch = 0
                 for dKey in list(d2r.normDataDict):
-                    for srcPeriod in range(BATCHLEN, d2r.normDataDict[dKey].shape[0]):
-                        npX[batch, :, :] = d2r.normDataDict[dKey].to_numpy()[srcPeriod-BATCHLEN:srcPeriod, feature_cols]
-                        npY[batch, :, :] = d2r.normDataDict[dKey].to_numpy()[srcPeriod, target_cols]
+                    for srcPeriod in range(d2r.timesteps, d2r.normDataDict[dKey].shape[0]):
+                        npX[batch, :, :] = d2r.normDataDict[dKey].to_numpy()[srcPeriod-d2r.timesteps : srcPeriod, feature_cols]
+                        npY[batch, :, :] = d2r.normDataDict[dKey].to_numpy()[                          srcPeriod-1, target_cols]
                         batch += 1
                                 
-                d2r.batches = batches
+                #sanityCheckMACD(npX=npX, npY=npY)
+                d2r.batches = batch
                 d2r.trainX    = npX[:d2r.trainLen, :, :]
                 d2r.trainY    = npY[:d2r.trainLen, :, :]
                 d2r.validateX = npX[d2r.trainLen:(d2r.trainLen + d2r.validateLen),:,  :]
@@ -374,8 +386,12 @@ def arrangeDataForTraining(d2r):
             d2r.validateY = d2r.validateY.to_frame()
             d2r.testX = d2r.testX.to_frame()
             d2r.testY = d2r.testY.to_frame()
-        
+            
+        #sanityCheckMACD(npX=d2r.trainX, npY=d2r.trainY)
+        #d2r.visualize_categorization_samples()
         balance_classes(d2r, nx_model_type)
+        #d2r.visualize_categorization_samples()
+        sanityCheckMACD(npX=d2r.trainX, npY=d2r.trainY)
 
     except Exception:
         exc_info = sys.exc_info()
@@ -597,6 +613,9 @@ def selectTrainingData(d2r, node_name, nx_edge):
                     for fld in d2r.dataSeriesIDFields:
                         l_filter.append(fld)
                 df_inputs = df_data.filter(l_filter)
+                
+                #sanityCheckMACD(combined=df_inputs)
+                
                 df_combined = pd.concat([df_combined, df_inputs], ignore_index=True)
                 d2r.dataDict[FileSpec] = df_inputs
             else:
@@ -610,6 +629,8 @@ def selectTrainingData(d2r, node_name, nx_edge):
         if ignoreBlanks:
             print("Removing NaN")
             df_combined = df_combined.dropna()
+            for dKey in list(d2r.dataDict):
+                d2r.dataDict[dKey] = d2r.dataDict[dKey].dropna()
                 
     #df_combined.drop(targetFields, axis=1)
     return df_combined
