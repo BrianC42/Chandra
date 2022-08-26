@@ -34,8 +34,6 @@
 			"preparationSequence" : ["normalize", "oneHotEncoding"],
 			"noPreparation" : {
 				"features" : [
-					{"feature" : "MACD"},
-					{"feature" : "MACD_Signal"},
 					{"feature" : "MACD_flag"}
 				],
 				"comment holding noPreparation features" : [
@@ -46,9 +44,11 @@
 				]
 			},
 			"normalize" : {
-				"comment types supported" : ["standard", "minmax"],
-				"type" : "minmax",
+				"comment types supported" : ["standard", "minmax", "relative_time_series"],
+				"type" : "relative_time_series",
 				"features" : [
+					{"feature" : "MACD"},
+					{"feature" : "MACD_Signal"}
 				],
 				"comment normalize - minmax - holding features" : [
 					{"feature" : "OBV"},
@@ -122,8 +122,9 @@
     		{"layerType" : "dense", "layerName" : "output", "layerUnits": 1, "outputActivation" : "tanh"}
 		],
 		"modelLayers" : [
-    		{"layerType" : "conv1d", "layerName" : "input", "featureCount": 2, "timeSteps": 5, "filterCount" : 3, "filterSize" : 2, "outputActivation" : "linear"},
+    		{"layerType" : "conv1d", "layerName" : "input", "featureCount": 2, "timeSteps": 9, "filterCount" : 5, "filterSize" : 3, "outputActivation" : "tanh"},
     		{"layerType" : "GlobalMaxPool1D", "layerName" : "GMP1D"},
+    		{"layerType" : "dense", "layerName" : "hiddenDense", "layerUnits": 10, "outputActivation" : "tanh"},
     		{"layerType" : "dense", "layerName" : "output", "layerUnits": 3, "outputActivation" : "softmax"}
 		],
 		"training" : {
@@ -131,7 +132,7 @@
 			"denseRegularation" : false,
 			"regularationValue" : 0.0,
 			"batchSize" : 32,
-			"epochs" : 5,
+			"epochs" : 50,
 			"useBias" : true,
 			"validationSplit" : 0.1,
 			"testSplit" : 0.2,

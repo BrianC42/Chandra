@@ -38,6 +38,8 @@ import tensorflow as tf
 #os.environ['AUTOGRAPH_VERBOSITY'] = 1
 
 from TrainingDataAndResults import Data2Results as d2r
+from TrainingDataAndResults import TRAINING_TENSORFLOW
+from TrainingDataAndResults import TRAINING_AUTO_KERAS
 
 from configuration import get_ini_data
 from configuration import read_config_json
@@ -53,9 +55,6 @@ from train_model import trainModel
 from evaluate_visualize import evaluate_and_visualize
 
 from configuration_constants import JSON_MODEL_FILE
-
-from TrainingDataAndResults import TRAINING_TENSORFLOW
-from TrainingDataAndResults import TRAINING_AUTO_KERAS
 
 if __name__ == '__main__':
     print ("Good morning Dr. Chandra. I am ready for my next lesson.\n\tI'm currently running Tensorflow version %s\n" % tf.__version__)

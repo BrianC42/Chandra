@@ -18,7 +18,9 @@ from configuration_constants import JSON_SHUFFLE_DATA
 
 def trainModel(d2r):
     try:
-        print("\nTraining shapes x:%s y:%s\nvalidating shapes x:%s y:%s\ntesting shapes x:%s y:%s" % (d2r.trainX.shape, d2r.trainY.shape, d2r.validateX.shape, d2r.validateY.shape, d2r.testX.shape, d2r.testY.shape))
+        print("\nTraining shapes x:%s y:%s" % (d2r.trainX.shape, d2r.trainY.shape))
+        print("validating shapes x:%s y:%s" % (d2r.validateX.shape, d2r.validateY.shape))
+        print("Testing shapes x:%s y:%s" % (d2r.testX.shape, d2r.testY.shape))
         
         nx_train = nx.get_node_attributes(d2r.graph, JSON_TRAIN)[d2r.mlNode]
         nx_batch = nx.get_node_attributes(d2r.graph, JSON_BATCH)[d2r.mlNode]

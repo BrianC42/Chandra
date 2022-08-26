@@ -31,8 +31,11 @@ from TrainingDataAndResults import INPUT_LAYERTYPE_RNN
 from TrainingDataAndResults import INPUT_LAYERTYPE_CNN
 from matplotlib.pyplot import tight_layout
 
-def sanityCheckMACD(combined=None, npX=None, npY=None, verbose=False):
-    print("\nSanity check of MACD data")
+def sanityCheckMACD(combined=None, npX=None, npY=None, verbose=False, stage=""):
+    if combined is None:
+        print("\nSanity check of MACD data: 2 numpy tables " + stage)
+    else:
+        print("\nSanity check of MACD data: 1 dataframe " + stage)
     
     LOOKBACK = 1
     NEGCROSS = 0
@@ -61,6 +64,8 @@ def sanityCheckMACD(combined=None, npX=None, npY=None, verbose=False):
                 if priorDiff > 0 and dayDiff > 0:
                     correctFlags[NEUTRAL] += 1
                 elif priorDiff < 0 and dayDiff < 0:
+                    correctFlags[NEUTRAL] += 1
+                elif priorDiff == 0 and dayDiff == 0:
                     correctFlags[NEUTRAL] += 1
                 else:
                     if verbose:
@@ -112,7 +117,8 @@ def sanityCheckMACD(combined=None, npX=None, npY=None, verbose=False):
     else:
         dfData = combined
     
-        for ndx in range (LOOKBACK, len(dfData)):
+        #for ndx in range (LOOKBACK, len(dfData)):
+        for ndx in dfData.index[1:]:
             if pd.isna(dfData.at[ndx, 'MACD_flag']) or pd.isna(dfData.at[ndx-LOOKBACK, 'MACD_flag']):
                 pass
             else:
@@ -749,7 +755,7 @@ def evaluate_and_visualize(d2r):
     if d2r.trainer == TRAINING_AUTO_KERAS:
         d2r.model = d2r.model.export_model()
 
-    d2r.evaluation = d2r.model.evaluate(x=d2r.testX, y=d2r.testY)
+    d2r.evaluation = d2r.model.evaluate(x=d2r.testX, y=d2r.testY, verbose=0)
     prediction = d2r.model.predict(d2r.testX, verbose=0)
 
     if len(prediction.shape) == 2:

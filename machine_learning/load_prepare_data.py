@@ -14,6 +14,9 @@ import numpy as np
 import tensorflow as tf
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
+from Scalers import chandraScaler
+from Scalers import NORMALIZE_RELATIVE_TIME_SERIES
+
 from configuration_constants import JSON_PRECISION
 from configuration_constants import JSON_OUTPUT_FLOW
 from configuration_constants import JSON_INPUT_DATA_FILE
@@ -31,6 +34,7 @@ from configuration_constants import JSON_DATA_PREP_NORMALIZE
 from configuration_constants import JSON_DATA_PREP_NORMALIZATION_TYPE
 from configuration_constants import JSON_DATA_PREP_NORMALIZE_STANDARD
 from configuration_constants import JSON_DATA_PREP_NORMALIZE_MINMAX
+from configuration_constants import JSON_DATA_PREP_NORMALIZE_RELATIVE_TIME_SERIES
 from configuration_constants import JSON_DATA_PREP_SEQ
 from configuration_constants import JSON_DATA_PREP_ENCODING
 from configuration_constants import JSON_BALANCED
@@ -74,6 +78,7 @@ arrangeDataForTraining
     id_columns
     np_to_sequence
 '''
+
 def loadTrainingData(d2r):
     '''
     load data for training and testing
@@ -310,7 +315,9 @@ def arrangeDataForTraining(d2r):
                 d2r.normDataDict = d2r.dataDict
             
             nx_model_type = nx.get_node_attributes(d2r.graph, MODEL_TYPE)[d2r.mlNode]
-    
+ 
+            #sanityCheckMACD(combined=d2r.data)
+   
             if nx_model_type == INPUT_LAYERTYPE_DENSE:
                 d2r.trainX = train[: , feature_cols]
                 d2r.trainY = train[: , target_cols]
@@ -350,7 +357,7 @@ def arrangeDataForTraining(d2r):
                         npY[batch, :, :] = d2r.normDataDict[dKey].to_numpy()[                          srcPeriod-1, target_cols]
                         batch += 1
                                 
-                #sanityCheckMACD(npX=npX, npY=npY)
+                #sanityCheckMACD(npX=npX, npY=npY, stage="creating train, validate, test data sets")
                 d2r.batches = batch
                 d2r.trainX    = npX[:d2r.trainLen, :, :]
                 d2r.trainY    = npY[:d2r.trainLen, :, :]
@@ -386,12 +393,35 @@ def arrangeDataForTraining(d2r):
             d2r.validateY = d2r.validateY.to_frame()
             d2r.testX = d2r.testX.to_frame()
             d2r.testY = d2r.testY.to_frame()
-            
-        #sanityCheckMACD(npX=d2r.trainX, npY=d2r.trainY)
-        #d2r.visualize_categorization_samples()
+
+        ''' =================== Sanity check of data preparation processing ===================
+        if nx_read_attr[d2r.mlNode] == JSON_TENSORFLOW:    
+            if nx_model_type == INPUT_LAYERTYPE_DENSE:
+                pass
+            elif nx_model_type == INPUT_LAYERTYPE_RNN:
+                pass
+            elif nx_model_type == INPUT_LAYERTYPE_CNN:
+                sanityCheckMACD(npX=d2r.trainX, npY=d2r.trainY, stage="arranged")
+                d2r.visualize_categorization_samples()
+        elif nx_read_attr[d2r.mlNode] == JSON_AUTOKERAS:
+            pass
+        =================== Sanity check of data preparation processing =================== '''
+
         balance_classes(d2r, nx_model_type)
-        #d2r.visualize_categorization_samples()
-        sanityCheckMACD(npX=d2r.trainX, npY=d2r.trainY)
+        
+        ''' =================== Sanity check of data preparation processing ===================
+        if nx_read_attr[d2r.mlNode] == JSON_TENSORFLOW:    
+            if nx_model_type == INPUT_LAYERTYPE_DENSE:
+                pass
+            elif nx_model_type == INPUT_LAYERTYPE_RNN:
+                pass
+            elif nx_model_type == INPUT_LAYERTYPE_CNN:
+                sanityCheckMACD(npX=d2r.trainX, npY=d2r.trainY, stage="after balancing")
+                d2r.visualize_categorization_samples()
+        elif nx_read_attr[d2r.mlNode] == JSON_AUTOKERAS:
+            pass
+        =================== Sanity check of data preparation processing =================== '''
+        
 
     except Exception:
         exc_info = sys.exc_info()
@@ -442,15 +472,22 @@ def generate1hot(d2r, fields, fieldPrepCtrl):
     return
 
 def normalizeFeature(d2r, fields, fieldPrepCtrl, normalizeType):
+    #sanityCheckMACD(combined=d2r.data, stage="d2r.data prior to normalization")
+
     if normalizeType == JSON_DATA_PREP_NORMALIZE_STANDARD:
         d2r.scaler = StandardScaler()
     elif normalizeType == JSON_DATA_PREP_NORMALIZE_MINMAX:
         d2r.scaler = MinMaxScaler(feature_range=(0,1))
+    elif normalizeType == JSON_DATA_PREP_NORMALIZE_RELATIVE_TIME_SERIES:
+        cs = chandraScaler()
+        d2r.scaler = cs.relativeTimeSeries()
         
     if len(fields) > 0:
         normalizedFields = d2r.data[fields]
+        
         d2r.scaler = d2r.scaler.fit(normalizedFields)
         normalizedFields = d2r.scaler.transform(normalizedFields)
+        
         df_normalizedFields = pd.DataFrame(normalizedFields, columns=fields)
         d2r.data[fields] = df_normalizedFields
         
@@ -462,10 +499,13 @@ def normalizeFeature(d2r, fields, fieldPrepCtrl, normalizeType):
             else:
                 d2r.normDataDict[dKey] = d2r.dataDict[dKey]
                 normalizedFields = d2r.dataDict[dKey][fields]
+
                 d2r.scaler = d2r.scaler.fit(normalizedFields)
                 normalizedFields = d2r.scaler.transform(normalizedFields)
-                df_normalizedFields = pd.DataFrame(normalizedFields, columns=fields)
-                d2r.dataDict[dKey][fields] = df_normalizedFields
+                df_normalizedFields = pd.DataFrame(normalizedFields, index=d2r.dataDict[dKey].index, columns=fields)
+                d2r.normDataDict[dKey][fields] = df_normalizedFields
+
+                #sanityCheckMACD(combined=d2r.normDataDict[dKey], stage="d2r.normDataDict after normalization")
 
         d2r.normalized = True
     else:
@@ -614,7 +654,7 @@ def selectTrainingData(d2r, node_name, nx_edge):
                         l_filter.append(fld)
                 df_inputs = df_data.filter(l_filter)
                 
-                #sanityCheckMACD(combined=df_inputs)
+                #sanityCheckMACD(combined=df_inputs, stage="selectTrainingData")
                 
                 df_combined = pd.concat([df_combined, df_inputs], ignore_index=True)
                 d2r.dataDict[FileSpec] = df_inputs
