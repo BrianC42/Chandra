@@ -16,6 +16,10 @@ from configuration_constants import JSON_DATA_PREP_PROCESS
 from configuration_constants import JSON_TRAIN
 from configuration_constants import JSON_TENSORFLOW
 from configuration_constants import JSON_AUTOKERAS
+from configuration_constants import JSON_ML_GOAL
+from configuration_constants import JSON_ML_GOAL_CATEGORIZATION
+from configuration_constants import JSON_ML_GOAL_REGRESSION
+from configuration_constants import JSON_ML_GOAL_COMBINE_SAMPLE_COUNT
 from configuration_constants import JSON_TENSORFLOW_DATA
 from configuration_constants import JSON_AUTOKERAS_PARAMETERS
 from configuration_constants import JSON_PRECISION
@@ -215,8 +219,27 @@ def add_meta_process_node (js_config, nx_graph) :
             nx_layers = js_conditional[JSON_LAYERS]
             nx.set_node_attributes(nx_graph, {nx_process_name:nx_layers}, JSON_LAYERS)
             
+        if JSON_ML_GOAL  in js_conditional:
+            nx_ml_goal = js_conditional[JSON_ML_GOAL]
+            if nx_ml_goal == JSON_ML_GOAL_CATEGORIZATION:
+                pass
+            elif  nx_ml_goal == JSON_ML_GOAL_REGRESSION:
+                pass
+            else:
+                raise NameError(nx_process_name + " invalid " + JSON_ML_GOAL)
+            nx.set_node_attributes(nx_graph, {nx_process_name:nx_ml_goal}, JSON_ML_GOAL)
+        else:
+            raise NameError(nx_process_name + " requires " + JSON_ML_GOAL)
+            
+        if JSON_ML_GOAL_COMBINE_SAMPLE_COUNT in js_conditional:
+            nx_ml_goal = js_conditional[JSON_ML_GOAL_COMBINE_SAMPLE_COUNT]
+        else:
+            nx_ml_goal = 1
+        nx.set_node_attributes(nx_graph, {nx_process_name:nx_ml_goal}, JSON_ML_GOAL_COMBINE_SAMPLE_COUNT)
+             
         if JSON_TRAINING in js_conditional:
             add_training_controls(js_conditional[JSON_TRAINING], nx_graph, nx_process_name)
+            
     elif nx_processType == JSON_AUTOKERAS:
         print("============== WIP =============\n\tAuto Keras node details\n================================")
         nx.set_node_attributes(nx_graph, {nx_process_name:nx_processType}, JSON_TRAIN)

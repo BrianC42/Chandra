@@ -127,6 +127,27 @@ class Data2Results():
     def modelType(self, modelType):
         self._modelType = modelType
     
+    @property
+    def categorizationRegression(self):
+        return self._categorizationRegression
+    
+    @categorizationRegression.setter
+    def categorizationRegression(self, categorizationRegression):
+        self._categorizationRegression = categorizationRegression
+    
+    @property
+    def categories(self):
+        return self._categories
+    
+    @property
+    def categorieCounts(self):
+        return self._counts
+
+    def determineCategories(self):
+        dfLabels = self._data[self._rawTargets]
+        npLabels = np.array(dfLabels)
+        self._categories, self._counts = np.unique(npLabels, return_counts=True)
+    
     '''
     training data properties
         rawData - source data for samples

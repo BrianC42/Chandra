@@ -80,7 +80,7 @@ class chandraScaler():
                 if self.npNormalizedFeatures[sample, 0] >= self.npNormalizedFeatures[sample, 1]:
                     print("relationship changed from <: %s %s" % (self.npNormalizedFeatures[sample, 0], self.npNormalizedFeatures[sample, 1]))
             else:
-                if self.npNormalizedFeatures[sample, 0] != self.npNormalizedFeatures[sample, 1]:
+                if abs(self.npNormalizedFeatures[sample, 0] - self.npNormalizedFeatures[sample, 1]) > 0.0001:
                     print("relationship changed from ==: %s %s" % (self.npNormalizedFeatures[sample, 0], self.npNormalizedFeatures[sample, 1]))
                 
         return self

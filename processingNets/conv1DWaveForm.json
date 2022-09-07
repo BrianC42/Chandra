@@ -16,7 +16,7 @@
 			"comment 1" : "do not concatenate multiple symbols due to time sequencing",
 			"comment file spec" : "d:\\brian\\AI-Projects\\tda\\market_analysis_data\\[a-c]*.csv",
 			"inputFile" : [
-				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\[a-z]*.csv"
+				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\[a-c]*.csv"
 			]
 		}
 	}
@@ -122,9 +122,9 @@
     		{"layerType" : "dense", "layerName" : "output", "layerUnits": 1, "outputActivation" : "tanh"}
 		],
 		"modelLayers" : [
-    		{"layerType" : "conv1d", "layerName" : "input", "featureCount": 2, "timeSteps": 9, "filterCount" : 5, "filterSize" : 3, "outputActivation" : "tanh"},
+    		{"layerType" : "conv1d", "layerName" : "input", "featureCount": 2, "timeSteps": 9, "filterCount" : 3, "filterSize" : 5, "outputActivation" : "tanh"},
     		{"layerType" : "GlobalMaxPool1D", "layerName" : "GMP1D"},
-    		{"layerType" : "dense", "layerName" : "hiddenDense", "layerUnits": 10, "outputActivation" : "tanh"},
+    		{"layerType" : "dense", "layerName" : "hiddenDense", "layerUnits": 10, "outputActivation" : "relu"},
     		{"layerType" : "dense", "layerName" : "output", "layerUnits": 3, "outputActivation" : "softmax"}
 		],
 		"training" : {
@@ -132,7 +132,7 @@
 			"denseRegularation" : false,
 			"regularationValue" : 0.0,
 			"batchSize" : 32,
-			"epochs" : 50,
+			"epochs" : 10,
 			"useBias" : true,
 			"validationSplit" : 0.1,
 			"testSplit" : 0.2,

@@ -26,6 +26,10 @@ from configuration_constants import JSON_INPUT_FLOWS
 from configuration_constants import JSON_PROCESS_TYPE
 from configuration_constants import JSON_DATA_LOAD_PROCESS
 
+from configuration_constants import JSON_ML_GOAL
+from configuration_constants import JSON_ML_GOAL_CATEGORIZATION
+from configuration_constants import JSON_ML_GOAL_REGRESSION
+from configuration_constants import JSON_ML_GOAL_COMBINE_SAMPLE_COUNT
 from configuration_constants import JSON_DATA_PREP_PROCESS
 from configuration_constants import JSON_DATA_PREPARATION_CTRL
 from configuration_constants import JSON_DATA_PREP_FEATURES
@@ -109,8 +113,7 @@ def loadTrainingData(d2r):
 
     return
 
-def balance_classes(d2r, model_type):
-    categorization = [-1, 1]
+def balance_classes(d2r, model_type, categorization):
     
     if model_type == INPUT_LAYERTYPE_RNN:
         print("\n============== WIP =============\n\tbalance_classes hard coded for LSTM MACD_signal\n================================\n")
@@ -129,7 +132,7 @@ def balance_classes(d2r, model_type):
                 count += 1
         d2r.trainX = train
         d2r.trainY = target
-
+    
         count = 0
         for ndx in range(0, d2r.validateY.shape[0]):
             if d2r.validateY[ndx, d2r.validateY.shape[1]-1] in categorization:
@@ -144,7 +147,7 @@ def balance_classes(d2r, model_type):
                 count += 1
         d2r.validateX = validate
         d2r.validateY = target
-
+    
         count = 0
         for ndx in range(0, d2r.testY.shape[0]):
             if d2r.testY[ndx, d2r.testY.shape[1]-1] in categorization:
@@ -159,63 +162,15 @@ def balance_classes(d2r, model_type):
                 count += 1
         d2r.testX = test
         d2r.testY = target
-        
-    elif model_type == INPUT_LAYERTYPE_DENSE:
-        print("\n============== WIP =============\n\tINPUT_LAYERTYPE_DENSE hard coded STEPS\n================================\n")
-        STEPS = 3
-        cols = d2r.trainX.shape[1]
-        count = 0
-        for ndx in range(STEPS, d2r.trainY.shape[0]):
-            if d2r.trainY[ndx, d2r.trainY.shape[1]-1] in categorization:
-                count += 1
-        train = np.empty([count, d2r.trainX.shape[1] * STEPS], dtype=float)
-        target = np.empty([count, d2r.trainY.shape[1]], dtype=float)
-        count = 0
-        for ndx in range(STEPS, d2r.trainY.shape[0]):
-            if d2r.trainY[ndx, d2r.trainY.shape[1]-1] in categorization:
-                for stepndx in range(0, STEPS):
-                    train[count, stepndx * cols : (stepndx * cols) + cols] = d2r.trainX[ndx - stepndx, :]
-                target[count] = d2r.trainY[ndx - stepndx, :]
-                count += 1
-        d2r.trainX = train
-        d2r.trainY = target
-
-        count = 0
-        for ndx in range(STEPS, d2r.validateY.shape[0]):
-            if d2r.validateY[ndx, d2r.validateY.shape[1]-1] in categorization:
-                count += 1
-        validate = np.empty([count, d2r.validateX.shape[1] * STEPS], dtype=float)
-        target = np.empty([count, d2r.validateY.shape[1]], dtype=float)
-        count = 0
-        for ndx in range(STEPS, d2r.validateY.shape[0]):
-            if d2r.validateY[ndx, d2r.validateY.shape[1]-1] in categorization:
-                for stepndx in range(0, STEPS):
-                    validate[count, stepndx * cols : (stepndx * cols) + cols] = d2r.validateX[ndx - stepndx, :]
-                target[count] = d2r.validateY[ndx - stepndx, :]
-                count += 1
-        d2r.validateX = validate
-        d2r.validateY = target
-
-        count = 0
-        for ndx in range(STEPS, d2r.testY.shape[0]):
-            if d2r.testY[ndx, d2r.testY.shape[1]-1] in categorization:
-                count += 1
-        test = np.empty([count, d2r.testX.shape[1] * STEPS], dtype=float)
-        target = np.empty([count, d2r.testY.shape[1]], dtype=float)
-        count = 0
-        for ndx in range(STEPS, d2r.testY.shape[0]):
-            if d2r.testY[ndx, d2r.testY.shape[1]-1] in categorization:
-                for stepndx in range(0, STEPS):
-                    test[count, stepndx * cols : (stepndx * cols) + cols] = d2r.testX[ndx - stepndx, :]
-                target[count] = d2r.testY[ndx - stepndx, :]
-                count += 1
-        d2r.testX = test
-        d2r.testY = target
-        
+    
     elif model_type == INPUT_LAYERTYPE_CNN:
         print("\n============== WIP =============\n\tbalance_classes for CNN\n================================\n")
 
-        print("Training shapes x:%s y:%s\nvalidating shapes x:%s y:%s\ntesting shapes x:%s y:%s" % (d2r.trainX.shape, d2r.trainY.shape, d2r.validateX.shape, d2r.validateY.shape, d2r.testX.shape, d2r.testY.shape))
+        print("Sample data contains %s samples with %s categories and distribution %s" % \
+              (len(d2r.data), d2r.categories, d2r.categorieCounts))
+        print("Training shapes features:%s labels:%s\nvalidating shapes x:%s y:%s\ntesting shapes x:%s y:%s" % \
+              (d2r.trainX.shape, d2r.trainY.shape, d2r.validateX.shape, d2r.validateY.shape, d2r.testX.shape, d2r.testY.shape))
+
         categories, counts = np.unique(d2r.trainY, return_counts=True)
         #sanityCheckMACD(npX=d2r.trainX, npY=d2r.trainY)
         print("Prior to balancing training labels are %s with %s distribution" % (categories, counts))
@@ -246,10 +201,69 @@ def balance_classes(d2r, model_type):
                     
         d2r.trainX = npX
         d2r.trainY = npY
+        
         categories, counts = np.unique(d2r.trainY, return_counts=True)
         print("After balancing training labels are %s with %s distribution" % (categories, counts))
 
+    elif model_type == INPUT_LAYERTYPE_DENSE:
+        print("Sample data contains %s samples with categories: %s categories distributed: %s" % \
+              (len(d2r.data), d2r.categories, d2r.categorieCounts))
+        print("Training shapes features:%s labels:%s\nvalidating shapes features:%s labels:%s\ntesting shapes features:%s labels:%s" % \
+              (d2r.trainX.shape, d2r.trainY.shape, d2r.validateX.shape, d2r.validateY.shape, d2r.testX.shape, d2r.testY.shape))
+
+        categories, counts = np.unique(d2r.trainY, return_counts=True)
+        print("Prior to balancing training labels are %s with %s distribution" % (categories, counts))
+
+        minCount = min(counts)
+        
+        ''' equal number of batches for each category '''
+        npX = np.zeros([minCount * len(counts), d2r.feature_count], dtype=float)
+        npY = np.zeros([minCount * len(counts), d2r.trainY.shape[1]], dtype=float)
+        
+        catStep = np.zeros(len(categories))
+        for cat in range (0, len(counts)):
+            catStep[cat] = counts[cat] / minCount
+
+        catCount = np.zeros(len(categories))
+        nextCatNdx = np.zeros(len(categories))
+        
+        sampleStep = len(d2r.categories)
+        for sample in range (0, len(npX), sampleStep):
+            for cat in range (0, len(categories)):
+                for offset in range (0, len(d2r.trainY)-int(nextCatNdx[cat])):
+                    srcNdx = int(nextCatNdx[cat]) + offset
+                    #srcNdx = int(nextCatNdx[cat])
+                    if d2r.trainY[srcNdx, 0] == categories[cat]:
+                        npX[sample + cat, :] = d2r.trainX[srcNdx, :]
+                        npY[sample + cat, :] = d2r.trainY[srcNdx, :]
+                        catCount[cat] += 1
+                        nextCatNdx[cat] = srcNdx + int(catStep[cat])
+                        break                            
+                    
+        d2r.trainX = npX
+        d2r.trainY = npY
+
+        categories, counts = np.unique(d2r.trainY, return_counts=True)
+        print("After balancing training labels are %s with %s distribution" % (categories, counts))
+        
     return
+
+def combineMultipleSamples(d2r, model_goal, combineCount, data_precision, feature_cols, target_cols):
+    npData   = np.array(d2r.data, dtype=float)
+    features = np.zeros([npData.shape[0] - combineCount + 1, len(feature_cols) * combineCount], dtype=data_precision)
+    labels = np.zeros([npData.shape[0] - combineCount + 1, len(target_cols)], dtype=data_precision)
+    for ndx in range(0, features.shape[0]):
+        for stepndx in range (0, combineCount):
+            startCol = stepndx * len(feature_cols)
+            endCol = startCol + len(feature_cols)
+            features[ndx, startCol : endCol] = npData[ndx + stepndx, feature_cols]
+        if model_goal == JSON_ML_GOAL_CATEGORIZATION:
+            labels[ndx, : ] = npData[ndx , target_cols]
+        elif  model_goal == JSON_ML_GOAL_REGRESSION:
+            print("\n============== WIP =============\n\combineMultipleSamples - regression\n================================\n")
+    d2r.feature_count = features.shape[1]
+    
+    return features, labels
 
 def id_columns(data, features, targets):
     feature_cols = []
@@ -288,7 +302,6 @@ def np_to_sequence(data, features, targets, seq_size=1):
 def arrangeDataForTraining(d2r):
     try:
         err_txt = "\nError arranging data for training"
-        
         features = d2r.preparedFeatures
         targets = d2r.preparedTargets
         
@@ -315,16 +328,27 @@ def arrangeDataForTraining(d2r):
                 d2r.normDataDict = d2r.dataDict
             
             nx_model_type = nx.get_node_attributes(d2r.graph, MODEL_TYPE)[d2r.mlNode]
+            nx_combine_sample_Count = nx.get_node_attributes(d2r.graph, JSON_ML_GOAL_COMBINE_SAMPLE_COUNT)[d2r.mlNode]
  
+            nx_categorization_regression = nx.get_node_attributes(d2r.graph, JSON_ML_GOAL)[d2r.mlNode]
+            d2r.categorizationRegression = nx_categorization_regression
             #sanityCheckMACD(combined=d2r.data)
    
             if nx_model_type == INPUT_LAYERTYPE_DENSE:
-                d2r.trainX = train[: , feature_cols]
-                d2r.trainY = train[: , target_cols]
-                d2r.validateX = validation[: , feature_cols]
-                d2r.validateY = validation[: , target_cols]
-                d2r.testX = test[: , feature_cols]
-                d2r.testY = test[: , target_cols]
+                if d2r.categorizationRegression == JSON_ML_GOAL_CATEGORIZATION:
+                    if nx_combine_sample_Count > 1:
+                        features, labels = combineMultipleSamples(d2r, d2r.categorizationRegression, nx_combine_sample_Count, nx_data_precision, feature_cols, target_cols)
+                        d2r.trainX = features[ : d2r.trainLen , :]
+                        d2r.trainY = labels[ : d2r.trainLen , :]
+                        d2r.validateX = features[d2r.trainLen : (d2r.trainLen + d2r.validateLen) , :]
+                        d2r.validateY = labels[d2r.trainLen : (d2r.trainLen + d2r.validateLen) , :]
+                        d2r.testX = features[d2r.trainLen + d2r.validateLen : , :]
+                        d2r.testY = labels[d2r.trainLen + d2r.validateLen : , :]
+                        #d2r.determineCategories()
+                    else:
+                        print("\n============== WIP =============\n\tarrangeDataForTraining dense no combination\n================================\n")
+                elif  d2r.categorizationRegression == JSON_ML_GOAL_REGRESSION:
+                    print("\n============== WIP =============\n\tarrangeDataForTraining dense regression\n================================\n")
                 
             elif nx_model_type == INPUT_LAYERTYPE_RNN:
                 nx_time_steps = nx.get_node_attributes(d2r.graph, JSON_TIMESTEPS)[d2r.mlNode]
@@ -407,7 +431,7 @@ def arrangeDataForTraining(d2r):
             pass
         =================== Sanity check of data preparation processing =================== '''
 
-        balance_classes(d2r, nx_model_type)
+        balance_classes(d2r, nx_model_type, d2r.categories)
         
         ''' =================== Sanity check of data preparation processing ===================
         if nx_read_attr[d2r.mlNode] == JSON_TENSORFLOW:    
@@ -491,7 +515,6 @@ def normalizeFeature(d2r, fields, fieldPrepCtrl, normalizeType):
         df_normalizedFields = pd.DataFrame(normalizedFields, columns=fields)
         d2r.data[fields] = df_normalizedFields
         
-        print("\n============== WIP =============\n\tnormalizing data for multiple batches\n================================\n")
         for dKey in list(d2r.dataDict):
             if d2r.dataDict[dKey].shape[0] == 0:
                 print("Skipping and removing %s" % dKey)
@@ -691,6 +714,7 @@ def collect_and_select_data(d2r):
                         nx_flowFilename = nx.get_edge_attributes(d2r.graph, JSON_FLOW_DATA_FILE)
                         flowFilename = nx_flowFilename[edge_i[0], edge_i[1], output_flow]
                         d2r.data = selectTrainingData(d2r, node_i, edge_i)
+                        d2r.determineCategories()
                         d2r.archiveData(flowFilename)
                         break
         

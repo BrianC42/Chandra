@@ -7,7 +7,7 @@
 "outputFile" : "\\logs\\chandra_output",
 "loggingLevel" : "debug",
 "loggingFormat" : "%(asctime)s: %(levelname)s: %(message)s",
-"processNet" : "\\chandra\\processingNets\\conv1DWaveForm.json",
+"processNet" : "\\chandra\\processingNets\\MACD.json",
 "comment end of specification" : "--------------------------------------------------------",
 "Comment use" : {
 	"1" : "\\chandra\\processingNets\\gmAutoEncoder.json"
@@ -16,7 +16,8 @@
 	"1" : "\\chandra\\processingNets\\conv1DWaveForm.json",
 	"2" : "\\chandra\\processingNets\\marketTechnicals.json",
 	"4" : "\\chandra\\processingNets\\LSTMAutoEncoder.json",
-	"5" : "Time series characterization"
+	"5" : "Time series characterization",
+	"6" : "\\chandra\\processingNets\\MACD.json"
 },
 "Comment goals achieved" : {
 	"1" : "\\chandra\\processingNets\\denseLinearRegression.json",

@@ -1,0 +1,211 @@
+{
+"comment - processing node section" : "Specification details for the processing nodes",
+"processNodes" : [
+	{
+	"processNodeName" : "dataIn",
+	"requiredFields" : {
+		"processType" : "dataLoad",
+		"comments: supported values - processType" : ["dataLoad", "dataPrep", "Tensorflow"],
+		"inputFlows" : [],
+		"outputFlow" : "MACD",
+		"outputFile" : "",
+		"logFile" : ""
+	},
+	"conditionalFields" : {
+		"dataLoadCtrl" : {
+			"comment file spec" : "d:\\brian\\AI-Projects\\tda\\market_analysis_data\\[a-c]*.csv",
+			"inputFile" : [
+				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\c.csv"
+			]
+		}
+	}
+	},
+	{
+	"processNodeName" : "PrepData",
+	"requiredFields" : {
+		"processType" : "dataPrep",
+		"inputFlows" : ["MACD"],
+		"outputFlow" : "MACDPrepared",
+		"logFile" : ""
+	},
+	"conditionalFields" : {
+		"dataPrepCtrl" : {
+			"preparationSequence" : ["normalize", "oneHotEncoding"],
+			"noPreparation" : {
+				"features" : [
+					{"feature" : "MACD_flag"}
+				],
+				"comment holding noPreparation features" : [
+					{"feature" : "MACD"},
+					{"feature" : "MACD_Signal"},
+					{"feature" : "MACD_flag"},
+					{"feature" : "DateTime"}
+				]
+			},
+			"normalize" : {
+				"comment types supported" : ["standard", "minmax", "relative_time_series"],
+				"type" : "relative_time_series",
+				"features" : [
+					{"feature" : "MACD"},
+					{"feature" : "MACD_Signal"}
+				],
+				"comment normalize - minmax - holding features" : [
+					{"feature" : "OBV"},
+					{"feature" : "Volume"},
+					{"feature" : "Relative Strength"},
+					{"feature" : "ADX"},
+					{"feature" : "AccumulationDistribution"},
+					{"feature" : "OBV"},
+					{"feature" : "MACD"},
+					{"feature" : "MACD_Signal"},
+					{"feature" : "SMA20"},
+					{"feature" : "EMA12"},
+					{"feature" : "EMA20"},
+					{"feature" : "EMA26"},
+					{"feature" : "40 day change"},
+					{"feature" : "20 day change"},
+					{"feature" : "10 day change"},
+					{"feature" : "5 day change"},
+					{"feature" : "Open"},
+					{"feature" : "High"},
+					{"feature" : "Low"},
+					{"feature" : "Close"}
+				]
+			},
+			"oneHotEncoding" : {
+				"features" : [
+				],
+				"comment oneHot hoding definitions" : [
+					{
+					"feature" : "OBV",
+					"categoryType" : "seriesChangeUpDown",
+					"categories" : ["Up" , "Down"],
+					"outputFields" : ["OBVUp", "OBVDown"]
+					}
+				]
+			}
+		}
+	}
+	},
+	{
+	"processNodeName" : "MACD",
+	"requiredFields" : {
+		"comments: supported values - processType" : ["dataPrep", "Tensorflow"],
+		"processType" : "Tensorflow",
+		"inputFlows" : ["MACDPrepared"],
+		"outputFlow" : "",
+		"outputFile" : "d:\\brian\\AI-Projects\\models\\MACD",
+		"logFile" : "d:\\brian\\AI-Projects\\logs\\MACD.txt"
+	},
+	"conditionalFields" : {
+		"modelFile" : "d:\\brian\\AI-Projects\\models\\MACD",
+		"categorizationRegression" : "categorization",
+		"combineSampleCount" : 1,
+		"dataPrecision" : "float32",
+		"visualizations" : ["summary", "trainingFit"],
+		"supported visualizations" : ["summary", "trainingFit", "targetSeries", "dataGroups", "normalizationCategorization", "cnnResult", "testVsPrediction"],
+		"comment model specification values supported" : [
+			{
+			"layerType" : ["conv1d", "lstm", "dense", "TimeDistributed", "dropout", "flatten", "GlobalMaxPool1D"],
+			"layer params - common required" : ["layerType", "layerName", "outputActivation"],
+			"layer params - dense" : ["layerUnits"],
+			"layer params - lstm" : [""],
+			"layer params - conv1d" : ["featureCount", "timeSteps", "filterCount", "filterSize", ""],
+			"layer params - dropout" : ["dropoutRate"],
+			"returnSequences" : "true if the next layer is also an RNN layer",
+			"outputActivation" : ["linear", "relu", "tanh", "softmax", "sigmoid", "softplus", "softsign", "selu", "elu", "exponential"]
+			}
+		],
+		"modelLayers dense / regression" : [
+		],
+		"modelLayers LSTM / regression" : [
+		],
+		"modelLayers conv1D / regression" : [
+		],
+		"modelLayers dense / categorization" : [
+    		{"layerType" : "dense", "layerName" : "input", "featureCount": 2, "layerUnits": 16, "outputActivation" : "tanh"},
+    		{"layerType" : "dropout", "layerName" : "drop1", "dropoutRate" : 0.2},
+    		{"layerType" : "dense", "layerName" : "output", "layerUnits": 3, "outputActivation" : "softmax"}
+		],
+		"modelLayers LSTM / categorization" : [
+    		{"layerType" : "lstm", "layerName" : "input", "outputActivation" : "relu"},
+    		{"layerType" : "dense", "layerName" : "output", "layerUnits": 3, "outputActivation" : "softmax"}
+		],
+		"modelLayers conv1D / categorization" : [
+    		{"layerType" : "conv1d", "layerName" : "input", "featureCount": 2, "timeSteps": 9, "filterCount" : 3, "filterSize" : 5, "outputActivation" : "tanh"},
+    		{"layerType" : "GlobalMaxPool1D", "layerName" : "GMP1D"},
+    		{"layerType" : "dense", "layerName" : "hiddenDense", "layerUnits": 10, "outputActivation" : "relu"},
+    		{"layerType" : "dense", "layerName" : "output", "layerUnits": 3, "outputActivation" : "softmax"}
+		],
+		"configuration changes to match model layer configuration" : [
+			{"categorizationRegression" : ["categorization", "regression"]},
+			{"dense" : ["visualizations", "timeSequence"]},
+			{"LSTM" : ["visualizations", "timeSequence"]},
+			{"conv1D" : ["visualizations", "timeSequence"]}
+		],
+		"modelLayers" : [
+    		{"layerType" : "dense", "layerName" : "input", "featureCount": 2, "layerUnits": 16, "outputActivation" : "tanh"},
+    		{"layerType" : "dropout", "layerName" : "drop1", "dropoutRate" : 0.2},
+    		{"layerType" : "dense", "layerName" : "output", "layerUnits": 3, "outputActivation" : "softmax"}
+		],
+		"training" : {
+			"lossWeights" : [1.0],
+			"denseRegularation" : false,
+			"regularationValue" : 0.0,
+			"batchSize" : 32,
+			"epochs" : 10,
+			"useBias" : true,
+			"validationSplit" : 0.1,
+			"testSplit" : 0.2,
+			"shuffle" : false,
+			"verbose" : 2,
+			"balanceClasses" : true,
+			"compilationLoss" : "mae",
+			"Compilation Loss metrics" : ["mae", "sparse_categorical_crossentropy"],
+			"compilationMetrics" : ["accuracy"],
+			"optimizer" : "adam",
+			"optimizers - adam" : "fast, tends to overfit",
+			"optimizers - SGD" : "slow, great results",
+			"optimizers - RMSProp" : "sometimes works best",
+			"optimizers - SWA" : "Unknown optimizer - can easily improve qualiy"
+		}
+	}
+	}
+],
+"comment - dataflow section" : "Specification details for the flows of data between processing nodes",
+"dataFlows" : [
+	{
+	"flowName" : "MACD",
+	"requiredFields" : {
+		"flowFrom" : "dataIn",
+		"flowTo" : "PrepData",
+		"flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\MACD.csv"
+		},
+	"conditionalFields" : {
+		"TensorflowData" : {
+			"balanceClasses" : true,
+			"ignoreBlanks" : true,
+			"features" : ["MACD", "MACD_Signal"],
+			"targets" : ["MACD_flag"],
+			"timeSequence" : false
+			}
+		}
+	},
+	{
+	"flowName" : "MACDPrepared",
+	"requiredFields" : {
+		"flowFrom" : "PrepData",
+		"flowTo" : "MACD",
+		"flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\MACDPrepared.csv"
+		},
+	"conditionalFields" : {
+		"TensorflowData" : {
+			"features" : ["MACD", "MACD_Signal"],
+			"targets" : ["MACD_flag"],
+			"timeSequence" : false
+			}
+		}
+	}
+],
+"comment end of specification" : "------------------------------------------------------------------------------------"
+}
