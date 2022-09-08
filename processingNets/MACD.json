@@ -13,7 +13,7 @@
 	},
 	"conditionalFields" : {
 		"dataLoadCtrl" : {
-			"comment file spec" : "d:\\brian\\AI-Projects\\tda\\market_analysis_data\\[a-c]*.csv",
+			"comment file spec" : "d:\\brian\\AI-Projects\\tda\\market_analysis_data\\[a-z]*.csv",
 			"inputFile" : [
 				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\c.csv"
 			]
@@ -102,8 +102,48 @@
 		"categorizationRegression" : "categorization",
 		"combineSampleCount" : 1,
 		"dataPrecision" : "float32",
-		"visualizations" : ["summary", "trainingFit"],
-		"supported visualizations" : ["summary", "trainingFit", "targetSeries", "dataGroups", "normalizationCategorization", "cnnResult", "testVsPrediction"],
+		"visualizations" : ["summary", "trainingFit", "denseCategorization", "categoryMatrix"],
+		"supported visualizations" : [
+			{
+			"targetSeries" : "", 
+			"dataGroups" : "", 
+			"normalizationCategorization" : "", 
+			"testVsPrediction" : "",
+			"valid for all models" : [
+				{
+				"summary" : "Prints tensorflow layer report",
+				"trainingFit" : "Prints loss and accuracy charts"
+				}
+			],
+			"valid for all dense categorization" : [
+				{
+				"denseCategorization" : "",
+				"categoryMatrix" : "Prints a matrix of evaluation labels vs. actual labels"
+				}
+			],
+			"valid for all dense regression" : [
+				{
+				}
+			],
+			"valid for all CNN categorization" : [
+				{
+				"cnnResult" : ""
+				}
+			],
+			"valid for all CNN regression" : [
+				{
+				}
+			],
+			"valid for all RNN categorization" : [
+				{
+				}
+			],
+			"valid for all RNN regression" : [
+				{
+				}
+			]
+			}
+		],
 		"comment model specification values supported" : [
 			{
 			"layerType" : ["conv1d", "lstm", "dense", "TimeDistributed", "dropout", "flatten", "GlobalMaxPool1D"],
@@ -144,7 +184,7 @@
 			{"conv1D" : ["visualizations", "timeSequence"]}
 		],
 		"modelLayers" : [
-    		{"layerType" : "dense", "layerName" : "input", "featureCount": 2, "layerUnits": 16, "outputActivation" : "tanh"},
+    		{"layerType" : "dense", "layerName" : "input", "featureCount": 2, "layerUnits": 256, "outputActivation" : "relu"},
     		{"layerType" : "dropout", "layerName" : "drop1", "dropoutRate" : 0.2},
     		{"layerType" : "dense", "layerName" : "output", "layerUnits": 3, "outputActivation" : "softmax"}
 		],

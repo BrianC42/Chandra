@@ -664,12 +664,52 @@ def visualize_rnn(d2r):
     plt.show()
     return 
 
+def reportEvaluationMatrix(d2r, prediction):
+    
+    print("\nThe shape of the evaluation of test data is [%s, %s]" % (prediction.shape[0], prediction.shape[1]))
+    
+    #print(prediction)
+    categories, counts = np.unique(d2r.data, return_counts=True)
+    
+    THRESHOLD = 0.66
+    results = np.zeros([len(d2r.categories), len(d2r.categories)], dtype=float)
+    thresholdResults = np.zeros([len(d2r.categories), len(d2r.categories)], dtype=float)
+
+    for batch in range(0, len(d2r.testY)):
+        maxndx = np.argmax(prediction[batch])
+        if d2r.testY[batch, 0] == -1:
+            results[0, maxndx] += 1
+        elif d2r.testY[batch, 0] == 0:
+            results[1, maxndx] += 1
+        elif d2r.testY[batch, 0] == 1:
+            results[2, maxndx] += 1
+
+        if prediction[batch, maxndx] > THRESHOLD:
+            if d2r.testY[batch, 0] == -1:
+                thresholdResults[0, maxndx] += 1
+            elif d2r.testY[batch, 0] == 0:
+                thresholdResults[1, maxndx] += 1
+            elif d2r.testY[batch, 0] == 1:
+                thresholdResults[2, maxndx] += 1
+
+    testCategories, testCounts = np.unique(d2r.testY, return_counts=True)
+    print("Testing labels are %s with %s distribution" % (testCategories, testCounts))
+    print("All results")
+    print("Rows represent test label values, Columns the predicted most likely choice")
+    pdResults = pd.DataFrame(data=results, index=['-1', '0', '1'], columns=['-1', '0', '1'])
+    print(pdResults)
+    
+    print("\nResults above probability threshold value of %s" % THRESHOLD)
+    print("Rows represent test label values, Columns the predicted most likely choice")
+    pdResults = pd.DataFrame(data=thresholdResults, index=['-1', '0', '1'], columns=['-1', '0', '1'])
+    print(pdResults)
+
+    return
 
 def visualize_cnn(d2r, prediction):
 
     try:
         err_txt = "*** An exception occurred visualizing CNN results ***"
-    
         print("\n=======================WIP ====================\n\tvisualize_cnn visualization - hard coded category count(3)")
         if len(prediction.shape) == 2:
             categories = prediction.shape[1]
@@ -677,44 +717,7 @@ def visualize_cnn(d2r, prediction):
                 dfPrediction = pd.DataFrame(prediction)
                 print("\nprediction\n%s" % (dfPrediction.describe().transpose()))
             else:
-                print("\nevaluation prediction shape is [%s, %s] - categorization" % (prediction.shape[0], prediction.shape[1]))
-                #print(prediction)
-                
-                THRESHOLD = 0.66
-                results = np.zeros([categories, categories], dtype=float)
-                thresholdResults = np.zeros([categories, categories], dtype=float)
-
-                for batch in range(0, len(d2r.testY)):
-                    maxndx = np.argmax(prediction[batch])
-                    if d2r.testY[batch, 0] == -1:
-                        results[0, maxndx] += 1
-                    elif d2r.testY[batch, 0] == 0:
-                        results[1, maxndx] += 1
-                    elif d2r.testY[batch, 0] == 1:
-                        results[2, maxndx] += 1
-
-                    if prediction[batch, maxndx] > THRESHOLD:
-                        if d2r.testY[batch, 0] == -1:
-                            thresholdResults[0, maxndx] += 1
-                        elif d2r.testY[batch, 0] == 0:
-                            thresholdResults[1, maxndx] += 1
-                        elif d2r.testY[batch, 0] == 1:
-                            thresholdResults[2, maxndx] += 1
-
-                testCategories, testCounts = np.unique(d2r.testY, return_counts=True)
-                print("Testing labels are %s with %s distribution" % (testCategories, testCounts))
-                print("All results")
-                print("Rows represent test label values, Columns the predicted most likely choice")
-                pdResults = pd.DataFrame(data=results, index=['-1', '0', '1'], columns=['-1', '0', '1'])
-                print(pdResults)
-                
-                print("\nResults above probability threshold value of %s" % THRESHOLD)
-                print("Rows represent test label values, Columns the predicted most likely choice")
-                pdResults = pd.DataFrame(data=thresholdResults, index=['-1', '0', '1'], columns=['-1', '0', '1'])
-                print(pdResults)
-                
                 d2r.visualize_categorization_samples()
-                
         else:
             err_txt = "No preparation sequence specified"
             raise NameError(err_txt)                
@@ -796,6 +799,8 @@ def evaluate_and_visualize(d2r):
     
             plt.tight_layout()
             plt.show()
+        elif vizualize == "categoryMatrix":
+            reportEvaluationMatrix(d2r, prediction)
         elif vizualize == "denseCategorization":
             visualize_dense(d2r, prediction)
     

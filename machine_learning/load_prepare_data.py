@@ -261,6 +261,7 @@ def combineMultipleSamples(d2r, model_goal, combineCount, data_precision, featur
             labels[ndx, : ] = npData[ndx , target_cols]
         elif  model_goal == JSON_ML_GOAL_REGRESSION:
             print("\n============== WIP =============\n\combineMultipleSamples - regression\n================================\n")
+            raise NameError('combine multiple samples for regression features and labels are not set')
     d2r.feature_count = features.shape[1]
     
     return features, labels
@@ -338,17 +339,23 @@ def arrangeDataForTraining(d2r):
                 if d2r.categorizationRegression == JSON_ML_GOAL_CATEGORIZATION:
                     if nx_combine_sample_Count > 1:
                         features, labels = combineMultipleSamples(d2r, d2r.categorizationRegression, nx_combine_sample_Count, nx_data_precision, feature_cols, target_cols)
-                        d2r.trainX = features[ : d2r.trainLen , :]
-                        d2r.trainY = labels[ : d2r.trainLen , :]
-                        d2r.validateX = features[d2r.trainLen : (d2r.trainLen + d2r.validateLen) , :]
-                        d2r.validateY = labels[d2r.trainLen : (d2r.trainLen + d2r.validateLen) , :]
-                        d2r.testX = features[d2r.trainLen + d2r.validateLen : , :]
-                        d2r.testY = labels[d2r.trainLen + d2r.validateLen : , :]
-                        #d2r.determineCategories()
                     else:
-                        print("\n============== WIP =============\n\tarrangeDataForTraining dense no combination\n================================\n")
+                        npData   = np.array(d2r.data, dtype=float)
+                        features = np.zeros([npData.shape[0], len(feature_cols)], dtype=nx_data_precision)
+                        labels = np.zeros([npData.shape[0], len(target_cols)], dtype=nx_data_precision)
+                        features[ : , : ] = npData[ : , feature_cols]
+                        labels[ : , : ] = npData[ :  , target_cols]
+                        
+                    d2r.trainX = features[ : d2r.trainLen , :]
+                    d2r.trainY = labels[ : d2r.trainLen , :]
+                    d2r.validateX = features[d2r.trainLen : (d2r.trainLen + d2r.validateLen) , :]
+                    d2r.validateY = labels[d2r.trainLen : (d2r.trainLen + d2r.validateLen) , :]
+                    d2r.testX = features[d2r.trainLen + d2r.validateLen : , :]
+                    d2r.testY = labels[d2r.trainLen + d2r.validateLen : , :]
+                    d2r.feature_count = features.shape[1]
                 elif  d2r.categorizationRegression == JSON_ML_GOAL_REGRESSION:
                     print("\n============== WIP =============\n\tarrangeDataForTraining dense regression\n================================\n")
+                    raise NameError('dense/regression - train, validate and test need to be set')
                 
             elif nx_model_type == INPUT_LAYERTYPE_RNN:
                 nx_time_steps = nx.get_node_attributes(d2r.graph, JSON_TIMESTEPS)[d2r.mlNode]
