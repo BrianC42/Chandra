@@ -390,12 +390,13 @@ class Data2Results():
         TRAIN_NDX = 0
         VALIDATE_NDX = 1
         TEST_NDX = 2
+        NUM_SAMPLE_SETS = 3
         trainCategories, trainIndices, trainCounts = np.unique(self.trainY, return_index=True, return_counts=True)
         validateCategories, validateIndices, validateCounts = np.unique(self.validateY, return_index=True, return_counts=True)
         testCategories, testIndices, testCounts = np.unique(self.testY, return_index=True, return_counts=True)
     
         categories = len(trainCategories)
-        fig, axs = plt.subplots(categories, 3)
+        fig, axs = plt.subplots(categories, NUM_SAMPLE_SETS)
         fig.suptitle("CNN Test Results for - " + self.mlNode, fontsize=14, fontweight='bold')
         
         for ndx in range (0, categories):

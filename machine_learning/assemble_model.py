@@ -117,7 +117,6 @@ def build_layer(d2r, layer_type, layer_definition, input_layer):
                                            activation = nx_activation, \
                                            return_sequences = nx_return_sequences)
     elif layer_type == JSON_CONV1D:
-        print("\n============== WIP =============\n\tconv1d layer type parameters hard coded\n================================\n")
         if input_layer:
             d2r.modelType = INPUT_LAYERTYPE_CNN
             nx.set_node_attributes(d2r.graph, {d2r.mlNode:INPUT_LAYERTYPE_CNN}, MODEL_TYPE)
@@ -125,7 +124,7 @@ def build_layer(d2r, layer_type, layer_definition, input_layer):
             d2r.filter_count = layer_definition[JSON_FILTER_COUNT]
             d2r.filter_size = layer_definition[JSON_FILTER_SIZE]
 
-            d2r.batches = 1
+            #d2r.batches = 1
             #d2r.batches = layer_definition[JSON_BATCHES]
             #d2r.timesteps = layer_definition[JSON_TIMESTEPS]
             d2r.feature_count = layer_definition[JSON_FEATURE_COUNT]
@@ -165,12 +164,10 @@ def build_layer(d2r, layer_type, layer_definition, input_layer):
         k_layer = keras.layers.TimeDistributed(TD_layer)
     elif layer_type == JSON_MAXPOOLING_1D:
         print("\n============== WIP =============\n\tWIP MaxPooling1D layer type - pool_size hard coded\n================================\n")
-        k_layer = keras.layers.MaxPooling1D(name=nx_layer_name, pool_size=2)
+        k_layer = keras.layers.MaxPooling1D(name=nx_layer_name)
     elif layer_type == JSON_GLOBAL_MAXPOOLING_1D:
-        print("\n============== WIP =============\n\tWIP GlobalMaxPool1D layer type\n================================\n")
         k_layer = keras.layers.GlobalMaxPool1D(name=nx_layer_name)
     elif layer_type == JSON_FLATTEN:
-        print("\n============== WIP =============\n\tWIP Flatten layer type\n================================\n")
         k_layer = keras.layers.Flatten(name=nx_layer_name)
     else:
         err_msg = 'Layer type not yet implemented: ' + layer_type

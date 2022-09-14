@@ -92,7 +92,7 @@ def loadTrainingData(d2r):
         err_txt = "*** An exception occurred preparing the training data for the model ***"
 
         nx_input_flow = nx.get_node_attributes(d2r.graph, JSON_INPUT_FLOWS)[d2r.mlNode]
-        print("Loading prepared data defined in flow: %s" % nx_input_flow[0])
+        print("\nLoading prepared data defined in flow: %s" % nx_input_flow[0])
         nx_data_file = nx.get_edge_attributes(d2r.graph, JSON_FLOW_DATA_FILE)
         inputData = nx_data_file[d2r.mlEdgeIn[0], d2r.mlEdgeIn[1], nx_input_flow[0]]    
         if os.path.isfile(inputData):
@@ -164,16 +164,14 @@ def balance_classes(d2r, model_type, categorization):
         d2r.testY = target
     
     elif model_type == INPUT_LAYERTYPE_CNN:
-        print("\n============== WIP =============\n\tbalance_classes for CNN\n================================\n")
-
-        print("Sample data contains %s samples with %s categories and distribution %s" % \
-              (len(d2r.data), d2r.categories, d2r.categorieCounts))
-        print("Training shapes features:%s labels:%s\nvalidating shapes x:%s y:%s\ntesting shapes x:%s y:%s" % \
+        print("Training shapes features:%s labels:%s\nvalidating shapes features:%s labels:%s\ntesting shapes features:%s labels:%s" % \
               (d2r.trainX.shape, d2r.trainY.shape, d2r.validateX.shape, d2r.validateY.shape, d2r.testX.shape, d2r.testY.shape))
+        print("\nSample data contains %s samples with\t%s labels distributed: %s" % \
+              (len(d2r.data), d2r.categories, d2r.categorieCounts))
 
         categories, counts = np.unique(d2r.trainY, return_counts=True)
         #sanityCheckMACD(npX=d2r.trainX, npY=d2r.trainY)
-        print("Prior to balancing training labels are %s with %s distribution" % (categories, counts))
+        print("Prior to balancing training labels are\t%s with %s distribution" % (categories, counts))
         minCount = min(counts)
         batches = minCount * len(categories)
         
@@ -203,7 +201,7 @@ def balance_classes(d2r, model_type, categorization):
         d2r.trainY = npY
         
         categories, counts = np.unique(d2r.trainY, return_counts=True)
-        print("After balancing training labels are %s with %s distribution" % (categories, counts))
+        print("After balancing training labels are\t%s with %s distribution" % (categories, counts))
 
     elif model_type == INPUT_LAYERTYPE_DENSE:
         print("Sample data contains %s samples with categories: %s categories distributed: %s" % \
@@ -313,7 +311,7 @@ def arrangeDataForTraining(d2r):
     
         nx_read_attr = nx.get_node_attributes(d2r.graph, JSON_PROCESS_TYPE)
         if nx_read_attr[d2r.mlNode] == JSON_TENSORFLOW:    
-            print("Preparing the data for training: %s" % d2r.mlNode)
+            print("Preparing the data for training as defined in: %s" % d2r.mlNode)
             d2r.trainLen = int(len(d2r.data) * (1-(nx_test_split+nx_validation_split)))
             d2r.validateLen = int(len(d2r.data) * nx_validation_split)
             d2r.testLen = int(len(d2r.data) * nx_test_split)
@@ -365,7 +363,6 @@ def arrangeDataForTraining(d2r):
                 d2r.testX,     d2r.testY     = np_to_sequence(test, feature_cols, target_cols, nx_time_steps)
     
             elif nx_model_type == INPUT_LAYERTYPE_CNN:
-                print("\n============== WIP =============\n\tconv1d layer - arrangeDataForTraining\n================================\n")
                 '''
                 data arranged as 3D batch/sequence elements/data elements
                 ...X represent causation features
@@ -396,9 +393,6 @@ def arrangeDataForTraining(d2r):
                 d2r.validateY = npY[d2r.trainLen:(d2r.trainLen + d2r.validateLen),:,  :]
                 d2r.testX     = npX[d2r.trainLen + d2r.validateLen:, :,  :]
                 d2r.testY     = npY[d2r.trainLen + d2r.validateLen:, :,  :]
-                '''
-                train, validate, test contain 3D arrays
-                '''
 
         elif nx_read_attr[d2r.mlNode] == JSON_AUTOKERAS:    
             nx_data_precision = nx.get_node_attributes(d2r.graph, JSON_PRECISION)[d2r.mlNode]

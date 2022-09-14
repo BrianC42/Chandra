@@ -665,44 +665,87 @@ def visualize_rnn(d2r):
     return 
 
 def reportEvaluationMatrix(d2r, prediction):
-    
-    print("\nThe shape of the evaluation of test data is [%s, %s]" % (prediction.shape[0], prediction.shape[1]))
-    
     #print(prediction)
-    categories, counts = np.unique(d2r.data, return_counts=True)
+    #categories, counts = np.unique(d2r.data, return_counts=True)
+    testCategories, testCounts = np.unique(d2r.testY, return_counts=True)
+    categoryCount = len(d2r.categories)
+    print("\nThe shape of the test data is [%s, %s]" % (prediction.shape[0], prediction.shape[1]))
+    print("Testing labels are %s with %s distribution\n" % (testCategories, testCounts))
     
     THRESHOLD = 0.66
     results = np.zeros([len(d2r.categories), len(d2r.categories)], dtype=float)
     thresholdResults = np.zeros([len(d2r.categories), len(d2r.categories)], dtype=float)
 
+    '''
     for batch in range(0, len(d2r.testY)):
-        maxndx = np.argmax(prediction[batch])
-        if d2r.testY[batch, 0] == -1:
-            results[0, maxndx] += 1
-        elif d2r.testY[batch, 0] == 0:
-            results[1, maxndx] += 1
-        elif d2r.testY[batch, 0] == 1:
-            results[2, maxndx] += 1
-
-        if prediction[batch, maxndx] > THRESHOLD:
+        for sample in range (0, )
+    '''
+    if len(d2r.testY.shape) == 2: # dense models
+        print("\n============== WIP =============\n\tevaluation matrix assumes 3 categories of specific values\n================================\n")
+        
+        ''' dense models '''
+        for batch in range(0, len(d2r.testY)):
+            maxndx = np.argmax(prediction[batch])
             if d2r.testY[batch, 0] == -1:
-                thresholdResults[0, maxndx] += 1
+                results[0, maxndx] += 1
             elif d2r.testY[batch, 0] == 0:
-                thresholdResults[1, maxndx] += 1
+                results[1, maxndx] += 1
             elif d2r.testY[batch, 0] == 1:
-                thresholdResults[2, maxndx] += 1
-
-    testCategories, testCounts = np.unique(d2r.testY, return_counts=True)
-    print("Testing labels are %s with %s distribution" % (testCategories, testCounts))
-    print("All results")
-    print("Rows represent test label values, Columns the predicted most likely choice")
-    pdResults = pd.DataFrame(data=results, index=['-1', '0', '1'], columns=['-1', '0', '1'])
-    print(pdResults)
+                results[2, maxndx] += 1
     
-    print("\nResults above probability threshold value of %s" % THRESHOLD)
-    print("Rows represent test label values, Columns the predicted most likely choice")
-    pdResults = pd.DataFrame(data=thresholdResults, index=['-1', '0', '1'], columns=['-1', '0', '1'])
-    print(pdResults)
+            if prediction[batch, maxndx] > THRESHOLD:
+                if d2r.testY[batch, 0] == -1:
+                    thresholdResults[0, maxndx] += 1
+                elif d2r.testY[batch, 0] == 0:
+                    thresholdResults[1, maxndx] += 1
+                elif d2r.testY[batch, 0] == 1:
+                    thresholdResults[2, maxndx] += 1
+
+        print("Rows represent test label values, Columns the predicted most likely choice")
+        print("All results")
+        pdResults = pd.DataFrame(data=results, index=['-1', '0', '1'], columns=['-1', '0', '1'])
+        print(pdResults)
+        
+        print("\nResults above probability threshold value of %s" % THRESHOLD)
+        print("Rows represent test label values, Columns the predicted most likely choice")
+        pdResults = pd.DataFrame(data=thresholdResults, index=['-1', '0', '1'], columns=['-1', '0', '1'])
+        print(pdResults)
+
+    elif len(d2r.testY.shape) == 3: #RNN and CNN models
+        ''' CNN and RNN models '''
+        catDict = dict()
+        for ndx in range (0, len(d2r.categories)):
+            catDict[d2r.categories[ndx]] = ndx
+
+        for batch in range(0, len(d2r.testY)):
+            labelNdx = int(d2r.testY[batch])
+            labelNdx = catDict.get(labelNdx)
+            predictionNdx = np.argmax(prediction[batch])
+            
+            results[labelNdx, predictionNdx] += 1
+            if prediction[batch, predictionNdx] > THRESHOLD:
+                thresholdResults[labelNdx, predictionNdx] += 1
+        
+        #print("\n=======================WIP ====================\n\tvisualize category prediction vs label\n===============================================\n")
+        print("Rows represent actual test label values, Columns the predicted most likely category")
+        #print("All results")
+        #print(results)
+        colDesc = "Label"
+        hdrRow = "\t\tModel prediction\n\t"
+        for predictionNdx in range (0, len(d2r.categories)):
+            hdrRow = hdrRow + "\t"
+            hdrRow = hdrRow + "{!s}".format(d2r.categories[predictionNdx])
+        print(hdrRow)
+        textRow = list()
+        for labelNdx in range (0, len(d2r.categories)):
+            textRow.append(colDesc[labelNdx])
+            textRow[labelNdx] = textRow[labelNdx] + "\t"
+            textRow[labelNdx] = textRow[labelNdx] + "{}".format(d2r.categories[labelNdx])
+            textRow[labelNdx] = textRow[labelNdx] + "\t"
+            for predictionNdx in range (0, len(d2r.categories)):
+                textRow[labelNdx] = textRow[labelNdx] + "{0:d}".format(int(results[labelNdx, predictionNdx]))
+                textRow[labelNdx] = textRow[labelNdx] + "\t"
+            print(textRow[labelNdx])
 
     return
 
@@ -710,7 +753,6 @@ def visualize_cnn(d2r, prediction):
 
     try:
         err_txt = "*** An exception occurred visualizing CNN results ***"
-        print("\n=======================WIP ====================\n\tvisualize_cnn visualization - hard coded category count(3)")
         if len(prediction.shape) == 2:
             categories = prediction.shape[1]
             if categories == 1:
