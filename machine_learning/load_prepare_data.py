@@ -115,9 +115,44 @@ def loadTrainingData(d2r):
 
 def balance_classes(d2r, model_type, categorization):
     
-    if model_type == INPUT_LAYERTYPE_RNN:
-        print("\n============== WIP =============\n\tbalance_classes hard coded for LSTM MACD_signal\n================================\n")
-    
+    if  model_type == INPUT_LAYERTYPE_RNN:
+        print("Training shapes features:%s labels:%s\nvalidating shapes features:%s labels:%s\ntesting shapes features:%s labels:%s" % \
+              (d2r.trainX.shape, d2r.trainY.shape, d2r.validateX.shape, d2r.validateY.shape, d2r.testX.shape, d2r.testY.shape))
+        print("\nSample data contains %s samples with\t%s labels distributed: %s" % \
+              (len(d2r.data), d2r.categories, d2r.categorieCounts))
+
+        categories, counts = np.unique(d2r.trainY, return_counts=True)
+        #sanityCheckMACD(npX=d2r.trainX, npY=d2r.trainY)
+        print("Prior to balancing training labels are\t%s with %s distribution" % (categories, counts))
+
+        minCount = min(counts)
+        batches = minCount * len(categories)
+        
+        ''' equal number of batches for each category '''
+        npX = np.zeros([batches, d2r.trainX.shape[1], d2r.feature_count], dtype=float)
+        npY = np.zeros([batches, d2r.trainY.shape[1]], dtype=float)
+        
+        catStep = np.zeros(len(categories))
+        for cat in range (0, len(counts)):
+            catStep[cat] = counts[cat] / minCount
+
+        catCount = np.zeros(len(categories))
+        nextCatNdx = np.zeros(len(categories))
+        
+        for sample in range (0, minCount):
+            for cat in range (0, len(categories)):
+                for offset in range (0, len(d2r.trainY)-int(nextCatNdx[cat])):
+                    srcNdx = int(nextCatNdx[cat]) + offset
+                    if d2r.trainY[srcNdx, 0] == categories[cat]:
+                        npX[(sample * len(counts)) + cat, :, :] = d2r.trainX[srcNdx, :, :]
+                        npY[(sample * len(counts)) + cat, :] = d2r.trainY[srcNdx, :]
+                        catCount[cat] += 1
+                        nextCatNdx[cat] = srcNdx + int(catStep[cat])
+                        break                            
+                    
+        d2r.trainX = npX
+        d2r.trainY = npY
+        '''
         count = 0
         for ndx in range(0, d2r.trainY.shape[0]):
             if d2r.trainY[ndx, d2r.trainY.shape[1]-1] in categorization:
@@ -132,36 +167,10 @@ def balance_classes(d2r, model_type, categorization):
                 count += 1
         d2r.trainX = train
         d2r.trainY = target
+        '''
     
-        count = 0
-        for ndx in range(0, d2r.validateY.shape[0]):
-            if d2r.validateY[ndx, d2r.validateY.shape[1]-1] in categorization:
-                count += 1
-        validate = np.empty([count, d2r.validateX.shape[1], d2r.validateX.shape[2]], dtype=float)
-        target = np.empty([count, d2r.validateY.shape[1]], dtype=float)
-        count = 0
-        for ndx in range(0, d2r.validateY.shape[0] - 1):
-            if d2r.validateY[ndx, d2r.validateY.shape[1]-1] in categorization:
-                validate[count] = d2r.validateX[ndx+1, :, :]
-                target[count] = d2r.validateY[ndx, :]
-                count += 1
-        d2r.validateX = validate
-        d2r.validateY = target
-    
-        count = 0
-        for ndx in range(0, d2r.testY.shape[0]):
-            if d2r.testY[ndx, d2r.testY.shape[1]-1] in categorization:
-                count += 1
-        test = np.empty([count, d2r.testX.shape[1], d2r.testX.shape[2]], dtype=float)
-        target = np.empty([count, d2r.testY.shape[1]], dtype=float)
-        count = 0
-        for ndx in range(0, d2r.testY.shape[0] - 1):
-            if d2r.testY[ndx, d2r.testY.shape[1]-1] in categorization:
-                test[count] = d2r.testX[ndx+1, :, :]
-                target[count] = d2r.testY[ndx, :]
-                count += 1
-        d2r.testX = test
-        d2r.testY = target
+        categories, counts = np.unique(d2r.trainY, return_counts=True)
+        print("After balancing, training labels are\t%s with %s distribution" % (categories, counts))
     
     elif model_type == INPUT_LAYERTYPE_CNN:
         print("Training shapes features:%s labels:%s\nvalidating shapes features:%s labels:%s\ntesting shapes features:%s labels:%s" % \
@@ -201,7 +210,7 @@ def balance_classes(d2r, model_type, categorization):
         d2r.trainY = npY
         
         categories, counts = np.unique(d2r.trainY, return_counts=True)
-        print("After balancing training labels are\t%s with %s distribution" % (categories, counts))
+        print("After balancing, training labels are\t%s with %s distribution" % (categories, counts))
 
     elif model_type == INPUT_LAYERTYPE_DENSE:
         print("Sample data contains %s samples with categories: %s categories distributed: %s" % \
@@ -357,11 +366,23 @@ def arrangeDataForTraining(d2r):
                 
             elif nx_model_type == INPUT_LAYERTYPE_RNN:
                 nx_time_steps = nx.get_node_attributes(d2r.graph, JSON_TIMESTEPS)[d2r.mlNode]
+                d2r.timesteps = nx_time_steps
+
+                npX = np.zeros([0, d2r.timesteps, len(feature_cols)], dtype=float)
+                npY = np.zeros([0, len(target_cols)], dtype=float)
+                for dkey in d2r.dataDict:
+                    npData   = np.array(d2r.dataDict[dkey], dtype=float)
+                    features, labels = np_to_sequence(npData, feature_cols, target_cols, nx_time_steps)
+                    npX = np.row_stack((npX, features))
+                    npY = np.row_stack((npY, labels))
+                d2r.trainX = npX[ : d2r.trainLen , :]
+                d2r.trainY = npY[ : d2r.trainLen , :]
+                d2r.validateX = npX[d2r.trainLen : (d2r.trainLen + d2r.validateLen) , :]
+                d2r.validateY = npY[d2r.trainLen : (d2r.trainLen + d2r.validateLen) , :]
+                d2r.testX = npX[d2r.trainLen + d2r.validateLen : , :]
+                d2r.testY = npY[d2r.trainLen + d2r.validateLen : , :]
+                d2r.feature_count = features.shape[2]
                 
-                d2r.trainX,    d2r.trainY    = np_to_sequence(train, feature_cols, target_cols, nx_time_steps)
-                d2r.validateX, d2r.validateY = np_to_sequence(validation, feature_cols, target_cols, nx_time_steps)
-                d2r.testX,     d2r.testY     = np_to_sequence(test, feature_cols, target_cols, nx_time_steps)
-    
             elif nx_model_type == INPUT_LAYERTYPE_CNN:
                 '''
                 data arranged as 3D batch/sequence elements/data elements

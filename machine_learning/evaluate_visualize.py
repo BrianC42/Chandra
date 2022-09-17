@@ -681,9 +681,11 @@ def reportEvaluationMatrix(d2r, prediction):
         for sample in range (0, )
     '''
     if len(d2r.testY.shape) == 2: # dense models
-        print("\n============== WIP =============\n\tevaluation matrix assumes 3 categories of specific values\n================================\n")
-        
+        ''' ++++++++++++++++++++++++++++++++++++++++
+        print("\n============== WIP =============\n\tdense and RNN model evaluation matrix assumes 3 categories of specific values\n================================\n")
+        '''
         ''' dense models '''
+        '''
         for batch in range(0, len(d2r.testY)):
             maxndx = np.argmax(prediction[batch])
             if d2r.testY[batch, 0] == -1:
@@ -711,8 +713,45 @@ def reportEvaluationMatrix(d2r, prediction):
         pdResults = pd.DataFrame(data=thresholdResults, index=['-1', '0', '1'], columns=['-1', '0', '1'])
         print(pdResults)
 
-    elif len(d2r.testY.shape) == 3: #RNN and CNN models
-        ''' CNN and RNN models '''
+        print("\n============== WIP =============\n\tflexible category values\n================================\n")
+        '''
+
+        catDict = dict()
+        for ndx in range (0, len(d2r.categories)):
+            catDict[d2r.categories[ndx]] = ndx
+
+        for batch in range(0, len(d2r.testY)):
+            labelNdx = int(d2r.testY[batch])
+            labelNdx = catDict.get(labelNdx)
+            predictionNdx = np.argmax(prediction[batch])
+            
+            results[labelNdx, predictionNdx] += 1
+            if prediction[batch, predictionNdx] > THRESHOLD:
+                thresholdResults[labelNdx, predictionNdx] += 1
+        
+        #print("\n=======================WIP ====================\n\tvisualize category prediction vs label\n===============================================\n")
+        print("Rows represent actual test label values, Columns the predicted most likely category")
+        #print("All results")
+        #print(results)
+        colDesc = "Label"
+        hdrRow = "\t\tModel prediction\n\t"
+        for predictionNdx in range (0, len(d2r.categories)):
+            hdrRow = hdrRow + "\t"
+            hdrRow = hdrRow + "{!s}".format(d2r.categories[predictionNdx])
+        print(hdrRow)
+        textRow = list()
+        for labelNdx in range (0, len(d2r.categories)):
+            textRow.append(colDesc[labelNdx])
+            textRow[labelNdx] = textRow[labelNdx] + "\t"
+            textRow[labelNdx] = textRow[labelNdx] + "{}".format(d2r.categories[labelNdx])
+            textRow[labelNdx] = textRow[labelNdx] + "\t"
+            for predictionNdx in range (0, len(d2r.categories)):
+                textRow[labelNdx] = textRow[labelNdx] + "{0:d}".format(int(results[labelNdx, predictionNdx]))
+                textRow[labelNdx] = textRow[labelNdx] + "\t"
+            print(textRow[labelNdx])
+
+    elif len(d2r.testY.shape) == 3: #CNN models
+        ''' CNN models '''
         catDict = dict()
         for ndx in range (0, len(d2r.categories)):
             catDict[d2r.categories[ndx]] = ndx
