@@ -20,6 +20,7 @@ from configuration_constants import JSON_ML_GOAL
 from configuration_constants import JSON_ML_GOAL_CATEGORIZATION
 from configuration_constants import JSON_ML_GOAL_REGRESSION
 from configuration_constants import JSON_ML_GOAL_COMBINE_SAMPLE_COUNT
+from configuration_constants import JSON_ML_REGRESSION_FORECAST_INTERVAL
 from configuration_constants import JSON_TENSORFLOW_DATA
 from configuration_constants import JSON_AUTOKERAS_PARAMETERS
 from configuration_constants import JSON_PRECISION
@@ -232,10 +233,16 @@ def add_meta_process_node (js_config, nx_graph) :
             raise NameError(nx_process_name + " requires " + JSON_ML_GOAL)
             
         if JSON_ML_GOAL_COMBINE_SAMPLE_COUNT in js_conditional:
-            nx_ml_goal = js_conditional[JSON_ML_GOAL_COMBINE_SAMPLE_COUNT]
+            nx_ml_goal_combine_sample_count = js_conditional[JSON_ML_GOAL_COMBINE_SAMPLE_COUNT]
         else:
-            nx_ml_goal = 1
-        nx.set_node_attributes(nx_graph, {nx_process_name:nx_ml_goal}, JSON_ML_GOAL_COMBINE_SAMPLE_COUNT)
+            nx_ml_goal_combine_sample_count = 1
+        nx.set_node_attributes(nx_graph, {nx_process_name:nx_ml_goal_combine_sample_count}, JSON_ML_GOAL_COMBINE_SAMPLE_COUNT)
+             
+        if JSON_ML_REGRESSION_FORECAST_INTERVAL in js_conditional:
+            nx_regression_forecast_interval = js_conditional[JSON_ML_REGRESSION_FORECAST_INTERVAL]
+        else:
+            nx_regression_forecast_interval = 1
+        nx.set_node_attributes(nx_graph, {nx_process_name:nx_regression_forecast_interval}, JSON_ML_REGRESSION_FORECAST_INTERVAL)
              
         if JSON_TRAINING in js_conditional:
             add_training_controls(js_conditional[JSON_TRAINING], nx_graph, nx_process_name)

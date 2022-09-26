@@ -15,7 +15,7 @@
 		"dataLoadCtrl" : {
 			"comment file spec" : "d:\\brian\\AI-Projects\\tda\\market_analysis_data\\[a-z]*.csv",
 			"inputFile" : [
-				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\c*.csv"
+				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\c.csv"
 			]
 		}
 	}
@@ -99,10 +99,11 @@
 	},
 	"conditionalFields" : {
 		"modelFile" : "d:\\brian\\AI-Projects\\models\\MACD",
-		"categorizationRegression" : "categorization",
-		"combineSampleCount" : 1,
+		"categorizationRegression" : "regression",
+		"combineSampleCount" : 20,
+		"forecastInterval" : 1,
 		"dataPrecision" : "float32",
-		"visualizations" : ["summary", "trainingFit", "categoryMatrix"],
+		"visualizations" : ["summary", "trainingFit", "testVsPrediction"],
 		"supported visualizations" : [
 			{
 			"targetSeries" : "", 
@@ -159,13 +160,30 @@
 			}
 		],
 		"modelLayers dense / regression" : [
+			{
+			"categorizationRegression" : ["regression"],
+			"combineSampleCount" : "",
+			"visualizations" : ["summary", "trainingFit"],
+			"type" : "relative_time_series"
+			}
 		],
 		"modelLayers LSTM / regression" : [
+			{
+			"categorizationRegression" : ["regression"],
+			"visualizations" : ["summary", "trainingFit"],
+			"type" : "relative_time_series"
+			}
 		],
 		"modelLayers conv1D / regression" : [
+			{
+			"categorizationRegression" : ["regression"],
+			"visualizations" : ["summary", "trainingFit"],
+			"type" : "relative_time_series"
+			}
 		],
 		"modelLayers dense / categorization" : [
 			{
+			"categorizationRegression" : ["categorization"],
 			"visualizations" : ["summary", "trainingFit", "denseCategorization", "categoryMatrix"],
 			"type" : "relative_time_series"
 			},
@@ -175,13 +193,21 @@
 		],
 		"modelLayers LSTM / categorization" : [
 			{
+			"categorizationRegression" : ["categorization"],
 			"visualizations" : ["summary", "trainingFit", "categoryMatrix"],
 			"type" : "relative_time_series"
 			},
-    		{"layerType" : "lstm", "layerName" : "input", "outputActivation" : "relu"},
+    		{"layerType" : "lstm", "layerName" : "input", "layerUnits" : 128, "featureCount": 2, "timeSteps": 9, "outputActivation" : "relu"},
+    		{"layerType" : "dense", "layerName" : "hiddenDense1", "layerUnits": 128, "outputActivation" : "tanh"},
+    		{"layerType" : "dropout", "layerName" : "drop1", "dropoutRate" : 0.2},
     		{"layerType" : "dense", "layerName" : "output", "layerUnits": 3, "outputActivation" : "softmax"}
 		],
 		"modelLayers conv1D / categorization" : [
+			{
+			"categorizationRegression" : ["categorization"],
+			"visualizations" : ["summary", "trainingFit", "cnnResult", "categoryMatrix"],
+			"type" : "relative_time_series"
+			},
     		{"layerType" : "conv1d", "layerName" : "input", "featureCount": 2, "timeSteps": 9, "filterCount" : 3, "filterSize" : 5, "outputActivation" : "tanh"},
     		{"layerType" : "GlobalMaxPool1D", "layerName" : "GMP1D"},
     		{"layerType" : "dense", "layerName" : "hiddenDense1", "layerUnits": 64, "outputActivation" : "tanh"},
@@ -197,17 +223,18 @@
 			{"conv1D" : ["visualizations", "timeSequence"]}
 		],
 		"modelLayers" : [
-    		{"layerType" : "lstm", "layerName" : "input", "layerUnits" : 128, "featureCount": 2, "timeSteps": 9, "outputActivation" : "relu"},
-    		{"layerType" : "dense", "layerName" : "hiddenDense1", "layerUnits": 128, "outputActivation" : "tanh"},
+    		{"layerType" : "dense", "layerName" : "input", "layerUnits" : 32, "featureCount": 40, "outputActivation" : "tanh"},
     		{"layerType" : "dropout", "layerName" : "drop1", "dropoutRate" : 0.2},
-    		{"layerType" : "dense", "layerName" : "output", "layerUnits": 3, "outputActivation" : "softmax"}
+    		{"layerType" : "dense", "layerName" : "hiddenDense1", "layerUnits": 16, "outputActivation" : "tanh"},
+    		{"layerType" : "dropout", "layerName" : "drop2", "dropoutRate" : 0.2},
+    		{"layerType" : "dense", "layerName" : "denseForecast", "layerUnits": 1, "outputActivation" : "tanh"}
 		],
 		"training" : {
 			"lossWeights" : [1.0],
 			"denseRegularation" : false,
 			"regularationValue" : 0.0,
 			"batchSize" : 32,
-			"epochs" : 30,
+			"epochs" : 10,
 			"useBias" : true,
 			"validationSplit" : 0.1,
 			"testSplit" : 0.2,

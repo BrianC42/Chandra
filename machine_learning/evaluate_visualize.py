@@ -516,36 +516,85 @@ def selectDateAxisLabels(dateTimes):
         
     return tmark, tmarkDates
 
-def visualizeTestVsForecast(d2r, prediction, axis1, axis2):
-    RECENT = len(d2r.trainX[0, :, 0]) * 3
+def visualizeTestVsForecast(d2r, prediction):
+    fig2, axs = plt.subplots(2, 1)
+    fig2.suptitle(d2r.mlNode, fontsize=14, fontweight='bold')
+    
+    if len(d2r.trainX.shape) == 3:
+        samples = len(d2r.trainX[0, :, 0]) * 3
+    if len(d2r.trainX.shape) == 2:
+        samples = len(d2r.trainX[0, :]) * 3
+    else:
+        ex_txt = "training data shape is invalid"
+        raise NameError(ex_txt)
+
     FORECAST = 0
     
-    axis1.set_title("WIP")
-    axis1.set_xlabel("time periods")
+    axis1 = axs[0]
+    axis1.set_title("Data series vs. Predictions")
+    axis1.set_xlabel("samples")
     axis1.set_ylabel("Data Value")
-    axis1.plot(range(len(prediction)-RECENT, len(prediction)), \
-               d2r.testY[len(prediction)-RECENT : ], \
+    axis1.plot(range(len(prediction)-samples, len(prediction)), \
+               d2r.testY[len(prediction)-samples : ], \
                label='Test series')
-    axis1.plot(range(len(prediction)-RECENT, len(prediction)), \
-               prediction[len(prediction)-RECENT : , FORECAST], \
+    axis1.plot(range(len(prediction)-samples, len(prediction)), \
+               prediction[len(prediction)-samples : , FORECAST], \
                linestyle='dashed', label='Prediction - 1 period')
-    testData = d2r.data.iloc[(len(d2r.data) - RECENT) : ]
-    testDateTimes = testData.loc[:, d2r.dataSeriesIDFields]
-    tmark, tmarkDates = selectDateAxisLabels(testDateTimes)
+    testData = d2r.data.iloc[(len(d2r.data) - samples) : ]
+    #testDateTimes = testData.loc[:, d2r.dataSeriesIDFields]
+    #tmark, tmarkDates = selectDateAxisLabels(testDateTimes)
     axis1.legend()
     axis1.grid(True)
 
-    axis2.set_title("Data series vs. Predictions")
-    axis2.set_xlabel("time periods")
-    axis2.set_ylabel("Data Value")
-    axis2.plot(range(len(prediction)), d2r.testY[:], label='Test series')
-    axis2.plot(range(len(prediction)), prediction[:, FORECAST], linestyle='dashed', label='Prediction - 1 period')
-    testData = d2r.data.iloc[(len(d2r.data) - len(d2r.testY)) : ]
-    testDateTimes = testData.loc[:, d2r.dataSeriesIDFields]
-    tmark, tmarkDates = selectDateAxisLabels(testDateTimes)
-    plt.xticks(tmark, tmarkDates, rotation=20)
-    axis2.legend()
-    axis2.grid(True)
+    print("\n============== WIP visualizeTestVsForecast - second axis ================================\n\tvisualization TBD\n================================\n")
+    axis2 = axs[1]
+
+    predCounts = np.unique(prediction, return_counts=True)
+    catVals, catInverse, catCounts = np.unique(d2r.testY, return_inverse=True, return_counts=True)    
+    
+    if len(catCounts) <= 10:
+        dfY = pd.Series(d2r.testY[:,0])
+        dfCatY = pd.Series(catCounts[0], dtype="category")
+        tickList = [float(i) for i in range(0, len(catVals))]
+        npTvP = np.zeros([d2r.testY.shape[0], 3])
+        npTvP[:, 0] = d2r.testY[:,0]
+        npTvP[:, 1] = prediction[:,0]
+        npTvP[:, 2] = abs(npTvP[:, 0]) - abs(npTvP[:, 1])
+        #pctileY = np.percentile(catVals, )
+
+        axis2.set_title("Violin Plot of label values and predicted values")
+        '''
+        axis2.set_xlabel("labels (observed values)")
+        axis2.set_ylabel("predicted values")
+        axis2.set_xticks(tickList, catVals)
+        axis2.set_yticks(tickList, catVals)
+        '''
+        parts = axis2.violinplot(npTvP[:, 2], vert=True, showmeans=False, showmedians=False, showextrema=False)
+        
+        axis2.legend()
+        axis2.grid(True)
+        
+    else:
+        print("\n============== WIP visualizeTestVsForecast - second axis ================================\n\tcontinuos label values\n================================\n")
+        axis2.set_title("WIP")
+        axis2.set_xlabel("time periods")
+        axis2.set_ylabel("Data Value")
+        low = 0
+        LOW_PCT = 0.9
+        accurate = 0
+        high = 0
+        HIGH_PCT = 1.1
+        for ndx in range(0, len(prediction)):
+            if prediction[ndx] < d2r.testY[ndx] * LOW_PCT:
+                low += 1
+            elif prediction[ndx] > d2r.testY[ndx] * HIGH_PCT:
+                high += 1
+            else:
+                accurate += 1
+        
+    
+    plt.tight_layout()
+    plt.show()
 
     return
 
@@ -866,20 +915,14 @@ def evaluate_and_visualize(d2r):
         elif vizualize == "cnnResult":
             visualize_cnn(d2r, prediction)
         elif vizualize == "testVsPrediction":
-            visualize_fit(d2r)
+            #visualize_fit(d2r)
 
             '''
             Screen 2
             Testing data and model predictions
             Two timeframes with focus on the most recent period
             '''
-            fig2, axs2 = plt.subplots(2, 1)
-            fig2.suptitle(d2r.mlNode, fontsize=14, fontweight='bold')
-    
-            visualizeTestVsForecast(d2r, prediction, axs2[0], axs2[1])
-    
-            plt.tight_layout()
-            plt.show()
+            visualizeTestVsForecast(d2r, prediction)
         elif vizualize == "categoryMatrix":
             reportEvaluationMatrix(d2r, prediction)
         elif vizualize == "denseCategorization":

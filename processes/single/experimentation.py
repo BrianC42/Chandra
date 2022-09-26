@@ -320,7 +320,7 @@ def digitalSreeni_180():
 
 if __name__ == '__main__':
     #digitalSreeni_180()
-    linear_regression()
+    #linear_regression()
     sine_wave_regression()
-    autoKeras()
+    #autoKeras()
     

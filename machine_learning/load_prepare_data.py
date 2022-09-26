@@ -30,6 +30,7 @@ from configuration_constants import JSON_ML_GOAL
 from configuration_constants import JSON_ML_GOAL_CATEGORIZATION
 from configuration_constants import JSON_ML_GOAL_REGRESSION
 from configuration_constants import JSON_ML_GOAL_COMBINE_SAMPLE_COUNT
+from configuration_constants import JSON_ML_REGRESSION_FORECAST_INTERVAL
 from configuration_constants import JSON_DATA_PREP_PROCESS
 from configuration_constants import JSON_DATA_PREPARATION_CTRL
 from configuration_constants import JSON_DATA_PREP_FEATURES
@@ -255,20 +256,27 @@ def balance_classes(d2r, model_type, categorization):
         
     return
 
-def combineMultipleSamples(d2r, model_goal, combineCount, data_precision, feature_cols, target_cols):
+def combineMultipleSamples(d2r, model_goal, combineCount, forecastInterval, data_precision, feature_cols, target_cols):
     npData   = np.array(d2r.data, dtype=float)
-    features = np.zeros([npData.shape[0] - combineCount + 1, len(feature_cols) * combineCount], dtype=data_precision)
-    labels = np.zeros([npData.shape[0] - combineCount + 1, len(target_cols)], dtype=data_precision)
-    for ndx in range(0, features.shape[0]):
+    numSamples = len(d2r.data)
+    if model_goal == JSON_ML_GOAL_CATEGORIZATION:
+        print("\n============== WIP =============\n\combineMultipleSamples - categorization =============\n\tbatch label set to final value, untested\n================================\n")
+        numBatches = numSamples - combineCount
+    elif  model_goal == JSON_ML_GOAL_REGRESSION:
+        numBatches = numSamples - combineCount - forecastInterval
+    features = np.zeros([numBatches, len(feature_cols) * combineCount], dtype=data_precision)
+    labels = np.zeros([numBatches, len(target_cols)], dtype=data_precision)
+    
+    for ndx in range(0, numBatches):
         for stepndx in range (0, combineCount):
             startCol = stepndx * len(feature_cols)
             endCol = startCol + len(feature_cols)
             features[ndx, startCol : endCol] = npData[ndx + stepndx, feature_cols]
         if model_goal == JSON_ML_GOAL_CATEGORIZATION:
-            labels[ndx, : ] = npData[ndx , target_cols]
+            labelNdx = ndx + combineCount
         elif  model_goal == JSON_ML_GOAL_REGRESSION:
-            print("\n============== WIP =============\n\combineMultipleSamples - regression\n================================\n")
-            raise NameError('combine multiple samples for regression features and labels are not set')
+            labelNdx = ndx + combineCount + forecastInterval
+        labels[ndx, : ] = npData[labelNdx, target_cols]
     d2r.feature_count = features.shape[1]
     
     return features, labels
@@ -337,6 +345,7 @@ def arrangeDataForTraining(d2r):
             
             nx_model_type = nx.get_node_attributes(d2r.graph, MODEL_TYPE)[d2r.mlNode]
             nx_combine_sample_Count = nx.get_node_attributes(d2r.graph, JSON_ML_GOAL_COMBINE_SAMPLE_COUNT)[d2r.mlNode]
+            nx_regression_forecast_interval = nx.get_node_attributes(d2r.graph, JSON_ML_REGRESSION_FORECAST_INTERVAL)[d2r.mlNode]
  
             nx_categorization_regression = nx.get_node_attributes(d2r.graph, JSON_ML_GOAL)[d2r.mlNode]
             d2r.categorizationRegression = nx_categorization_regression
@@ -361,8 +370,23 @@ def arrangeDataForTraining(d2r):
                     d2r.testY = labels[d2r.trainLen + d2r.validateLen : , :]
                     d2r.feature_count = features.shape[1]
                 elif  d2r.categorizationRegression == JSON_ML_GOAL_REGRESSION:
-                    print("\n============== WIP =============\n\tarrangeDataForTraining dense regression\n================================\n")
-                    raise NameError('dense/regression - train, validate and test need to be set')
+                    if nx_combine_sample_Count > 1:
+                        features, labels = combineMultipleSamples(d2r, d2r.categorizationRegression, nx_combine_sample_Count, \
+                                                                  nx_regression_forecast_interval, nx_data_precision, feature_cols, target_cols)
+                    else:
+                        npData   = np.array(d2r.data, dtype=float)
+                        features = np.zeros([npData.shape[0], len(feature_cols)], dtype=nx_data_precision)
+                        labels = np.zeros([npData.shape[0], len(target_cols)], dtype=nx_data_precision)
+                        features[ : , : ] = npData[ : , feature_cols]
+                        labels[ : , : ] = npData[ :  , target_cols]
+                        
+                    d2r.trainX = features[ : d2r.trainLen , :]
+                    d2r.trainY = labels[ : d2r.trainLen , :]
+                    d2r.validateX = features[d2r.trainLen : (d2r.trainLen + d2r.validateLen) , :]
+                    d2r.validateY = labels[d2r.trainLen : (d2r.trainLen + d2r.validateLen) , :]
+                    d2r.testX = features[d2r.trainLen + d2r.validateLen : , :]
+                    d2r.testY = labels[d2r.trainLen + d2r.validateLen : , :]
+                    d2r.feature_count = features.shape[1]
                 
             elif nx_model_type == INPUT_LAYERTYPE_RNN:
                 nx_time_steps = nx.get_node_attributes(d2r.graph, JSON_TIMESTEPS)[d2r.mlNode]
@@ -453,7 +477,8 @@ def arrangeDataForTraining(d2r):
             pass
         =================== Sanity check of data preparation processing =================== '''
 
-        balance_classes(d2r, nx_model_type, d2r.categories)
+        if d2r.categorizationRegression == JSON_ML_GOAL_CATEGORIZATION:
+            balance_classes(d2r, nx_model_type, d2r.categories)
         
         ''' =================== Sanity check of data preparation processing ===================
         if nx_read_attr[d2r.mlNode] == JSON_TENSORFLOW:    
