@@ -9,7 +9,6 @@ import numpy as np
 import pandas as pd
 import networkx as nx
 import matplotlib.pyplot as plt
-from executing.executing import get_setter
 
 TRAINING_TENSORFLOW = 'Tensorflow'
 TRAINING_AUTO_KERAS = 'AutoKeras'
