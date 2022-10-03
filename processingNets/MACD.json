@@ -100,7 +100,7 @@
 	"conditionalFields" : {
 		"modelFile" : "d:\\brian\\AI-Projects\\models\\MACD",
 		"categorizationRegression" : "regression",
-		"combineSampleCount" : 20,
+		"combineSampleCount" : 9,
 		"forecastInterval" : 1,
 		"dataPrecision" : "float32",
 		"visualizations" : ["summary", "trainingFit", "testVsPrediction"],
@@ -124,6 +124,7 @@
 			],
 			"valid for all dense regression" : [
 				{
+				"testVsPrediction" : ""
 				}
 			],
 			"valid for all CNN categorization" : [
@@ -223,7 +224,7 @@
 			{"conv1D" : ["visualizations", "timeSequence"]}
 		],
 		"modelLayers" : [
-    		{"layerType" : "dense", "layerName" : "input", "layerUnits" : 32, "featureCount": 40, "outputActivation" : "tanh"},
+    		{"layerType" : "dense", "layerName" : "input", "layerUnits" : 32, "featureCount": 18, "outputActivation" : "tanh"},
     		{"layerType" : "dropout", "layerName" : "drop1", "dropoutRate" : 0.2},
     		{"layerType" : "dense", "layerName" : "hiddenDense1", "layerUnits": 16, "outputActivation" : "tanh"},
     		{"layerType" : "dropout", "layerName" : "drop2", "dropoutRate" : 0.2},

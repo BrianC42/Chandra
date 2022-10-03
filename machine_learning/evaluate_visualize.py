@@ -540,7 +540,7 @@ def visualizeTestVsForecast(d2r, prediction):
     axis1.plot(range(len(prediction)-samples, len(prediction)), \
                prediction[len(prediction)-samples : , FORECAST], \
                linestyle='dashed', label='Prediction - 1 period')
-    testData = d2r.data.iloc[(len(d2r.data) - samples) : ]
+    #testData = d2r.data.iloc[(len(d2r.data) - samples) : ]
     #testDateTimes = testData.loc[:, d2r.dataSeriesIDFields]
     #tmark, tmarkDates = selectDateAxisLabels(testDateTimes)
     axis1.legend()
@@ -549,33 +549,18 @@ def visualizeTestVsForecast(d2r, prediction):
     print("\n============== WIP visualizeTestVsForecast - second axis ================================\n\tvisualization TBD\n================================\n")
     axis2 = axs[1]
 
-    predCounts = np.unique(prediction, return_counts=True)
+    predVals, predInverse, predCounts = np.unique(prediction, return_inverse=True, return_counts=True)
     catVals, catInverse, catCounts = np.unique(d2r.testY, return_inverse=True, return_counts=True)    
     
     if len(catCounts) <= 10:
-        dfY = pd.Series(d2r.testY[:,0])
-        dfCatY = pd.Series(catCounts[0], dtype="category")
-        tickList = [float(i) for i in range(0, len(catVals))]
-        npTvP = np.zeros([d2r.testY.shape[0], 3])
-        npTvP[:, 0] = d2r.testY[:,0]
-        npTvP[:, 1] = prediction[:,0]
-        npTvP[:, 2] = abs(npTvP[:, 0]) - abs(npTvP[:, 1])
-        #pctileY = np.percentile(catVals, )
-
-        axis2.set_title("Violin Plot of label values and predicted values")
-        '''
-        axis2.set_xlabel("labels (observed values)")
-        axis2.set_ylabel("predicted values")
-        axis2.set_xticks(tickList, catVals)
-        axis2.set_yticks(tickList, catVals)
-        '''
-        parts = axis2.violinplot(npTvP[:, 2], vert=True, showmeans=False, showmedians=False, showextrema=False)
-        
+        dfV = pd.DataFrame(columns=['Prediction', 'Labels'])
+        dfV['Prediction'] = prediction[:,0]
+        dfV['Labels'] = d2r.testY[:,0]
+        axis2 = sns.violinplot(x=dfV['Labels'], y=dfV['Prediction'])
         axis2.legend()
-        axis2.grid(True)
         
     else:
-        print("\n============== WIP visualizeTestVsForecast - second axis ================================\n\tcontinuos label values\n================================\n")
+        print("\n============== WIP visualizeTestVsForecast - second axis ================================\n\tcontinuous label values\n================================\n")
         axis2.set_title("WIP")
         axis2.set_xlabel("time periods")
         axis2.set_ylabel("Data Value")
@@ -915,13 +900,6 @@ def evaluate_and_visualize(d2r):
         elif vizualize == "cnnResult":
             visualize_cnn(d2r, prediction)
         elif vizualize == "testVsPrediction":
-            #visualize_fit(d2r)
-
-            '''
-            Screen 2
-            Testing data and model predictions
-            Two timeframes with focus on the most recent period
-            '''
             visualizeTestVsForecast(d2r, prediction)
         elif vizualize == "categoryMatrix":
             reportEvaluationMatrix(d2r, prediction)
