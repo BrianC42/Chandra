@@ -260,7 +260,6 @@ def combineMultipleSamples(d2r, model_goal, combineCount, forecastInterval, data
     npData   = np.array(d2r.data, dtype=float)
     numSamples = len(d2r.data)
     if model_goal == JSON_ML_GOAL_CATEGORIZATION:
-        print("\n============== WIP =============\n\combineMultipleSamples - categorization =============\n\tbatch label set to final value, untested\n================================\n")
         numBatches = numSamples - combineCount
     elif  model_goal == JSON_ML_GOAL_REGRESSION:
         numBatches = numSamples - combineCount - forecastInterval
@@ -273,9 +272,9 @@ def combineMultipleSamples(d2r, model_goal, combineCount, forecastInterval, data
             endCol = startCol + len(feature_cols)
             features[ndx, startCol : endCol] = npData[ndx + stepndx, feature_cols]
         if model_goal == JSON_ML_GOAL_CATEGORIZATION:
-            labelNdx = ndx + combineCount
+            labelNdx = ndx + stepndx + forecastInterval
         elif  model_goal == JSON_ML_GOAL_REGRESSION:
-            labelNdx = ndx + combineCount + forecastInterval
+            labelNdx = ndx + stepndx + forecastInterval
         labels[ndx, : ] = npData[labelNdx, target_cols]
     d2r.feature_count = features.shape[1]
     
@@ -354,7 +353,8 @@ def arrangeDataForTraining(d2r):
             if nx_model_type == INPUT_LAYERTYPE_DENSE:
                 if d2r.categorizationRegression == JSON_ML_GOAL_CATEGORIZATION:
                     if nx_combine_sample_Count > 1:
-                        features, labels = combineMultipleSamples(d2r, d2r.categorizationRegression, nx_combine_sample_Count, nx_data_precision, feature_cols, target_cols)
+                        features, labels = combineMultipleSamples(d2r, d2r.categorizationRegression, nx_combine_sample_Count, \
+                                                                  nx_regression_forecast_interval, nx_data_precision, feature_cols, target_cols)
                     else:
                         npData   = np.array(d2r.data, dtype=float)
                         features = np.zeros([npData.shape[0], len(feature_cols)], dtype=nx_data_precision)

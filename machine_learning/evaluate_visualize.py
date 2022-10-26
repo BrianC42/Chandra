@@ -243,9 +243,20 @@ def plotDataGroups(d2r):
     print("\nTraining shapes x:%s y:%s, validating shapes x:%s y:%s, testing shapes x:%s y:%s" % (d2r.trainX.shape, d2r.trainY.shape, d2r.validateX.shape, d2r.validateY.shape, d2r.testX.shape, d2r.testY.shape))
 
     if d2r.seriesDataType == "TDADateTime":
+        
+        if len(d2r.trainX.shape) == 3:
+            seriesLen = len(d2r.trainX[0, :, 0])
+            trainingPeriods = d2r.trainX.shape[2]
+        if len(d2r.trainX.shape) == 2:
+            seriesLen = len(d2r.trainX[0, :])
+            trainingPeriods = d2r.trainX.shape[1]
+        else:
+            ex_txt = "training data shape is invalid"
+            raise NameError(ex_txt)
+
+        #seriesLen = len(d2r.trainX[0, :, 0])
+        #trainingPeriods = d2r.trainX.shape[2]
         targetCount = len(d2r.preparedTargets)
-        seriesLen = len(d2r.trainX[0, :, 0])
-        trainingPeriods = d2r.trainX.shape[2]
         rawFeatureCount = len(d2r.rawFeatures)
         trainingFeatureCount = len(d2r.preparedFeatures)
         
@@ -517,9 +528,6 @@ def selectDateAxisLabels(dateTimes):
     return tmark, tmarkDates
 
 def visualizeTestVsForecast(d2r, prediction):
-    fig2, axs = plt.subplots(2, 1)
-    fig2.suptitle(d2r.mlNode, fontsize=14, fontweight='bold')
-    
     if len(d2r.trainX.shape) == 3:
         samples = len(d2r.trainX[0, :, 0]) * 3
     if len(d2r.trainX.shape) == 2:
@@ -529,8 +537,14 @@ def visualizeTestVsForecast(d2r, prediction):
         raise NameError(ex_txt)
 
     FORECAST = 0
-    
+    predVals, predInverse, predCounts = np.unique(prediction, return_inverse=True, return_counts=True)
+    catVals, catInverse, catCounts = np.unique(d2r.testY, return_inverse=True, return_counts=True)    
+        
+    fig2, axs = plt.subplots(2, 1)
+    fig2.suptitle(d2r.mlNode, fontsize=14, fontweight='bold')    
     axis1 = axs[0]
+    axis2 = axs[1]
+    
     axis1.set_title("Data series vs. Predictions")
     axis1.set_xlabel("samples")
     axis1.set_ylabel("Data Value")
@@ -540,18 +554,9 @@ def visualizeTestVsForecast(d2r, prediction):
     axis1.plot(range(len(prediction)-samples, len(prediction)), \
                prediction[len(prediction)-samples : , FORECAST], \
                linestyle='dashed', label='Prediction - 1 period')
-    #testData = d2r.data.iloc[(len(d2r.data) - samples) : ]
-    #testDateTimes = testData.loc[:, d2r.dataSeriesIDFields]
-    #tmark, tmarkDates = selectDateAxisLabels(testDateTimes)
     axis1.legend()
     axis1.grid(True)
 
-    print("\n============== WIP visualizeTestVsForecast - second axis ================================\n\tvisualization TBD\n================================\n")
-    axis2 = axs[1]
-
-    predVals, predInverse, predCounts = np.unique(prediction, return_inverse=True, return_counts=True)
-    catVals, catInverse, catCounts = np.unique(d2r.testY, return_inverse=True, return_counts=True)    
-    
     if len(catCounts) <= 10:
         dfV = pd.DataFrame(columns=['Prediction', 'Labels'])
         dfV['Prediction'] = prediction[:,0]
@@ -577,7 +582,6 @@ def visualizeTestVsForecast(d2r, prediction):
             else:
                 accurate += 1
         
-    
     plt.tight_layout()
     plt.show()
 
@@ -589,39 +593,48 @@ def visualize_dense(d2r, prediction):
 
     axs[0, 0].set_title("Training Data")
     axs[0, 0].set_xlabel("Sample")
-    axs[0, 0].set_ylabel("Values")
+    axs[0, 0].set_ylabel("Feature Values")
     lines = []
+    x=range(0, d2r.trainX.shape[0])
     for featureNdx in range (0, d2r.trainX.shape[1]):
-        lines.append(axs[0, 0].scatter(range(0, d2r.trainX.shape[0]), d2r.trainX[:, featureNdx], s=0.1))
-    lines.append(axs[0, 0].scatter(range(0, d2r.trainX.shape[0]), d2r.trainY, s=0.1))
-    axs[0, 0].legend(lines, d2r.preparedFeatures, loc='upper center')
+        y=d2r.trainX[:, featureNdx]
+        lines.append(axs[0, 0].plot(x, y, linewidth=2))
+        #lines.append(axs[0, 0].plot(range(0, d2r.trainX.shape[0]), d2r.trainX[:, featureNdx], linewidth=0.1))
+    #lines.append(axs[0, 0].scatter(range(0, d2r.trainX.shape[0]), d2r.trainY, s=0.1))
+    #axs[0, 0].legend(lines, d2r.preparedFeatures, loc='upper center')
         
-    axs[0, 1].set_title("Evaluation Data")
+    axs[0, 1].set_title("Validation Data")
     axs[0, 1].set_xlabel("Sample")
-    axs[0, 1].set_ylabel("Values")
+    axs[0, 1].set_ylabel("Feature Values")
     lines = []
-    for featureNdx in range (0, d2r.testX.shape[1]):
-        lines.append(axs[0, 1].scatter(range(0, d2r.validateX.shape[0]), d2r.validateX[:, featureNdx], s=0.1))
-    lines.append(axs[0, 1].scatter(range(0, d2r.validateX.shape[0]), d2r.validateY, s=0.1))
-    axs[0, 1].legend(lines, d2r.preparedFeatures, loc='upper center')
+    x=range(0, d2r.validateX.shape[0])
+    for featureNdx in range (0, d2r.validateX.shape[1]):
+        y=d2r.validateX[:, featureNdx]
+        lines.append(axs[0, 1].plot(x, y, linewidth=2))
+        #lines.append(axs[0, 1].plot(range(0, d2r.validateX.shape[0]), d2r.validateX[:, featureNdx], linewidth=0.1))
+    #lines.append(axs[0, 1].scatter(range(0, d2r.validateX.shape[0]), d2r.validateY, s=0.1))
+    #axs[0, 1].legend(lines, d2r.preparedFeatures, loc='upper center')
     
-    axs[0, 2].set_title("Testing Data")
+    axs[0, 2].set_title("Test Data")
     axs[0, 2].set_xlabel("Sample")
-    axs[0, 2].set_ylabel("Values")
+    axs[0, 2].set_ylabel("Feature Values")
     lines = []
+    x=range(0, d2r.testX.shape[0])
     for featureNdx in range (0, d2r.testX.shape[1]):
-        lines.append(axs[0, 2].scatter(range(0, d2r.testX.shape[0]), d2r.testX[:, featureNdx], s=0.1))
-    lines.append(axs[0, 2].scatter(range(0, d2r.testX.shape[0]), d2r.testY, s=0.1))
-    axs[0, 2].legend(lines, d2r.preparedFeatures, loc='upper center')
+        y=d2r.testX[:, featureNdx]
+        lines.append(axs[0, 2].plot(x, y, linewidth=2))
+        #lines.append(axs[0, 2].plot(range(0, d2r.testX.shape[0]), d2r.testX[:, featureNdx], linewidth=0.1))
+    #lines.append(axs[0, 2].scatter(range(0, d2r.testX.shape[0]), d2r.testY, s=0.1))
+    #axs[0, 2].legend(lines, d2r.preparedFeatures, loc='upper center')
     
-    axs[1, 1].set_title("Prediction")
+    axs[1, 1].set_title("TBD")
     axs[1, 1].set_xlabel("Sample")
     axs[1, 1].set_ylabel("Values")
     #axs[1, 1].scatter(d2r.testX, prediction, label='Prediction', linestyle='dashed')
     #axs[1, 1].scatter(d2r.testX, d2r.testY, label='Test data')
     #axs[1, 1].legend()
 
-    axs[1, 2].set_title("Extrapolation")
+    axs[1, 2].set_title("TBD")
     x_min = np.min(d2r.testX)
     x_max = np.max(d2r.testX)
     iterable = ((x_max + (((x_max - x_min) / 10) * x)) for x in range(100))
