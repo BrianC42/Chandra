@@ -565,7 +565,7 @@ def visualizeTestVsForecast(d2r, prediction):
         axis2.legend()
         
     else:
-        print("\n============== WIP visualizeTestVsForecast - second axis ================================\n\tcontinuous label values\n================================\n")
+        print("\n============== WIP visualizeTestVsForecast - second axis \n\tcontinuous label values\n================================\n")
         axis2.set_title("WIP")
         axis2.set_xlabel("time periods")
         axis2.set_ylabel("Data Value")

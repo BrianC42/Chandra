@@ -1,6 +1,6 @@
 {
+"comment - description" : "Experimental regression models to predict ADX based on component features",
 "comment - processing node section" : "Specification details for the processing nodes",
-"comment - description" : "Experimental categorization models to identify MACD_flag based on MACD and MACD_Signal",
 "processNodes" : [
 	{
 	"processNodeName" : "dataIn",
@@ -8,7 +8,7 @@
 		"processType" : "dataLoad",
 		"comments: supported values - processType" : ["dataLoad", "dataPrep", "Tensorflow"],
 		"inputFlows" : [],
-		"outputFlow" : "MACD",
+		"outputFlow" : "ADXfeatures",
 		"outputFile" : "",
 		"logFile" : ""
 	},
@@ -25,35 +25,50 @@
 	"processNodeName" : "PrepData",
 	"requiredFields" : {
 		"processType" : "dataPrep",
-		"inputFlows" : ["MACD"],
-		"outputFlow" : "MACDPrepared",
+		"inputFlows" : ["ADXfeatures"],
+		"outputFlow" : "ADXPrepared",
 		"logFile" : ""
 	},
 	"conditionalFields" : {
 		"dataPrepCtrl" : {
-			"preparationSequence" : ["normalize", "oneHotEncoding"],
+			"comment - preparationSequence" : ["normalize", "oneHotEncoding"],
+			"preparationSequence" : ["normalize"],
 			"noPreparation" : {
 				"features" : [
-					{"feature" : "MACD_flag"}
+					{"feature" : "DateTime"}
 				],
 				"comment holding noPreparation features" : [
-					{"feature" : "MACD"},
-					{"feature" : "MACD_Signal"},
-					{"feature" : "MACD_flag"},
-					{"feature" : "DateTime"}
 				]
 			},
 			"normalize" : {
 				"comment types supported" : ["standard", "minmax", "relative_time_series"],
 				"type" : "relative_time_series",
 				"features" : [
-					{"feature" : "MACD"},
-					{"feature" : "MACD_Signal"}
+					{"feature" : "ADI -DM"},
+					{"feature" : "ADI Smooth -DM"},
+					{"feature" : "ADI +DM"},
+					{"feature" : "ADI Smooth +DM"},
+					{"feature" : "ADI TR"},
+					{"feature" : "ADI Smooth TR"},
+					{"feature" : "ADI -DI"},
+					{"feature" : "ADI +DI"},
+					{"feature" : "DX"},
+					{"feature" : "ADX"}
 				],
 				"comment normalize - minmax - holding features" : [
+					{"feature" : "DateTime"},
 					{"feature" : "OBV"},
 					{"feature" : "Volume"},
 					{"feature" : "Relative Strength"},
+					{"feature" : "ADI -DM"},
+					{"feature" : "ADI Smooth -DM"},
+					{"feature" : "ADI +DM"},
+					{"feature" : "ADI Smooth +DM"},
+					{"feature" : "ADI TR"},
+					{"feature" : "ADI Smooth TR"},
+					{"feature" : "ADI -DI"},
+					{"feature" : "ADI +DI"},
+					{"feature" : "DX"},
 					{"feature" : "ADX"},
 					{"feature" : "AccumulationDistribution"},
 					{"feature" : "OBV"},
@@ -89,114 +104,107 @@
 	}
 	},
 	{
-	"processNodeName" : "MACD",
+	"processNodeName" : "ADX regression",
 	"requiredFields" : {
 		"comments: supported values - processType" : ["dataPrep", "Tensorflow"],
 		"processType" : "Tensorflow",
-		"inputFlows" : ["MACDPrepared"],
+		"inputFlows" : ["ADXPrepared"],
 		"outputFlow" : "",
-		"outputFile" : "d:\\brian\\AI-Projects\\models\\MACD",
-		"logFile" : "d:\\brian\\AI-Projects\\logs\\MACD.txt"
+		"outputFile" : "d:\\brian\\AI-Projects\\models\\ADX",
+		"logFile" : "d:\\brian\\AI-Projects\\logs\\ADX.txt"
 	},
 	"conditionalFields" : {
-		"modelFile" : "d:\\brian\\AI-Projects\\models\\MACD",
-		"categorizationRegression" : "categorization",
-		"combineSampleCount" : 4,
+		"modelFile" : "d:\\brian\\AI-Projects\\models\\ADX",
+		"categorizationRegression" : "regression",
+		"combineSampleCount" : 28,
 		"forecastInterval" : 0,
 		"dataPrecision" : "float32",
-		"visualizations" : ["summary", "trainingFit", "categoryMatrix", "cnnResult"],
+		"visualizations" : ["summary", "trainingFit"],
 		"supported visualizations" : [
 			{
 			"targetSeries" : "", 
 			"dataGroups" : "", 
 			"normalizationCategorization" : "", 
 			"testVsPrediction" : "",
-			"valid for all categorization models" : [
+			"valid for all regression models" : [
 				{
 				"summary" : "Prints tensorflow layer report",
-				"trainingFit" : "Prints loss and accuracy charts",
-				"categoryMatrix" : "Prints a matrix of evaluation labels vs. actual labels"
+				"trainingFit" : "Prints loss and accuracy charts"
 				}
 			],
-			"valid for all dense categorization" : [
+			"valid for all dense regression" : [
 				{
-				"denseCategorization" : ""
+				"dataGroups" : "?",
+				"testVsPrediction" : "apparently not "
 				}
 			],
-			"valid for all CNN categorization" : [
+			"valid for all CNN regression" : [
 				{
-				"cnnResult" : ""
 				}
 			],
-			"valid for all RNN categorization" : [
+			"valid for all RNN regression" : [
 				{
+				"cnnResult" : "?"
 				}
 			]
 			}
 		],
-		"modelLayers dense / regression" : "MACD is categorization problem, MACD = {-1, 0, 1}",
-		"modelLayers LSTM / regression" : "MACD is categorization problem, MACD = {-1, 0, 1}",
-		"modelLayers conv1D / regression" : "MACD is categorization problem, MACD = {-1, 0, 1}",
-		"modelLayers dense / categorization" : [
+		"modelLayers dense / regression" : [
 			{
-			"visualizations" : ["summary", "trainingFit", "denseCategorization", "categoryMatrix"],
+			"visualizations" : ["summary", "trainingFit"],
 			"categorizationRegression" : "categorization",
-			"combineSampleCount" : 4,
-			"forecastInterval" : 0,
-			"timeSequence" : false
-			},
-    		{"layerType" : "dense", "layerName" : "input", "featureCount": 8, "layerUnits" : 64, "outputActivation" : "linear"},
-    		{"layerType" : "dropout", "layerName" : "drop-h1", "dropoutRate" : 0.2},
-    		{"layerType" : "dense", "layerName" : "dense-h1", "layerUnits" : 32, "outputActivation" : "linear"},
-    		{"layerType" : "dropout", "layerName" : "drop-h2", "dropoutRate" : 0.2},
-    		{"layerType" : "dense", "layerName" : "output", "layerUnits": 3, "outputActivation" : "softmax"}
-		],
-		"modelLayers LSTM / categorization" : [
-			{
-			"categorizationRegression" : ["categorization"],
-			"visualizations" : ["summary", "trainingFit", "categoryMatrix"],
-			"combineSampleCount" : 4,
-			"forecastInterval" : 0,
-			"timeSequence" : true,
-			"seriesStepIDField" : ["DateTime"],
-			"seriesDataType" : "TDADateTime",
-			"type" : "relative_time_series"
-			},
-    		{"layerType" : "lstm", "layerName" : "input", "layerUnits" : 32, "featureCount": 2, "timeSteps": 4, "outputActivation" : "linear"},
-    		{"layerType" : "dropout", "layerName" : "drop-1", "dropoutRate" : 0.2},
-    		{"layerType" : "dense", "layerName" : "dense-h1", "layerUnits": 16, "outputActivation" : "linear"},
-    		{"layerType" : "dropout", "layerName" : "drop-2", "dropoutRate" : 0.2},
-    		{"layerType" : "dense", "layerName" : "output", "layerUnits": 3, "outputActivation" : "softmax"}
-		],
-		"modelLayers conv1D / categorization" : [
-			{
-			"categorizationRegression" : ["categorization"],
-			"visualizations" : ["summary", "trainingFit", "categoryMatrix", "cnnResult"],
-			"combineSampleCount" : 4,
-			"forecastInterval" : 0,
-			"timeSequence" : true,
-			"seriesStepIDField" : ["DateTime"],
-			"seriesDataType" : "TDADateTime",
-			"type" : "relative_time_series"
-			},
-    		{"layerType" : "conv1d", "layerName" : "input", "featureCount": 2, "timeSteps": 4, "filterCount" : 3, "filterSize" : 5, "outputActivation" : "tanh"},
-    		{"layerType" : "GlobalMaxPool1D", "layerName" : "GMP1D"},
-    		{"layerType" : "dense", "layerName" : "hiddenDense1", "layerUnits": 64, "outputActivation" : "linear"},
-    		{"layerType" : "dropout", "layerName" : "drop1", "dropoutRate" : 0.2},
-    		{"layerType" : "dense", "layerName" : "hiddenDense2", "layerUnits": 32, "outputActivation" : "linear"},
-    		{"layerType" : "dropout", "layerName" : "drop2", "dropoutRate" : 0.2},
-    		{"layerType" : "dense", "layerName" : "output", "layerUnits": 3, "outputActivation" : "softmax"}
-		],
-		"configuration changes to match model layer configuration" : {
-			"categorizationRegression" : ["regression", "categorization"],
-			"visualizations" : ["summary", "trainingFit", "categoryMatrix"],
-			"combineSampleCount" : 9,
+			"combineSampleCount" : 28,
 			"forecastInterval" : 1,
 			"timeSequence" : true,
 			"seriesStepIDField" : ["DateTime"],
 			"seriesDataType" : "TDADateTime",
 			"type" : "relative_time_series"
-		},
+			},
+    		{"layerType" : "dense", "layerName" : "input", "featureCount": 252, "layerUnits" : 512, "outputActivation" : "linear"},
+    		{"layerType" : "dropout", "layerName" : "drop-h1", "dropoutRate" : 0.2},
+    		{"layerType" : "dense", "layerName" : "dense-h1", "layerUnits" : 128, "outputActivation" : "linear"},
+    		{"layerType" : "dropout", "layerName" : "drop-h2", "dropoutRate" : 0.2},
+    		{"layerType" : "dense", "layerName" : "output", "layerUnits": 3, "outputActivation" : "linear"}
+		],
+		"modelLayers LSTM / regression" : [
+			{
+			"visualizations" : ["summary", "trainingFit"],
+			"categorizationRegression" : "categorization",
+			"combineSampleCount" : 28,
+			"forecastInterval" : 1,
+			"timeSequence" : true,
+			"seriesStepIDField" : ["DateTime"],
+			"seriesDataType" : "TDADateTime",
+			"type" : "relative_time_series"
+			},
+    		{"layerType" : "lstm", "layerName" : "input", "layerUnits" : 64, "featureCount": 9, "timeSteps": 28, "outputActivation" : "linear"},
+    		{"layerType" : "dropout", "layerName" : "drop-1", "dropoutRate" : 0.2},
+    		{"layerType" : "dense", "layerName" : "dense-h1", "layerUnits": 16, "outputActivation" : "linear"},
+    		{"layerType" : "dropout", "layerName" : "drop-2", "dropoutRate" : 0.2},
+    		{"layerType" : "dense", "layerName" : "output", "layerUnits": 1, "outputActivation" : "linear"}
+		],
+		"modelLayers conv1D / regression" : [
+			{
+			"visualizations" : ["summary", "trainingFit"],
+			"categorizationRegression" : "categorization",
+			"combineSampleCount" : 28,
+			"forecastInterval" : 0,
+			"timeSequence" : true,
+			"seriesStepIDField" : ["DateTime"],
+			"seriesDataType" : "TDADateTime",
+			"type" : "relative_time_series"
+			},
+    		{"layerType" : "conv1d", "layerName" : "input", "featureCount": 9, "timeSteps": 28, "filterCount" : 3, "filterSize" : 5, "outputActivation" : "linear"},
+    		{"layerType" : "GlobalMaxPool1D", "layerName" : "GMP1D"},
+    		{"layerType" : "dense", "layerName" : "hiddenDense1", "layerUnits": 64, "outputActivation" : "linear"},
+    		{"layerType" : "dropout", "layerName" : "drop1", "dropoutRate" : 0.2},
+    		{"layerType" : "dense", "layerName" : "hiddenDense2", "layerUnits": 32, "outputActivation" : "linear"},
+    		{"layerType" : "dropout", "layerName" : "drop2", "dropoutRate" : 0.2},
+    		{"layerType" : "dense", "layerName" : "output", "layerUnits": 3, "outputActivation" : "linear"}
+		],
+		"modelLayers dense / categorization" : "ADX is a continuous variable label suitable for regression models",
+		"modelLayers LSTM / categorization" : "ADX is a continuous variable label suitable for regression models",
+		"modelLayers conv1D / categorization" : "ADX is a continuous variable label suitable for regression models",
 		"comment model specification values supported" : [
 			{
 			"layerType" : ["conv1d", "lstm", "dense", "TimeDistributed", "dropout", "flatten", "GlobalMaxPool1D"],
@@ -210,13 +218,13 @@
 			}
 		],
 		"modelLayers" : [
-    		{"layerType" : "conv1d", "layerName" : "input", "featureCount": 2, "timeSteps": 4, "filterCount" : 3, "filterSize" : 5, "outputActivation" : "tanh"},
+    		{"layerType" : "conv1d", "layerName" : "input", "featureCount": 9, "timeSteps": 28, "filterCount" : 3, "filterSize" : 5, "outputActivation" : "linear"},
     		{"layerType" : "GlobalMaxPool1D", "layerName" : "GMP1D"},
     		{"layerType" : "dense", "layerName" : "hiddenDense1", "layerUnits": 64, "outputActivation" : "linear"},
     		{"layerType" : "dropout", "layerName" : "drop1", "dropoutRate" : 0.2},
     		{"layerType" : "dense", "layerName" : "hiddenDense2", "layerUnits": 32, "outputActivation" : "linear"},
     		{"layerType" : "dropout", "layerName" : "drop2", "dropoutRate" : 0.2},
-    		{"layerType" : "dense", "layerName" : "output", "layerUnits": 3, "outputActivation" : "softmax"}
+    		{"layerType" : "dense", "layerName" : "output", "layerUnits": 3, "outputActivation" : "linear"}
 		],
 		"training" : {
 			"lossWeights" : [1.0],
@@ -245,18 +253,18 @@
 "comment - dataflow section" : "Specification details for the flows of data between processing nodes",
 "dataFlows" : [
 	{
-	"flowName" : "MACD",
+	"flowName" : "ADXfeatures",
 	"requiredFields" : {
 		"flowFrom" : "dataIn",
 		"flowTo" : "PrepData",
-		"flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\MACD.csv"
+		"flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\ADX.csv"
 		},
 	"conditionalFields" : {
 		"TensorflowData" : {
 			"balanceClasses" : true,
 			"ignoreBlanks" : true,
-			"features" : ["MACD", "MACD_Signal"],
-			"targets" : ["MACD_flag"],
+			"features" : ["ADI -DM", "ADI Smooth -DM", "ADI +DM", "ADI Smooth +DM", "ADI TR", "ADI Smooth TR", "ADI -DI", "ADI +DI", "DX"],
+			"targets" : ["ADX"],
 			"timeSequence" : true,
 			"seriesStepIDField" : ["DateTime"],
 			"seriesDataType" : "TDADateTime",
@@ -265,16 +273,16 @@
 		}
 	},
 	{
-	"flowName" : "MACDPrepared",
+	"flowName" : "ADXPrepared",
 	"requiredFields" : {
 		"flowFrom" : "PrepData",
-		"flowTo" : "MACD",
-		"flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\MACDPrepared.csv"
+		"flowTo" : "ADX regression",
+		"flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\ADXPrepared.csv"
 		},
 	"conditionalFields" : {
 		"TensorflowData" : {
-			"features" : ["MACD", "MACD_Signal"],
-			"targets" : ["MACD_flag"],
+			"features" : ["ADI -DM", "ADI Smooth -DM", "ADI +DM", "ADI Smooth +DM", "ADI TR", "ADI Smooth TR", "ADI -DI", "ADI +DI", "DX"],
+			"targets" : ["ADX"],
 			"timeSequence" : true,
 			"seriesStepIDField" : ["DateTime"],
 			"seriesDataType" : "TDADateTime",

@@ -97,12 +97,12 @@ class chandraScaler():
                 if self.maxPosMax != 0.0:
                     self.posRatio[feature] = self.maxPos[feature] / self.maxPosMax
                 else:
-                    print("maxPosMax==0.0 for feature %s" % feature)
+                    #print("maxPosMax==0.0 for feature %s" % feature)
                     self.posRatio[feature] = 0.0
-                if self.maxPosMax != 0.0:
+                if self.minNegMin != 0.0:
                     self.negRatio[feature] = self.minNeg[feature] / self.minNegMin
                 else:
-                    print("minNegMin==0.0 for feature %s" % feature)
+                    #print("minNegMin==0.0 for feature %s" % feature)
                     self.negRatio[feature] = 0.0
         self.npNormalizedFeatures = np.zeros((self.dfFeatures.shape[0], self.dfFeatures.shape[1]))
         #print("Positive value factors:\nmaxPosMax=\t%s\nmaxPos=\n%s" % (self.maxPosMax, self.maxPos))
