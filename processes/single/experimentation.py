@@ -15,7 +15,7 @@ Works fine in Tensorflow: 2.2.0
 dataset: https://finance.yahoo.com/quote/GE/history/
 Also try S&P: https://finance.yahoo.com/quote/%5EGSPC/history?p=%5EGSPC
 '''
-
+import tkinter
 
 import numpy as np
 import pandas as pd
@@ -319,8 +319,13 @@ def digitalSreeni_180():
     return
 
 if __name__ == '__main__':
+    answer = tkinter.messagebox.askyesno(title="box title", message="dialog message")
+    if answer:
+        print("true - yes")
+    else:
+        print("false - no")
     #digitalSreeni_180()
     #linear_regression()
-    sine_wave_regression()
+    #sine_wave_regression()
     #autoKeras()
     

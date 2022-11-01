@@ -1,4 +1,5 @@
 {
+"comment - description" : "Experimental regression models based on TDA technical features",
 "comment - processing node section" : "Specification details for the processing nodes",
 "processNodes" : [
 	{
@@ -7,15 +8,15 @@
 		"processType" : "dataLoad",
 		"comments: supported values - processType" : ["dataLoad", "dataPrep", "Tensorflow"],
 		"inputFlows" : [],
-		"outputFlow" : "marketDataMulti",
+		"outputFlow" : "TDAfeatures",
 		"outputFile" : "",
 		"logFile" : ""
 	},
 	"conditionalFields" : {
 		"dataLoadCtrl" : {
+			"comment file spec" : "d:\\brian\\AI-Projects\\tda\\market_analysis_data\\[a-z]*.csv",
 			"inputFile" : [
-			"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\[a-b]*.csv",
-			"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\[y-z]*.csv"
+				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\a*.csv"
 			]
 		}
 	}
@@ -24,55 +25,106 @@
 	"processNodeName" : "PrepData",
 	"requiredFields" : {
 		"processType" : "dataPrep",
-		"inputFlows" : ["marketDataMulti"],
-		"outputFlow" : "Prepared",
+		"inputFlows" : ["TDAfeatures"],
+		"outputFlow" : "TDAPrepared",
 		"logFile" : ""
 	},
 	"conditionalFields" : {
 		"dataPrepCtrl" : {
-			"preparationSequence" : ["normalize", "oneHotEncoding"],
+			"comment - preparationSequence" : ["normalize", "oneHotEncoding"],
+			"preparationSequence" : ["normalize"],
 			"noPreparation" : {
 				"features" : [
-					{"feature" : "MACD"},
-					{"feature" : "MACD_Signal"},
-					{"feature" : "MACD_flag"},
-					{"feature" : "DateTime"}
+					{"feature" : "DateTime"},
+					{"feature" : "5 day change"}
 				],
 				"comment holding noPreparation features" : [
-					{"feature" : "MACD_flag"},
-					{"feature" : "DateTime"}
 				]
 			},
 			"normalize" : {
-				"comment types supported" : ["standard", "minmax"],
-				"type" : "standard",
+				"comment types supported" : ["standard", "minmax", "relative_time_series"],
+				"type" : "relative_time_series",
 				"features" : [
-					{"feature" : "EMA26"},
-					{"feature" : "EMA20"},
-					{"feature" : "EMA12"},
-					{"feature" : "Close"}
-				],
-				"comment normalize - minmax - holding features" : [
-					{"feature" : "OBV"},
-					{"feature" : "Volume"},
+					{"feature" : "RS SMA20"},
 					{"feature" : "Relative Strength"},
+					{"feature" : "SO SMA3"},
+					{"feature" : "Stochastic Oscillator"},	
+					{"feature" : "ADI -DM"},
+					{"feature" : "ADI Smooth -DM"},
+					{"feature" : "ADI +DM"},
+					{"feature" : "ADI Smooth +DM"},
+					{"feature" : "ADI TR"},
+					{"feature" : "ADI Smooth TR"},
+					{"feature" : "ADI -DI"},
+					{"feature" : "ADI +DI"},
+					{"feature" : "DX"},
 					{"feature" : "ADX"},
-					{"feature" : "AccumulationDistribution"},
-					{"feature" : "OBV"},
-					{"feature" : "MACD"},
+					{"feature" : "BB_Lower"},
+					{"feature" : "BB_Upper"},
 					{"feature" : "MACD_Signal"},
+					{"feature" : "MACD"},
 					{"feature" : "SMA20"},
 					{"feature" : "EMA26"},
 					{"feature" : "EMA20"},
 					{"feature" : "EMA12"},
-					{"feature" : "40 day change"},
-					{"feature" : "20 day change"},
-					{"feature" : "10 day change"},
-					{"feature" : "5 day change"},
+					{"feature" : "day"},
 					{"feature" : "Open"},
 					{"feature" : "High"},
 					{"feature" : "Low"},
 					{"feature" : "Close"}
+				],
+				"comment available feature list" : [
+					{"feature" : "DateTime"},
+					{"feature" : "RS SMA20"},
+					{"feature" : "Relative Strength"},
+					{"feature" : "SO SMA3"},
+					{"feature" : "Stochastic Oscillator"},	
+					{"feature" : "ADI -DM"},
+					{"feature" : "ADI Smooth -DM"},
+					{"feature" : "ADI +DM"},
+					{"feature" : "ADI Smooth +DM"},
+					{"feature" : "ADI TR"},
+					{"feature" : "ADI Smooth TR"},
+					{"feature" : "ADI -DI"},
+					{"feature" : "ADI +DI"},
+					{"feature" : "DX"},
+					{"feature" : "ADX"},
+					{"feature not implemented" : "Aroon Indicator"},
+					{"feature very large values" : "AccumulationDistribution"},
+					{"feature" : "BB_Lower"},
+					{"feature" : "BB_Upper"},
+					{"feature very large values" : "OBV"},
+					{"feature" : "MACD_Signal"},
+					{"feature" : "MACD"},
+					{"feature" : "SMA20"},
+					{"feature" : "EMA26"},
+					{"feature" : "EMA20"},
+					{"feature" : "EMA12"},
+					{"feature text" : "10day100pct"},
+					{"feature text" : "10day50pct"},
+					{"feature text" : "10day25pct"},
+					{"feature text" : "10day10pct"},
+					{"feature text" : "10day5pct"},
+					{"feature" : "day"},
+					{"feature text" : "date"},
+					{"feature look ahead data - only use as label" : "40 day min"},
+					{"feature look ahead data - only use as label" : "40 day max"},
+					{"feature look ahead data - only use as label" : "40 day change"},
+					{"feature look ahead data - only use as label" : "20 day min"},
+					{"feature look ahead data - only use as label" : "20 day max"},
+					{"feature look ahead data - only use as label" : "20 day change"},
+					{"feature look ahead data - only use as label" : "10 day min"},
+					{"feature look ahead data - only use as label" : "10 day max"},
+					{"feature look ahead data - only use as label" : "10 day change"},
+					{"feature look ahead data - only use as label" : "5 day change"},
+					{"feature look ahead data - only use as label" : "1 day change"},
+					{"feature" : "Open"},
+					{"feature" : "High"},
+					{"feature" : "Low"},
+					{"feature" : "Close"},
+					{"feature very large values" : "Volume"},
+					{"feature" : "14 day max"},
+					{"feature" : "14 day min"}
 				]
 			},
 			"oneHotEncoding" : {
@@ -91,81 +143,155 @@
 	}
 	},
 	{
-	"processNodeName" : "mktMulti",
+	"processNodeName" : "TDA regression",
 	"requiredFields" : {
 		"comments: supported values - processType" : ["dataPrep", "Tensorflow"],
 		"processType" : "Tensorflow",
-		"inputFlows" : ["Prepared"],
+		"inputFlows" : ["TDAPrepared"],
 		"outputFlow" : "",
-		"outputFile" : "d:\\brian\\AI-Projects\\models\\mkt_multi",
-		"logFile" : "d:\\brian\\AI-Projects\\logs\\mkt_multi.txt"
+		"outputFile" : "d:\\brian\\AI-Projects\\models\\TDA",
+		"logFile" : "d:\\brian\\AI-Projects\\logs\\TDA.txt"
 	},
 	"conditionalFields" : {
-		"modelFile" : "d:\\brian\\AI-Projects\\models\\mkt_multi",
+		"modelFile" : "d:\\brian\\AI-Projects\\models\\TDA",
+		"categorizationRegression" : "regression",
+		"combineSampleCount" : 0,
+		"forecastInterval" : 1,
 		"dataPrecision" : "float32",
-		"visualizations" : ["summary", "trainingFit"],
-		"supported visualizations" : ["targetSeries", "dataGroups", "normalizationCategorization", "summary", "trainingFit", "testVsPrediction"],
+		"visualizations" : ["summary", "trainingFit", "testVsPrediction"],
+		"supported visualizations" : [
+			{
+			"targetSeries" : "", 
+			"dataGroups" : "", 
+			"normalizationCategorization" : "", 
+			"testVsPrediction" : "",
+			"valid for all regression models" : [
+				{
+				"summary" : "Prints tensorflow layer report",
+				"trainingFit" : "Prints loss and accuracy charts"
+				}
+			],
+			"valid for all dense regression" : [
+				{
+				"dataGroups" : "?",
+				"testVsPrediction" : "apparently not "
+				}
+			],
+			"valid for all CNN regression" : [
+				{
+				}
+			],
+			"valid for all RNN regression" : [
+				{
+				"cnnResult" : "?"
+				}
+			]
+			}
+		],
+		"modelLayers dense / regression" : [
+			{
+			"comment - description" : "calculation of ADX given 9 features. No forecast",
+			"visualizations" : ["summary", "trainingFit"],
+			"categorizationRegression" : "categorization",
+			"combineSampleCount" : 0,
+			"forecastInterval" : 0,
+			"timeSequence" : true,
+			"seriesStepIDField" : ["DateTime"],
+			"seriesDataType" : "TDADateTime",
+			"type" : "relative_time_series",
+			"epochs" : 30,
+			"compilationLoss" : "mse",
+			"compilationMetrics" : ["mse"],
+			"optimizer" : "adam"
+			},
+    		{"layerType" : "dense", "layerName" : "input", "featureCount": 9, "layerUnits" : 128, "outputActivation" : "linear"},
+    		{"layerType" : "dropout", "layerName" : "drop-h1", "dropoutRate" : 0.2},
+    		{"layerType" : "dense", "layerName" : "dense-h1", "layerUnits" : 64, "outputActivation" : "linear"},
+    		{"layerType" : "dropout", "layerName" : "drop-h2", "dropoutRate" : 0.2},
+    		{"layerType" : "dense", "layerName" : "output", "layerUnits": 1, "outputActivation" : "linear"}
+		],
+		"modelLayers LSTM / regression" : [
+			{
+			"comment - description" : "calculation of ADX given 9 features. 28 day time series. 1 day (day 29) forecast",
+			"visualizations" : ["summary", "trainingFit"],
+			"categorizationRegression" : "categorization",
+			"combineSampleCount" : 0,
+			"forecastInterval" : 1,
+			"timeSequence" : true,
+			"seriesStepIDField" : ["DateTime"],
+			"seriesDataType" : "TDADateTime",
+			"type" : "relative_time_series",
+			"epochs" : 30,
+			"compilationLoss" : "mse",
+			"compilationMetrics" : ["mse"],
+			"optimizer" : "RMSProp"
+			},
+    		{"layerType" : "lstm", "layerName" : "input", "layerUnits" : 32, "featureCount": 9, "timeSteps": 28, "outputActivation" : "linear"},
+    		{"layerType" : "dropout", "layerName" : "drop-1", "dropoutRate" : 0.2},
+    		{"layerType" : "dense", "layerName" : "dense-h1", "layerUnits": 16, "outputActivation" : "linear"},
+    		{"layerType" : "dropout", "layerName" : "drop-2", "dropoutRate" : 0.2},
+    		{"layerType" : "dense", "layerName" : "output", "layerUnits": 1, "outputActivation" : "linear"}
+		],
+		"modelLayers conv1D / regression" : [
+			{
+			"comment - description" : "calculation of ADX given 9 features. 28 day time series. 1 day (day 29) forecast",
+			"visualizations" : ["summary", "trainingFit"],
+			"categorizationRegression" : "categorization",
+			"combineSampleCount" : 28,
+			"forecastInterval" : 1,
+			"timeSequence" : true,
+			"seriesStepIDField" : ["DateTime"],
+			"seriesDataType" : "TDADateTime",
+			"type" : "relative_time_series",
+			"epochs" : 30,
+			"compilationLoss" : "mse",
+			"compilationMetrics" : ["mse"],
+			"optimizer" : "RMSProp"
+			},
+    		{"layerType" : "conv1d", "layerName" : "input", "featureCount": 30, "timeSteps": 28, "filterCount" : 3, "filterSize" : 5, "outputActivation" : "linear"},
+    		{"layerType" : "GlobalMaxPool1D", "layerName" : "GMP1D"},
+    		{"layerType" : "dense", "layerName" : "hiddenDense1", "layerUnits": 64, "outputActivation" : "linear"},
+    		{"layerType" : "dropout", "layerName" : "drop1", "dropoutRate" : 0.2},
+    		{"layerType" : "dense", "layerName" : "hiddenDense2", "layerUnits": 32, "outputActivation" : "linear"},
+    		{"layerType" : "dropout", "layerName" : "drop2", "dropoutRate" : 0.2},
+    		{"layerType" : "dense", "layerName" : "output", "layerUnits": 1, "outputActivation" : "linear"}
+		],
 		"comment model specification values supported" : [
 			{
-			"layerType" : ["lstm", "dropout", "dense", "TimeDistributed"],
+			"layerType" : ["conv1d", "lstm", "dense", "TimeDistributed", "dropout", "flatten", "GlobalMaxPool1D"],
+			"layer params - common required" : ["layerType", "layerName", "outputActivation"],
+			"layer params - dense" : ["layerUnits"],
+			"layer params - lstm" : [""],
+			"layer params - conv1d" : ["featureCount", "timeSteps", "filterCount", "filterSize", ""],
+			"layer params - dropout" : ["dropoutRate"],
 			"returnSequences" : "true if the next layer is also an RNN layer",
 			"outputActivation" : ["linear", "relu", "tanh", "softmax", "sigmoid", "softplus", "softsign", "selu", "elu", "exponential"]
 			}
 		],
-		"modelLayers lstm trial" : [
-			{"layerType" : "lstm", "layerName" : "lstmIn",  "timeSteps" : 5, "featureCount": 7, "layerUnits" : 32, "returnSequences" : false, "outputActivation" : "relu"},
-			{"layerType" : "dropout", "layerName" : "dropout1", "dropoutRate" : 0.2},
-			{"layerType" : "dense", "layerName" : "output", "layerUnits" : 2, "outputActivation" : "softmax" }
-		],
-		"modelLayers trial 1" : [
-			{"layerType" : "lstm", "layerName" : "hidden-lstm-1", "layerUnits" : 16, "returnSequences" : false, "outputActivation" : "relu"},
-			{"layerType" : "dropout", "layerName" : "dropout2", "dropoutRate" : 0.2},
-			{"layerType" : "TimeDistributed", "comment" : "implied dense layer parameters", "layerUnits" : 1, "outputActivation" : "linear"}
-		],
-		"modelLayers trial 2" : [
-    		{"layerType" : "lstm", "layerName" : "lstmIn", "timeSteps" : 5, "featureCount": 7, "layerUnits" : 64, "returnSequences" : false, "outputActivation" : "relu"},
-    		{"layerType" : "dropout", "layerName" : "dropout1", "dropoutRate" : 0.2},
-    		{"layerType" : "dense", "layerName" : "dense1", "layerUnits": 16, "outputActivation" : "relu"},
-    		{"layerType" : "dropout", "layerName" : "dropout2", "dropoutRate" : 0.2},
-    		{"layerType" : "dense", "layerName" : "output", "layerUnits": 3, "outputActivation" : "linear"}
-		],
-		"modelLayers dense 1 validation accuracy 88% with RMSProp 100 epochs" : [
-    		{"layerType" : "dense", "layerName" : "input", "featureCount": 18, "layerUnits" : 512, "outputActivation" : "tanh"},
-    		{"layerType" : "dropout", "layerName" : "dropoutIn", "dropoutRate" : 0.2},
-    		{"layerType" : "dense", "layerName" : "dense1", "layerUnits": 256, "outputActivation" : "tanh"},
-    		{"layerType" : "dropout", "layerName" : "dropout1", "dropoutRate" : 0.2},
-    		{"layerType" : "dense", "layerName" : "dense2", "layerUnits": 32, "outputActivation" : "tanh"},
-    		{"layerType" : "dropout", "layerName" : "dropout2", "dropoutRate" : 0.2},
-    		{"layerType" : "dense", "layerName" : "dense3", "layerUnits": 64, "outputActivation" : "tanh"},
-    		{"layerType" : "dropout", "layerName" : "dropout3", "dropoutRate" : 0.2},
-    		{"layerType" : "dense", "layerName" : "output", "layerUnits": 2, "outputActivation" : "softmax"}
-		],
 		"modelLayers" : [
-    		{"layerType" : "dense", "layerName" : "input", "featureCount": 18, "layerUnits" : 512, "outputActivation" : "tanh"},
-    		{"layerType" : "dropout", "layerName" : "dropoutIn", "dropoutRate" : 0.2},
-    		{"layerType" : "dense", "layerName" : "dense1", "layerUnits": 256, "outputActivation" : "tanh"},
-    		{"layerType" : "dropout", "layerName" : "dropout1", "dropoutRate" : 0.2},
-    		{"layerType" : "dense", "layerName" : "dense2", "layerUnits": 32, "outputActivation" : "tanh"},
-    		{"layerType" : "dropout", "layerName" : "dropout2", "dropoutRate" : 0.2},
-    		{"layerType" : "dense", "layerName" : "dense3", "layerUnits": 64, "outputActivation" : "tanh"},
-    		{"layerType" : "dropout", "layerName" : "dropout3", "dropoutRate" : 0.2},
-    		{"layerType" : "dense", "layerName" : "output", "layerUnits": 2, "outputActivation" : "softmax"}
+    		{"layerType" : "lstm", "layerName" : "input", "layerUnits" : 64, "featureCount": 30, "timeSteps": 28, "outputActivation" : "linear"},
+    		{"layerType" : "dropout", "layerName" : "drop-1", "dropoutRate" : 0.2},
+    		{"layerType" : "dense", "layerName" : "dense-h1", "layerUnits": 32, "outputActivation" : "linear"},
+    		{"layerType" : "dropout", "layerName" : "drop-2", "dropoutRate" : 0.2},
+    		{"layerType" : "dense", "layerName" : "output", "layerUnits": 1, "outputActivation" : "linear"}
 		],
 		"training" : {
 			"lossWeights" : [1.0],
 			"denseRegularation" : false,
 			"regularationValue" : 0.0,
 			"batchSize" : 32,
-			"epochs" : 20,
+			"epochs" : 30,
 			"useBias" : true,
 			"validationSplit" : 0.1,
 			"testSplit" : 0.2,
 			"shuffle" : false,
 			"verbose" : 2,
 			"balanceClasses" : true,
-			"compilationLoss" : "mae",
-			"compilationMetrics" : ["accuracy"],
-			"optimizer" : "adam",
+			"compilationLoss" : "mse",
+			"Compilation Loss metrics - regression" : ["mse", "mae", "mape", "msle", "cosine_similarity", "log_cosh"],
+			"compilationMetrics" : ["mse"],
+			"compilation metrics - regression" : ["mse", "mae", "mape", "msle", "cosine_similarity", "log_cosh"],
+			"optimizer" : "SGD",
 			"optimizers - adam" : "fast, tends to overfit",
 			"optimizers - SGD" : "slow, great results",
 			"optimizers - RMSProp" : "sometimes works best",
@@ -177,38 +303,72 @@
 "comment - dataflow section" : "Specification details for the flows of data between processing nodes",
 "dataFlows" : [
 	{
-	"flowName" : "marketDataMulti",
+	"flowName" : "TDAfeatures",
 	"requiredFields" : {
 		"flowFrom" : "dataIn",
 		"flowTo" : "PrepData",
-		"flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\mktDataMulti.csv"
+		"flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\TDA.csv"
 		},
+
+
 	"conditionalFields" : {
 		"TensorflowData" : {
-			"balanceClasses" : false,
+			"balanceClasses" : true,
 			"ignoreBlanks" : true,
-			"features" : ["EMA26", "EMA20", "EMA12", "MACD", "Close", "MACD_Signal"],
-			"targets" : ["MACD_flag"],
-			"timeSequence" : false,
-			"comment seriesStepIDField" : ["DateTime"],
-			"comment seriesDataType" : "TDADateTime"
+			"features" : [
+				"MACD_flag", "MACD_Sell", "MACD_Buy", 
+				"RS SMA20", "Relative Strength", 
+				"SO SMA3", "Stochastic Oscillator", 
+				"ADI -DM", "ADI Smooth -DM", "ADI +DM", "ADI Smooth +DM", "ADI TR", "ADI Smooth TR", "ADI -DI", "ADI +DI", "DX", "ADX", 
+				"BB_Lower", "BB_Upper", 
+				"MACD_Signal", "MACD", 
+				"SMA20", "EMA26", "EMA20", "EMA12", 
+				"day",
+				"Open", "High", "Low", "Close"
+				],
+			"comment" : ["10day100pct", "10day50pct", "10day25pct", "10day10pct", "10day5pct", "date", "OBV", 
+						"Aroon Indicator", "Volume", "AccumulationDistribution"
+				],
+			"targets" : ["5 day change"],
+			"comment - look ahead prediction targets" : [
+				"40 day min","40 day max","40 day change",
+				"20 day min","20 day max","20 day change",
+				"10 day min","10 day max","10 day change",
+				"5 day change",
+				"1 day change"
+				],
+			"timeSequence" : true,
+			"seriesStepIDField" : ["DateTime"],
+			"seriesDataType" : "TDADateTime",
+			"type" : "relative_time_series"
 			}
 		}
 	},
 	{
-	"flowName" : "Prepared",
+	"flowName" : "TDAPrepared",
 	"requiredFields" : {
 		"flowFrom" : "PrepData",
-		"flowTo" : "mktMulti",
-		"flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\preparedMktDataMulti.csv"
+		"flowTo" : "TDA regression",
+		"flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\TDAPrepared.csv"
 		},
 	"conditionalFields" : {
 		"TensorflowData" : {
-			"features" : ["EMA26", "EMA20", "EMA12", "MACD", "Close", "MACD_Signal"],
-			"targets" : ["MACD_flag"],
-			"timeSequence" : false,
-			"comment seriesStepIDField" : ["DateTime"],
-			"comment seriesDataType" : "TDADateTime"
+			"features" : [
+				"MACD_flag", "MACD_Sell", "MACD_Buy", 
+				"RS SMA20", "Relative Strength", 
+				"SO SMA3", "Stochastic Oscillator", 
+				"ADI -DM", "ADI Smooth -DM", "ADI +DM", "ADI Smooth +DM", "ADI TR", "ADI Smooth TR", "ADI -DI", "ADI +DI", "DX", "ADX", 
+				"BB_Lower", "BB_Upper", 
+				"MACD_Signal", "MACD", 
+				"SMA20", "EMA26", "EMA20", "EMA12", 
+				"day",
+				"Open", "High", "Low", "Close"
+				],
+			"targets" : ["5 day change"],
+			"timeSequence" : true,
+			"seriesStepIDField" : ["DateTime"],
+			"seriesDataType" : "TDADateTime",
+			"type" : "relative_time_series"
 			}
 		}
 	}

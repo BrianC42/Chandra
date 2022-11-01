@@ -168,19 +168,6 @@ def sanityCheckMACD(combined=None, npX=None, npY=None, verbose=False, stage=""):
     return
 
 def visualize_fit(d2r):
-    '''
-    fig1, axs1 = plt.subplots(2, 1)
-    fig1.suptitle(d2r.mlNode, fontsize=14, fontweight='bold')
-    
-    fig = plt.figure(tight_layout=True)
-    '''
-    fig = plt.figure(tight_layout=True)
-    gs = gridspec.GridSpec(2, 1)
-    fig.suptitle("Training results", fontsize=14, fontweight='bold')
-
-    axLoss = fig.add_subplot(gs[0, 0])
-    axAccuracy = fig.add_subplot(gs[1, 0])
-    
     nx_optimizer = nx.get_node_attributes(d2r.graph, JSON_OPTIMIZER)[d2r.mlNode]
     nx_loss = nx.get_node_attributes(d2r.graph, JSON_LOSS)[d2r.mlNode]
     nx_metrics = nx.get_node_attributes(d2r.graph, JSON_METRICS)[d2r.mlNode]
@@ -191,22 +178,28 @@ def visualize_fit(d2r):
     str_p6 = ',epochs:{:d}'.format(d2r.fitting.params['epochs'])
     str_p7 = ',steps:{:d}'.format(d2r.fitting.params['steps'])
     str_params = "\n" + str_l7 + str_p4 + str_p5 + str_p6 + str_p7
-    axLoss.set_title("Fitting history" + str_params)
-    '''
-    evaluationLoss = d2r.evaluation[0]
-    evaluationAccuracy = d2r.evaluation[1]
-    '''
-    axLoss.plot(d2r.fitting.epoch, d2r.fitting.history['loss'], label='Training loss')
-    axLoss.plot(d2r.fitting.epoch, d2r.fitting.history['val_loss'], label='Validation loss')
-    axLoss.set_xlabel("Epochs")
-    axLoss.set_ylabel("loss")
-    axLoss.legend()
 
-    axAccuracy.plot(d2r.fitting.epoch, d2r.fitting.history['accuracy'], label='Training accuracy')
-    axAccuracy.plot(d2r.fitting.epoch, d2r.fitting.history['val_accuracy'], label='Validation accuracy')
-    axAccuracy.set_xlabel("Epochs")
-    axAccuracy.set_ylabel("Accuracy")
-    axAccuracy.legend()
+    if len(d2r.fitting.history.keys()) != 4:
+        raise NameError("Training history has an unexpected contents list")
+
+    fig = plt.figure(tight_layout=True)
+    gs = gridspec.GridSpec(2, 2)
+    fig.suptitle("Training results " + str_params, fontsize=14, fontweight='bold')
+
+    gridRow = 0
+    gridCol = 0
+    axPlots = pd.DataFrame(index=['loss', 'metric'], columns=['fit', 'validate'])
+    for histDataLabel in d2r.fitting.history.keys():
+        axPlots.iat[gridRow, gridCol] = fig.add_subplot(gs[gridRow, gridCol])
+        axPlots.iat[gridRow, gridCol].set_title(histDataLabel)
+        axPlots.iat[gridRow, gridCol].set_xlabel("Epochs")
+        axPlots.iat[gridRow, gridCol].set_ylabel(histDataLabel)
+        axPlots.iat[gridRow, gridCol].plot(d2r.fitting.epoch, d2r.fitting.history[histDataLabel], label=histDataLabel)
+        axPlots.iat[gridRow, gridCol].legend()
+        gridCol += 1
+        if gridCol > 1:
+            gridRow += 1
+            gridCol = 0
 
     plt.tight_layout()
     plt.show()
@@ -530,11 +523,20 @@ def selectDateAxisLabels(dateTimes):
 def visualizeTestVsForecast(d2r, prediction):
     if len(d2r.trainX.shape) == 3:
         samples = len(d2r.trainX[0, :, 0]) * 3
-    if len(d2r.trainX.shape) == 2:
+    elif len(d2r.trainX.shape) == 2:
         samples = len(d2r.trainX[0, :]) * 3
     else:
-        ex_txt = "training data shape is invalid"
+        ex_txt = "training data feature shape is invalid"
         raise NameError(ex_txt)
+
+    if len(d2r.trainY.shape) == 3:
+        label = np.reshape(d2r.testY, (len(prediction),1))
+    elif len(d2r.trainY.shape) == 2:
+        label = d2r.testY.copy()
+    else:
+        ex_txt = "training data label shape is invalid"
+        raise NameError(ex_txt)
+
 
     FORECAST = 0
     predVals, predInverse, predCounts = np.unique(prediction, return_inverse=True, return_counts=True)
@@ -549,23 +551,23 @@ def visualizeTestVsForecast(d2r, prediction):
     axis1.set_xlabel("samples")
     axis1.set_ylabel("Data Value")
     axis1.plot(range(len(prediction)-samples, len(prediction)), \
-               d2r.testY[len(prediction)-samples : ], \
+               label[len(prediction)-samples : ], \
                label='Test series')
     axis1.plot(range(len(prediction)-samples, len(prediction)), \
                prediction[len(prediction)-samples : , FORECAST], \
-               linestyle='dashed', label='Prediction - 1 period')
+               linestyle='dashed', label='Prediction')
     axis1.legend()
     axis1.grid(True)
 
     if len(catCounts) <= 10:
         dfV = pd.DataFrame(columns=['Prediction', 'Labels'])
         dfV['Prediction'] = prediction[:,0]
-        dfV['Labels'] = d2r.testY[:,0]
+        dfV['Labels'] = label[:,0]
         axis2 = sns.violinplot(x=dfV['Labels'], y=dfV['Prediction'])
         axis2.legend()
         
     else:
-        print("\n============== WIP visualizeTestVsForecast - second axis \n\tcontinuous label values\n================================\n")
+        print("\n==============================================\n\tWIP visualizeTestVsForecast - second axis \n\tcontinuous label values\n================================\n")
         axis2.set_title("WIP")
         axis2.set_xlabel("time periods")
         axis2.set_ylabel("Data Value")
@@ -575,9 +577,9 @@ def visualizeTestVsForecast(d2r, prediction):
         high = 0
         HIGH_PCT = 1.1
         for ndx in range(0, len(prediction)):
-            if prediction[ndx] < d2r.testY[ndx] * LOW_PCT:
+            if prediction[ndx] < label[ndx] * LOW_PCT:
                 low += 1
-            elif prediction[ndx] > d2r.testY[ndx] * HIGH_PCT:
+            elif prediction[ndx] > label[ndx] * HIGH_PCT:
                 high += 1
             else:
                 accurate += 1

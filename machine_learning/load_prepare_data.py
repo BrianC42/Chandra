@@ -8,6 +8,8 @@ import os
 import time
 import glob
 import logging
+import tkinter
+
 import networkx as nx
 import pandas as pd
 import numpy as np
@@ -567,6 +569,9 @@ def normalizeFeature(d2r, fields, fieldPrepCtrl, normalizeType):
                 print("Skipping and removing %s" % dKey)
                 del d2r.dataDict[dKey]
             else:
+                for fld in fields:
+                    if fld not in d2r.dataDict[dKey]:
+                        raise NameError("Missing data " + fld + " in " + dKey)
                 d2r.normDataDict[dKey] = d2r.dataDict[dKey]
                 normalizedFields = d2r.dataDict[dKey][fields]
 
@@ -624,6 +629,7 @@ def prepareTrainingData(d2r):
                                 d2r.seriesDataType = ""
                             else:
                                 d2r.seriesDataType = nx_seriesDataType[edge_i[0], edge_i[1], input_flow]
+                                
                 if os.path.isfile(nx_input_data_file):
                     d2r.rawData = pd.read_csv(nx_input_data_file)
                     d2r.data = d2r.rawData.copy()
@@ -693,13 +699,6 @@ def selectTrainingData(d2r, node_name, nx_edge):
     if d2r.timeSeries:
         nx_seriesStepIDs = nx.get_edge_attributes(d2r.graph, JSON_SERIES_ID)
         d2r.dataSeriesIDFields = nx_seriesStepIDs[nx_edge[0], nx_edge[1], output_flow]
-        '''
-        if JSON_SERIES_ID in d2r.graph:
-            nx_seriesStepIDs = nx.get_edge_attributes(d2r.graph, JSON_SERIES_ID)
-            d2r.dataSeriesIDFields = nx_seriesStepIDs[nx_edge[0], nx_edge[1], output_flow]
-        else:
-            d2r.dataSeriesIDFields = ''
-        '''
     
     df_combined = pd.DataFrame()
     nx_data_file = nx.get_node_attributes(d2r.graph, JSON_INPUT_DATA_FILE)

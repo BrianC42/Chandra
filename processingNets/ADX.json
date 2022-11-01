@@ -117,9 +117,9 @@
 		"modelFile" : "d:\\brian\\AI-Projects\\models\\ADX",
 		"categorizationRegression" : "regression",
 		"combineSampleCount" : 28,
-		"forecastInterval" : 0,
+		"forecastInterval" : 1,
 		"dataPrecision" : "float32",
-		"visualizations" : ["summary", "trainingFit"],
+		"visualizations" : ["summary", "trainingFit", "testVsPrediction"],
 		"supported visualizations" : [
 			{
 			"targetSeries" : "", 
@@ -151,33 +151,43 @@
 		],
 		"modelLayers dense / regression" : [
 			{
+			"comment - description" : "calculation of ADX given 9 features. No forecast",
 			"visualizations" : ["summary", "trainingFit"],
 			"categorizationRegression" : "categorization",
-			"combineSampleCount" : 28,
-			"forecastInterval" : 1,
+			"combineSampleCount" : 0,
+			"forecastInterval" : 0,
 			"timeSequence" : true,
 			"seriesStepIDField" : ["DateTime"],
 			"seriesDataType" : "TDADateTime",
-			"type" : "relative_time_series"
+			"type" : "relative_time_series",
+			"epochs" : 30,
+			"compilationLoss" : "mse",
+			"compilationMetrics" : ["mse"],
+			"optimizer" : "adam"
 			},
-    		{"layerType" : "dense", "layerName" : "input", "featureCount": 252, "layerUnits" : 512, "outputActivation" : "linear"},
+    		{"layerType" : "dense", "layerName" : "input", "featureCount": 9, "layerUnits" : 128, "outputActivation" : "linear"},
     		{"layerType" : "dropout", "layerName" : "drop-h1", "dropoutRate" : 0.2},
-    		{"layerType" : "dense", "layerName" : "dense-h1", "layerUnits" : 128, "outputActivation" : "linear"},
+    		{"layerType" : "dense", "layerName" : "dense-h1", "layerUnits" : 64, "outputActivation" : "linear"},
     		{"layerType" : "dropout", "layerName" : "drop-h2", "dropoutRate" : 0.2},
-    		{"layerType" : "dense", "layerName" : "output", "layerUnits": 3, "outputActivation" : "linear"}
+    		{"layerType" : "dense", "layerName" : "output", "layerUnits": 1, "outputActivation" : "linear"}
 		],
 		"modelLayers LSTM / regression" : [
 			{
+			"comment - description" : "calculation of ADX given 9 features. 28 day time series. 1 day (day 29) forecast",
 			"visualizations" : ["summary", "trainingFit"],
 			"categorizationRegression" : "categorization",
-			"combineSampleCount" : 28,
+			"combineSampleCount" : 0,
 			"forecastInterval" : 1,
 			"timeSequence" : true,
 			"seriesStepIDField" : ["DateTime"],
 			"seriesDataType" : "TDADateTime",
-			"type" : "relative_time_series"
+			"type" : "relative_time_series",
+			"epochs" : 30,
+			"compilationLoss" : "mse",
+			"compilationMetrics" : ["mse"],
+			"optimizer" : "RMSProp"
 			},
-    		{"layerType" : "lstm", "layerName" : "input", "layerUnits" : 64, "featureCount": 9, "timeSteps": 28, "outputActivation" : "linear"},
+    		{"layerType" : "lstm", "layerName" : "input", "layerUnits" : 32, "featureCount": 9, "timeSteps": 28, "outputActivation" : "linear"},
     		{"layerType" : "dropout", "layerName" : "drop-1", "dropoutRate" : 0.2},
     		{"layerType" : "dense", "layerName" : "dense-h1", "layerUnits": 16, "outputActivation" : "linear"},
     		{"layerType" : "dropout", "layerName" : "drop-2", "dropoutRate" : 0.2},
@@ -185,14 +195,19 @@
 		],
 		"modelLayers conv1D / regression" : [
 			{
+			"comment - description" : "calculation of ADX given 9 features. 28 day time series. 1 day (day 29) forecast",
 			"visualizations" : ["summary", "trainingFit"],
 			"categorizationRegression" : "categorization",
 			"combineSampleCount" : 28,
-			"forecastInterval" : 0,
+			"forecastInterval" : 1,
 			"timeSequence" : true,
 			"seriesStepIDField" : ["DateTime"],
 			"seriesDataType" : "TDADateTime",
-			"type" : "relative_time_series"
+			"type" : "relative_time_series",
+			"epochs" : 30,
+			"compilationLoss" : "mse",
+			"compilationMetrics" : ["mse"],
+			"optimizer" : "RMSProp"
 			},
     		{"layerType" : "conv1d", "layerName" : "input", "featureCount": 9, "timeSteps": 28, "filterCount" : 3, "filterSize" : 5, "outputActivation" : "linear"},
     		{"layerType" : "GlobalMaxPool1D", "layerName" : "GMP1D"},
@@ -224,24 +239,25 @@
     		{"layerType" : "dropout", "layerName" : "drop1", "dropoutRate" : 0.2},
     		{"layerType" : "dense", "layerName" : "hiddenDense2", "layerUnits": 32, "outputActivation" : "linear"},
     		{"layerType" : "dropout", "layerName" : "drop2", "dropoutRate" : 0.2},
-    		{"layerType" : "dense", "layerName" : "output", "layerUnits": 3, "outputActivation" : "linear"}
+    		{"layerType" : "dense", "layerName" : "output", "layerUnits": 1, "outputActivation" : "linear"}
 		],
 		"training" : {
 			"lossWeights" : [1.0],
 			"denseRegularation" : false,
 			"regularationValue" : 0.0,
 			"batchSize" : 32,
-			"epochs" : 10,
+			"epochs" : 30,
 			"useBias" : true,
 			"validationSplit" : 0.1,
 			"testSplit" : 0.2,
 			"shuffle" : false,
 			"verbose" : 2,
 			"balanceClasses" : true,
-			"compilationLoss" : "mae",
-			"Compilation Loss metrics" : ["mae", "sparse_categorical_crossentropy"],
-			"compilationMetrics" : ["accuracy"],
-			"optimizer" : "adam",
+			"compilationLoss" : "mse",
+			"Compilation Loss metrics - regression" : ["mse", "mae", "mape", "msle", "cosine_similarity", "log_cosh"],
+			"compilationMetrics" : ["mse"],
+			"compilation metrics - regression" : ["mse", "mae", "mape", "msle", "cosine_similarity", "log_cosh"],
+			"optimizer" : "SGD",
 			"optimizers - adam" : "fast, tends to overfit",
 			"optimizers - SGD" : "slow, great results",
 			"optimizers - RMSProp" : "sometimes works best",
