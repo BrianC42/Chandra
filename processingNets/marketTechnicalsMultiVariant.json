@@ -14,9 +14,11 @@
 	},
 	"conditionalFields" : {
 		"dataLoadCtrl" : {
-			"comment file spec" : "d:\\brian\\AI-Projects\\tda\\market_analysis_data\\[a-z]*.csv",
+			"comment file spec" : [
+				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\[a-z]*.csv"
+				],
 			"inputFile" : [
-				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\a*.csv"
+				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\[a-f]*.csv"
 			]
 		}
 	}
@@ -36,6 +38,7 @@
 			"noPreparation" : {
 				"features" : [
 					{"feature" : "DateTime"},
+					{"feature" : "MACD_flag"},
 					{"feature" : "5 day change"}
 				],
 				"comment holding noPreparation features" : [
@@ -45,6 +48,19 @@
 				"comment types supported" : ["standard", "minmax", "relative_time_series"],
 				"type" : "relative_time_series",
 				"features" : [
+					{"feature" : "day"},
+					{"feature" : "Open"},
+					{"feature" : "High"},
+					{"feature" : "Low"},
+					{"feature" : "Close"},
+					{"feature" : "BB_Lower"},
+					{"feature" : "BB_Upper"},
+					{"feature" : "MACD_Signal"},
+					{"feature" : "MACD"},
+					{"feature" : "SMA20"},
+					{"feature" : "EMA26"},
+					{"feature" : "EMA20"},
+					{"feature" : "EMA12"},
 					{"feature" : "RS SMA20"},
 					{"feature" : "Relative Strength"},
 					{"feature" : "SO SMA3"},
@@ -58,21 +74,8 @@
 					{"feature" : "ADI -DI"},
 					{"feature" : "ADI +DI"},
 					{"feature" : "DX"},
-					{"feature" : "ADX"},
-					{"feature" : "BB_Lower"},
-					{"feature" : "BB_Upper"},
-					{"feature" : "MACD_Signal"},
-					{"feature" : "MACD"},
-					{"feature" : "SMA20"},
-					{"feature" : "EMA26"},
-					{"feature" : "EMA20"},
-					{"feature" : "EMA12"},
-					{"feature" : "day"},
-					{"feature" : "Open"},
-					{"feature" : "High"},
-					{"feature" : "Low"},
-					{"feature" : "Close"}
-				],
+					{"feature" : "ADX"}
+					],
 				"comment available feature list" : [
 					{"feature" : "DateTime"},
 					{"feature" : "RS SMA20"},
@@ -96,6 +99,7 @@
 					{"feature very large values" : "OBV"},
 					{"feature" : "MACD_Signal"},
 					{"feature" : "MACD"},
+					{"feature" : "MACD_flag"},
 					{"feature" : "SMA20"},
 					{"feature" : "EMA26"},
 					{"feature" : "EMA20"},
@@ -269,7 +273,7 @@
 			}
 		],
 		"modelLayers" : [
-    		{"layerType" : "lstm", "layerName" : "input", "layerUnits" : 64, "featureCount": 30, "timeSteps": 28, "outputActivation" : "linear"},
+    		{"layerType" : "lstm", "layerName" : "input", "layerUnits" : 64, "featureCount": 28, "timeSteps": 28, "outputActivation" : "linear"},
     		{"layerType" : "dropout", "layerName" : "drop-1", "dropoutRate" : 0.2},
     		{"layerType" : "dense", "layerName" : "dense-h1", "layerUnits": 32, "outputActivation" : "linear"},
     		{"layerType" : "dropout", "layerName" : "drop-2", "dropoutRate" : 0.2},
@@ -280,7 +284,7 @@
 			"denseRegularation" : false,
 			"regularationValue" : 0.0,
 			"batchSize" : 32,
-			"epochs" : 30,
+			"epochs" : 5,
 			"useBias" : true,
 			"validationSplit" : 0.1,
 			"testSplit" : 0.2,
@@ -316,18 +320,16 @@
 			"balanceClasses" : true,
 			"ignoreBlanks" : true,
 			"features" : [
-				"MACD_flag", "MACD_Sell", "MACD_Buy", 
-				"RS SMA20", "Relative Strength", 
-				"SO SMA3", "Stochastic Oscillator", 
-				"ADI -DM", "ADI Smooth -DM", "ADI +DM", "ADI Smooth +DM", "ADI TR", "ADI Smooth TR", "ADI -DI", "ADI +DI", "DX", "ADX", 
 				"BB_Lower", "BB_Upper", 
-				"MACD_Signal", "MACD", 
+				"MACD_Signal", "MACD", "MACD_flag",
 				"SMA20", "EMA26", "EMA20", "EMA12", 
 				"day",
-				"Open", "High", "Low", "Close"
+				"Open", "High", "Low", "Close",
+				"RS SMA20", "Relative Strength", 
+				"SO SMA3", "Stochastic Oscillator", 
+				"ADI -DM", "ADI Smooth -DM", "ADI +DM", "ADI Smooth +DM", "ADI TR", "ADI Smooth TR", "ADI -DI", "ADI +DI", "DX", "ADX"
 				],
-			"comment" : ["10day100pct", "10day50pct", "10day25pct", "10day10pct", "10day5pct", "date", "OBV", 
-						"Aroon Indicator", "Volume", "AccumulationDistribution"
+			"comment - hold" : [
 				],
 			"targets" : ["5 day change"],
 			"comment - look ahead prediction targets" : [
@@ -354,15 +356,14 @@
 	"conditionalFields" : {
 		"TensorflowData" : {
 			"features" : [
-				"MACD_flag", "MACD_Sell", "MACD_Buy", 
-				"RS SMA20", "Relative Strength", 
-				"SO SMA3", "Stochastic Oscillator", 
-				"ADI -DM", "ADI Smooth -DM", "ADI +DM", "ADI Smooth +DM", "ADI TR", "ADI Smooth TR", "ADI -DI", "ADI +DI", "DX", "ADX", 
 				"BB_Lower", "BB_Upper", 
-				"MACD_Signal", "MACD", 
+				"MACD_Signal", "MACD", "MACD_flag",
 				"SMA20", "EMA26", "EMA20", "EMA12", 
 				"day",
-				"Open", "High", "Low", "Close"
+				"Open", "High", "Low", "Close",
+				"RS SMA20", "Relative Strength", 
+				"SO SMA3", "Stochastic Oscillator", 
+				"ADI -DM", "ADI Smooth -DM", "ADI +DM", "ADI Smooth +DM", "ADI TR", "ADI Smooth TR", "ADI -DI", "ADI +DI", "DX", "ADX"
 				],
 			"targets" : ["5 day change"],
 			"timeSequence" : true,
