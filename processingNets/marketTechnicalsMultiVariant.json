@@ -17,8 +17,38 @@
 			"comment file spec" : [
 				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\[a-z]*.csv"
 				],
+			"comment - Information Technology" : [
+				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\adbe.csv",
+				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\apps.csv",
+				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\ibm.csv",
+				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\intc.csv",
+				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\kd.csv",
+				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\nvda.csv",
+				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\pypl.csv",
+				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\uber.csv",
+				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\ai.csv"
+			],
+			"comment - Health Care" : [
+				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\gild.csv",
+				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\mrk.csv",
+				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\crsp.csv",
+				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\incy.csv",
+				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\ntla.csv",
+				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\vrtx.csv",
+				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\vtrs.csv",
+				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\gsk.csv",
+				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\hln.csv"
+			],
 			"inputFile" : [
-				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\[a-f]*.csv"
+				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\gild.csv",
+				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\mrk.csv",
+				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\crsp.csv",
+				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\incy.csv",
+				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\ntla.csv",
+				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\vrtx.csv",
+				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\vtrs.csv",
+				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\gsk.csv",
+				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\hln.csv"
 			]
 		}
 	}
@@ -39,7 +69,7 @@
 				"features" : [
 					{"feature" : "DateTime"},
 					{"feature" : "MACD_flag"},
-					{"feature" : "5 day change"}
+					{"feature" : "1 day change"}
 				],
 				"comment holding noPreparation features" : [
 				]
@@ -63,8 +93,6 @@
 					{"feature" : "EMA12"},
 					{"feature" : "RS SMA20"},
 					{"feature" : "Relative Strength"},
-					{"feature" : "SO SMA3"},
-					{"feature" : "Stochastic Oscillator"},	
 					{"feature" : "ADI -DM"},
 					{"feature" : "ADI Smooth -DM"},
 					{"feature" : "ADI +DM"},
@@ -80,8 +108,8 @@
 					{"feature" : "DateTime"},
 					{"feature" : "RS SMA20"},
 					{"feature" : "Relative Strength"},
-					{"feature" : "SO SMA3"},
-					{"feature" : "Stochastic Oscillator"},	
+					{"feature very large values" : "SO SMA3"},
+					{"feature very large values" : "Stochastic Oscillator"},	
 					{"feature" : "ADI -DM"},
 					{"feature" : "ADI Smooth -DM"},
 					{"feature" : "ADI +DM"},
@@ -159,8 +187,8 @@
 	"conditionalFields" : {
 		"modelFile" : "d:\\brian\\AI-Projects\\models\\TDA",
 		"categorizationRegression" : "regression",
-		"combineSampleCount" : 0,
-		"forecastInterval" : 1,
+		"combineSampleCount" : 28,
+		"forecastInterval" : 0,
 		"dataPrecision" : "float32",
 		"visualizations" : ["summary", "trainingFit", "testVsPrediction"],
 		"supported visualizations" : [
@@ -203,10 +231,11 @@
 			"seriesStepIDField" : ["DateTime"],
 			"seriesDataType" : "TDADateTime",
 			"type" : "relative_time_series",
-			"epochs" : 30,
+			"epochs" : 10,
 			"compilationLoss" : "mse",
 			"compilationMetrics" : ["mse"],
-			"optimizer" : "adam"
+			"optimizer" : "adam",
+			"targets" : ["1 day change"]
 			},
     		{"layerType" : "dense", "layerName" : "input", "featureCount": 9, "layerUnits" : 128, "outputActivation" : "linear"},
     		{"layerType" : "dropout", "layerName" : "drop-h1", "dropoutRate" : 0.2},
@@ -217,22 +246,23 @@
 		"modelLayers LSTM / regression" : [
 			{
 			"comment - description" : "calculation of ADX given 9 features. 28 day time series. 1 day (day 29) forecast",
-			"visualizations" : ["summary", "trainingFit"],
-			"categorizationRegression" : "categorization",
+			"visualizations" : ["summary", "trainingFit", "testVsPrediction"],
+			"categorizationRegression" : "regression",
 			"combineSampleCount" : 0,
 			"forecastInterval" : 1,
 			"timeSequence" : true,
 			"seriesStepIDField" : ["DateTime"],
 			"seriesDataType" : "TDADateTime",
 			"type" : "relative_time_series",
-			"epochs" : 30,
-			"compilationLoss" : "mse",
-			"compilationMetrics" : ["mse"],
-			"optimizer" : "RMSProp"
+			"epochs" : 10,
+			"compilationLoss" : "mape",
+			"compilationMetrics" : ["mape"],
+			"optimizer" : "RMSProp",
+			"targets" : ["1 day change"]
 			},
-    		{"layerType" : "lstm", "layerName" : "input", "layerUnits" : 32, "featureCount": 9, "timeSteps": 28, "outputActivation" : "linear"},
+    		{"layerType" : "lstm", "layerName" : "input", "layerUnits" : 64, "featureCount" : 26, "timeSteps" : 20, "outputActivation" : "linear"},
     		{"layerType" : "dropout", "layerName" : "drop-1", "dropoutRate" : 0.2},
-    		{"layerType" : "dense", "layerName" : "dense-h1", "layerUnits": 16, "outputActivation" : "linear"},
+    		{"layerType" : "dense", "layerName" : "dense-h1", "layerUnits": 32, "outputActivation" : "linear"},
     		{"layerType" : "dropout", "layerName" : "drop-2", "dropoutRate" : 0.2},
     		{"layerType" : "dense", "layerName" : "output", "layerUnits": 1, "outputActivation" : "linear"}
 		],
@@ -247,10 +277,11 @@
 			"seriesStepIDField" : ["DateTime"],
 			"seriesDataType" : "TDADateTime",
 			"type" : "relative_time_series",
-			"epochs" : 30,
-			"compilationLoss" : "mse",
-			"compilationMetrics" : ["mse"],
-			"optimizer" : "RMSProp"
+			"epochs" : 10,
+			"compilationLoss" : "mape",
+			"compilationMetrics" : ["mape"],
+			"optimizer" : "RMSProp",
+			"targets" : ["1 day change"]
 			},
     		{"layerType" : "conv1d", "layerName" : "input", "featureCount": 30, "timeSteps": 28, "filterCount" : 3, "filterSize" : 5, "outputActivation" : "linear"},
     		{"layerType" : "GlobalMaxPool1D", "layerName" : "GMP1D"},
@@ -273,29 +304,35 @@
 			}
 		],
 		"modelLayers" : [
-    		{"layerType" : "lstm", "layerName" : "input", "layerUnits" : 64, "featureCount": 28, "timeSteps": 28, "outputActivation" : "linear"},
-    		{"layerType" : "dropout", "layerName" : "drop-1", "dropoutRate" : 0.2},
-    		{"layerType" : "dense", "layerName" : "dense-h1", "layerUnits": 32, "outputActivation" : "linear"},
-    		{"layerType" : "dropout", "layerName" : "drop-2", "dropoutRate" : 0.2},
+    		{"layerType" : "conv1d", "layerName" : "input", "featureCount": 26, 
+    			"timeSteps": 10, "filterCount" : 128, "filterSize" : 26, "outputActivation" : "linear"},
+    		{"layerType" : "GlobalMaxPool1D", "layerName" : "GMP1D"},
+    		{"layerType" : "dense", "layerName" : "DenseStart", "layerUnits": 128, "outputActivation" : "linear"},
+    		{"layerType" : "dropout", "layerName" : "drop1", "dropoutRate" : 0.5},
+    		{"layerType" : "dense", "layerName" : "hiddenDense1", "layerUnits": 128, "outputActivation" : "linear"},
+    		{"layerType" : "dropout", "layerName" : "drop2", "dropoutRate" : 0.5},
+    		{"layerType" : "dense", "layerName" : "hiddenDense2", "layerUnits": 128, "outputActivation" : "linear"},
+    		{"layerType" : "dropout", "layerName" : "drop3", "dropoutRate" : 0.5},
+    		{"layerType" : "dense", "layerName" : "hiddenDense3", "layerUnits": 128, "outputActivation" : "linear"},
     		{"layerType" : "dense", "layerName" : "output", "layerUnits": 1, "outputActivation" : "linear"}
 		],
 		"training" : {
 			"lossWeights" : [1.0],
 			"denseRegularation" : false,
 			"regularationValue" : 0.0,
-			"batchSize" : 32,
-			"epochs" : 5,
+			"batchSize" : 16,
+			"epochs" : 10,
 			"useBias" : true,
 			"validationSplit" : 0.1,
 			"testSplit" : 0.2,
 			"shuffle" : false,
 			"verbose" : 2,
 			"balanceClasses" : true,
-			"compilationLoss" : "mse",
+			"compilationLoss" : "mae",
 			"Compilation Loss metrics - regression" : ["mse", "mae", "mape", "msle", "cosine_similarity", "log_cosh"],
-			"compilationMetrics" : ["mse"],
+			"compilationMetrics" : ["mae"],
 			"compilation metrics - regression" : ["mse", "mae", "mape", "msle", "cosine_similarity", "log_cosh"],
-			"optimizer" : "SGD",
+			"optimizer" : "adam",
 			"optimizers - adam" : "fast, tends to overfit",
 			"optimizers - SGD" : "slow, great results",
 			"optimizers - RMSProp" : "sometimes works best",
@@ -326,12 +363,12 @@
 				"day",
 				"Open", "High", "Low", "Close",
 				"RS SMA20", "Relative Strength", 
-				"SO SMA3", "Stochastic Oscillator", 
 				"ADI -DM", "ADI Smooth -DM", "ADI +DM", "ADI Smooth +DM", "ADI TR", "ADI Smooth TR", "ADI -DI", "ADI +DI", "DX", "ADX"
 				],
 			"comment - hold" : [
+				"SO SMA3", "Stochastic Oscillator"
 				],
-			"targets" : ["5 day change"],
+			"targets" : ["1 day change"],
 			"comment - look ahead prediction targets" : [
 				"40 day min","40 day max","40 day change",
 				"20 day min","20 day max","20 day change",
@@ -362,10 +399,9 @@
 				"day",
 				"Open", "High", "Low", "Close",
 				"RS SMA20", "Relative Strength", 
-				"SO SMA3", "Stochastic Oscillator", 
 				"ADI -DM", "ADI Smooth -DM", "ADI +DM", "ADI Smooth +DM", "ADI TR", "ADI Smooth TR", "ADI -DI", "ADI +DI", "DX", "ADX"
 				],
-			"targets" : ["5 day change"],
+			"targets" : ["1 day change"],
 			"timeSequence" : true,
 			"seriesStepIDField" : ["DateTime"],
 			"seriesDataType" : "TDADateTime",

@@ -380,6 +380,7 @@ class Data2Results():
     def archiveData(self, location):
         print("\nData \n%s\nwritten to %s for training\n" % (self.data.describe().transpose(), location))
         self.data.to_csv(location, index=False)
+        #"d:\\brian\\AI-Projects\\internal_flows\\TDAPrepared.csv"
           
     def plotGraph(self):
         nx.draw_circular(self.graph, arrows=True, with_labels=True, font_weight='bold')

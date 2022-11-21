@@ -28,13 +28,17 @@ def trainModel(d2r):
         nx_verbose = nx.get_node_attributes(d2r.graph, JSON_VERBOSE)[d2r.mlNode]
         nx_shuffle = nx.get_node_attributes(d2r.graph, JSON_SHUFFLE_DATA)[d2r.mlNode]
         
+        logDir = "d:\\brian\\AI-Projects\\logs\\TDATensorBoard"
+        tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=logDir, histogram_freq=1)
+        
         d2r.fitting = d2r.model.fit(x=d2r.trainX, y=d2r.trainY, \
                                     validation_data=(d2r.validateX, d2r.validateY), \
                                     #validation_split=0.1, \
                                     epochs=nx_epochs, \
                                     batch_size=nx_batch, \
                                     shuffle=nx_shuffle, \
-                                    verbose=nx_verbose)
+                                    verbose=nx_verbose, \
+                                    callbacks=[tensorboard_callback])
     
     except Exception:
         err_txt = "\n*** An exception occurred training the model ***\n\t"
