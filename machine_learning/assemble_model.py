@@ -188,8 +188,6 @@ def assemble_layers(d2r):
         err_txt = "*** An exception occurred building the model ***"
         input_layer = True
         
-        print("=================================\n\tWIP Setting iteration configuration parameters\n=========================================")        
-        nx_Tensorboard = nx.get_node_attributes(d2r.graph, "tensorboard")[d2r.mlNode]
         nx_modelIterations = nx.get_node_attributes(d2r.graph, "training iterations")[d2r.mlNode]
         iterVariables = nx_modelIterations[d2r.trainingIteration]
         iterParamters = iterVariables["iteration parameters"]

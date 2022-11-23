@@ -4,6 +4,7 @@ Created on Oct 9, 2020
 @author: Brian
 '''
 import sys
+import datetime as dt
 import logging
 import networkx as nx
 import numpy as np
@@ -25,15 +26,21 @@ def trainModel(d2r):
         nx_modelIterations = nx.get_node_attributes(d2r.graph, "training iterations")[d2r.mlNode]
         iterVariables = nx_modelIterations[d2r.trainingIteration]
         iterParamters = iterVariables["iteration parameters"]
-        iterTraining = iterParamters["training"]
 
+        iterTraining = iterParamters["training"]
         nx_batch = iterTraining[JSON_BATCH]
         nx_epochs = iterTraining[JSON_EPOCHS]
         nx_verbose = iterTraining[JSON_VERBOSE]
         nx_shuffle = iterTraining[JSON_SHUFFLE_DATA]
         
-        logDir = "d:\\brian\\AI-Projects\\logs\\TDATensorBoard"
-        tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=logDir, histogram_freq=1)
+        iterTensorboard = iterParamters["tensorboard"]
+        logDir = iterTensorboard["log file dir"]
+        logFileBase = iterTensorboard["log file name"]
+        now = dt.datetime.now()
+        timeStamp = ' {:4d}{:0>2d}{:0>2d} {:0>2d}{:0>2d}{:0>2d}'.format(now.year, now.month, now.day, \
+                                                                        now.hour, now.minute, now.second)
+        logFile = logDir + logFileBase + timeStamp
+        tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=logFile, histogram_freq=1)
         
         d2r.fitting = d2r.model.fit(x=d2r.trainX, y=d2r.trainY, \
                                     validation_data=(d2r.validateX, d2r.validateY), \

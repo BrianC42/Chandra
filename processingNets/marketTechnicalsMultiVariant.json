@@ -1,6 +1,11 @@
 {
 "comment - description" : "Experimental regression models based on TDA technical features",
-"comment - processing node section" : "Specification details for the processing nodes",
+"Training controls" : 
+	{
+	"categorizationRegression" : "regression",
+	"forecastInterval" : 1,
+	"timeSequence" : true
+	},
 "processNodes" : [
 	{
 	"processNodeName" : "dataIn",
@@ -179,110 +184,8 @@
 	"conditionalFields" : {
 		"modelFile" : "d:\\brian\\AI-Projects\\models\\TDA",
 		"categorizationRegression" : "regression",
-		"combineSampleCount" : 28,
-		"forecastInterval" : 0,
 		"dataPrecision" : "float32",
-		"visualizations" : ["summary", "trainingFit", "testVsPrediction"],
-		"supported visualizations" : [
-			{
-			"targetSeries" : "", 
-			"dataGroups" : "", 
-			"normalizationCategorization" : "", 
-			"testVsPrediction" : "",
-			"valid for all regression models" : [
-				{
-				"summary" : "Prints tensorflow layer report",
-				"trainingFit" : "Prints loss and accuracy charts"
-				}
-			],
-			"valid for all dense regression" : [
-				{
-				"dataGroups" : "?",
-				"testVsPrediction" : "apparently not "
-				}
-			],
-			"valid for all CNN regression" : [
-				{
-				}
-			],
-			"valid for all RNN regression" : [
-				{
-				"cnnResult" : "?"
-				}
-			]
-			}
-		],
-		"modelLayers dense / regression" : [
-			{
-			"comment - description" : "calculation of ADX given 9 features. No forecast",
-			"visualizations" : ["summary", "trainingFit"],
-			"categorizationRegression" : "categorization",
-			"combineSampleCount" : 0,
-			"forecastInterval" : 0,
-			"timeSequence" : true,
-			"seriesStepIDField" : ["DateTime"],
-			"seriesDataType" : "TDADateTime",
-			"type" : "relative_time_series",
-			"epochs" : 10,
-			"compilationLoss" : "mse",
-			"compilationMetrics" : ["mse"],
-			"optimizer" : "adam",
-			"targets" : ["1 day change"]
-			},
-    		{"layerType" : "dense", "layerName" : "input", "featureCount": 9, "layerUnits" : 128, "outputActivation" : "linear"},
-    		{"layerType" : "dropout", "layerName" : "drop-h1", "dropoutRate" : 0.2},
-    		{"layerType" : "dense", "layerName" : "dense-h1", "layerUnits" : 64, "outputActivation" : "linear"},
-    		{"layerType" : "dropout", "layerName" : "drop-h2", "dropoutRate" : 0.2},
-    		{"layerType" : "dense", "layerName" : "output", "layerUnits": 1, "outputActivation" : "linear"}
-		],
-		"modelLayers LSTM / regression" : [
-			{
-			"comment - description" : "calculation of ADX given 9 features. 28 day time series. 1 day (day 29) forecast",
-			"visualizations" : ["summary", "trainingFit", "testVsPrediction"],
-			"categorizationRegression" : "regression",
-			"combineSampleCount" : 0,
-			"forecastInterval" : 1,
-			"timeSequence" : true,
-			"seriesStepIDField" : ["DateTime"],
-			"seriesDataType" : "TDADateTime",
-			"type" : "relative_time_series",
-			"epochs" : 10,
-			"compilationLoss" : "mape",
-			"compilationMetrics" : ["mape"],
-			"optimizer" : "RMSProp",
-			"targets" : ["1 day change"]
-			},
-    		{"layerType" : "lstm", "layerName" : "input", "layerUnits" : 64, "featureCount" : 26, "timeSteps" : 20, "outputActivation" : "linear"},
-    		{"layerType" : "dropout", "layerName" : "drop-1", "dropoutRate" : 0.2},
-    		{"layerType" : "dense", "layerName" : "dense-h1", "layerUnits": 32, "outputActivation" : "linear"},
-    		{"layerType" : "dropout", "layerName" : "drop-2", "dropoutRate" : 0.2},
-    		{"layerType" : "dense", "layerName" : "output", "layerUnits": 1, "outputActivation" : "linear"}
-		],
-		"modelLayers conv1D / regression" : [
-			{
-			"comment - description" : "calculation of ADX given 9 features. 28 day time series. 1 day (day 29) forecast",
-			"visualizations" : ["summary", "trainingFit"],
-			"categorizationRegression" : "categorization",
-			"combineSampleCount" : 28,
-			"forecastInterval" : 1,
-			"timeSequence" : true,
-			"seriesStepIDField" : ["DateTime"],
-			"seriesDataType" : "TDADateTime",
-			"type" : "relative_time_series",
-			"epochs" : 10,
-			"compilationLoss" : "mape",
-			"compilationMetrics" : ["mape"],
-			"optimizer" : "RMSProp",
-			"targets" : ["1 day change"]
-			},
-    		{"layerType" : "conv1d", "layerName" : "input", "featureCount": 30, "timeSteps": 28, "filterCount" : 3, "filterSize" : 5, "outputActivation" : "linear"},
-    		{"layerType" : "GlobalMaxPool1D", "layerName" : "GMP1D"},
-    		{"layerType" : "dense", "layerName" : "hiddenDense1", "layerUnits": 64, "outputActivation" : "linear"},
-    		{"layerType" : "dropout", "layerName" : "drop1", "dropoutRate" : 0.2},
-    		{"layerType" : "dense", "layerName" : "hiddenDense2", "layerUnits": 32, "outputActivation" : "linear"},
-    		{"layerType" : "dropout", "layerName" : "drop2", "dropoutRate" : 0.2},
-    		{"layerType" : "dense", "layerName" : "output", "layerUnits": 1, "outputActivation" : "linear"}
-		],
+		"visualizations" : [],
 		"comment model specification values supported" : [
 			{
 			"layerType" : ["conv1d", "lstm", "dense", "TimeDistributed", "dropout", "flatten", "GlobalMaxPool1D"],
@@ -298,77 +201,40 @@
 			"optimizers" : ["Adadelta", "Adagrad", "adam", "Adamax", "Ftrl", "Nadam", "RMSProp", "SGD"]
 			}
 		],
-		"modelLayers" : [
-    		{"layerType" : "conv1d", "layerName" : "input", "featureCount": 26, 
-    			"timeSteps": 10, "filterCount" : 128, "filterSize" : 26, "outputActivation" : "linear"},
-    		{"layerType" : "GlobalMaxPool1D", "layerName" : "GMP1D"},
-    		{"layerType" : "dense", "layerName" : "DenseStart", "layerUnits": 128, "outputActivation" : "linear"},
-    		{"layerType" : "dropout", "layerName" : "drop1", "dropoutRate" : 0.5},
-    		{"layerType" : "dense", "layerName" : "hiddenDense1", "layerUnits": 128, "outputActivation" : "linear"},
-    		{"layerType" : "dropout", "layerName" : "drop2", "dropoutRate" : 0.5},
-    		{"layerType" : "dense", "layerName" : "hiddenDense2", "layerUnits": 128, "outputActivation" : "linear"},
-    		{"layerType" : "dropout", "layerName" : "drop3", "dropoutRate" : 0.5},
-    		{"layerType" : "dense", "layerName" : "hiddenDense3", "layerUnits": 128, "outputActivation" : "linear"},
-    		{"layerType" : "dense", "layerName" : "output", "layerUnits": 1, "outputActivation" : "linear"}
-		],
-		"training" : {
-			"lossWeights" : [1.0],
-			"denseRegularation" : false,
-			"regularationValue" : 0.0,
-			"batchSize" : 16,
-			"epochs" : 5,
-			"useBias" : true,
-			"validationSplit" : 0.1,
-			"testSplit" : 0.2,
-			"shuffle" : false,
-			"balanceClasses" : true,
-			"verbose" : 2,
-			"compilationLoss" : "mae",
-			"compilationMetrics" : ["mae"],
-			"optimizer" : "adadelta"
-		},
-		"tensorboard" : {
-			"log file dir" : "",
-			"log file name" : ""
-			},
 		"training iterations" : [
 			{
 			"iteration parameters" : {
+				"comment - description" : "prediction of 1 day change given 26 features. 28 day time series. 1 time step prediction",
+				"data arrangement" : {
+					"combineSampleCount" : 28
+					},
 				"modelLayers" : [
-    				{"layerType" : "conv1d", "layerName" : "input", "featureCount": 26, 
-    					"timeSteps": 10, "filterCount" : 128, "filterSize" : 26, "outputActivation" : "linear"},
-    				{"layerType" : "GlobalMaxPool1D", "layerName" : "GMP1D"},
-    				{"layerType" : "dense", "layerName" : "DenseStart", "layerUnits": 128, "outputActivation" : "linear"},
-    				{"layerType" : "dropout", "layerName" : "drop1", "dropoutRate" : 0.5},
-    				{"layerType" : "dense", "layerName" : "hiddenDense1", "layerUnits": 128, "outputActivation" : "linear"},
-    				{"layerType" : "dropout", "layerName" : "drop2", "dropoutRate" : 0.5},
-    				{"layerType" : "dense", "layerName" : "hiddenDense2", "layerUnits": 128, "outputActivation" : "linear"},
-    				{"layerType" : "dropout", "layerName" : "drop3", "dropoutRate" : 0.5},
-    				{"layerType" : "dense", "layerName" : "hiddenDense3", "layerUnits": 128, "outputActivation" : "linear"},
+    				{"layerType" : "dense", "layerName" : "input-dense", "featureCount": 728, "layerUnits" : 128, "outputActivation" : "linear"},
+    				{"layerType" : "dropout", "layerName" : "drop-h1", "dropoutRate" : 0.2},
+    				{"layerType" : "dense", "layerName" : "dense-h1", "layerUnits" : 64, "outputActivation" : "linear"},
+    				{"layerType" : "dropout", "layerName" : "drop-h2", "dropoutRate" : 0.2},
     				{"layerType" : "dense", "layerName" : "output", "layerUnits": 1, "outputActivation" : "linear"}
 					],
 				"training" : {
-					"lossWeights" : [1.0],
-					"denseRegularation" : false,
-					"regularationValue" : 0.0,
-					"batchSize" : 16,
-					"epochs" : 10,
-					"useBias" : true,
-					"validationSplit" : 0.1,
-					"testSplit" : 0.2,
-					"shuffle" : false,
-					"balanceClasses" : true,
-					"verbose" : 2,
-					"compilationLoss" : "mae",
-					"compilationMetrics" : ["mae"],
-					"optimizer" : {"name" : "adam", "learning_rate" : 0.001}
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"batchSize" : 16, "epochs" : 5, "validationSplit" : 0.1, "testSplit" : 0.2,
+					"shuffle" : false, "balanceClasses" : true,	"verbose" : 2,
+					"compilationLoss" : "mae", "compilationMetrics" : ["mae"], "optimizer" : {"name" : "adam", "learning_rate" : 0.001}
+					},
+				"tensorboard" : {
+					"log file dir" : "d:\\brian\\AI-Projects\\logs\\tensorboard\\dense\\1DayChange\\28DaySeries\\",
+					"log file name" : "1DayChange_regression"
 					}
 				}
 			},
 			{
 			"iteration parameters" : {
+				"comment - description" : "prediction of 1 day change given 26 features. 10 day time series. 1 time step prediction",
+				"data arrangement" : {
+					"combineSampleCount" : 0
+					},
 				"modelLayers" : [
-    				{"layerType" : "conv1d", "layerName" : "input", "featureCount": 26, 
+    				{"layerType" : "conv1d", "layerName" : "input-conv1d", "featureCount": 26, 
     					"timeSteps": 10, "filterCount" : 128, "filterSize" : 26, "outputActivation" : "linear"},
     				{"layerType" : "GlobalMaxPool1D", "layerName" : "GMP1D"},
     				{"layerType" : "dense", "layerName" : "DenseStart", "layerUnits": 128, "outputActivation" : "linear"},
@@ -381,25 +247,43 @@
     				{"layerType" : "dense", "layerName" : "output", "layerUnits": 1, "outputActivation" : "linear"}
 					],
 				"training" : {
-					"lossWeights" : [1.0],
-					"denseRegularation" : false,
-					"regularationValue" : 0.0,
-					"batchSize" : 16,
-					"epochs" : 10,
-					"useBias" : true,
-					"validationSplit" : 0.1,
-					"testSplit" : 0.2,
-					"shuffle" : false,
-					"balanceClasses" : true,
-					"verbose" : 2,
-					"compilationLoss" : "mae",
-					"compilationMetrics" : ["mae"],
-					"optimizer" : {"name" : "adam", "learning_rate" : 0.001}
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"batchSize" : 16, "epochs" : 5, "validationSplit" : 0.1, "testSplit" : 0.2,
+					"shuffle" : false, "balanceClasses" : true,	"verbose" : 2,
+					"compilationLoss" : "mae", "compilationMetrics" : ["mae"], "optimizer" : {"name" : "adam", "learning_rate" : 0.001}
+					},
+				"tensorboard" : {
+					"log file dir" : "d:\\brian\\AI-Projects\\logs\\tensorboard\\cnn\\1DayChange\\10DaySeries\\",
+					"log file name" : "1DayChange_regression"
+					}				
+				}
+			},
+			{
+			"iteration parameters" : {
+				"comment - description" : "prediction of 1 day change given 26 features. 20 day time series. 1 time step prediction",
+				"data arrangement" : {
+					"combineSampleCount" : 0
+					},
+				"modelLayers" : [
+    				{"layerType" : "lstm", "layerName" : "input-LSTM", "layerUnits" : 64, "featureCount" : 26, "timeSteps" : 20, "outputActivation" : "linear"},
+    				{"layerType" : "dropout", "layerName" : "drop-1", "dropoutRate" : 0.2},
+    				{"layerType" : "dense", "layerName" : "dense-h1", "layerUnits": 32, "outputActivation" : "linear"},
+    				{"layerType" : "dropout", "layerName" : "drop-2", "dropoutRate" : 0.2},
+    				{"layerType" : "dense", "layerName" : "output", "layerUnits": 1, "outputActivation" : "linear"}
+					],
+				"training" : {
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"batchSize" : 16, "epochs" : 5, "validationSplit" : 0.1, "testSplit" : 0.2,
+					"shuffle" : false, "balanceClasses" : true,	"verbose" : 2,
+					"compilationLoss" : "mae", "compilationMetrics" : ["mae"], "optimizer" : {"name" : "adam", "learning_rate" : 0.001}
+					},
+				"tensorboard" : {
+					"log file dir" : "d:\\brian\\AI-Projects\\logs\\tensorboard\\rnn\\1DayChange\\20DaySeries\\",
+					"log file name" : "1DayChange_regression"
 					}
 				}
 			}
-			],
-		"end of conditional fields" : ""
+			]
 		}
 	}
 ],
@@ -412,8 +296,6 @@
 		"flowTo" : "PrepData",
 		"flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\TDA.csv"
 		},
-
-
 	"conditionalFields" : {
 		"TensorflowData" : {
 			"balanceClasses" : true,
@@ -430,7 +312,6 @@
 			"comment - hold" : [
 				"SO SMA3", "Stochastic Oscillator"
 				],
-			"targets" : ["1 day change"],
 			"comment - look ahead prediction targets" : [
 				"40 day min","40 day max","40 day change",
 				"20 day min","20 day max","20 day change",
@@ -438,6 +319,7 @@
 				"5 day change",
 				"1 day change"
 				],
+			"targets" : ["1 day change"],
 			"timeSequence" : true,
 			"seriesStepIDField" : ["DateTime"],
 			"seriesDataType" : "TDADateTime",

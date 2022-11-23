@@ -350,7 +350,9 @@ def arrangeDataForTraining(d2r):
                 d2r.normDataDict = d2r.dataDict
             
             nx_model_type = nx.get_node_attributes(d2r.graph, MODEL_TYPE)[d2r.mlNode]
-            nx_combine_sample_Count = nx.get_node_attributes(d2r.graph, JSON_ML_GOAL_COMBINE_SAMPLE_COUNT)[d2r.mlNode]
+            nx_dataArrangement = iterParamters["data arrangement"]
+            nx_combine_sample_Count = nx_dataArrangement["combineSampleCount"]
+            #nx_combine_sample_Count = nx.get_node_attributes(d2r.graph, JSON_ML_GOAL_COMBINE_SAMPLE_COUNT)[d2r.mlNode]
             nx_regression_forecast_interval = nx.get_node_attributes(d2r.graph, JSON_ML_REGRESSION_FORECAST_INTERVAL)[d2r.mlNode]
  
             nx_categorization_regression = nx.get_node_attributes(d2r.graph, JSON_ML_GOAL)[d2r.mlNode]
