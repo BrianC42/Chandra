@@ -323,9 +323,14 @@ def arrangeDataForTraining(d2r):
         targets = d2r.preparedTargets
         
         feature_cols, target_cols = id_columns(d2r.data, features, targets)
+        
+        nx_modelIterations = nx.get_node_attributes(d2r.graph, "training iterations")[d2r.mlNode]
+        iterVariables = nx_modelIterations[d2r.trainingIteration]
+        iterParamters = iterVariables["iteration parameters"]
+        iterTraining = iterParamters["training"]
     
-        nx_test_split = nx.get_node_attributes(d2r.graph, JSON_TEST_SPLIT)[d2r.mlNode]
-        nx_validation_split = nx.get_node_attributes(d2r.graph, JSON_VALIDATION_SPLIT)[d2r.mlNode]
+        nx_test_split = iterTraining[JSON_TEST_SPLIT]        
+        nx_validation_split = iterTraining[JSON_VALIDATION_SPLIT]        
     
         nx_read_attr = nx.get_node_attributes(d2r.graph, JSON_PROCESS_TYPE)
         if nx_read_attr[d2r.mlNode] == JSON_TENSORFLOW:    

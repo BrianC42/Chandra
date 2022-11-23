@@ -111,67 +111,34 @@ def add_data_source_details(js_config, nx_graph, nx_process_name):
     nx.set_node_attributes(nx_graph, {nx_process_name:nx_inputFile}, JSON_INPUT_DATA_FILE)
     return
 
-def add_meta_data_edge (js_config, nx_graph):
+def add_meta_data_edge (js_config, d2r):
     nx_flowName = js_config[JSON_FLOW_NAME]
 
     # mandatory elements
     js_required = js_config[JSON_REQUIRED]
     nx_flowFrom =  js_required[JSON_FLOW_FROM]
     nx_flowTo =  js_required[JSON_FLOW_TO]
-    nx_graph.add_edge(nx_flowFrom, nx_flowTo, key=nx_flowName)
+    d2r.graph.add_edge(nx_flowFrom, nx_flowTo, key=nx_flowName)
 
     nx_edge_key = (nx_flowFrom, nx_flowTo, nx_flowName)
     nx_flow_data_file = js_required[JSON_FLOW_DATA_FILE]
-    nx.set_edge_attributes(nx_graph, {nx_edge_key:nx_flow_data_file}, JSON_FLOW_DATA_FILE)
+    nx.set_edge_attributes(d2r.graph, {nx_edge_key:nx_flow_data_file}, JSON_FLOW_DATA_FILE)
 
     if JSON_CONDITIONAL in js_config:
         js_conditional = js_config[JSON_CONDITIONAL]
-        add_data_flow_details(js_conditional, nx_graph, nx_edge_key)
+        add_data_flow_details(js_conditional, d2r.graph, nx_edge_key)
 
     print("Connected %s to %s by data flow %s" % (nx_flowFrom, nx_flowTo, nx_flowName))
     return
 
-def add_training_controls(js_training, nx_graph, nx_process_name):
-    nx_loss_weights = js_training[JSON_LOSS_WTS]
-    nx_regularization = js_training[JSON_REGULARIZATION]
-    nx_reg_value = js_training[JSON_REG_VALUE]
-    nx_bias = js_training[JSON_BIAS]
-    nx_validation_split = js_training[JSON_VALIDATION_SPLIT]
-    nx_test_split = js_training[JSON_TEST_SPLIT]
-    nx_batch = js_training[JSON_BATCH]
-    nx_epochs = js_training[JSON_EPOCHS]
-    nx_verbose = js_training[JSON_VERBOSE]
-    nx_balanced = js_training[JSON_BALANCED]
-    nx_loss = js_training[JSON_LOSS]
-    nx_metrics = js_training[JSON_METRICS]
-    nx_optimizer = js_training[JSON_OPTIMIZER]
-    nx_shuffle = js_training[JSON_SHUFFLE_DATA]
-    
-    nx.set_node_attributes(nx_graph, {nx_process_name:nx_loss_weights}, JSON_LOSS_WTS)
-    nx.set_node_attributes(nx_graph, {nx_process_name:nx_regularization}, JSON_REGULARIZATION)
-    nx.set_node_attributes(nx_graph, {nx_process_name:nx_reg_value}, JSON_REG_VALUE)
-    nx.set_node_attributes(nx_graph, {nx_process_name:nx_bias}, JSON_BIAS)
-    nx.set_node_attributes(nx_graph, {nx_process_name:nx_validation_split}, JSON_VALIDATION_SPLIT)
-    nx.set_node_attributes(nx_graph, {nx_process_name:nx_test_split}, JSON_TEST_SPLIT)
-    nx.set_node_attributes(nx_graph, {nx_process_name:nx_batch}, JSON_BATCH)
-    nx.set_node_attributes(nx_graph, {nx_process_name:nx_epochs}, JSON_EPOCHS)
-    nx.set_node_attributes(nx_graph, {nx_process_name:nx_verbose}, JSON_VERBOSE)
-    nx.set_node_attributes(nx_graph, {nx_process_name:nx_balanced}, JSON_BALANCED)
-    nx.set_node_attributes(nx_graph, {nx_process_name:nx_loss}, JSON_LOSS)
-    nx.set_node_attributes(nx_graph, {nx_process_name:nx_metrics}, JSON_METRICS)
-    nx.set_node_attributes(nx_graph, {nx_process_name:nx_optimizer}, JSON_OPTIMIZER)
-    nx.set_node_attributes(nx_graph, {nx_process_name:nx_shuffle}, JSON_SHUFFLE_DATA)
-
-    return
-
-def add_meta_process_node (js_config, nx_graph) :
+def add_meta_process_node (js_config, d2r) :
     nx_process_name = ""
     if JSON_NODE_NAME in js_config:
         nx_process_name = js_config[JSON_NODE_NAME]
     else:
         raise NameError('Missing process node name')
         
-    nx_graph.add_node(nx_process_name)
+    d2r.graph.add_node(nx_process_name)
 
     # mandatory elements
     js_required = js_config[JSON_REQUIRED]
@@ -181,13 +148,13 @@ def add_meta_process_node (js_config, nx_graph) :
     #nx_outputFile = js_required[JSON_OUTPUT_FILE]
     nx_log = js_required[JSON_LOG_FILE]
     
-    for node_i in nx_graph.nodes():
+    for node_i in d2r.graph.nodes():
         if node_i == nx_process_name:
-            nx.set_node_attributes(nx_graph, {nx_process_name:nx_processType}, JSON_PROCESS_TYPE)
-            nx.set_node_attributes(nx_graph, {nx_process_name:nx_inputs}, JSON_INPUT_FLOWS)
-            nx.set_node_attributes(nx_graph, {nx_process_name:nx_output}, JSON_OUTPUT_FLOW)
+            nx.set_node_attributes(d2r.graph, {nx_process_name:nx_processType}, JSON_PROCESS_TYPE)
+            nx.set_node_attributes(d2r.graph, {nx_process_name:nx_inputs}, JSON_INPUT_FLOWS)
+            nx.set_node_attributes(d2r.graph, {nx_process_name:nx_output}, JSON_OUTPUT_FLOW)
             #nx.set_node_attributes(nx_graph, {nx_process_name:nx_outputFile}, JSON_OUTPUT_FILE)
-            nx.set_node_attributes(nx_graph, {nx_process_name:nx_log}, JSON_LOG_FILE)
+            nx.set_node_attributes(d2r.graph, {nx_process_name:nx_log}, JSON_LOG_FILE)
             break
     
     # conditional elements
@@ -195,31 +162,38 @@ def add_meta_process_node (js_config, nx_graph) :
     
     if nx_processType == JSON_DATA_LOAD_PROCESS:
         js_data_prep_ctrl = js_conditional[JSON_INPUT_DATA_PREPARATION]
-        add_data_source_details(js_data_prep_ctrl, nx_graph, nx_process_name)
+        add_data_source_details(js_data_prep_ctrl, d2r.graph, nx_process_name)
     elif nx_processType == JSON_DATA_PREP_PROCESS:
         nx_prepCtrl = js_conditional[JSON_DATA_PREPARATION_CTRL]
-        nx.set_node_attributes(nx_graph, {nx_process_name:nx_prepCtrl}, JSON_DATA_PREPARATION_CTRL)
+        nx.set_node_attributes(d2r.graph, {nx_process_name:nx_prepCtrl}, JSON_DATA_PREPARATION_CTRL)
         '''
         js_data_prep_ctrl = js_conditional[JSON_DATA_PREPARATION_CTRL]
         add_data_prep_details(js_data_prep_ctrl, nx_graph, nx_process_name)
         '''
     elif nx_processType == JSON_TENSORFLOW:
-        nx.set_node_attributes(nx_graph, {nx_process_name:nx_processType}, JSON_TRAIN)
+        nx.set_node_attributes(d2r.graph, {nx_process_name:nx_processType}, JSON_TRAIN)
         nx_model_file = js_conditional[JSON_MODEL_FILE]
-        nx.set_node_attributes(nx_graph, {nx_process_name:nx_model_file}, JSON_MODEL_FILE)
+        nx.set_node_attributes(d2r.graph, {nx_process_name:nx_model_file}, JSON_MODEL_FILE)
         nx_dataPrecision = js_conditional[JSON_PRECISION]
-        nx.set_node_attributes(nx_graph, {nx_process_name:nx_dataPrecision}, JSON_PRECISION)
+        nx.set_node_attributes(d2r.graph, {nx_process_name:nx_dataPrecision}, JSON_PRECISION)
         nx_visualizations = js_conditional[JSON_VISUALIZATIONS]
-        nx.set_node_attributes(nx_graph, {nx_process_name:nx_visualizations}, JSON_VISUALIZATIONS)
+        nx.set_node_attributes(d2r.graph, {nx_process_name:nx_visualizations}, JSON_VISUALIZATIONS)
         
         if JSON_NORMALIZE_DATA in js_conditional:
             nx_normalize = js_conditional[JSON_NORMALIZE_DATA]
-            nx.set_node_attributes(nx_graph, {nx_process_name:nx_normalize}, JSON_NORMALIZE_DATA)
+            nx.set_node_attributes(d2r.graph, {nx_process_name:nx_normalize}, JSON_NORMALIZE_DATA)
         
-        if JSON_LAYERS in js_conditional:
-            nx_layers = js_conditional[JSON_LAYERS]
-            nx.set_node_attributes(nx_graph, {nx_process_name:nx_layers}, JSON_LAYERS)
+        if "tensorboard" in js_conditional:
+            nx_tensorboard = js_conditional["tensorboard"]
+            nx.set_node_attributes(d2r.graph, {nx_process_name:nx_tensorboard}, "tensorboard")
+            print ("tensorboard")
             
+        if "training iterations" in js_conditional:
+            nx_trainingIteration = js_conditional["training iterations"]
+            nx.set_node_attributes(d2r.graph, {nx_process_name:nx_trainingIteration}, "training iterations")
+            d2r.trainingIterationCount = len(nx_trainingIteration)
+            print ("training iterations")
+
         if JSON_ML_GOAL  in js_conditional:
             nx_ml_goal = js_conditional[JSON_ML_GOAL]
             if nx_ml_goal == JSON_ML_GOAL_CATEGORIZATION:
@@ -228,7 +202,7 @@ def add_meta_process_node (js_config, nx_graph) :
                 pass
             else:
                 raise NameError(nx_process_name + " invalid " + JSON_ML_GOAL)
-            nx.set_node_attributes(nx_graph, {nx_process_name:nx_ml_goal}, JSON_ML_GOAL)
+            nx.set_node_attributes(d2r.graph, {nx_process_name:nx_ml_goal}, JSON_ML_GOAL)
         else:
             raise NameError(nx_process_name + " requires " + JSON_ML_GOAL)
             
@@ -236,46 +210,41 @@ def add_meta_process_node (js_config, nx_graph) :
             nx_ml_goal_combine_sample_count = js_conditional[JSON_ML_GOAL_COMBINE_SAMPLE_COUNT]
         else:
             nx_ml_goal_combine_sample_count = 1
-        nx.set_node_attributes(nx_graph, {nx_process_name:nx_ml_goal_combine_sample_count}, JSON_ML_GOAL_COMBINE_SAMPLE_COUNT)
+        nx.set_node_attributes(d2r.graph, {nx_process_name:nx_ml_goal_combine_sample_count}, JSON_ML_GOAL_COMBINE_SAMPLE_COUNT)
              
         if JSON_ML_REGRESSION_FORECAST_INTERVAL in js_conditional:
             nx_regression_forecast_interval = js_conditional[JSON_ML_REGRESSION_FORECAST_INTERVAL]
         else:
             nx_regression_forecast_interval = 1
-        nx.set_node_attributes(nx_graph, {nx_process_name:nx_regression_forecast_interval}, JSON_ML_REGRESSION_FORECAST_INTERVAL)
+        nx.set_node_attributes(d2r.graph, {nx_process_name:nx_regression_forecast_interval}, JSON_ML_REGRESSION_FORECAST_INTERVAL)
              
-        if JSON_TRAINING in js_conditional:
-            add_training_controls(js_conditional[JSON_TRAINING], nx_graph, nx_process_name)
-            
     elif nx_processType == JSON_AUTOKERAS:
         print("============== WIP =============\n\tAuto Keras node details\n================================")
-        nx.set_node_attributes(nx_graph, {nx_process_name:nx_processType}, JSON_TRAIN)
+        nx.set_node_attributes(d2r.graph, {nx_process_name:nx_processType}, JSON_TRAIN)
         nx_model_file = js_conditional[JSON_MODEL_FILE]
-        nx.set_node_attributes(nx_graph, {nx_process_name:nx_model_file}, JSON_MODEL_FILE)
+        nx.set_node_attributes(d2r.graph, {nx_process_name:nx_model_file}, JSON_MODEL_FILE)
         nx_dataPrecision = js_conditional[JSON_PRECISION]
-        nx.set_node_attributes(nx_graph, {nx_process_name:nx_dataPrecision}, JSON_PRECISION)
+        nx.set_node_attributes(d2r.graph, {nx_process_name:nx_dataPrecision}, JSON_PRECISION)
         nx_visualizations = js_conditional[JSON_VISUALIZATIONS]
-        nx.set_node_attributes(nx_graph, {nx_process_name:nx_visualizations}, JSON_VISUALIZATIONS)
+        nx.set_node_attributes(d2r.graph, {nx_process_name:nx_visualizations}, JSON_VISUALIZATIONS)
 
         if JSON_AUTOKERAS_PARAMETERS in js_conditional:
             nx_akParameters = js_conditional[JSON_AUTOKERAS_PARAMETERS]
-            nx.set_node_attributes(nx_graph, {nx_process_name:nx_akParameters}, JSON_AUTOKERAS_PARAMETERS)
+            nx.set_node_attributes(d2r.graph, {nx_process_name:nx_akParameters}, JSON_AUTOKERAS_PARAMETERS)
             
         if JSON_NORMALIZE_DATA in js_conditional:
             nx_normalize = js_conditional[JSON_NORMALIZE_DATA]
-            nx.set_node_attributes(nx_graph, {nx_process_name:nx_normalize}, JSON_NORMALIZE_DATA)
+            nx.set_node_attributes(d2r.graph, {nx_process_name:nx_normalize}, JSON_NORMALIZE_DATA)
         
         if JSON_LAYERS in js_conditional:
             nx_layers = js_conditional[JSON_LAYERS]
-            nx.set_node_attributes(nx_graph, {nx_process_name:nx_layers}, JSON_LAYERS)
+            nx.set_node_attributes(d2r.graph, {nx_process_name:nx_layers}, JSON_LAYERS)
             
-        if JSON_TRAINING in js_conditional:
-            add_training_controls(js_conditional[JSON_TRAINING], nx_graph, nx_process_name)
     else:
         ex_txt = nx_process_name + ", type " + nx_processType + " is not supported"
         raise NameError(ex_txt)
     
-    nx_read_attr = nx.get_node_attributes(nx_graph, JSON_PROCESS_TYPE)
+    nx_read_attr = nx.get_node_attributes(d2r.graph, JSON_PROCESS_TYPE)
     print("Added %s node %s" % (nx_read_attr[nx_process_name], nx_process_name))
     return
 
@@ -288,13 +257,13 @@ def build_configuration_graph(d2r, json_config):
         logging.debug("Adding processing nodes")
         exc_txt = "json configuration file error\n\tprocess node "
         for i, process_i in enumerate(json_config[JSON_PROCESS_NODES]):
-            add_meta_process_node(process_i, d2r.graph)
+            add_meta_process_node(process_i, d2r)
         
         # processing data flows                
         logging.debug("Adding data flows")
         exc_txt = "json configuration file error\n\tdata flow "
         for i, flow_i in enumerate(json_config[JSON_DATA_FLOWS]):
-            add_meta_data_edge(flow_i, d2r.graph)
+            add_meta_data_edge(flow_i, d2r)
         
         d2r.plotGraph()
 

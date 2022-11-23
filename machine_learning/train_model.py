@@ -22,11 +22,15 @@ def trainModel(d2r):
         print("validating shapes x:%s y:%s" % (d2r.validateX.shape, d2r.validateY.shape))
         print("Testing shapes x:%s y:%s" % (d2r.testX.shape, d2r.testY.shape))
         
-        nx_train = nx.get_node_attributes(d2r.graph, JSON_TRAIN)[d2r.mlNode]
-        nx_batch = nx.get_node_attributes(d2r.graph, JSON_BATCH)[d2r.mlNode]
-        nx_epochs = nx.get_node_attributes(d2r.graph, JSON_EPOCHS)[d2r.mlNode]
-        nx_verbose = nx.get_node_attributes(d2r.graph, JSON_VERBOSE)[d2r.mlNode]
-        nx_shuffle = nx.get_node_attributes(d2r.graph, JSON_SHUFFLE_DATA)[d2r.mlNode]
+        nx_modelIterations = nx.get_node_attributes(d2r.graph, "training iterations")[d2r.mlNode]
+        iterVariables = nx_modelIterations[d2r.trainingIteration]
+        iterParamters = iterVariables["iteration parameters"]
+        iterTraining = iterParamters["training"]
+
+        nx_batch = iterTraining[JSON_BATCH]
+        nx_epochs = iterTraining[JSON_EPOCHS]
+        nx_verbose = iterTraining[JSON_VERBOSE]
+        nx_shuffle = iterTraining[JSON_SHUFFLE_DATA]
         
         logDir = "d:\\brian\\AI-Projects\\logs\\TDATensorBoard"
         tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=logDir, histogram_freq=1)

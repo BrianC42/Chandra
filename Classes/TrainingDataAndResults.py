@@ -87,6 +87,22 @@ class Data2Results():
         fitting - Tensorflow fit results
     '''
     @property
+    def trainingIterationCount(self):
+        return self._trainingIterationCount
+    
+    @trainingIterationCount.setter
+    def trainingIterationCount(self, trainingIterationCount):
+        self._trainingIterationCount = trainingIterationCount
+        
+    @property
+    def trainingIteration(self):
+        return self._trainingIteration
+    
+    @trainingIteration.setter
+    def trainingIteration(self, trainingIteration):
+        self._trainingIteration = trainingIteration
+        
+    @property
     def trainer(self):
         return self._trainer
     

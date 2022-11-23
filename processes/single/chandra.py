@@ -141,39 +141,42 @@ if __name__ == '__main__':
     collect_and_select_data(d2r)
     prepareTrainingData(d2r)
 
-    ''' ................... Step 2 - Build Model ............................
-    ========================================================================= '''
-    step2 = time.time()
-    print ('\nStep 2 - Structure the data as required by the model, build and train the Model')
-    #node_i, k_model, x_features, y_targets, x_test, y_test, fitting = build_and_train_model(nx_graph)
-    buildModel(d2r)
-    loadTrainingData(d2r)
-    arrangeDataForTraining(d2r)
-    trainModel(d2r)
+    for d2r.trainingIteration in range (0, d2r.trainingIterationCount):
+        print("trainNdx = %s" % d2r.trainingIteration)
 
-    ''' .................... Step 3 - Evaluate the model! ...............
-    ===================================================================== '''
-    step3 = time.time()
-    print ("\nStep 3 - Evaluate the model and visualize accuracy!")
-    #evaluate_and_visualize(nx_graph, node_i, k_model, x_features, y_targets, x_test, y_test, fitting)
-    evaluate_and_visualize(d2r)
+        ''' ................... Step 2 - Build Model ............................
+        ========================================================================= '''
+        step2 = time.time()
+        print ('\nStep 2 - Structure the data as required by the model, build and train the Model')
+        #node_i, k_model, x_features, y_targets, x_test, y_test, fitting = build_and_train_model(nx_graph)
+        buildModel(d2r)
+        loadTrainingData(d2r)
+        arrangeDataForTraining(d2r)
+        trainModel(d2r)
     
-    ''' .................... Step 4 - clean up, archive and visualize accuracy! ...............
-    =========================================================================================== '''
-    step4 = time.time()
-    print ("\nStep 4 - clean up, archive")
-    nx_model_file = nx.get_node_attributes(d2r.graph, JSON_MODEL_FILE)[d2r.mlNode]
-    if d2r.trainer == TRAINING_AUTO_KERAS:
-        d2r.model = d2r.model.export_model()
-    d2r.model.save(nx_model_file)
-
-    end = time.time()
-    print ("")
-    print ("\tStep 1 took %.1f secs to Load and prepare the data for training and evaluation" % (step2 - step1)) 
-    print ("\tStep 2 took %.1f secs to Arrange the data for the model, build and train the Model" % (step3 - step2)) 
-    print ("\tStep 3 took %.1f secs to Evaluate the model and visualize the training results" % (step4 - step3)) 
-    print ("\tStep 5 took %.1f secs to Clean up and archive" % (end - step4))    
-
+        ''' .................... Step 3 - Evaluate the model! ...............
+        ===================================================================== '''
+        step3 = time.time()
+        print ("\nStep 3 - Evaluate the model and visualize accuracy!")
+        #evaluate_and_visualize(nx_graph, node_i, k_model, x_features, y_targets, x_test, y_test, fitting)
+        evaluate_and_visualize(d2r)
+        
+        ''' .................... Step 4 - clean up, archive and visualize accuracy! ...............
+        =========================================================================================== '''
+        step4 = time.time()
+        print ("\nStep 4 - clean up, archive")
+        nx_model_file = nx.get_node_attributes(d2r.graph, JSON_MODEL_FILE)[d2r.mlNode]
+        if d2r.trainer == TRAINING_AUTO_KERAS:
+            d2r.model = d2r.model.export_model()
+        d2r.model.save(nx_model_file)
+    
+        end = time.time()
+        print ("")
+        print ("\tStep 1 took %.1f secs to Load and prepare the data for training and evaluation" % (step2 - step1)) 
+        print ("\tStep 2 took %.1f secs to Arrange the data for the model, build and train the Model" % (step3 - step2)) 
+        print ("\tStep 3 took %.1f secs to Evaluate the model and visualize the training results" % (step4 - step3)) 
+        print ("\tStep 5 took %.1f secs to Clean up and archive" % (end - step4))
+        
     '''
     clean up and prepare to exit
     '''

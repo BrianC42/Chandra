@@ -40,15 +40,7 @@
 				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\hln.csv"
 			],
 			"inputFile" : [
-				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\gild.csv",
-				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\mrk.csv",
-				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\crsp.csv",
-				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\incy.csv",
-				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\ntla.csv",
-				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\vrtx.csv",
-				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\vtrs.csv",
-				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\gsk.csv",
-				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\hln.csv"
+				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\c.csv"
 			]
 		}
 	}
@@ -300,7 +292,10 @@
 			"layer params - conv1d" : ["featureCount", "timeSteps", "filterCount", "filterSize", ""],
 			"layer params - dropout" : ["dropoutRate"],
 			"returnSequences" : "true if the next layer is also an RNN layer",
-			"outputActivation" : ["linear", "relu", "tanh", "softmax", "sigmoid", "softplus", "softsign", "selu", "elu", "exponential"]
+			"outputActivation" : ["linear", "relu", "tanh", "softmax", "sigmoid", "softplus", "softsign", "selu", "elu", "exponential"],
+			"Compilation Loss metrics - regression" : ["mse", "mae", "mape", "msle", "cosine_similarity", "log_cosh"],
+			"compilation metrics - regression" : ["mse", "mae", "mape", "msle", "cosine_similarity", "log_cosh"],
+			"optimizers" : ["Adadelta", "Adagrad", "adam", "Adamax", "Ftrl", "Nadam", "RMSProp", "SGD"]
 			}
 		],
 		"modelLayers" : [
@@ -321,24 +316,91 @@
 			"denseRegularation" : false,
 			"regularationValue" : 0.0,
 			"batchSize" : 16,
-			"epochs" : 10,
+			"epochs" : 5,
 			"useBias" : true,
 			"validationSplit" : 0.1,
 			"testSplit" : 0.2,
 			"shuffle" : false,
-			"verbose" : 2,
 			"balanceClasses" : true,
+			"verbose" : 2,
 			"compilationLoss" : "mae",
-			"Compilation Loss metrics - regression" : ["mse", "mae", "mape", "msle", "cosine_similarity", "log_cosh"],
 			"compilationMetrics" : ["mae"],
-			"compilation metrics - regression" : ["mse", "mae", "mape", "msle", "cosine_similarity", "log_cosh"],
-			"optimizer" : "adam",
-			"optimizers - adam" : "fast, tends to overfit",
-			"optimizers - SGD" : "slow, great results",
-			"optimizers - RMSProp" : "sometimes works best",
-			"optimizers - SWA" : "Unknown optimizer - can easily improve qualiy"
+			"optimizer" : "adadelta"
+		},
+		"tensorboard" : {
+			"log file dir" : "",
+			"log file name" : ""
+			},
+		"training iterations" : [
+			{
+			"iteration parameters" : {
+				"modelLayers" : [
+    				{"layerType" : "conv1d", "layerName" : "input", "featureCount": 26, 
+    					"timeSteps": 10, "filterCount" : 128, "filterSize" : 26, "outputActivation" : "linear"},
+    				{"layerType" : "GlobalMaxPool1D", "layerName" : "GMP1D"},
+    				{"layerType" : "dense", "layerName" : "DenseStart", "layerUnits": 128, "outputActivation" : "linear"},
+    				{"layerType" : "dropout", "layerName" : "drop1", "dropoutRate" : 0.5},
+    				{"layerType" : "dense", "layerName" : "hiddenDense1", "layerUnits": 128, "outputActivation" : "linear"},
+    				{"layerType" : "dropout", "layerName" : "drop2", "dropoutRate" : 0.5},
+    				{"layerType" : "dense", "layerName" : "hiddenDense2", "layerUnits": 128, "outputActivation" : "linear"},
+    				{"layerType" : "dropout", "layerName" : "drop3", "dropoutRate" : 0.5},
+    				{"layerType" : "dense", "layerName" : "hiddenDense3", "layerUnits": 128, "outputActivation" : "linear"},
+    				{"layerType" : "dense", "layerName" : "output", "layerUnits": 1, "outputActivation" : "linear"}
+					],
+				"training" : {
+					"lossWeights" : [1.0],
+					"denseRegularation" : false,
+					"regularationValue" : 0.0,
+					"batchSize" : 16,
+					"epochs" : 10,
+					"useBias" : true,
+					"validationSplit" : 0.1,
+					"testSplit" : 0.2,
+					"shuffle" : false,
+					"balanceClasses" : true,
+					"verbose" : 2,
+					"compilationLoss" : "mae",
+					"compilationMetrics" : ["mae"],
+					"optimizer" : {"name" : "adam", "learning_rate" : 0.001}
+					}
+				}
+			},
+			{
+			"iteration parameters" : {
+				"modelLayers" : [
+    				{"layerType" : "conv1d", "layerName" : "input", "featureCount": 26, 
+    					"timeSteps": 10, "filterCount" : 128, "filterSize" : 26, "outputActivation" : "linear"},
+    				{"layerType" : "GlobalMaxPool1D", "layerName" : "GMP1D"},
+    				{"layerType" : "dense", "layerName" : "DenseStart", "layerUnits": 128, "outputActivation" : "linear"},
+    				{"layerType" : "dropout", "layerName" : "drop1", "dropoutRate" : 0.5},
+    				{"layerType" : "dense", "layerName" : "hiddenDense1", "layerUnits": 128, "outputActivation" : "linear"},
+    				{"layerType" : "dropout", "layerName" : "drop2", "dropoutRate" : 0.5},
+    				{"layerType" : "dense", "layerName" : "hiddenDense2", "layerUnits": 128, "outputActivation" : "linear"},
+    				{"layerType" : "dropout", "layerName" : "drop3", "dropoutRate" : 0.5},
+    				{"layerType" : "dense", "layerName" : "hiddenDense3", "layerUnits": 128, "outputActivation" : "linear"},
+    				{"layerType" : "dense", "layerName" : "output", "layerUnits": 1, "outputActivation" : "linear"}
+					],
+				"training" : {
+					"lossWeights" : [1.0],
+					"denseRegularation" : false,
+					"regularationValue" : 0.0,
+					"batchSize" : 16,
+					"epochs" : 10,
+					"useBias" : true,
+					"validationSplit" : 0.1,
+					"testSplit" : 0.2,
+					"shuffle" : false,
+					"balanceClasses" : true,
+					"verbose" : 2,
+					"compilationLoss" : "mae",
+					"compilationMetrics" : ["mae"],
+					"optimizer" : {"name" : "adam", "learning_rate" : 0.001}
+					}
+				}
+			}
+			],
+		"end of conditional fields" : ""
 		}
-	}
 	}
 ],
 "comment - dataflow section" : "Specification details for the flows of data between processing nodes",

@@ -168,11 +168,16 @@ def sanityCheckMACD(combined=None, npX=None, npY=None, verbose=False, stage=""):
     return
 
 def visualize_fit(d2r):
-    nx_optimizer = nx.get_node_attributes(d2r.graph, JSON_OPTIMIZER)[d2r.mlNode]
-    nx_loss = nx.get_node_attributes(d2r.graph, JSON_LOSS)[d2r.mlNode]
-    nx_metrics = nx.get_node_attributes(d2r.graph, JSON_METRICS)[d2r.mlNode]
+    nx_modelIterations = nx.get_node_attributes(d2r.graph, "training iterations")[d2r.mlNode]
+    iterVariables = nx_modelIterations[d2r.trainingIteration]
+    iterParamters = iterVariables["iteration parameters"]
+    iterTraining = iterParamters["training"]
+    nx_loss = iterTraining[JSON_LOSS]
+    nx_metrics = iterTraining[JSON_METRICS]
+    nx_optimizer = iterTraining[JSON_OPTIMIZER]
+    nx_optimizerName = nx_optimizer['name']
 
-    str_l7 = 'Opt:{:s}'.format(nx_optimizer)    
+    str_l7 = 'Opt:{:s}'.format(nx_optimizerName)    
     str_p4 = ',loss:{:s}'.format(nx_loss)
     str_p5 = ',metrics:{:s}'.format(nx_metrics[0])
     str_p6 = ',epochs:{:d}'.format(d2r.fitting.params['epochs'])

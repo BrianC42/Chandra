@@ -175,16 +175,27 @@ def build_layer(d2r, layer_type, layer_definition, input_layer):
 
     return k_layer
 
+
+    return
+
 def assemble_layers(d2r):
     # error handling
     try:
         # inputs                
-        print("Assembling model defined in node: %s" % d2r.mlNode)
+        print("Assembling model defined in node: %s, iteration %s" % (d2r.mlNode, d2r.trainingIteration))
         logging.debug("Building ML model")
 
         err_txt = "*** An exception occurred building the model ***"
         input_layer = True
-        nx_layers = nx.get_node_attributes(d2r.graph, JSON_LAYERS)[d2r.mlNode]
+        
+        print("=================================\n\tWIP Setting iteration configuration parameters\n=========================================")        
+        nx_Tensorboard = nx.get_node_attributes(d2r.graph, "tensorboard")[d2r.mlNode]
+        nx_modelIterations = nx.get_node_attributes(d2r.graph, "training iterations")[d2r.mlNode]
+        iterVariables = nx_modelIterations[d2r.trainingIteration]
+        iterParamters = iterVariables["iteration parameters"]
+        
+        nx_layers = iterParamters["modelLayers"]
+        
         nx_data_precision = nx.get_node_attributes(d2r.graph, JSON_PRECISION)[d2r.mlNode]
         keras.backend.set_floatx(nx_data_precision)
         d2r.model = keras.Sequential()
@@ -197,12 +208,73 @@ def assemble_layers(d2r):
             input_layer = False
             
         err_txt = "*** An exception occurred compiling the model ***"
-        nx_loss = nx.get_node_attributes(d2r.graph, JSON_LOSS)[d2r.mlNode]
-        nx_metrics = nx.get_node_attributes(d2r.graph, JSON_METRICS)[d2r.mlNode]
-        nx_optimizer = nx.get_node_attributes(d2r.graph, JSON_OPTIMIZER)[d2r.mlNode]
-        nx_loss_weights = nx.get_node_attributes(d2r.graph, JSON_LOSS_WTS)[d2r.mlNode]
+        iterTraining = iterParamters["training"]
+        nx_loss = iterTraining[JSON_LOSS]
+        nx_metrics = iterTraining[JSON_METRICS]
+        nx_optimizer = iterTraining[JSON_OPTIMIZER]
+        nx_loss_weights = iterTraining[JSON_LOSS_WTS]
         
-        d2r.model.compile(optimizer=nx_optimizer, loss=nx_loss, metrics=nx_metrics, loss_weights=nx_loss_weights)
+        if nx_optimizer['name'] == 'adam':
+            # learning_rate=0.001
+            optimizer = tf.keras.optimizers.Adam(
+                learning_rate = nx_optimizer['learning_rate'],
+                beta_1=0.9,
+                beta_2=0.999,
+                epsilon=1e-07,
+                amsgrad=False,
+                weight_decay=None,
+                clipnorm=None,
+                clipvalue=None,
+                global_clipnorm=None,
+                use_ema=False,
+                ema_momentum=0.99,
+                ema_overwrite_frequency=None,
+                jit_compile=True,
+                name='Adam')
+        elif nx_optimizer == 'SGD':
+            optimizer = tf.keras.optimizers.experimental.SGD(
+                learning_rate = nx_optimizer['learning_rate'],
+                momentum=0.0,
+                nesterov=False,
+                amsgrad=False,
+                weight_decay=None,
+                clipnorm=None,
+                clipvalue=None,
+                global_clipnorm=None,
+                use_ema=False,
+                ema_momentum=0.99,
+                ema_overwrite_frequency=None,
+                jit_compile=True,
+                name='SGD')
+        elif nx_optimizer == 'RMSProp':
+            optimizer = tf.keras.optimizers.experimental.RMSprop(
+                learning_rate = nx_optimizer['learning_rate'],
+                rho=0.9,
+                momentum=0.0,
+                epsilon=1e-07,
+                centered=False,
+                weight_decay=None,
+                clipnorm=None,
+                clipvalue=None,
+                global_clipnorm=None,
+                use_ema=False,
+                ema_momentum=0.99,
+                ema_overwrite_frequency=100,
+                jit_compile=True,
+                name='RMSprop')
+        elif nx_optimizer == 'Nadam':
+            optimizer = nx_optimizer
+        elif nx_optimizer == 'Adamax':
+            optimizer = nx_optimizer
+        elif nx_optimizer == 'adagrad':
+            optimizer = nx_optimizer
+        elif nx_optimizer == 'adadelta':
+            optimizer = nx_optimizer
+        else:
+            err_msg = 'Invalid optimizer: ' + nx_optimizer
+            raise NameError(err_msg)
+            
+        d2r.model.compile(optimizer=optimizer, loss=nx_loss, metrics=nx_metrics, loss_weights=nx_loss_weights)
         print("compile optimizer:%s loss:%s metrics:%s loss_weights:%s" % \
               (nx_optimizer, nx_loss, nx_metrics, nx_loss_weights))
         d2r.model.summary()
