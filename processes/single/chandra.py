@@ -165,10 +165,12 @@ if __name__ == '__main__':
         =========================================================================================== '''
         step4 = time.time()
         print ("\nStep 4 - clean up, archive")
+        '''
         nx_model_file = nx.get_node_attributes(d2r.graph, JSON_MODEL_FILE)[d2r.mlNode]
         if d2r.trainer == TRAINING_AUTO_KERAS:
             d2r.model = d2r.model.export_model()
         d2r.model.save(nx_model_file)
+        '''
     
         end = time.time()
         print ("")

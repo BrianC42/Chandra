@@ -229,7 +229,7 @@ def assemble_layers(d2r):
                 ema_overwrite_frequency=None,
                 jit_compile=True,
                 name='Adam')
-        elif nx_optimizer == 'SGD':
+        elif nx_optimizer['name'] == 'SGD':
             optimizer = tf.keras.optimizers.experimental.SGD(
                 learning_rate = nx_optimizer['learning_rate'],
                 momentum=0.0,
@@ -244,7 +244,7 @@ def assemble_layers(d2r):
                 ema_overwrite_frequency=None,
                 jit_compile=True,
                 name='SGD')
-        elif nx_optimizer == 'RMSProp':
+        elif nx_optimizer['name'] == 'RMSprop':
             optimizer = tf.keras.optimizers.experimental.RMSprop(
                 learning_rate = nx_optimizer['learning_rate'],
                 rho=0.9,
@@ -260,14 +260,82 @@ def assemble_layers(d2r):
                 ema_overwrite_frequency=100,
                 jit_compile=True,
                 name='RMSprop')
-        elif nx_optimizer == 'Nadam':
-            optimizer = nx_optimizer
-        elif nx_optimizer == 'Adamax':
-            optimizer = nx_optimizer
-        elif nx_optimizer == 'adagrad':
-            optimizer = nx_optimizer
-        elif nx_optimizer == 'adadelta':
-            optimizer = nx_optimizer
+        elif nx_optimizer['name'] == 'Nadam':
+            optimizer = tf.keras.optimizers.experimental.Nadam(
+                learning_rate=nx_optimizer['learning_rate'],
+                beta_1=0.9,
+                beta_2=0.999,
+                epsilon=1e-07,
+                weight_decay=None,
+                clipnorm=None,
+                clipvalue=None,
+                global_clipnorm=None,
+                use_ema=False,
+                ema_momentum=0.99,
+                ema_overwrite_frequency=None,
+                jit_compile=True,
+                name='Nadam')
+        elif nx_optimizer['name'] == 'Adamax':
+            optimizer = tf.keras.optimizers.experimental.Adamax(
+                learning_rate=nx_optimizer['learning_rate'],
+                beta_1=0.9,
+                beta_2=0.999,
+                epsilon=1e-07,
+                weight_decay=None,
+                clipnorm=None,
+                clipvalue=None,
+                global_clipnorm=None,
+                use_ema=False,
+                ema_momentum=0.99,
+                ema_overwrite_frequency=None,
+                jit_compile=True,
+                name='Adamax')
+        elif nx_optimizer['name'] == 'adagrad':
+            optimizer = tf.keras.optimizers.experimental.Adagrad(
+                learning_rate=nx_optimizer['learning_rate'],
+                initial_accumulator_value=0.1,
+                epsilon=1e-07,
+                weight_decay=None,
+                clipnorm=None,
+                clipvalue=None,
+                global_clipnorm=None,
+                use_ema=False,
+                ema_momentum=0.99,
+                ema_overwrite_frequency=None,
+                jit_compile=True,
+                name='Adagrad')
+        elif nx_optimizer['name'] == 'adadelta':
+            optimizer = tf.keras.optimizers.experimental.Adadelta(
+                learning_rate=nx_optimizer['learning_rate'],
+                rho=0.95,
+                epsilon=1e-07,
+                weight_decay=None,
+                clipnorm=None,
+                clipvalue=None,
+                global_clipnorm=None,
+                use_ema=False,
+                ema_momentum=0.99,
+                ema_overwrite_frequency=None,
+                jit_compile=True,
+                name='Adadelta')
+        elif nx_optimizer['name'] == 'ftrl':
+            optimizer = tf.keras.optimizers.experimental.Ftrl(
+                learning_rate=nx_optimizer['learning_rate'],
+                learning_rate_power=-0.5,
+                initial_accumulator_value=0.1,
+                l1_regularization_strength=0.0,
+                l2_regularization_strength=0.0,
+                l2_shrinkage_regularization_strength=0.0,
+                beta=0.0,
+                weight_decay=None,
+                clipnorm=None,
+                clipvalue=None,
+                global_clipnorm=None,
+                use_ema=False,
+                ema_momentum=0.99,
+                ema_overwrite_frequency=None,
+                jit_compile=True,
+                name='Ftrl')
         else:
             err_msg = 'Invalid optimizer: ' + nx_optimizer
             raise NameError(err_msg)
@@ -276,10 +344,6 @@ def assemble_layers(d2r):
         print("compile optimizer:%s loss:%s metrics:%s loss_weights:%s" % \
               (nx_optimizer, nx_loss, nx_metrics, nx_loss_weights))
         d2r.model.summary()
-        nx_model_file = nx.get_node_attributes(d2r.graph, JSON_MODEL_FILE)[d2r.mlNode]
-
-        err_txt = "*** An exception occurred plotting the model ***"
-        keras.utils.plot_model(d2r.model, to_file=nx_model_file + '.png', show_shapes=True)
 
     except Exception:
         exc_info = sys.exc_info()

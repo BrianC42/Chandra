@@ -1,113 +1,573 @@
 {
+"comment - description" : "Experimental regression model to demonstrate ability to predict future value of a sine wave function",
 "comment - processing node section" : "Specification details for the processing nodes",
-"processNodes" : [
+"Training controls" : 
 	{
-		"processNodeName" : "LoadData",
-		"requiredFields" : {
-			"processType" : "dataPrep",
-			"comments: supported values - processType" : ["dataPrep", "Tensorflow"],
-			"inputFlows" : [],
-			"outputFlow" : "SinWave",
-			"outputFile" : "",
-			"logFile" : ""
-		},
-		"conditionalFields" : {
-			"dataPrepCtrl" : {
-				"inputFile" : ["d:\\brian\\AI-Projects\\Datasets\\regression - sine 10.csv"]
-			},
-			"removeOutliers" : [
-				{"commented - featureName - none" : "", "outlierPct" : 0.02}
-			]
-		}
+	"categorizationRegression" : "regression",
+	"comment - forecast details" : "prediction of 1 time step prediction following feature samples",
+	"forecastInterval" : 0,
+	"timeSequence" : false
 	},
-	{
-		"processNodeName" : "SineWaveRegression",
-		"requiredFields" : {
-			"comments: supported values - processType" : ["dataPrep", "Tensorflow"],
-			"processType" : "Tensorflow",
-			"inputFlows" : ["SinWave"],
-			"outputFlow" : "",
-			"outputFile" : "d:\\brian\\AI-Projects\\models\\TimeSeriesDemo_LSTM",
-			"logFile" : "d:\\brian\\AI-Projects\\logs\\TimeSeriesDemo_LSTM.txt"
-		},
-		"conditionalFields" : {
-			"modelFile" : "d:\\brian\\AI-Projects\\models\\SineWave",
-			"dataPrecision" : "float32",
-			"normalize" : "none",
-			"modelLayers" : [
-				{
-				"layerName" : "lstm1",
-				"layerType" : "lstm",
-				"timeSteps" : 20,
-				"featureCount": 1,
-				"layerUnits" : 10,
-				"returnSequences" : false,
-				"comment outputActivation" : "linear"
-				},
-				{
-				"layerName" : "dropout1",
-				"layerType" : "dropout",
-				"dropoutRate" : 0.2
-				},
-				{
-				"layerName" : "output",
-				"layerType" : "dense",
-				"layerUnits" : 10,
-				"comment: activations" : "https://keras.io/api/layers/activations/",
-				"comment: activations regression" : ["relu", "sigmoid", "softmax", "softplus", "softsign", "tanh", "selu", "elu", "exponential"],
-				"comment outputActivation" : "linear"
-				}
-			],
-			"training" : {
-				"lossWeights" : [1.0],
-				"denseRegularation" : false,
-				"regularationValue" : 0.0,
-				"batchSize" : 32,
-				"epochs" : 10,
-				"useBias" : true,
-				"validationSplit" : 0.1,
-				"testSplit" : 0.2,
-				"shuffle" : false,
-				"verbose" : 2,
-				"balanceClasses" : true,
-				"comment: compilationLoss" : ["see https://keras.io/api/losses/regression_losses/"],
-				"comment: compilationLoss regression" : ["mean_squared_error", "mean_absolute_error", "mean_absolute_percentage_error", "mean_squared_logarithmic_error", "cosine_similarity"],
-				"comment: compilationLoss categorization probablistic" : ["binary_crossentropy", "categorical_crossentropy", "sparse_categorical_crossentropy", "poisson"],
-				"compilationLoss" : "mae",
-				"comment: compilationMetrics" : ["see https://keras.io/api/metrics/regression_metrics/"],
-				"comment: compilationMetrics regression" : ["mean_squared_error", "root_mean_squared_error", "mean_absolute_error", "mean_absolute_percentage_error", "mean_squared_logarithmic_error", "cosine_similarity", "log_cosh_error"],
-				"comment: compilationMetrics categorization accuracy" : ["accuracy", "binary_accuracy", "categorical_accuracy", "top_k_categorical_accuracy", "sparse_top_k_categorical_accuracy"],
-				"comment: compilationMetrics categorization probablistic" : ["binary_crossentropy", "categorical_crossentropy", "sparse_categorical_crossentropy", "poisson"],
-				"comment: compilationMetrics true/false classification" : [],
-				"comment: compilationMetrics image" : [],
-				"comment: compilationMetrics hinge" : [],
-				"compilationMetrics" : ["accuracy"],
-				"comment: optimizers" : "https://keras.io/api/optimizers/",
-				"comment: optimizer values" : ["SGD", "RMSprop", "Adam", "Adadelta", "Adagrad", "Adamax", "Nadam", "Ftrl"],
-				"optimizer" : "adam"
-			}
-		}
-	}
-],
 "comment - wave form dataflow section" : "Specification details  for the flows of data between processing nodes",
 "dataFlows" : [
 	{
-	"flowName" : "SinWave",
+	"flowName" : "srcData",
 	"requiredFields" : {
-		"flowFrom" : "LoadData",
-		"flowTo" : "SineWaveRegression",
-		"flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\regression - sine 10.csv"
+		"flowFrom" : "LoadData", "flowTo" : "PrepData",
+		"flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\regression - linear.csv"
 		},
 	"conditionalFields" : {
 		"TensorflowData" : {
-			"timeSequence" : true,
-			"balanceClasses" : false,
-			"ignoreBlanks" : true,
+			"balanceClasses" : true, "ignoreBlanks" : true,
 			"features" : ["FeatureX"],
-			"targets" : ["TargetY"]
+			"targets" : ["TargetY"],
+			"timeSequence" : false, "seriesStepIDField" : ["FeatureX"], "seriesDataType" : "standard", "type" : "standard"
+			}
+		}
+	},
+	{
+	"flowName" : "preparedData",
+	"requiredFields" : {
+		"flowFrom" : "PrepData", "flowTo" : "linearRegression",
+		"flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\regression - linear prepared.csv"
+		},
+	"conditionalFields" : {
+		"TensorflowData" : {
+			"balanceClasses" : true, "ignoreBlanks" : true,
+			"features" : ["FeatureX"],
+			"targets" : ["TargetY"],
+			"timeSequence" : false, "seriesStepIDField" : ["FeatureX"], "seriesDataType" : "standard", "type" : "standard"
 			}
 		}
 	}
 ],
+"comment - dataflow" : "definition end",
+"processNodes" : [
+	{
+	"comments: supported processType" : ["dataLoad", "dataPrep", "Tensorflow"],
+	"processNodeName" : "LoadData",
+	"requiredFields" : {
+		"processType" : "dataLoad",	"inputFlows" : [], "outputFlow" : "srcData"
+	},
+	"conditionalFields" : {
+		"dataLoadCtrl" : {
+			"inputFile" : ["d:\\brian\\AI-Projects\\Datasets\\linear regression.csv"],
+			"comment" : "a set of x and y values based on a y = nx formula with a small % of noise"
+		}
+	}
+	},
+	{
+	"processNodeName" : "PrepData",
+	"requiredFields" : {
+		"processType" : "dataPrep", "inputFlows" : ["srcData"], "outputFlow" : "preparedData"
+	},
+	"conditionalFields" : {
+		"dataPrepCtrl" : {
+			"comment - preparationSequence" : ["normalize", "oneHotEncoding"],
+			"preparationSequence" : ["normalize"],
+			"noPreparation" : {
+				"features" : [
+					{"feature" : "FeatureX"}
+				]
+			},
+			"normalize" : {
+				"comment types supported" : ["standard", "minmax", "relative_time_series"],
+				"type" : "standard",
+				"features" : [
+					{"feature" : "TargetY"}
+					]
+			},
+			"oneHotEncoding" : {
+				"features" : [
+				]
+			}
+		}
+	}
+	},
+	{
+	"processNodeName" : "linearRegression",
+	"requiredFields" : {
+		"processType" : "Tensorflow", "inputFlows" : ["preparedData"], "outputFlow" : ""
+	},
+	"conditionalFields" : {
+		"categorizationRegression" : "regression",
+		"dataPrecision" : "float32",
+		"visualizations" : [],
+		"training iterations" : [
+			{
+			"iteration parameters" : {
+				"comment - description" : "dense model doing regression analysis of a linear equation",
+				"modelFileDir" : "d:\\brian\\AI-Projects\\models\\fc\\linear",
+				"iteration ID" : "Adadelta_relu_mse_mse_1h100e256",
+				"data arrangement" : {
+					"combineSampleCount" : 1
+					},
+				"modelLayers" : [
+    				{"layerType" : "dense", "layerName" : "input-dense", "featureCount": 1, "layerUnits" : 256, "outputActivation" : "relu"},
+    				{"layerType" : "dense", "layerName" : "hiddenDense1", "layerUnits" : 128, "outputActivation" : "relu"},
+    				{"layerType" : "dense", "layerName" : "output", "layerUnits": 1, "outputActivation" : "relu"}
+					],
+				"training" : {
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"batchSize" : 16, "epochs" : 100, "validationSplit" : 0.1, "testSplit" : 0.2,
+					"shuffle" : false, "balanceClasses" : true,	"verbose" : 2,
+					"compilationLoss" : "mse", "compilationMetrics" : ["mse"], "optimizer" : {"name" : "adadelta", "learning_rate" : 0.001}
+					},
+				"tensorboard" : {
+					"log file dir" : "d:\\brian\\AI-Projects\\logs\\tensorboard\\regression\\fc\\linear\\wd\\"
+					}
+				}
+			}
+		]
+	}
+	}
+],
+"comment - process node" : "definition end",
+"comment single iteration template ============================================================================================" : [
+			{
+			"iteration parameters" : {
+				"comment - description" : "dense model doing regression analysis of a linear equation",
+				"modelFileDir" : "d:\\brian\\AI-Projects\\models\\fc\\linear",
+				"iteration ID" : "Adadelta_relu_mse_mse_2h10e",
+				"data arrangement" : {
+					"combineSampleCount" : 1
+					},
+				"modelLayers" : [
+    				{"layerType" : "dense", "layerName" : "input-dense", "featureCount": 1, "layerUnits" : 16, "outputActivation" : "relu"},
+    				{"layerType" : "dense", "layerName" : "hiddenDense1", "layerUnits" : 16, "outputActivation" : "relu"},
+    				{"layerType" : "dense", "layerName" : "output", "layerUnits": 1, "outputActivation" : "relu"}
+					],
+				"training" : {
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"batchSize" : 16, "epochs" : 5, "validationSplit" : 0.1, "testSplit" : 0.2,
+					"shuffle" : false, "balanceClasses" : true,	"verbose" : 2,
+					"compilationLoss" : "mse", "compilationMetrics" : ["mse"], "optimizer" : {"name" : "adadelta", "learning_rate" : 0.001}
+					},
+				"tensorboard" : {
+					"log file dir" : "d:\\brian\\AI-Projects\\logs\\tensorboard\\regression\\fc\\linear\\epochs\\"
+					}
+				}
+			}
+],
+"comment width and depth tests ==========================================================================================================" : [
+			{
+			"iteration parameters" : {
+				"comment - description" : "dense model doing regression analysis of a linear equation",
+				"modelFileDir" : "d:\\brian\\AI-Projects\\models\\fc\\linear",
+				"iteration ID" : "Adadelta_relu_mse_mse_1h100e256",
+				"data arrangement" : {
+					"combineSampleCount" : 1
+					},
+				"modelLayers" : [
+    				{"layerType" : "dense", "layerName" : "input-dense", "featureCount": 1, "layerUnits" : 256, "outputActivation" : "relu"},
+    				{"layerType" : "dense", "layerName" : "hiddenDense1", "layerUnits" : 128, "outputActivation" : "relu"},
+    				{"layerType" : "dense", "layerName" : "output", "layerUnits": 1, "outputActivation" : "relu"}
+					],
+				"training" : {
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"batchSize" : 16, "epochs" : 100, "validationSplit" : 0.1, "testSplit" : 0.2,
+					"shuffle" : false, "balanceClasses" : true,	"verbose" : 2,
+					"compilationLoss" : "mse", "compilationMetrics" : ["mse"], "optimizer" : {"name" : "adadelta", "learning_rate" : 0.001}
+					},
+				"tensorboard" : {
+					"log file dir" : "d:\\brian\\AI-Projects\\logs\\tensorboard\\regression\\fc\\linear\\wd\\"
+					}
+				}
+			},
+			{
+			"iteration parameters" : {
+				"comment - description" : "dense model doing regression analysis of a linear equation",
+				"modelFileDir" : "d:\\brian\\AI-Projects\\models\\fc\\linear",
+				"iteration ID" : "Adadelta_relu_mse_mse_1h100e512",
+				"data arrangement" : {
+					"combineSampleCount" : 1
+					},
+				"modelLayers" : [
+    				{"layerType" : "dense", "layerName" : "input-dense", "featureCount": 1, "layerUnits" : 512, "outputActivation" : "relu"},
+    				{"layerType" : "dense", "layerName" : "hiddenDense1", "layerUnits" : 256, "outputActivation" : "relu"},
+    				{"layerType" : "dense", "layerName" : "output", "layerUnits": 1, "outputActivation" : "relu"}
+					],
+				"training" : {
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"batchSize" : 16, "epochs" : 100, "validationSplit" : 0.1, "testSplit" : 0.2,
+					"shuffle" : false, "balanceClasses" : true,	"verbose" : 2,
+					"compilationLoss" : "mse", "compilationMetrics" : ["mse"], "optimizer" : {"name" : "adadelta", "learning_rate" : 0.001}
+					},
+				"tensorboard" : {
+					"log file dir" : "d:\\brian\\AI-Projects\\logs\\tensorboard\\regression\\fc\\linear\\wd\\"
+					}
+				}
+			},
+			{
+			"iteration parameters" : {
+				"comment - description" : "dense model doing regression analysis of a linear equation",
+				"modelFileDir" : "d:\\brian\\AI-Projects\\models\\fc\\linear",
+				"iteration ID" : "Adadelta_relu_mse_mse_2h100e256",
+				"data arrangement" : {
+					"combineSampleCount" : 1
+					},
+				"modelLayers" : [
+    				{"layerType" : "dense", "layerName" : "input-dense", "featureCount": 1, "layerUnits" : 256, "outputActivation" : "relu"},
+    				{"layerType" : "dense", "layerName" : "hiddenDense1", "layerUnits" : 128, "outputActivation" : "relu"},
+    				{"layerType" : "dense", "layerName" : "hiddenDense2", "layerUnits" : 128, "outputActivation" : "relu"},
+    				{"layerType" : "dense", "layerName" : "output", "layerUnits": 1, "outputActivation" : "relu"}
+					],
+				"training" : {
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"batchSize" : 16, "epochs" : 100, "validationSplit" : 0.1, "testSplit" : 0.2,
+					"shuffle" : false, "balanceClasses" : true,	"verbose" : 2,
+					"compilationLoss" : "mse", "compilationMetrics" : ["mse"], "optimizer" : {"name" : "adadelta", "learning_rate" : 0.001}
+					},
+				"tensorboard" : {
+					"log file dir" : "d:\\brian\\AI-Projects\\logs\\tensorboard\\regression\\fc\\linear\\wd\\"
+					}
+				}
+			},
+			{
+			"iteration parameters" : {
+				"comment - description" : "dense model doing regression analysis of a linear equation",
+				"modelFileDir" : "d:\\brian\\AI-Projects\\models\\fc\\linear",
+				"iteration ID" : "Adadelta_relu_mse_mse_2h100e512",
+				"data arrangement" : {
+					"combineSampleCount" : 1
+					},
+				"modelLayers" : [
+    				{"layerType" : "dense", "layerName" : "input-dense", "featureCount": 1, "layerUnits" : 512, "outputActivation" : "relu"},
+    				{"layerType" : "dense", "layerName" : "hiddenDense1", "layerUnits" : 256, "outputActivation" : "relu"},
+    				{"layerType" : "dense", "layerName" : "hiddenDense2", "layerUnits" : 128, "outputActivation" : "relu"},
+    				{"layerType" : "dense", "layerName" : "output", "layerUnits": 1, "outputActivation" : "relu"}
+					],
+				"training" : {
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"batchSize" : 16, "epochs" : 100, "validationSplit" : 0.1, "testSplit" : 0.2,
+					"shuffle" : false, "balanceClasses" : true,	"verbose" : 2,
+					"compilationLoss" : "mse", "compilationMetrics" : ["mse"], "optimizer" : {"name" : "adadelta", "learning_rate" : 0.001}
+					},
+				"tensorboard" : {
+					"log file dir" : "d:\\brian\\AI-Projects\\logs\\tensorboard\\regression\\fc\\linear\\wd\\"
+					}
+				}
+			},
+			{
+			"iteration parameters" : {
+				"comment - description" : "dense model doing regression analysis of a linear equation",
+				"modelFileDir" : "d:\\brian\\AI-Projects\\models\\fc\\linear",
+				"iteration ID" : "Adadelta_relu_mse_mse_3h100e256",
+				"data arrangement" : {
+					"combineSampleCount" : 1
+					},
+				"modelLayers" : [
+    				{"layerType" : "dense", "layerName" : "input-dense", "featureCount": 1, "layerUnits" : 256, "outputActivation" : "relu"},
+    				{"layerType" : "dense", "layerName" : "hiddenDense1", "layerUnits" : 128, "outputActivation" : "relu"},
+    				{"layerType" : "dense", "layerName" : "hiddenDense2", "layerUnits" : 128, "outputActivation" : "relu"},
+    				{"layerType" : "dense", "layerName" : "hiddenDense3", "layerUnits" : 128, "outputActivation" : "relu"},
+    				{"layerType" : "dense", "layerName" : "output", "layerUnits": 1, "outputActivation" : "relu"}
+					],
+				"training" : {
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"batchSize" : 16, "epochs" : 100, "validationSplit" : 0.1, "testSplit" : 0.2,
+					"shuffle" : false, "balanceClasses" : true,	"verbose" : 2,
+					"compilationLoss" : "mse", "compilationMetrics" : ["mse"], "optimizer" : {"name" : "adadelta", "learning_rate" : 0.001}
+					},
+				"tensorboard" : {
+					"log file dir" : "d:\\brian\\AI-Projects\\logs\\tensorboard\\regression\\fc\\linear\\wd\\"
+					}
+				}
+			},
+			{
+			"iteration parameters" : {
+				"comment - description" : "dense model doing regression analysis of a linear equation",
+				"modelFileDir" : "d:\\brian\\AI-Projects\\models\\fc\\linear",
+				"iteration ID" : "Adadelta_relu_mse_mse_3h100e512",
+				"data arrangement" : {
+					"combineSampleCount" : 1
+					},
+				"modelLayers" : [
+    				{"layerType" : "dense", "layerName" : "input-dense", "featureCount": 1, "layerUnits" : 512, "outputActivation" : "relu"},
+    				{"layerType" : "dense", "layerName" : "hiddenDense1", "layerUnits" : 256, "outputActivation" : "relu"},
+    				{"layerType" : "dense", "layerName" : "hiddenDense2", "layerUnits" : 128, "outputActivation" : "relu"},
+    				{"layerType" : "dense", "layerName" : "hiddenDense3", "layerUnits" : 128, "outputActivation" : "relu"},
+    				{"layerType" : "dense", "layerName" : "output", "layerUnits": 1, "outputActivation" : "relu"}
+					],
+				"training" : {
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"batchSize" : 16, "epochs" : 100, "validationSplit" : 0.1, "testSplit" : 0.2,
+					"shuffle" : false, "balanceClasses" : true,	"verbose" : 2,
+					"compilationLoss" : "mse", "compilationMetrics" : ["mse"], "optimizer" : {"name" : "adadelta", "learning_rate" : 0.001}
+					},
+				"tensorboard" : {
+					"log file dir" : "d:\\brian\\AI-Projects\\logs\\tensorboard\\regression\\fc\\linear\\wd\\"
+					}
+				}
+			}
+],
+"comment epoch tests ==========================================================================================================" : [
+			{
+			"iteration parameters" : {
+				"comment - description" : "dense model doing regression analysis of a linear equation",
+				"modelFileDir" : "d:\\brian\\AI-Projects\\models\\fc\\linear",
+				"iteration ID" : "Adadelta_relu_mse_mse_1h10e",
+				"data arrangement" : {
+					"combineSampleCount" : 1
+					},
+				"modelLayers" : [
+    				{"layerType" : "dense", "layerName" : "input-dense", "featureCount": 1, "layerUnits" : 16, "outputActivation" : "relu"},
+    				{"layerType" : "dense", "layerName" : "hiddenDense1", "layerUnits" : 16, "outputActivation" : "relu"},
+    				{"layerType" : "dense", "layerName" : "output", "layerUnits": 1, "outputActivation" : "relu"}
+					],
+				"training" : {
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"batchSize" : 16, "epochs" : 10, "validationSplit" : 0.1, "testSplit" : 0.2,
+					"shuffle" : false, "balanceClasses" : true,	"verbose" : 2,
+					"compilationLoss" : "mse", "compilationMetrics" : ["mse"], "optimizer" : {"name" : "adadelta", "learning_rate" : 0.001}
+					},
+				"tensorboard" : {
+					"log file dir" : "d:\\brian\\AI-Projects\\logs\\tensorboard\\regression\\fc\\linear\\epochs\\"
+					}
+				}
+			},
+			{
+			"iteration parameters" : {
+				"comment - description" : "dense model doing regression analysis of a linear equation",
+				"modelFileDir" : "d:\\brian\\AI-Projects\\models\\fc\\linear",
+				"iteration ID" : "Adadelta_relu_mse_mse_1h50e",
+				"data arrangement" : {
+					"combineSampleCount" : 1
+					},
+				"modelLayers" : [
+    				{"layerType" : "dense", "layerName" : "input-dense", "featureCount": 1, "layerUnits" : 16, "outputActivation" : "relu"},
+    				{"layerType" : "dense", "layerName" : "hiddenDense1", "layerUnits" : 16, "outputActivation" : "relu"},
+    				{"layerType" : "dense", "layerName" : "output", "layerUnits": 1, "outputActivation" : "relu"}
+					],
+				"training" : {
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"batchSize" : 16, "epochs" : 50, "validationSplit" : 0.1, "testSplit" : 0.2,
+					"shuffle" : false, "balanceClasses" : true,	"verbose" : 2,
+					"compilationLoss" : "mse", "compilationMetrics" : ["mse"], "optimizer" : {"name" : "adadelta", "learning_rate" : 0.001}
+					},
+				"tensorboard" : {
+					"log file dir" : "d:\\brian\\AI-Projects\\logs\\tensorboard\\regression\\fc\\linear\\epochs\\"
+					}
+				}
+			},
+			{
+			"iteration parameters" : {
+				"comment - description" : "dense model doing regression analysis of a linear equation",
+				"modelFileDir" : "d:\\brian\\AI-Projects\\models\\fc\\linear",
+				"iteration ID" : "Adadelta_relu_mse_mse_1h100e",
+				"data arrangement" : {
+					"combineSampleCount" : 1
+					},
+				"modelLayers" : [
+    				{"layerType" : "dense", "layerName" : "input-dense", "featureCount": 1, "layerUnits" : 16, "outputActivation" : "relu"},
+    				{"layerType" : "dense", "layerName" : "hiddenDense1", "layerUnits" : 16, "outputActivation" : "relu"},
+    				{"layerType" : "dense", "layerName" : "output", "layerUnits": 1, "outputActivation" : "relu"}
+					],
+				"training" : {
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"batchSize" : 16, "epochs" : 100, "validationSplit" : 0.1, "testSplit" : 0.2,
+					"shuffle" : false, "balanceClasses" : true,	"verbose" : 2,
+					"compilationLoss" : "mse", "compilationMetrics" : ["mse"], "optimizer" : {"name" : "adadelta", "learning_rate" : 0.001}
+					},
+				"tensorboard" : {
+					"log file dir" : "d:\\brian\\AI-Projects\\logs\\tensorboard\\regression\\fc\\linear\\epochs\\"
+					}
+				}
+			}
+],
+"comment optimizer tests ==========================================================================================================" : [
+			{
+			"iteration parameters" : {
+				"comment - description" : "dense model doing regression analysis of a linear equation",
+				"modelFileDir" : "d:\\brian\\AI-Projects\\models\\fc\\linear",
+				"iteration ID" : "adam_relu_mse_mse_2h10e",
+				"data arrangement" : {
+					"combineSampleCount" : 1
+					},
+				"modelLayers" : [
+    				{"layerType" : "dense", "layerName" : "input-dense", "featureCount": 1, "layerUnits" : 16, "outputActivation" : "relu"},
+    				{"layerType" : "dense", "layerName" : "hiddenDense1", "layerUnits" : 16, "outputActivation" : "relu"},
+    				{"layerType" : "dense", "layerName" : "output", "layerUnits": 1, "outputActivation" : "relu"}
+					],
+				"training" : {
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"batchSize" : 16, "epochs" : 10, "validationSplit" : 0.1, "testSplit" : 0.2,
+					"shuffle" : false, "balanceClasses" : true,	"verbose" : 2,
+					"compilationLoss" : "mse", "compilationMetrics" : ["mse"], "optimizer" : {"name" : "adam", "learning_rate" : 0.001}
+					},
+				"tensorboard" : {
+					"log file dir" : "d:\\brian\\AI-Projects\\logs\\tensorboard\\regression\\fc\\linear\\optimizer\\"
+					}
+				}
+			},
+			{
+			"iteration parameters" : {
+				"comment - description" : "dense model doing regression analysis of a linear equation",
+				"modelFileDir" : "d:\\brian\\AI-Projects\\models\\fc\\linear",
+				"iteration ID" : "Adadelta_relu_mse_mse_1h10e",
+				"data arrangement" : {
+					"combineSampleCount" : 1
+					},
+				"modelLayers" : [
+    				{"layerType" : "dense", "layerName" : "input-dense", "featureCount": 1, "layerUnits" : 16, "outputActivation" : "relu"},
+    				{"layerType" : "dense", "layerName" : "hiddenDense1", "layerUnits" : 16, "outputActivation" : "relu"},
+    				{"layerType" : "dense", "layerName" : "output", "layerUnits": 1, "outputActivation" : "relu"}
+					],
+				"training" : {
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"batchSize" : 16, "epochs" : 10, "validationSplit" : 0.1, "testSplit" : 0.2,
+					"shuffle" : false, "balanceClasses" : true,	"verbose" : 2,
+					"compilationLoss" : "mse", "compilationMetrics" : ["mse"], "optimizer" : {"name" : "adadelta", "learning_rate" : 0.001}
+					},
+				"tensorboard" : {
+					"log file dir" : "d:\\brian\\AI-Projects\\logs\\tensorboard\\regression\\fc\\linear\\optimizer\\"
+					}
+				}
+			},
+			{
+			"iteration parameters" : {
+				"comment - description" : "dense model doing regression analysis of a linear equation",
+				"modelFileDir" : "d:\\brian\\AI-Projects\\models\\fc\\linear",
+				"iteration ID" : "adagrad_relu_mse_mse_1h10e",
+				"data arrangement" : {
+					"combineSampleCount" : 1
+					},
+				"modelLayers" : [
+    				{"layerType" : "dense", "layerName" : "input-dense", "featureCount": 1, "layerUnits" : 16, "outputActivation" : "relu"},
+    				{"layerType" : "dense", "layerName" : "hiddenDense1", "layerUnits" : 16, "outputActivation" : "relu"},
+    				{"layerType" : "dense", "layerName" : "output", "layerUnits": 1, "outputActivation" : "relu"}
+					],
+				"training" : {
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"batchSize" : 16, "epochs" : 10, "validationSplit" : 0.1, "testSplit" : 0.2,
+					"shuffle" : false, "balanceClasses" : true,	"verbose" : 2,
+					"compilationLoss" : "mse", "compilationMetrics" : ["mse"], "optimizer" : {"name" : "adagrad", "learning_rate" : 0.001}
+					},
+				"tensorboard" : {
+					"log file dir" : "d:\\brian\\AI-Projects\\logs\\tensorboard\\regression\\fc\\linear\\optimizer\\"
+					}
+				}
+			},
+			{
+			"iteration parameters" : {
+				"comment - description" : "dense model doing regression analysis of a linear equation",
+				"modelFileDir" : "d:\\brian\\AI-Projects\\models\\fc\\linear",
+				"iteration ID" : "Adamax_relu_mse_mse_1h10e",
+				"data arrangement" : {
+					"combineSampleCount" : 1
+					},
+				"modelLayers" : [
+    				{"layerType" : "dense", "layerName" : "input-dense", "featureCount": 1, "layerUnits" : 16, "outputActivation" : "relu"},
+    				{"layerType" : "dense", "layerName" : "hiddenDense1", "layerUnits" : 16, "outputActivation" : "relu"},
+    				{"layerType" : "dense", "layerName" : "output", "layerUnits": 1, "outputActivation" : "relu"}
+					],
+				"training" : {
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"batchSize" : 16, "epochs" : 10, "validationSplit" : 0.1, "testSplit" : 0.2,
+					"shuffle" : false, "balanceClasses" : true,	"verbose" : 2,
+					"compilationLoss" : "mse", "compilationMetrics" : ["mse"], "optimizer" : {"name" : "Adamax", "learning_rate" : 0.001}
+					},
+				"tensorboard" : {
+					"log file dir" : "d:\\brian\\AI-Projects\\logs\\tensorboard\\regression\\fc\\linear\\optimizer\\"
+					}
+				}
+			},
+			{
+			"iteration parameters" : {
+				"comment - description" : "dense model doing regression analysis of a linear equation",
+				"modelFileDir" : "d:\\brian\\AI-Projects\\models\\fc\\linear",
+				"iteration ID" : "Nadam_relu_mse_mse_1h10e",
+				"data arrangement" : {
+					"combineSampleCount" : 1
+					},
+				"modelLayers" : [
+    				{"layerType" : "dense", "layerName" : "input-dense", "featureCount": 1, "layerUnits" : 16, "outputActivation" : "relu"},
+    				{"layerType" : "dense", "layerName" : "hiddenDense1", "layerUnits" : 16, "outputActivation" : "relu"},
+    				{"layerType" : "dense", "layerName" : "output", "layerUnits": 1, "outputActivation" : "relu"}
+					],
+				"training" : {
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"batchSize" : 16, "epochs" : 10, "validationSplit" : 0.1, "testSplit" : 0.2,
+					"shuffle" : false, "balanceClasses" : true,	"verbose" : 2,
+					"compilationLoss" : "mse", "compilationMetrics" : ["mse"], "optimizer" : {"name" : "Nadam", "learning_rate" : 0.001}
+					},
+				"tensorboard" : {
+					"log file dir" : "d:\\brian\\AI-Projects\\logs\\tensorboard\\regression\\fc\\linear\\optimizer\\"
+					}
+				}
+			},
+			{
+			"iteration parameters" : {
+				"comment - description" : "dense model doing regression analysis of a linear equation",
+				"modelFileDir" : "d:\\brian\\AI-Projects\\models\\fc\\linear",
+				"iteration ID" : "RMSprop_relu_mse_mse_1h10e",
+				"data arrangement" : {
+					"combineSampleCount" : 1
+					},
+				"modelLayers" : [
+    				{"layerType" : "dense", "layerName" : "input-dense", "featureCount": 1, "layerUnits" : 16, "outputActivation" : "relu"},
+    				{"layerType" : "dense", "layerName" : "hiddenDense1", "layerUnits" : 16, "outputActivation" : "relu"},
+    				{"layerType" : "dense", "layerName" : "output", "layerUnits": 1, "outputActivation" : "relu"}
+					],
+				"training" : {
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"batchSize" : 16, "epochs" : 10, "validationSplit" : 0.1, "testSplit" : 0.2,
+					"shuffle" : false, "balanceClasses" : true,	"verbose" : 2,
+					"compilationLoss" : "mse", "compilationMetrics" : ["mse"], "optimizer" : {"name" : "RMSprop", "learning_rate" : 0.001}
+					},
+				"tensorboard" : {
+					"log file dir" : "d:\\brian\\AI-Projects\\logs\\tensorboard\\regression\\fc\\linear\\optimizer\\"
+					}
+				}
+			},
+			{
+			"iteration parameters" : {
+				"comment - description" : "dense model doing regression analysis of a linear equation",
+				"modelFileDir" : "d:\\brian\\AI-Projects\\models\\fc\\linear",
+				"iteration ID" : "ftrl_relu_mse_mse_1h10e",
+				"data arrangement" : {
+					"combineSampleCount" : 1
+					},
+				"modelLayers" : [
+    				{"layerType" : "dense", "layerName" : "input-dense", "featureCount": 1, "layerUnits" : 16, "outputActivation" : "relu"},
+    				{"layerType" : "dense", "layerName" : "hiddenDense1", "layerUnits" : 16, "outputActivation" : "relu"},
+    				{"layerType" : "dense", "layerName" : "output", "layerUnits": 1, "outputActivation" : "relu"}
+					],
+				"training" : {
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"batchSize" : 16, "epochs" : 10, "validationSplit" : 0.1, "testSplit" : 0.2,
+					"shuffle" : false, "balanceClasses" : true,	"verbose" : 2,
+					"compilationLoss" : "mse", "compilationMetrics" : ["mse"], "optimizer" : {"name" : "ftrl", "learning_rate" : 0.001}
+					},
+				"tensorboard" : {
+					"log file dir" : "d:\\brian\\AI-Projects\\logs\\tensorboard\\regression\\fc\\linear\\optimizer\\"
+					}
+				}
+			},
+			{
+			"iteration parameters" : {
+				"comment - description" : "dense model doing regression analysis of a linear equation",
+				"modelFileDir" : "d:\\brian\\AI-Projects\\models\\fc\\linear",
+				"iteration ID" : "SGD_relu_mse_mse_1h10e",
+				"data arrangement" : {
+					"combineSampleCount" : 1
+					},
+				"modelLayers" : [
+    				{"layerType" : "dense", "layerName" : "input-dense", "featureCount": 1, "layerUnits" : 16, "outputActivation" : "relu"},
+    				{"layerType" : "dense", "layerName" : "hiddenDense1", "layerUnits" : 16, "outputActivation" : "relu"},
+    				{"layerType" : "dense", "layerName" : "output", "layerUnits": 1, "outputActivation" : "relu"}
+					],
+				"training" : {
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"batchSize" : 16, "epochs" : 10, "validationSplit" : 0.1, "testSplit" : 0.2,
+					"shuffle" : false, "balanceClasses" : true,	"verbose" : 2,
+					"compilationLoss" : "mse", "compilationMetrics" : ["mse"], "optimizer" : {"name" : "SGD", "learning_rate" : 0.001}
+					},
+				"tensorboard" : {
+					"log file dir" : "d:\\brian\\AI-Projects\\logs\\tensorboard\\regression\\fc\\linear\\optimizer\\"
+					}
+				}
+			}
+	],
 "comment end of specification" : "------------------------------------------------------------------------------------"
 }

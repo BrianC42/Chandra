@@ -9,6 +9,7 @@ import logging
 import networkx as nx
 import numpy as np
 import tensorflow as tf
+from tensorflow import keras
 import autokeras as ak
 
 from configuration_constants import JSON_TRAIN
@@ -16,9 +17,17 @@ from configuration_constants import JSON_BATCH
 from configuration_constants import JSON_EPOCHS
 from configuration_constants import JSON_VERBOSE
 from configuration_constants import JSON_SHUFFLE_DATA
+from configuration_constants import JSON_MODEL_FILE_DIR
+from configuration_constants import JSON_ITERATION_ID
+
+from TrainingDataAndResults import TRAINING_AUTO_KERAS
 
 def trainModel(d2r):
     try:
+        now = dt.datetime.now()
+        timeStamp = ' {:4d}{:0>2d}{:0>2d} {:0>2d}{:0>2d}{:0>2d}'.format(now.year, now.month, now.day, \
+                                                                        now.hour, now.minute, now.second)
+
         print("\nTraining shapes x:%s y:%s" % (d2r.trainX.shape, d2r.trainY.shape))
         print("validating shapes x:%s y:%s" % (d2r.validateX.shape, d2r.validateY.shape))
         print("Testing shapes x:%s y:%s" % (d2r.testX.shape, d2r.testY.shape))
@@ -27,6 +36,9 @@ def trainModel(d2r):
         iterVariables = nx_modelIterations[d2r.trainingIteration]
         iterParamters = iterVariables["iteration parameters"]
 
+        modeFileDir = iterParamters[JSON_MODEL_FILE_DIR]
+        iterationID = iterParamters[JSON_ITERATION_ID]
+        
         iterTraining = iterParamters["training"]
         nx_batch = iterTraining[JSON_BATCH]
         nx_epochs = iterTraining[JSON_EPOCHS]
@@ -35,22 +47,25 @@ def trainModel(d2r):
         
         iterTensorboard = iterParamters["tensorboard"]
         logDir = iterTensorboard["log file dir"]
-        logFileBase = iterTensorboard["log file name"]
-        now = dt.datetime.now()
-        timeStamp = ' {:4d}{:0>2d}{:0>2d} {:0>2d}{:0>2d}{:0>2d}'.format(now.year, now.month, now.day, \
-                                                                        now.hour, now.minute, now.second)
-        logFile = logDir + logFileBase + timeStamp
+        logFile = logDir + iterationID + timeStamp
         tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=logFile, histogram_freq=1)
         
         d2r.fitting = d2r.model.fit(x=d2r.trainX, y=d2r.trainY, \
                                     validation_data=(d2r.validateX, d2r.validateY), \
-                                    #validation_split=0.1, \
                                     epochs=nx_epochs, \
                                     batch_size=nx_batch, \
                                     shuffle=nx_shuffle, \
                                     verbose=nx_verbose, \
                                     callbacks=[tensorboard_callback])
     
+        modelFileName = modeFileDir + iterationID + timeStamp
+        
+        if d2r.trainer == TRAINING_AUTO_KERAS:
+            d2r.model = d2r.model.export_model()
+        d2r.model.save(modelFileName)
+
+        keras.utils.plot_model(d2r.model, to_file=modelFileName + '.png', show_shapes=True)
+
     except Exception:
         err_txt = "\n*** An exception occurred training the model ***\n\t"
         

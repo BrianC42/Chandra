@@ -37,7 +37,6 @@ from configuration_constants import JSON_LOG_FILE
 from configuration_constants import JSON_INPUT_DATA_FILE
 from configuration_constants import JSON_INPUT_DATA_PREPARATION
 from configuration_constants import JSON_DATA_PREPARATION_CTRL
-from configuration_constants import JSON_MODEL_FILE
 from configuration_constants import JSON_LAYERS
 from configuration_constants import JSON_BALANCED
 from configuration_constants import JSON_TIME_SEQ
@@ -146,7 +145,7 @@ def add_meta_process_node (js_config, d2r) :
     nx_inputs = js_required[JSON_INPUT_FLOWS]
     nx_output = js_required[JSON_OUTPUT_FLOW]
     #nx_outputFile = js_required[JSON_OUTPUT_FILE]
-    nx_log = js_required[JSON_LOG_FILE]
+    #nx_log = js_required[JSON_LOG_FILE]
     
     for node_i in d2r.graph.nodes():
         if node_i == nx_process_name:
@@ -154,7 +153,7 @@ def add_meta_process_node (js_config, d2r) :
             nx.set_node_attributes(d2r.graph, {nx_process_name:nx_inputs}, JSON_INPUT_FLOWS)
             nx.set_node_attributes(d2r.graph, {nx_process_name:nx_output}, JSON_OUTPUT_FLOW)
             #nx.set_node_attributes(nx_graph, {nx_process_name:nx_outputFile}, JSON_OUTPUT_FILE)
-            nx.set_node_attributes(d2r.graph, {nx_process_name:nx_log}, JSON_LOG_FILE)
+            #nx.set_node_attributes(d2r.graph, {nx_process_name:nx_log}, JSON_LOG_FILE)
             break
     
     # conditional elements
@@ -172,8 +171,6 @@ def add_meta_process_node (js_config, d2r) :
         '''
     elif nx_processType == JSON_TENSORFLOW:
         nx.set_node_attributes(d2r.graph, {nx_process_name:nx_processType}, JSON_TRAIN)
-        nx_model_file = js_conditional[JSON_MODEL_FILE]
-        nx.set_node_attributes(d2r.graph, {nx_process_name:nx_model_file}, JSON_MODEL_FILE)
         nx_dataPrecision = js_conditional[JSON_PRECISION]
         nx.set_node_attributes(d2r.graph, {nx_process_name:nx_dataPrecision}, JSON_PRECISION)
         nx_visualizations = js_conditional[JSON_VISUALIZATIONS]
@@ -221,8 +218,6 @@ def add_meta_process_node (js_config, d2r) :
     elif nx_processType == JSON_AUTOKERAS:
         print("============== WIP =============\n\tAuto Keras node details\n================================")
         nx.set_node_attributes(d2r.graph, {nx_process_name:nx_processType}, JSON_TRAIN)
-        nx_model_file = js_conditional[JSON_MODEL_FILE]
-        nx.set_node_attributes(d2r.graph, {nx_process_name:nx_model_file}, JSON_MODEL_FILE)
         nx_dataPrecision = js_conditional[JSON_PRECISION]
         nx.set_node_attributes(d2r.graph, {nx_process_name:nx_dataPrecision}, JSON_PRECISION)
         nx_visualizations = js_conditional[JSON_VISUALIZATIONS]

@@ -526,6 +526,7 @@ def selectDateAxisLabels(dateTimes):
     return tmark, tmarkDates
 
 def visualizeTestVsForecast(d2r, prediction):
+    '''
     if len(d2r.trainX.shape) == 3:
         samples = len(d2r.trainX[0, :, 0]) * 3
     elif len(d2r.trainX.shape) == 2:
@@ -546,24 +547,33 @@ def visualizeTestVsForecast(d2r, prediction):
     FORECAST = 0
     predVals, predInverse, predCounts = np.unique(prediction, return_inverse=True, return_counts=True)
     catVals, catInverse, catCounts = np.unique(d2r.testY, return_inverse=True, return_counts=True)    
-        
+    '''
+    
     fig2, axs = plt.subplots(2, 1)
     fig2.suptitle(d2r.mlNode, fontsize=14, fontweight='bold')    
     axis1 = axs[0]
     axis2 = axs[1]
     
     axis1.set_title("Data series vs. Predictions")
-    axis1.set_xlabel("samples")
-    axis1.set_ylabel("Data Value")
+    axis1.set_xlabel("feature value")
+    axis1.set_ylabel("label Value")
+    
+    #axis1.plot(range(0, len(d2r.trainY)), d2r.trainY[ : ], label='Train series')
+    #axis1.plot(range(0, len(d2r.validateY)), d2r.validateY[ : ], label='Validate series')
+    axis1.plot(range(0, len(d2r.testY)), d2r.testY[ : ], label='Test series')
+    axis1.plot(range(0, len(prediction)), prediction[ : ], linestyle='dashed', label='Prediction')
+    '''
     axis1.plot(range(len(prediction)-samples, len(prediction)), \
                label[len(prediction)-samples : ], \
                label='Test series')
     axis1.plot(range(len(prediction)-samples, len(prediction)), \
                prediction[len(prediction)-samples : , FORECAST], \
                linestyle='dashed', label='Prediction')
+    '''
     axis1.legend()
     axis1.grid(True)
 
+    '''
     if len(catCounts) <= 10:
         dfV = pd.DataFrame(columns=['Prediction', 'Labels'])
         dfV['Prediction'] = prediction[:,0]
@@ -588,6 +598,7 @@ def visualizeTestVsForecast(d2r, prediction):
                 high += 1
             else:
                 accurate += 1
+    '''
         
     plt.tight_layout()
     plt.show()
