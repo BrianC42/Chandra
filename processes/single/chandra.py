@@ -58,6 +58,10 @@ from configuration_constants import JSON_MODEL_FILE
 
 if __name__ == '__main__':
     print ("Good morning Dr. Chandra. I am ready for my next lesson.\n\tI'm currently running Tensorflow version %s\n" % tf.__version__)
+    ''' requires v1 compatibility mode
+    gpu_options = tf.GPUOptions(per_process_gpu_fraction=0.3)
+    sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
+    '''
     
     '''
     Prepare the run time environment
