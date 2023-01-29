@@ -1,4 +1,5 @@
 {
+"comment - environment test" : "checkout 1/29/2023",
 "comment - description" : "Experimental regression model to demonstrate ability to predict future value of a sine wave function",
 "comment - processing node section" : "Specification details for the processing nodes",
 "Training controls" : 
