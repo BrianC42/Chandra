@@ -10,7 +10,10 @@ import logging
 import networkx as nx
 import tensorflow as tf
 from tensorflow import keras
+'''
+autokeras disabled for now
 import autokeras as ak
+'''
 
 from configuration_constants import JSON_TENSORFLOW
 from configuration_constants import JSON_AUTOKERAS
@@ -377,7 +380,11 @@ def build_autokeras_model(d2r):
             err_msg = 'AutoKeras task not yet implemented: ' + akTask
             raise NameError(err_msg)
         elif akTask == JSON_AK_IMAGE_REGRESSOR:
+            ''' autokeras disabled temporarily
             d2r.model = ak.ImageRegressor(overwrite=True, max_trials=akMaxTrials, directory=akDirectory)
+            '''
+            err_msg = 'AutoKeras task not yet implemented: ' + akTask
+            raise NameError(err_msg)
         elif akTask == JSON_AK_TEXT_CLASSIFIER:
             err_msg = 'AutoKeras task not yet implemented: ' + akTask
             raise NameError(err_msg)
@@ -388,7 +395,11 @@ def build_autokeras_model(d2r):
             err_msg = 'AutoKeras task not yet implemented: ' + akTask
             raise NameError(err_msg)
         elif akTask == JSON_AK_STRUCTURED_DATA_REGRESSOR:
+            ''' autokeras disabled temporarily
             d2r.model = ak.StructuredDataRegressor(overwrite=True, max_trials=akMaxTrials, directory=akDirectory)
+            '''
+            err_msg = 'AutoKeras task not yet implemented: ' + akTask
+            raise NameError(err_msg)
         elif akTask == JSON_AK_MULTI:
             err_msg = 'AutoKeras task not yet implemented: ' + akTask
             raise NameError(err_msg)

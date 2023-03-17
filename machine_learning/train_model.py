@@ -10,7 +10,9 @@ import networkx as nx
 import numpy as np
 import tensorflow as tf
 from tensorflow import keras
+''' autokeras disabled temporarily
 import autokeras as ak
+'''
 
 from configuration_constants import JSON_TRAIN
 from configuration_constants import JSON_BATCH
@@ -48,8 +50,15 @@ def trainModel(d2r):
         iterTensorboard = iterParamters["tensorboard"]
         logDir = iterTensorboard["log file dir"]
         logFile = logDir + iterationID + timeStamp
-        tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=logFile, histogram_freq=1)
-        
+        tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=logFile, \
+                                                              histogram_freq=1, \
+                                                              write_graph=True, \
+                                                              write_images=False, \
+                                                              write_steps_per_second=False, \
+                                                              profile_batch=0, \
+                                                              embeddings_freq=0, \
+                                                              embeddings_metadata=None)
+
         d2r.fitting = d2r.model.fit(x=d2r.trainX, y=d2r.trainY, \
                                     validation_data=(d2r.validateX, d2r.validateY), \
                                     epochs=nx_epochs, \

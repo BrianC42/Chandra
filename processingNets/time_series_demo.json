@@ -110,7 +110,7 @@
 					],
 				"training" : {
 					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
-					"batchSize" : 16, "epochs" : 100, "validationSplit" : 0.1, "testSplit" : 0.2,
+					"batchSize" : 16, "epochs" : 10, "validationSplit" : 0.1, "testSplit" : 0.2,
 					"shuffle" : false, "balanceClasses" : true,	"verbose" : 2,
 					"compilationLoss" : "mse", "compilationMetrics" : ["mse"], "optimizer" : {"name" : "adadelta", "learning_rate" : 0.001}
 					},
