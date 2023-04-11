@@ -19,8 +19,23 @@ def tda_date_diff(date1, date2):
     return dt_diff
 
 def format_tda_datetime(tda_datetime):
-    str_dt = date.fromtimestamp(tda_datetime/1000).strftime("%Y-%m-%d")
+    str_dt = date.fromtimestamp(int(tda_datetime)/1000).strftime("%Y-%m-%d")
     return str_dt
+
+def tda_manage_throttling(callCount, periodStart):
+    if callCount == 0:
+        callCount += 1
+        periodStart = time.time()
+    elif callCount < 110:
+        callCount += 1
+    else:
+        now = time.time()
+        if now - periodStart < 60:
+            print("Sleeping to avoid TDA throttling")
+            time.sleep(now - periodStart)
+        callCount = 0
+        periodStart = time.time()
+    return callCount, periodStart
 
 def tda_get_authentication_details(auth_file):
     logging.debug('tda_get_authentication_details ---->')

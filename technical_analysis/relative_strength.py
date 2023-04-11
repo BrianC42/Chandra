@@ -56,7 +56,9 @@ def trade_on_relative_strength(guidance, symbol, df_data):
             trade = True
             trigger_status = 'RS1 & RS5'
             trigger_date = format_tda_datetime(df_data.loc[idx, 'DateTime'])
-            guidance = guidance.append([[trade, symbol, 'RS', trigger_date, trigger_status, df_data.at[idx, "Close"]]])
+            newRow = pd.DataFrame([[trade, symbol, 'RS', trigger_date, trigger_status, df_data.at[idx, "Close"]]])
+            guidance = pd.concat([guidance, newRow])
+            #guidance = guidance.append([[trade, symbol, 'RS', trigger_date, trigger_status, df_data.at[idx, "Close"]]])
             
         if idx > 220:
             rs_mean = df_data.loc[idx-220:idx, 'Relative Strength'].mean()
@@ -64,8 +66,10 @@ def trade_on_relative_strength(guidance, symbol, df_data):
                 trade = True
                 trigger_status = 'RS2 & RS6'
                 trigger_date = format_tda_datetime(df_data.loc[idx, 'DateTime'])
-                guidance = guidance.append([[trade, symbol, 'RS', trigger_date, trigger_status, df_data.at[idx, "Close"]]])
-
+                newRow = pd.DataFrame([[trade, symbol, 'RS', trigger_date, trigger_status, df_data.at[idx, "Close"]]])
+                guidance = pd.concat([guidance, newRow])
+                #guidance = guidance.append([[trade, symbol, 'RS', trigger_date, trigger_status, df_data.at[idx, "Close"]]])
+        
     return guidance
 
 def eval_relative_strength(symbol, df_data, eval_results):

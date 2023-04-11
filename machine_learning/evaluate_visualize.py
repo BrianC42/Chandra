@@ -245,7 +245,7 @@ def plotDataGroups(d2r):
         if len(d2r.trainX.shape) == 3:
             seriesLen = len(d2r.trainX[0, :, 0])
             trainingPeriods = d2r.trainX.shape[2]
-        if len(d2r.trainX.shape) == 2:
+        elif len(d2r.trainX.shape) == 2:
             seriesLen = len(d2r.trainX[0, :])
             trainingPeriods = d2r.trainX.shape[1]
         else:
@@ -384,95 +384,57 @@ def plotDataGroups(d2r):
 
     return 
 
-def showNormalizationCategorization(d2r):
+def showCategorizedTimeSeries(d2r):
     if d2r.seriesDataType == "TDADateTime":
-        ''' Full raw data '''        
-        x_dates = d2r.rawData['DateTime'].copy()
-        x_dates2 = x_dates[range(0, len(x_dates), int(len(x_dates)/3))]
-
-        ''' Training data '''        
-        x_trainDates = d2r.rawData['DateTime'][ : d2r.trainLen].copy()
-        x_trainDates2 = x_trainDates    [range( 0, \
-                                                d2r.trainLen, \
-                                                int(d2r.trainLen / 3))]
-        y_trainTargets = d2r.rawData['Close'][ : d2r.trainLen].copy()
-        x_ticksTrain = []
-        x_tickLabelsTrain = []
-        for tdaDate in x_trainDates2:
-            x_ticksTrain.append(tdaDate)
-            x_tickLabelsTrain.append(format_tda_datetime(tdaDate))
-
-        ''' Validation data '''        
-        x_validateDates = d2r.rawData['DateTime'][d2r.trainLen : (d2r.trainLen + d2r.validateLen)].copy()
-        x_validateDates2 = x_validateDates  [range( d2r.trainLen, \
-                                                    d2r.trainLen + d2r.validateLen, \
-                                                    int(d2r.validateLen / 3))]
-        y_validateTargets = d2r.rawData['Close'][d2r.trainLen : (d2r.trainLen + d2r.validateLen)].copy()
-        x_ticksVal = []
-        x_tickLabelsVal = []
-        for tdaDate in x_validateDates2:
-            x_ticksVal.append(tdaDate)
-            x_tickLabelsVal.append(format_tda_datetime(tdaDate))
-
-        ''' Testing data '''        
-        x_testDates = d2r.rawData['DateTime'][(d2r.trainLen + d2r.validateLen) : ].copy()
-        x_testDates2 = x_testDates  [range(d2r.trainLen + d2r.validateLen, \
-                                           len(x_dates), \
-                                           int(d2r.testLen / 3))]
-        y_testTargets = d2r.rawData['Close'][(d2r.trainLen + d2r.validateLen) : ].copy()
-        x_ticksTest = []
-        x_tickLabelsTest = []
-        for tdaDate in x_testDates2:
-            x_ticksTest.append(tdaDate)
-            x_tickLabelsTest.append(format_tda_datetime(tdaDate))
-
         fig = plt.figure(tight_layout=True)
-        fig.suptitle("Feature data for: " + d2r.mlNode, fontsize=14, fontweight='bold')
-    
+        fig.suptitle("Process node: " + d2r.mlNode, fontsize=14, fontweight='bold')
         gs = gridspec.GridSpec(2, 3)
 
+        timeTicks = range(0, d2r.timesteps)
+
+        ''' Training data '''        
         axULeft = fig.add_subplot(gs[0, 0])
-        axULeft.set_title("Training data")
+        axULeft.set_title("Original training features: start to finish")
         axULeft.set_xlabel("time periods")
-        axULeft.set_ylabel("Data Values")
-        axULeft.xaxis.set_ticks(x_trainDates2)
-        axULeft.xaxis.set_ticklabels(x_tickLabelsTrain)
-        axULeft.plot(d2r.data['DateTime'][ : d2r.trainLen], d2r.data['MACD_flag'][ : d2r.trainLen], linestyle='solid')
-
+        axULeft.set_ylabel("Feature values")
+        axULeft.xaxis.set_ticks(timeTicks)
         axLLeft = fig.add_subplot(gs[1, 0])
-        axLLeft.set_title("Training targets")
+        axLLeft.set_title("Prepared training targets: start to finish")
         axLLeft.set_xlabel("time periods")
-        axLLeft.set_ylabel("Data Values")
-        axLLeft.xaxis.set_ticks(x_ticksTrain)
-        axLLeft.xaxis.set_ticklabels(x_tickLabelsTrain)
-
+        axLLeft.set_ylabel("Feature values")
+        axLLeft.xaxis.set_ticks(timeTicks)
+        
+        ''' Validation data '''        
         axUMiddle = fig.add_subplot(gs[0, 1])
-        axUMiddle.set_title("Validation data")
+        axUMiddle.set_title("Original validation features: start to finish")
         axUMiddle.set_xlabel("time periods")
-        axUMiddle.set_ylabel("Data Values")
-        axUMiddle.xaxis.set_ticks(x_ticksVal)
-        axUMiddle.xaxis.set_ticklabels(x_tickLabelsVal)
-    
+        axUMiddle.set_ylabel("Feature Values")
+        axUMiddle.xaxis.set_ticks(timeTicks)
         axLMiddle = fig.add_subplot(gs[1, 1])
-        axLMiddle.set_title("Validation targets")
+        axLMiddle.set_title("Prepared validation targets: start to finish")
         axLMiddle.set_xlabel("time periods")
-        axLMiddle.set_ylabel("Data Values")
-        axLMiddle.xaxis.set_ticks(x_ticksVal)
-        axLMiddle.xaxis.set_ticklabels(x_tickLabelsVal)
-    
+        axLMiddle.set_ylabel("Feature values")
+        axLMiddle.xaxis.set_ticks(timeTicks)
+
+        ''' Testing data '''        
         axURight = fig.add_subplot(gs[0, 2])
-        axURight.set_title("Testing data")
+        axURight.set_title("Original testing features: start to finish")
         axURight.set_xlabel("time periods")
-        axURight.set_ylabel("Data Values")
-        axURight.xaxis.set_ticks(x_ticksTest)
-        axURight.xaxis.set_ticklabels(x_tickLabelsTest)
-    
+        axURight.set_ylabel("Feature Values")
+        axURight.xaxis.set_ticks(timeTicks)
         axLRight = fig.add_subplot(gs[1, 2])
-        axLRight.set_title("Testing targets")
+        axLRight.set_title("Prepared testing features: start to finish")
         axLRight.set_xlabel("time periods")
-        axLRight.set_ylabel("Data Values")
-        axLRight.xaxis.set_ticks(x_ticksTest)
-        axLRight.xaxis.set_ticklabels(x_tickLabelsTest)
+        axLRight.set_ylabel("Feature values")
+        axLRight.xaxis.set_ticks(timeTicks)
+        
+        for feature in range(0, d2r.feature_count):
+            axULeft.plot(timeTicks, d2r.trainX[int(len(d2r.trainX)/2) , : , feature])
+            axUMiddle.plot(timeTicks, d2r.validateX[int(len(d2r.validateX)/2) , : , feature])
+            axURight.plot(timeTicks, d2r.testX[int(len(d2r.testX)/2) , : , feature])
+            axLLeft.plot(timeTicks, d2r.trainX[int(len(d2r.trainX)/2) , : , feature])
+            axLMiddle.plot(timeTicks, d2r.validateX[int(len(d2r.validateX)/2) , : , feature])
+            axLRight.plot(timeTicks, d2r.testX[int(len(d2r.testX)/2) , : , feature])
     
         plt.tight_layout()
         plt.show()
@@ -734,7 +696,7 @@ def reportEvaluationMatrix(d2r, prediction):
     #categories, counts = np.unique(d2r.data, return_counts=True)
     testCategories, testCounts = np.unique(d2r.testY, return_counts=True)
     categoryCount = len(d2r.categories)
-    print("\nThe shape of the test data is [%s, %s]" % (prediction.shape[0], prediction.shape[1]))
+    print("\nThe shape of the prediction data is [%s, %s]" % (prediction.shape[0], prediction.shape[1]))
     print("Testing labels are %s with %s distribution\n" % (testCategories, testCounts))
     
     THRESHOLD = 0.66
@@ -926,8 +888,8 @@ def evaluate_and_visualize(d2r):
             d2r.model.summary()
         elif vizualize == "dataGroups":
             plotDataGroups(d2r)
-        elif vizualize == "normalizationCategorization":
-            showNormalizationCategorization(d2r)
+        elif vizualize == "CategorizedTimeSeries":
+            showCategorizedTimeSeries(d2r)
         elif vizualize == "cnnResult":
             visualize_cnn(d2r, prediction)
         elif vizualize == "testVsPrediction":

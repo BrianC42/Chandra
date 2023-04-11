@@ -7,21 +7,43 @@
 "outputFile" : "\\logs\\chandra_output",
 "loggingLevel" : "debug",
 "loggingFormat" : "%(asctime)s: %(levelname)s: %(message)s",
-"processNet" : "\\chandra\\processingNets\\denseLinearRegression.json",
-"comment end of specification" : "--------------------------------------------------------",
-"Comment use" : {
-	"1" : "\\chandra\\processingNets\\gmAutoEncoder.json"
+"processNet" : "\\chandra\\processingNets\\MACD.json",
+"comment end of specification" : "---------------------------------------------------------------------------",
+"comment - processing networks" : {
+	"00" : "|=============================================================================================|",
+	"01" : "|                              |           Regression          |                              |",
+	"02" : "|             Dense            |           Convolution         |           Recurrent          |",
+	"03" : "|---------------------------------------------------------------------------------------------|",
+	"10" : "| denseLinearRegression        | conv1DWaveForm                |                              |",
+	"11" : "| marketTechnicalsMultiVariant |                               |                              |",
+	"12" : "|                              |                               |                              |",
+	"13" : "|                              |                               |                              |",
+	"14" : "|                              |                               |                              |",
+	"15" : "|                              |                               |                              |",
+	"16" : "|                              |                               |                              |",
+	"50" : "|=============================================================================================|",
+	"51" : "|                              |          Categorization       |                              |",
+	"52" : "|             Dense            |           Convolution         |           Recurrent          |",
+	"53" : "|---------------------------------------------------------------------------------------------|",
+	"60" : "|                              |                               | MACD                         |",
+	"61" : "|                              |                               |                              |",
+	"62" : "|                              |                               |                              |",
+	"63" : "|                              |                               |                              |",
+	"64" : "|                              |                               |                              |",
+	"65" : "|                              |                               |                              |",
+	"66" : "|                              |                               |                              |",
+	"99" : "|=============================================================================================|"
+},
+"comment use" : {
+	"1" : "\\chandra\\processingNets\\gmAutoEncoder.json",
+	"4" : "\\chandra\\processingNets\\LSTMAutoEncoder.json"
 },
 "Comment active experimentation" : {
-	"1" : "\\chandra\\processingNets\\conv1DWaveForm.json",
 	"2" : "\\chandra\\processingNets\\marketTechnicals.json",
-	"4" : "\\chandra\\processingNets\\LSTMAutoEncoder.json",
-	"5" : "Time series characterization",
 	"6" : "\\chandra\\processingNets\\MACD.json",
 	"7" : "\\chandra\\processingNets\\ADX.json"
 },
 "Comment goals achieved" : {
-	"1" : "\\chandra\\processingNets\\denseLinearRegression.json",
 	"2" : "\\chandra\\processingNets\\time_series_demo.json",
 	"3" : "\\chandra\\processingNets\\akexperimentation.json",
 	"4" : "\\chandra\\processingNets\\marketTechnicalsMultiVariant.json"

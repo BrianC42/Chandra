@@ -24,6 +24,7 @@ from tda_api_library import tda_get_authentication_details
 from tda_api_library import tda_read_watch_lists
 from tda_api_library import tda_read_option_chain
 from tda_api_library import format_tda_datetime
+from tda_api_library import tda_manage_throttling
 
 from tradingIndicationsML import tradingIndications
 
@@ -239,12 +240,17 @@ def search_for_trading_opportunities(f_out, authentication_parameters, analysis_
     Machine learning models
     '''
     tradingIndications()
-                
+
     '''
     Covered call options
     '''
+    callCount=0
+    periodStart = time.time()
+    callCount, periodStart = tda_manage_throttling(callCount, periodStart)
+
     print("\nAnalyzing potential covered calls")
     for symbol in tda_read_watch_lists(json_authentication, watch_list='Combined Holding'):
+        callCount, periodStart = tda_manage_throttling(callCount, periodStart)
         df_options, options_json = tda_read_option_chain(authentication_parameters, symbol)
         filename = analysis_dir + '\\' + symbol + '.csv'
         if os.path.isfile(filename):
@@ -258,6 +264,7 @@ def search_for_trading_opportunities(f_out, authentication_parameters, analysis_
     '''
     print("\nAnalyzing potential cash secured puts")
     for symbol in tda_read_watch_lists(json_authentication, watch_list='Potential Buy'):
+        callCount, periodStart = tda_manage_throttling(callCount, periodStart)
         df_options, options_json = tda_read_option_chain(authentication_parameters, symbol)
         filename = analysis_dir + '\\' + symbol + '.csv'
         if os.path.isfile(filename):

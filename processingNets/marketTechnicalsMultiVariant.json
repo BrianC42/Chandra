@@ -213,6 +213,8 @@
 			{
 			"iteration parameters" : {
 				"comment - description" : "prediction of 1 day change given 26 features. 5 day time series. 0 time step prediction",
+				"modelFileDir" : "d:\\brian\\AI-Projects\\models\\regression-dense\\",
+				"iteration ID" : "Adadelta_relu_mse_mse_1h10e64",
 				"data arrangement" : {
 					"combineSampleCount" : 5
 					},
@@ -238,6 +240,8 @@
 			{
 			"iteration parameters" : {
 				"comment - description" : "prediction of 1 day change given 26 features. 10 day time series. 0 time step prediction",
+				"modelFileDir" : "d:\\brian\\AI-Projects\\models\\regression-dense\\",
+				"iteration ID" : "Adadelta_relu_mse_mse_1h10e64",
 				"data arrangement" : {
 					"combineSampleCount" : 10
 					},
@@ -263,6 +267,8 @@
 			{
 			"iteration parameters" : {
 				"comment - description" : "prediction of 1 day change given 26 features. 20 day time series. 0 time step prediction",
+				"modelFileDir" : "d:\\brian\\AI-Projects\\models\\regression-dense\\",
+				"iteration ID" : "Adadelta_relu_mse_mse_1h10e64",
 				"data arrangement" : {
 					"combineSampleCount" : 20
 					},
@@ -362,6 +368,8 @@
 			"dense" : "=====================================================================================================",
 			"iteration parameters" : {
 				"comment - description" : "dense - prediction of 1 day change given 26 features. 5 day time series. 0 time step prediction",
+				"modelFileDir" : "d:\\brian\\AI-Projects\\models\\regression-dense\\",
+				"iteration ID" : "Adadelta_relu_mse_mse_1h10e64",
 				"data arrangement" : {
 					"combineSampleCount" : 5
 					},
@@ -388,6 +396,8 @@
 			"conv1d" : "=====================================================================================================",
 			"iteration parameters" : {
 				"comment - description" : "conv1d - prediction of 1 day change given 26 features. 20 day time series. 0 time step prediction",
+				"modelFileDir" : "d:\\brian\\AI-Projects\\models\\regression-dense\\",
+				"iteration ID" : "Adadelta_relu_mse_mse_1h10e64",
 				"data arrangement" : {
 					"combineSampleCount" : 0
 					},
@@ -420,6 +430,8 @@
 			"LSTM" : "=====================================================================================================",
 			"iteration parameters" : {
 				"comment - description" : "LSTM - prediction of 1 day change given 26 features. 20 day time series. 1 time step prediction",
+				"modelFileDir" : "d:\\brian\\AI-Projects\\models\\regression-dense\\",
+				"iteration ID" : "Adadelta_relu_mse_mse_1h10e64",
 				"data arrangement" : {
 					"combineSampleCount" : 0
 					},

@@ -100,55 +100,38 @@
 	},
 	"conditionalFields" : {
 		"modelFile" : "d:\\brian\\AI-Projects\\models\\Conv1D",
+		"categorizationRegression" : "regression",
 		"dataPrecision" : "float32",
-		"visualizations" : ["summary", "trainingFit", "cnnResult"],
-		"supported visualizations" : ["summary", "trainingFit", "targetSeries", "dataGroups", "normalizationCategorization", "cnnResult", "testVsPrediction"],
-		"comment model specification values supported" : [
+		"visualizations" : [],
+		"training iterations" : [
 			{
-			"layerType" : ["conv1d", "lstm", "dense", "TimeDistributed", "dropout"],
-			"returnSequences" : "true if the next layer is also an RNN layer",
-			"outputActivation" : ["linear", "relu", "tanh", "softmax", "sigmoid", "softplus", "softsign", "selu", "elu", "exponential"]
+			"iteration parameters" : {
+				"comment - description" : "prediction of 1 day change given 26 features. 5 day time series. 0 time step prediction",
+				"modelFileDir" : "d:\\brian\\AI-Projects\\models\\regression-dense\\",
+				"iteration ID" : "Adadelta_relu_mse_mse_1h10e64",
+				"data arrangement" : {
+					"combineSampleCount" : 5
+					},
+				"modelLayers" : [
+    				{"layerType" : "conv1d", "layerName" : "input", "featureCount": 2, "timeSteps": 9, "filterCount" : 3, "filterSize" : 5, "outputActivation" : "tanh"},
+    				{"layerType" : "GlobalMaxPool1D", "layerName" : "GMP1D"},
+    				{"layerType" : "dense", "layerName" : "hiddenDense", "layerUnits": 10, "outputActivation" : "relu"},
+    				{"layerType" : "dense", "layerName" : "output", "layerUnits": 1, "outputActivation" : "linear"}
+				],
+				"training" : {
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true,
+					"batchSize" : 32, "epochs" : 10, "validationSplit" : 0.1, "testSplit" : 0.2,
+					"shuffle" : false, "verbose" : 2, "balanceClasses" : true,
+					"compilationLoss" : "mae", "compilationMetrics" : ["mae"], "optimizer" : {"name" : "adam", "learning_rate" : 0.001}
+					},
+				"tensorboard" : {
+					"log file dir" : "d:\\brian\\AI-Projects\\logs\\tensorboard\\regression\\dense\\1DayChange\\20DaySeries\\",
+					"log file name" : "1DayChange"
+					}
+				}
 			}
-		],
-		"modelLayers saved layers" : [
-    		{"layerType" : "conv1d", "layerName" : "input", "featureCount": 2, "filterCount" : 10, "filterSize" : 7, "layerUnits" : 128, "outputActivation" : "tanh"},
-    		{"layerType" : "dropout", "layerName" : "dropoutIn", "dropoutRate" : 0.2},
-    		{"layerType" : "dense", "layerName" : "output", "layerUnits": 2, "outputActivation" : "softmax"},
-    		{"layerType" : "flatten", "layerName" : "Flatten"},
-    		{"layerType" : "dense", "layerName" : "hiddenDense", "layerUnits": 10, "outputActivation" : "relu"},
-    		{"layerType" : "dense", "layerName" : "hiddenDense", "layerUnits": 128, "outputActivation" : "relu"},
-    		{"layerType" : "dense", "layerName" : "output", "layerUnits": 1, "outputActivation" : "relu"},
-    		{"layerType" : "GlobalMaxPool1D", "layerName" : "GMP1D"},
-    		{"layerType" : "dense", "layerName" : "output", "layerUnits": 1, "outputActivation" : "tanh"}
-		],
-		"modelLayers" : [
-    		{"layerType" : "conv1d", "layerName" : "input", "featureCount": 2, "timeSteps": 9, "filterCount" : 3, "filterSize" : 5, "outputActivation" : "tanh"},
-    		{"layerType" : "GlobalMaxPool1D", "layerName" : "GMP1D"},
-    		{"layerType" : "dense", "layerName" : "hiddenDense", "layerUnits": 10, "outputActivation" : "relu"},
-    		{"layerType" : "dense", "layerName" : "output", "layerUnits": 3, "outputActivation" : "softmax"}
-		],
-		"training" : {
-			"lossWeights" : [1.0],
-			"denseRegularation" : false,
-			"regularationValue" : 0.0,
-			"batchSize" : 32,
-			"epochs" : 10,
-			"useBias" : true,
-			"validationSplit" : 0.1,
-			"testSplit" : 0.2,
-			"shuffle" : false,
-			"verbose" : 2,
-			"balanceClasses" : true,
-			"compilationLoss" : "mae",
-			"Compilation Loss metrics" : ["mae", "sparse_categorical_crossentropy"],
-			"compilationMetrics" : ["accuracy"],
-			"optimizer" : "adam",
-			"optimizers - adam" : "fast, tends to overfit",
-			"optimizers - SGD" : "slow, great results",
-			"optimizers - RMSProp" : "sometimes works best",
-			"optimizers - SWA" : "Unknown optimizer - can easily improve qualiy"
+			]
 		}
-	}
 	}
 ],
 "comment - dataflow section" : "Specification details for the flows of data between processing nodes",

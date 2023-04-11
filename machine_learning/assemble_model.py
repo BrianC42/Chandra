@@ -355,7 +355,7 @@ def assemble_layers(d2r):
             nx_layer_name = None
             if JSON_LAYER_NAME in nx_layer_definition:
                 nx_layer_name = nx_layer_definition[JSON_LAYER_NAME]
-            exc_txt = err_txt + "\n\t" + nx_layer_name + "\n\t" +exc_str
+            exc_txt = err_txt + "\n\t" + "layer named: " + nx_layer_name + "\n\t" +exc_str
         elif isinstance(exc_str, tuple):
             exc_txt = err_txt + "\n\t"
             for s in exc_str:
