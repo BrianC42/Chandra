@@ -70,7 +70,6 @@
 			"preparationSequence" : ["normalize", "oneHotEncoding"],
 			"noPreparation" : {
 				"features" : [
-					{"feature" : "MACD_flag"}
 				]
 			},
 			"normalize" : {
@@ -83,6 +82,7 @@
 			},
 			"oneHotEncoding" : {
 				"features" : [
+					{"feature" : "MACD_flag", "categoryType" : "tbd"}
 				]
 			}
 		}
@@ -99,30 +99,30 @@
 	"conditionalFields" : {
 		"categorizationRegression" : "categorization",
 		"dataPrecision" : "float32",
-		"visualizations" : ["summary", "trainingFit", "categoryMatrix", "testVsPrediction", "dataGroups", "CategorizedTimeSeries"],
+		"visualizations" : ["summary", "trainingFit", "CategorizedTimeSeries"],
 		"training iterations" : [
 			{
 			"iteration parameters" : {
-				"comment - description" : "Recurrent model categorizing LSTM flag (-1, 0 1)",
+				"comment - description" : "Recurrent model categorizing MACD flag (-1, 0 1)",
 				"modelFileDir" : "d:\\brian\\AI-Projects\\models\\rnn\\lstm\\macd",
-				"iteration ID" : "adam_mae_mae",
+				"iteration ID" : "adam_categorical_crossentropy",
 				"forecastInterval" : 0,
 				"data arrangement" : {
 					"combineSampleCount" : 4
 					},
 				"modelLayers" : [
-    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 2, "timeSteps": 28, "layerUnits" : 64, "returnSequences" : true, "outputActivation" : "tanh"},
-					{"layerName" : "lstm-dropout", "layerType" : "dropout", "dropoutRate" : 0.2},
-					{"layerName" : "hidden-lstm-1", "layerType" : "lstm", "timeSteps" : 28, "layerUnits" : 32, "returnSequences" : false, "outputActivation" : "tanh"},
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 2, "timeSteps": 12, "layerUnits" : 256, "returnSequences" : true, "outputActivation" : "linear"},
+					{"layerName" : "hidden-lstm-1", "layerType" : "lstm", "timeSteps" : 28, "layerUnits" : 64, "returnSequences" : false, "outputActivation" : "linear"},
 					{"layerName" : "dropout1", "layerType" : "dropout", "dropoutRate" : 0.2},
-    				{"layerType" : "dense", "layerName" : "hiddenDense1", "layerUnits" : 16, "outputActivation" : "tanh"},
+    				{"layerType" : "dense", "layerName" : "hiddenDense1", "layerUnits" : 32, "outputActivation" : "linear"},
+					{"layerName" : "dropout2", "layerType" : "dropout", "dropoutRate" : 0.2},
     				{"layerType" : "dense", "layerName" : "output", "layerUnits": 3, "outputActivation" : "softmax"}
 					],
 				"training" : {
 					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
 					"batchSize" : 16, "epochs" : 10, "validationSplit" : 0.1, "testSplit" : 0.2,
 					"shuffle" : false, "balanceClasses" : true,	"verbose" : 2,
-					"optimizer" : {"name" : "adam", "learning_rate" : 0.001}, "compilationLoss" : "mae", "compilationMetrics" : ["mae"]
+					"optimizer" : {"name" : "adam", "learning_rate" : 0.001}, "compilationLoss" : "categorical_crossentropy", "compilationMetrics" : ["categorical_crossentropy"]
 				},
 				"tensorboard" : {
 					"log file dir" : "d:\\brian\\AI-Projects\\logs\\tensorboard\\categorization\\lstm\\macd\\"

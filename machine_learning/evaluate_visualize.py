@@ -386,56 +386,49 @@ def plotDataGroups(d2r):
 
 def showCategorizedTimeSeries(d2r):
     if d2r.seriesDataType == "TDADateTime":
+        FIGROWS = 1
+        FIGCOLS = 3
+        
         fig = plt.figure(tight_layout=True)
         fig.suptitle("Process node: " + d2r.mlNode, fontsize=14, fontweight='bold')
-        gs = gridspec.GridSpec(2, 3)
+        gs = gridspec.GridSpec(FIGROWS, FIGCOLS)
 
         timeTicks = range(0, d2r.timesteps)
+        ticksText = '{} to {}'.format('0', max(timeTicks))
 
-        ''' Training data '''        
+        ''' Training data '''
         axULeft = fig.add_subplot(gs[0, 0])
-        axULeft.set_title("Original training features: start to finish")
+        axULeft.set_title("Prepared training features: " + ticksText)
         axULeft.set_xlabel("time periods")
         axULeft.set_ylabel("Feature values")
         axULeft.xaxis.set_ticks(timeTicks)
-        axLLeft = fig.add_subplot(gs[1, 0])
-        axLLeft.set_title("Prepared training targets: start to finish")
-        axLLeft.set_xlabel("time periods")
-        axLLeft.set_ylabel("Feature values")
-        axLLeft.xaxis.set_ticks(timeTicks)
         
-        ''' Validation data '''        
+        ''' Validation data '''
         axUMiddle = fig.add_subplot(gs[0, 1])
-        axUMiddle.set_title("Original validation features: start to finish")
+        axUMiddle.set_title("Prepared validation features: " + ticksText)
         axUMiddle.set_xlabel("time periods")
         axUMiddle.set_ylabel("Feature Values")
         axUMiddle.xaxis.set_ticks(timeTicks)
-        axLMiddle = fig.add_subplot(gs[1, 1])
-        axLMiddle.set_title("Prepared validation targets: start to finish")
-        axLMiddle.set_xlabel("time periods")
-        axLMiddle.set_ylabel("Feature values")
-        axLMiddle.xaxis.set_ticks(timeTicks)
 
-        ''' Testing data '''        
+        ''' Testing data '''
         axURight = fig.add_subplot(gs[0, 2])
-        axURight.set_title("Original testing features: start to finish")
+        axURight.set_title("Prepared testing features: " + ticksText)
         axURight.set_xlabel("time periods")
         axURight.set_ylabel("Feature Values")
         axURight.xaxis.set_ticks(timeTicks)
-        axLRight = fig.add_subplot(gs[1, 2])
-        axLRight.set_title("Prepared testing features: start to finish")
-        axLRight.set_xlabel("time periods")
-        axLRight.set_ylabel("Feature values")
-        axLRight.xaxis.set_ticks(timeTicks)
         
         for feature in range(0, d2r.feature_count):
             axULeft.plot(timeTicks, d2r.trainX[int(len(d2r.trainX)/2) , : , feature])
+            trainMin = min(d2r.trainX[int(len(d2r.trainX)/2) , : , feature])
             axUMiddle.plot(timeTicks, d2r.validateX[int(len(d2r.validateX)/2) , : , feature])
+            validateMin = min(d2r.validateX[int(len(d2r.validateX)/2) , : , feature])
             axURight.plot(timeTicks, d2r.testX[int(len(d2r.testX)/2) , : , feature])
-            axLLeft.plot(timeTicks, d2r.trainX[int(len(d2r.trainX)/2) , : , feature])
-            axLMiddle.plot(timeTicks, d2r.validateX[int(len(d2r.validateX)/2) , : , feature])
-            axLRight.plot(timeTicks, d2r.testX[int(len(d2r.testX)/2) , : , feature])
+            testMin = min(d2r.testX[int(len(d2r.testX)/2) , : , feature])
     
+        axULeft.text(0,trainMin, "target = {}".format(d2r.trainY[int(len(d2r.trainY)/2) , : ]))
+        axUMiddle.text(0,validateMin, "target = {}".format(d2r.validateY[int(len(d2r.validateY)/2) , : ]))
+        axURight.text(0,testMin, "target = {}".format(d2r.testY[int(len(d2r.testY)/2) , : ]))
+
         plt.tight_layout()
         plt.show()
 

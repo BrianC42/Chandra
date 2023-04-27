@@ -166,8 +166,8 @@ class Data2Results():
     '''
     training data properties
         rawData - source data for samples
-        data - Source data samples, modified by preparation step and used to train, evaluate and test
-        trainX - sample data used to train the model. Number of samples = trainLen
+        data - Source data samples, modified by preparation step and used to train, evaluate and test - DataFrame
+        trainX - sample data used to train the model. Number of samples = trainLen - DataFrame
         trainY - values matching the trainX samples
         testX -  sample data used to test the model. Number of samples = testLen
         testY -  values matching the testX samples

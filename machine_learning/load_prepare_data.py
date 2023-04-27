@@ -14,7 +14,10 @@ import networkx as nx
 import pandas as pd
 import numpy as np
 import tensorflow as tf
+
+from sklearn import preprocessing
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
+from sklearn.preprocessing import  OneHotEncoder
 
 from Scalers import chandraScaler
 from Scalers import NORMALIZE_RELATIVE_TIME_SERIES
@@ -57,25 +60,28 @@ from configuration_constants import JSON_SERIES_ID
 from configuration_constants import JSON_SERIES_DATA_TYPE
 from configuration_constants import JSON_TIMESTEPS
 
+'''
 from configuration_constants import JSON_1HOT_ENCODING
 from configuration_constants import JSON_1HOT_FIELD
-from configuration_constants import JSON_1HOT_CATEGORYTYPE
 from configuration_constants import JSON_1HOT_SERIESTREND
+'''
 from configuration_constants import JSON_1HOT_CATEGORYTYPE
 from configuration_constants import JSON_1HOT_CATEGORIES
 from configuration_constants import JSON_1HOT_OUTPUTFIELDS
 from configuration_constants import JSON_1HOT_SERIES_UP_DOWN
 
+'''
 from configuration_constants import JSON_CONV1D
 from configuration_constants import JSON_FILTER_COUNT
 from configuration_constants import JSON_FILTER_SIZE
+'''
 
 from TrainingDataAndResults import MODEL_TYPE
 from TrainingDataAndResults import INPUT_LAYERTYPE_DENSE
 from TrainingDataAndResults import INPUT_LAYERTYPE_RNN
 from TrainingDataAndResults import INPUT_LAYERTYPE_CNN
 
-from evaluate_visualize import sanityCheckMACD
+#from evaluate_visualize import sanityCheckMACD
 
 '''
 Data pipeline step 2
@@ -312,7 +318,7 @@ def np_to_sequence(data, features, targets, seq_size=1):
 
     for i in range(len(data) - (seq_size+1)):
         npx[i, :, :]    = data[i : i+seq_size, features[:]]
-        npy[i]          = data[    i+seq_size, targets[:]]
+        npy[i]          = data[    i+seq_size-1, targets[:]]
 
     return npx, npy
 
@@ -536,6 +542,11 @@ def generate1hot(d2r, fields, fieldPrepCtrl):
                 else:
                     row = pd.DataFrame(data=[[0, 0]], columns=outputFields)
                 oneHot = pd.concat([oneHot, row])
+        elif fieldPrep[JSON_1HOT_CATEGORYTYPE] == "tbd":
+            print("category to 1 hot")
+            label1Hot = preprocessing.LabelBinarizer()
+            label1Hot.fit([-1.0, 0.0, 1.0])
+            label1Hot.transform(d2r.data['MACD_flag'].to_numpy())
         else:
             pass
 
