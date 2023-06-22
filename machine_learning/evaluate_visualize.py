@@ -29,9 +29,33 @@ from TrainingDataAndResults import TRAINING_AUTO_KERAS
 from TrainingDataAndResults import INPUT_LAYERTYPE_DENSE
 from TrainingDataAndResults import INPUT_LAYERTYPE_RNN
 from TrainingDataAndResults import INPUT_LAYERTYPE_CNN
+
 from matplotlib.pyplot import tight_layout
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
+
+def confusion_matrix(actual, predicted):
+    """Generates a confusion matrix based on the actual and predicted labels.
+
+    Args:
+        actual: The actual labels, represented as a one-hot vector.
+        predicted: The predicted labels, represented as a one-hot vector.
+
+    Returns:
+        The confusion matrix, a numpy array of shape (num_classes, num_classes).
+    """
+    num_classes = actual.shape[1]
+    confusion_matrix = np.zeros((num_classes, num_classes))
+    for i in range(num_classes):
+        for j in range(num_classes):
+            confusion_matrix[i, j] = np.sum(actual[:, i] * predicted[:, j])
+
+    return confusion_matrix
 
 def sanityCheckMACD(combined=None, npX=None, npY=None, verbose=False, stage=""):
+    '''
+    hard coded visualization of MACD test result
+    3x3 result matrix
+    '''
     if combined is None:
         print("\nSanity check of MACD data: 2 numpy tables " + stage)
     else:
@@ -386,48 +410,67 @@ def plotDataGroups(d2r):
 
 def showCategorizedTimeSeries(d2r):
     if d2r.seriesDataType == "TDADateTime":
-        FIGROWS = 1
+        
+        labelPatterns, counts = np.unique(d2r.trainY, return_counts=True, axis=0)
+        figRows = len(labelPatterns)
         FIGCOLS = 3
         
         fig = plt.figure(tight_layout=True)
         fig.suptitle("Process node: " + d2r.mlNode, fontsize=14, fontweight='bold')
-        gs = gridspec.GridSpec(FIGROWS, FIGCOLS)
+        gs = gridspec.GridSpec(figRows, FIGCOLS)
 
         timeTicks = range(0, d2r.timesteps)
         ticksText = '{} to {}'.format('0', max(timeTicks))
-
-        ''' Training data '''
-        axULeft = fig.add_subplot(gs[0, 0])
-        axULeft.set_title("Prepared training features: " + ticksText)
-        axULeft.set_xlabel("time periods")
-        axULeft.set_ylabel("Feature values")
-        axULeft.xaxis.set_ticks(timeTicks)
         
-        ''' Validation data '''
-        axUMiddle = fig.add_subplot(gs[0, 1])
-        axUMiddle.set_title("Prepared validation features: " + ticksText)
-        axUMiddle.set_xlabel("time periods")
-        axUMiddle.set_ylabel("Feature Values")
-        axUMiddle.xaxis.set_ticks(timeTicks)
-
-        ''' Testing data '''
-        axURight = fig.add_subplot(gs[0, 2])
-        axURight.set_title("Prepared testing features: " + ticksText)
-        axURight.set_xlabel("time periods")
-        axURight.set_ylabel("Feature Values")
-        axURight.xaxis.set_ticks(timeTicks)
-        
-        for feature in range(0, d2r.feature_count):
-            axULeft.plot(timeTicks, d2r.trainX[int(len(d2r.trainX)/2) , : , feature])
-            trainMin = min(d2r.trainX[int(len(d2r.trainX)/2) , : , feature])
-            axUMiddle.plot(timeTicks, d2r.validateX[int(len(d2r.validateX)/2) , : , feature])
-            validateMin = min(d2r.validateX[int(len(d2r.validateX)/2) , : , feature])
-            axURight.plot(timeTicks, d2r.testX[int(len(d2r.testX)/2) , : , feature])
-            testMin = min(d2r.testX[int(len(d2r.testX)/2) , : , feature])
+        for row in range(figRows):
+            rowLabels = '\nLabel(s): {}'.format(labelPatterns[row])
+            '''
+            Find a sample of data matching the label pattern
+            '''
+            for ndxTrain in range(len(d2r.trainX)):
+                if np.array_equal(d2r.trainY[ndxTrain], labelPatterns[row]):
+                    break
+            for ndxValidate in range(len(d2r.validateX)):
+                if np.array_equal(d2r.validateY[ndxValidate], labelPatterns[row]):
+                    break
+            for ndxTest in range(len(d2r.testX)):
+                if np.array_equal(d2r.testY[ndxTest], labelPatterns[row]):
+                    break
+            
+            ''' Training data '''
+            axULeft = fig.add_subplot(gs[row, 0])
+            axULeft.set_title("Prepared training features: " + ticksText + rowLabels)
+            axULeft.set_xlabel("time periods")
+            axULeft.set_ylabel("Feature values")
+            axULeft.xaxis.set_ticks(timeTicks)
+            
+            ''' Validation data '''
+            axUMiddle = fig.add_subplot(gs[row, 1])
+            axUMiddle.set_title("Prepared validation features: " + ticksText + rowLabels)
+            axUMiddle.set_xlabel("time periods")
+            axUMiddle.set_ylabel("Feature Values")
+            axUMiddle.xaxis.set_ticks(timeTicks)
     
-        axULeft.text(0,trainMin, "target = {}".format(d2r.trainY[int(len(d2r.trainY)/2) , : ]))
-        axUMiddle.text(0,validateMin, "target = {}".format(d2r.validateY[int(len(d2r.validateY)/2) , : ]))
-        axURight.text(0,testMin, "target = {}".format(d2r.testY[int(len(d2r.testY)/2) , : ]))
+            ''' Testing data '''
+            axURight = fig.add_subplot(gs[row, 2])
+            axURight.set_title("Prepared testing features: " + ticksText + rowLabels)
+            axURight.set_xlabel("time periods")
+            axURight.set_ylabel("Feature Values")
+            axURight.xaxis.set_ticks(timeTicks)
+            
+            for feature in range(0, d2r.feature_count):
+                axULeft.plot(timeTicks, d2r.trainX[ndxTrain , : , feature])
+                trainMin = min(d2r.trainX[ndxTrain , : , feature])
+                
+                axUMiddle.plot(timeTicks, d2r.validateX[ndxValidate , : , feature])
+                validateMin = min(d2r.validateX[ndxValidate , : , feature])
+                
+                axURight.plot(timeTicks, d2r.testX[ndxTest , : , feature])
+                testMin = min(d2r.testX[ndxTest , : , feature])
+    
+            axULeft.text(0,trainMin, "target = {}".format(d2r.trainY[ndxTrain , : ]))
+            axUMiddle.text(0,validateMin, "target = {}".format(d2r.validateY[ndxValidate , : ]))
+            axURight.text(0,testMin, "target = {}".format(d2r.testY[ndxTest , : ]))
 
         plt.tight_layout()
         plt.show()
@@ -687,125 +730,22 @@ def visualize_rnn(d2r):
 def reportEvaluationMatrix(d2r, prediction):
     #print(prediction)
     #categories, counts = np.unique(d2r.data, return_counts=True)
-    testCategories, testCounts = np.unique(d2r.testY, return_counts=True)
+    testCategories, testCounts = np.unique(d2r.testY, return_counts=True, axis=0)
     categoryCount = len(d2r.categories)
     print("\nThe shape of the prediction data is [%s, %s]" % (prediction.shape[0], prediction.shape[1]))
-    print("Testing labels are %s with %s distribution\n" % (testCategories, testCounts))
+    print("Testing labels are \n%s\nwith %s distribution\n" % (testCategories, testCounts))
     
     THRESHOLD = 0.66
-    results = np.zeros([len(d2r.categories), len(d2r.categories)], dtype=float)
-    thresholdResults = np.zeros([len(d2r.categories), len(d2r.categories)], dtype=float)
+    #confMatrix = confusion_matrix(d2r.testY, prediction)
 
-    '''
-    for batch in range(0, len(d2r.testY)):
-        for sample in range (0, )
-    '''
-    if len(d2r.testY.shape) == 2: # dense models
-        ''' ++++++++++++++++++++++++++++++++++++++++
-        print("\n============== WIP =============\n\tdense and RNN model evaluation matrix assumes 3 categories of specific values\n================================\n")
-        '''
-        ''' dense models '''
-        '''
-        for batch in range(0, len(d2r.testY)):
-            maxndx = np.argmax(prediction[batch])
-            if d2r.testY[batch, 0] == -1:
-                results[0, maxndx] += 1
-            elif d2r.testY[batch, 0] == 0:
-                results[1, maxndx] += 1
-            elif d2r.testY[batch, 0] == 1:
-                results[2, maxndx] += 1
+    bestPrediction = np.zeros(prediction.shape[1])
+    for ndx in range (len(d2r.testY)):
+        bestPrediction[int(max(prediction[ndx]))] += 1
+    print("best prediction distribution: %s" % bestPrediction)
+        
+    cMatrix = confusion_matrix(d2r.testY, prediction)
+    print("Confusion matrix of predictions is\n%s" % cMatrix)
     
-            if prediction[batch, maxndx] > THRESHOLD:
-                if d2r.testY[batch, 0] == -1:
-                    thresholdResults[0, maxndx] += 1
-                elif d2r.testY[batch, 0] == 0:
-                    thresholdResults[1, maxndx] += 1
-                elif d2r.testY[batch, 0] == 1:
-                    thresholdResults[2, maxndx] += 1
-
-        print("Rows represent test label values, Columns the predicted most likely choice")
-        print("All results")
-        pdResults = pd.DataFrame(data=results, index=['-1', '0', '1'], columns=['-1', '0', '1'])
-        print(pdResults)
-        
-        print("\nResults above probability threshold value of %s" % THRESHOLD)
-        print("Rows represent test label values, Columns the predicted most likely choice")
-        pdResults = pd.DataFrame(data=thresholdResults, index=['-1', '0', '1'], columns=['-1', '0', '1'])
-        print(pdResults)
-
-        print("\n============== WIP =============\n\tflexible category values\n================================\n")
-        '''
-
-        catDict = dict()
-        for ndx in range (0, len(d2r.categories)):
-            catDict[d2r.categories[ndx]] = ndx
-
-        for batch in range(0, len(d2r.testY)):
-            labelNdx = int(d2r.testY[batch])
-            labelNdx = catDict.get(labelNdx)
-            predictionNdx = np.argmax(prediction[batch])
-            
-            results[labelNdx, predictionNdx] += 1
-            if prediction[batch, predictionNdx] > THRESHOLD:
-                thresholdResults[labelNdx, predictionNdx] += 1
-        
-        #print("\n=======================WIP ====================\n\tvisualize category prediction vs label\n===============================================\n")
-        print("Rows represent actual test label values, Columns the predicted most likely category")
-        #print("All results")
-        #print(results)
-        colDesc = "Label"
-        hdrRow = "\t\tModel prediction\n\t"
-        for predictionNdx in range (0, len(d2r.categories)):
-            hdrRow = hdrRow + "\t"
-            hdrRow = hdrRow + "{!s}".format(d2r.categories[predictionNdx])
-        print(hdrRow)
-        textRow = list()
-        for labelNdx in range (0, len(d2r.categories)):
-            textRow.append(colDesc[labelNdx])
-            textRow[labelNdx] = textRow[labelNdx] + "\t"
-            textRow[labelNdx] = textRow[labelNdx] + "{}".format(d2r.categories[labelNdx])
-            textRow[labelNdx] = textRow[labelNdx] + "\t"
-            for predictionNdx in range (0, len(d2r.categories)):
-                textRow[labelNdx] = textRow[labelNdx] + "{0:d}".format(int(results[labelNdx, predictionNdx]))
-                textRow[labelNdx] = textRow[labelNdx] + "\t"
-            print(textRow[labelNdx])
-
-    elif len(d2r.testY.shape) == 3: #CNN models
-        ''' CNN models '''
-        catDict = dict()
-        for ndx in range (0, len(d2r.categories)):
-            catDict[d2r.categories[ndx]] = ndx
-
-        for batch in range(0, len(d2r.testY)):
-            labelNdx = int(d2r.testY[batch])
-            labelNdx = catDict.get(labelNdx)
-            predictionNdx = np.argmax(prediction[batch])
-            
-            results[labelNdx, predictionNdx] += 1
-            if prediction[batch, predictionNdx] > THRESHOLD:
-                thresholdResults[labelNdx, predictionNdx] += 1
-        
-        #print("\n=======================WIP ====================\n\tvisualize category prediction vs label\n===============================================\n")
-        print("Rows represent actual test label values, Columns the predicted most likely category")
-        #print("All results")
-        #print(results)
-        colDesc = "Label"
-        hdrRow = "\t\tModel prediction\n\t"
-        for predictionNdx in range (0, len(d2r.categories)):
-            hdrRow = hdrRow + "\t"
-            hdrRow = hdrRow + "{!s}".format(d2r.categories[predictionNdx])
-        print(hdrRow)
-        textRow = list()
-        for labelNdx in range (0, len(d2r.categories)):
-            textRow.append(colDesc[labelNdx])
-            textRow[labelNdx] = textRow[labelNdx] + "\t"
-            textRow[labelNdx] = textRow[labelNdx] + "{}".format(d2r.categories[labelNdx])
-            textRow[labelNdx] = textRow[labelNdx] + "\t"
-            for predictionNdx in range (0, len(d2r.categories)):
-                textRow[labelNdx] = textRow[labelNdx] + "{0:d}".format(int(results[labelNdx, predictionNdx]))
-                textRow[labelNdx] = textRow[labelNdx] + "\t"
-            print(textRow[labelNdx])
-
     return
 
 def visualize_cnn(d2r, prediction):

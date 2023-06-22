@@ -78,6 +78,7 @@ JSON_1HOT_SERIES_UP_DOWN = "seriesChangeUpDown"
 JSON_1HOT_CATEGORYTYPE = "categoryType"
 JSON_1HOT_CATEGORIES = "categories"
 JSON_1HOT_OUTPUTFIELDS = "outputFields"
+JSON_1HOT_LABEL = "label"
 
 JSON_INPUT_DATA_FILE= "inputFile"
 JSON_DATA_FLOWS = 'dataFlows'

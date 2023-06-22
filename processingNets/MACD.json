@@ -55,7 +55,7 @@
 		"dataLoadCtrl" : {
 			"comment file spec" : "d:\\brian\\AI-Projects\\tda\\market_analysis_data\\[a-z]*.csv",
 			"inputFile" : [
-				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\c.csv"
+				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\c*.csv"
 			]
 		}
 	}
@@ -82,7 +82,7 @@
 			},
 			"oneHotEncoding" : {
 				"features" : [
-					{"feature" : "MACD_flag", "categoryType" : "tbd"}
+					{"feature" : "MACD_flag", "categoryType" : "label"}
 				]
 			}
 		}
@@ -99,7 +99,7 @@
 	"conditionalFields" : {
 		"categorizationRegression" : "categorization",
 		"dataPrecision" : "float32",
-		"visualizations" : ["summary", "trainingFit", "CategorizedTimeSeries"],
+		"visualizations" : ["summary", "trainingFit", "CategorizedTimeSeries", "categoryMatrix"],
 		"training iterations" : [
 			{
 			"iteration parameters" : {

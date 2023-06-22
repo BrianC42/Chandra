@@ -36,22 +36,6 @@ class Data2Results():
         self.maxDictLength = 0
         self.minDictLength = 99999999
         
-    @property
-    def dataDict(self):
-        return self._dataDict
-    
-    @dataDict.setter
-    def dataDict(self, dataDict):
-        self._dataDict = dataDict
-    
-    @property
-    def normDataDict(self):
-        return self._normDataDict
-    
-    @normDataDict.setter
-    def normDataDict(self, normDataDict):
-        self._normDataDict = normDataDict
-    
     '''
     definition graph properties
         graph - graph of nodes and edges defining the information flow and processing
@@ -165,6 +149,8 @@ class Data2Results():
     
     '''
     training data properties
+        dataDict - dictionary of data source specifications and their data
+        normDataDict - copy of dataDict modified by preparation steps (normalization and conversion to 1 hot)
         rawData - source data for samples
         data - Source data samples, modified by preparation step and used to train, evaluate and test - DataFrame
         trainX - sample data used to train the model. Number of samples = trainLen - DataFrame
@@ -179,6 +165,22 @@ class Data2Results():
         preparedFeatures - modified list of data elements (columns) to be input to the model
         preparedTargets - modified list of data elements (columns) to be input to the model for identification or prediction
     '''
+    @property
+    def dataDict(self):
+        return self._dataDict
+    
+    @dataDict.setter
+    def dataDict(self, dataDict):
+        self._dataDict = dataDict
+    
+    @property
+    def normDataDict(self):
+        return self._normDataDict
+    
+    @normDataDict.setter
+    def normDataDict(self, normDataDict):
+        self._normDataDict = normDataDict
+    
     @property
     def data(self):
         return self._data

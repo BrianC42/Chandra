@@ -67,6 +67,7 @@ from configuration_constants import JSON_1HOT_SERIESTREND
 '''
 from configuration_constants import JSON_1HOT_CATEGORYTYPE
 from configuration_constants import JSON_1HOT_CATEGORIES
+from configuration_constants import JSON_1HOT_LABEL
 from configuration_constants import JSON_1HOT_OUTPUTFIELDS
 from configuration_constants import JSON_1HOT_SERIES_UP_DOWN
 
@@ -123,145 +124,168 @@ def loadTrainingData(d2r):
     return
 
 def balance_classes(d2r, model_type, categorization):
+    if d2r.trainY.shape[1] == 1:
+        if  model_type == INPUT_LAYERTYPE_RNN:
+            print("Training shapes features:%s labels:%s\nvalidating shapes features:%s labels:%s\ntesting shapes features:%s labels:%s" % \
+                  (d2r.trainX.shape, d2r.trainY.shape, d2r.validateX.shape, d2r.validateY.shape, d2r.testX.shape, d2r.testY.shape))
+            print("\nSample data contains %s samples with\t%s labels distributed: %s" % \
+                  (len(d2r.data), d2r.categories, d2r.categorieCounts))
     
-    if  model_type == INPUT_LAYERTYPE_RNN:
-        print("Training shapes features:%s labels:%s\nvalidating shapes features:%s labels:%s\ntesting shapes features:%s labels:%s" % \
-              (d2r.trainX.shape, d2r.trainY.shape, d2r.validateX.shape, d2r.validateY.shape, d2r.testX.shape, d2r.testY.shape))
-        print("\nSample data contains %s samples with\t%s labels distributed: %s" % \
-              (len(d2r.data), d2r.categories, d2r.categorieCounts))
-
-        categories, counts = np.unique(d2r.trainY, return_counts=True)
-        #sanityCheckMACD(npX=d2r.trainX, npY=d2r.trainY)
-        print("Prior to balancing training labels are\t%s with %s distribution" % (categories, counts))
-
-        minCount = min(counts)
-        batches = minCount * len(categories)
-        
-        ''' equal number of batches for each category '''
-        npX = np.zeros([batches, d2r.trainX.shape[1], d2r.feature_count], dtype=float)
-        npY = np.zeros([batches, d2r.trainY.shape[1]], dtype=float)
-        
-        catStep = np.zeros(len(categories))
-        for cat in range (0, len(counts)):
-            catStep[cat] = counts[cat] / minCount
-
-        catCount = np.zeros(len(categories))
-        nextCatNdx = np.zeros(len(categories))
-        
-        for sample in range (0, minCount):
-            for cat in range (0, len(categories)):
-                for offset in range (0, len(d2r.trainY)-int(nextCatNdx[cat])):
-                    srcNdx = int(nextCatNdx[cat]) + offset
-                    if d2r.trainY[srcNdx, 0] == categories[cat]:
-                        npX[(sample * len(counts)) + cat, :, :] = d2r.trainX[srcNdx, :, :]
-                        npY[(sample * len(counts)) + cat, :] = d2r.trainY[srcNdx, :]
-                        catCount[cat] += 1
-                        nextCatNdx[cat] = srcNdx + int(catStep[cat])
-                        break                            
-                    
-        d2r.trainX = npX
-        d2r.trainY = npY
-        '''
-        count = 0
-        for ndx in range(0, d2r.trainY.shape[0]):
-            if d2r.trainY[ndx, d2r.trainY.shape[1]-1] in categorization:
-                count += 1
-        train = np.empty([count, d2r.trainX.shape[1], d2r.trainX.shape[2]], dtype=float)
-        target = np.empty([count, d2r.trainY.shape[1]], dtype=float)
-        count = 0
-        for ndx in range(0, d2r.trainY.shape[0] - 1):
-            if d2r.trainY[ndx, d2r.trainY.shape[1]-1] in categorization:
-                train[count] = d2r.trainX[ndx+1, :, :]
-                target[count] = d2r.trainY[ndx, :]
-                count += 1
-        d2r.trainX = train
-        d2r.trainY = target
-        '''
+            categories, counts = np.unique(d2r.trainY, return_counts=True)
+            #sanityCheckMACD(npX=d2r.trainX, npY=d2r.trainY)
+            print("Prior to balancing training labels are\t%s with %s distribution" % (categories, counts))
     
-        categories, counts = np.unique(d2r.trainY, return_counts=True)
-        print("After balancing, training labels are\t%s with %s distribution" % (categories, counts))
+            minCount = min(counts)
+            batches = minCount * len(categories)
+            
+            ''' equal number of batches for each category '''
+            npX = np.zeros([batches, d2r.trainX.shape[1], d2r.feature_count], dtype=float)
+            npY = np.zeros([batches, d2r.trainY.shape[1]], dtype=float)
+            
+            catStep = np.zeros(len(categories))
+            for cat in range (0, len(counts)):
+                catStep[cat] = counts[cat] / minCount
     
-    elif model_type == INPUT_LAYERTYPE_CNN:
-        print("Training shapes features:%s labels:%s\nvalidating shapes features:%s labels:%s\ntesting shapes features:%s labels:%s" % \
-              (d2r.trainX.shape, d2r.trainY.shape, d2r.validateX.shape, d2r.validateY.shape, d2r.testX.shape, d2r.testY.shape))
-        print("\nSample data contains %s samples with\t%s labels distributed: %s" % \
-              (len(d2r.data), d2r.categories, d2r.categorieCounts))
-
-        categories, counts = np.unique(d2r.trainY, return_counts=True)
-        #sanityCheckMACD(npX=d2r.trainX, npY=d2r.trainY)
-        print("Prior to balancing training labels are\t%s with %s distribution" % (categories, counts))
-        minCount = min(counts)
-        batches = minCount * len(categories)
+            catCount = np.zeros(len(categories))
+            nextCatNdx = np.zeros(len(categories))
+            
+            for sample in range (0, minCount):
+                for cat in range (0, len(categories)):
+                    for offset in range (0, len(d2r.trainY)-int(nextCatNdx[cat])):
+                        srcNdx = int(nextCatNdx[cat]) + offset
+                        if d2r.trainY[srcNdx, 0] == categories[cat]:
+                            npX[(sample * len(counts)) + cat, :, :] = d2r.trainX[srcNdx, :, :]
+                            npY[(sample * len(counts)) + cat, :] = d2r.trainY[srcNdx, :]
+                            catCount[cat] += 1
+                            nextCatNdx[cat] = srcNdx + int(catStep[cat])
+                            break                            
+                        
+            d2r.trainX = npX
+            d2r.trainY = npY
+            categories, counts = np.unique(d2r.trainY, return_counts=True)
+            print("After balancing, training labels are\t%s with %s distribution" % (categories, counts))
         
-        ''' equal number of batches for each category '''
-        npX = np.zeros([batches, d2r.trainX.shape[1], d2r.feature_count], dtype=float)
-        npY = np.zeros([batches, d2r.trainY.shape[1], d2r.trainY.shape[2]], dtype=float)
+        elif model_type == INPUT_LAYERTYPE_CNN:
+            print("Training shapes features:%s labels:%s\nvalidating shapes features:%s labels:%s\ntesting shapes features:%s labels:%s" % \
+                  (d2r.trainX.shape, d2r.trainY.shape, d2r.validateX.shape, d2r.validateY.shape, d2r.testX.shape, d2r.testY.shape))
+            print("\nSample data contains %s samples with\t%s labels distributed: %s" % \
+                  (len(d2r.data), d2r.categories, d2r.categorieCounts))
+    
+            categories, counts = np.unique(d2r.trainY, return_counts=True)
+            #sanityCheckMACD(npX=d2r.trainX, npY=d2r.trainY)
+            print("Prior to balancing training labels are\t%s with %s distribution" % (categories, counts))
+            minCount = min(counts)
+            batches = minCount * len(categories)
+            
+            ''' equal number of batches for each category '''
+            npX = np.zeros([batches, d2r.trainX.shape[1], d2r.feature_count], dtype=float)
+            npY = np.zeros([batches, d2r.trainY.shape[1], d2r.trainY.shape[2]], dtype=float)
+            
+            catStep = np.zeros(len(categories))
+            for cat in range (0, len(counts)):
+                catStep[cat] = counts[cat] / minCount
+    
+            catCount = np.zeros(len(categories))
+            nextCatNdx = np.zeros(len(categories))
+            
+            for sample in range (0, minCount):
+                for cat in range (0, len(categories)):
+                    for offset in range (0, len(d2r.trainY)-int(nextCatNdx[cat])):
+                        srcNdx = int(nextCatNdx[cat]) + offset
+                        if d2r.trainY[srcNdx, 0, 0] == categories[cat]:
+                            npX[(sample * len(counts)) + cat, :, :] = d2r.trainX[srcNdx, :, :]
+                            npY[(sample * len(counts)) + cat, :, :] = d2r.trainY[srcNdx, :, :]
+                            catCount[cat] += 1
+                            nextCatNdx[cat] = srcNdx + int(catStep[cat])
+                            break                            
+                        
+            d2r.trainX = npX
+            d2r.trainY = npY
+            
+            categories, counts = np.unique(d2r.trainY, return_counts=True)
+            print("After balancing, training labels are\t%s with %s distribution" % (categories, counts))
+    
+        elif model_type == INPUT_LAYERTYPE_DENSE:
+            print("Sample data contains %s samples with categories: %s categories distributed: %s" % \
+                  (len(d2r.data), d2r.categories, d2r.categorieCounts))
+            print("Training shapes features:%s labels:%s\nvalidating shapes features:%s labels:%s\ntesting shapes features:%s labels:%s" % \
+                  (d2r.trainX.shape, d2r.trainY.shape, d2r.validateX.shape, d2r.validateY.shape, d2r.testX.shape, d2r.testY.shape))
+    
+            categories, counts = np.unique(d2r.trainY, return_counts=True)
+            print("Prior to balancing training labels are %s with %s distribution" % (categories, counts))
+    
+            minCount = min(counts)
+            
+            ''' equal number of batches for each category '''
+            npX = np.zeros([minCount * len(counts), d2r.feature_count], dtype=float)
+            npY = np.zeros([minCount * len(counts), d2r.trainY.shape[1]], dtype=float)
+            
+            catStep = np.zeros(len(categories))
+            for cat in range (0, len(counts)):
+                catStep[cat] = counts[cat] / minCount
+    
+            catCount = np.zeros(len(categories))
+            nextCatNdx = np.zeros(len(categories))
+            
+            sampleStep = len(d2r.categories)
+            for sample in range (0, len(npX), sampleStep):
+                for cat in range (0, len(categories)):
+                    for offset in range (0, len(d2r.trainY)-int(nextCatNdx[cat])):
+                        srcNdx = int(nextCatNdx[cat]) + offset
+                        #srcNdx = int(nextCatNdx[cat])
+                        if d2r.trainY[srcNdx, 0] == categories[cat]:
+                            npX[sample + cat, :] = d2r.trainX[srcNdx, :]
+                            npY[sample + cat, :] = d2r.trainY[srcNdx, :]
+                            catCount[cat] += 1
+                            nextCatNdx[cat] = srcNdx + int(catStep[cat])
+                            break                            
+                        
+            d2r.trainX = npX
+            d2r.trainY = npY
+    
+            categories, counts = np.unique(d2r.trainY, return_counts=True)
+            print("After balancing training labels are %s with %s distribution" % (categories, counts))
         
-        catStep = np.zeros(len(categories))
-        for cat in range (0, len(counts)):
-            catStep[cat] = counts[cat] / minCount
-
-        catCount = np.zeros(len(categories))
-        nextCatNdx = np.zeros(len(categories))
-        
-        for sample in range (0, minCount):
-            for cat in range (0, len(categories)):
-                for offset in range (0, len(d2r.trainY)-int(nextCatNdx[cat])):
-                    srcNdx = int(nextCatNdx[cat]) + offset
-                    if d2r.trainY[srcNdx, 0, 0] == categories[cat]:
-                        npX[(sample * len(counts)) + cat, :, :] = d2r.trainX[srcNdx, :, :]
-                        npY[(sample * len(counts)) + cat, :, :] = d2r.trainY[srcNdx, :, :]
-                        catCount[cat] += 1
-                        nextCatNdx[cat] = srcNdx + int(catStep[cat])
-                        break                            
-                    
-        d2r.trainX = npX
-        d2r.trainY = npY
-        
-        categories, counts = np.unique(d2r.trainY, return_counts=True)
-        print("After balancing, training labels are\t%s with %s distribution" % (categories, counts))
-
-    elif model_type == INPUT_LAYERTYPE_DENSE:
-        print("Sample data contains %s samples with categories: %s categories distributed: %s" % \
-              (len(d2r.data), d2r.categories, d2r.categorieCounts))
-        print("Training shapes features:%s labels:%s\nvalidating shapes features:%s labels:%s\ntesting shapes features:%s labels:%s" % \
-              (d2r.trainX.shape, d2r.trainY.shape, d2r.validateX.shape, d2r.validateY.shape, d2r.testX.shape, d2r.testY.shape))
-
-        categories, counts = np.unique(d2r.trainY, return_counts=True)
-        print("Prior to balancing training labels are %s with %s distribution" % (categories, counts))
-
-        minCount = min(counts)
-        
-        ''' equal number of batches for each category '''
-        npX = np.zeros([minCount * len(counts), d2r.feature_count], dtype=float)
-        npY = np.zeros([minCount * len(counts), d2r.trainY.shape[1]], dtype=float)
-        
-        catStep = np.zeros(len(categories))
-        for cat in range (0, len(counts)):
-            catStep[cat] = counts[cat] / minCount
-
-        catCount = np.zeros(len(categories))
-        nextCatNdx = np.zeros(len(categories))
-        
-        sampleStep = len(d2r.categories)
-        for sample in range (0, len(npX), sampleStep):
-            for cat in range (0, len(categories)):
-                for offset in range (0, len(d2r.trainY)-int(nextCatNdx[cat])):
-                    srcNdx = int(nextCatNdx[cat]) + offset
-                    #srcNdx = int(nextCatNdx[cat])
-                    if d2r.trainY[srcNdx, 0] == categories[cat]:
-                        npX[sample + cat, :] = d2r.trainX[srcNdx, :]
-                        npY[sample + cat, :] = d2r.trainY[srcNdx, :]
-                        catCount[cat] += 1
-                        nextCatNdx[cat] = srcNdx + int(catStep[cat])
-                        break                            
-                    
-        d2r.trainX = npX
-        d2r.trainY = npY
-
-        categories, counts = np.unique(d2r.trainY, return_counts=True)
-        print("After balancing training labels are %s with %s distribution" % (categories, counts))
-        
+    else:
+        ex_txt = "label balancing is not supported for multiple labels in " + model_type + " models"
+        labelPatterns, counts = np.unique(d2r.trainY, return_counts=True, axis=0)
+        print("Prior to balancing training labels are\n%s with\n%s distribution" % (labelPatterns, counts))
+        if  model_type == INPUT_LAYERTYPE_RNN:
+            minCount = min(counts)
+            batches = minCount * len(labelPatterns)
+            
+            ''' equal number of batches for each category '''
+            npX = np.zeros([batches, d2r.trainX.shape[1], d2r.feature_count], dtype=float)
+            npY = np.zeros([batches, d2r.trainY.shape[1]], dtype=float)
+            
+            catStep = np.zeros(len(labelPatterns))
+            for cat in range (0, len(counts)):
+                catStep[cat] = counts[cat] / minCount
+    
+            catCount = np.zeros(len(labelPatterns))
+            nextCatNdx = np.zeros(len(labelPatterns))
+            
+            for sample in range (0, minCount):
+                for cat in range (0, len(labelPatterns)):
+                    for offset in range (0, len(d2r.trainY)-int(nextCatNdx[cat])):
+                        srcNdx = int(nextCatNdx[cat]) + offset
+                        if np.array_equal(d2r.trainY[srcNdx], labelPatterns[cat]):
+                            npX[(sample * len(counts)) + cat, :, :] = d2r.trainX[srcNdx, :, :]
+                            npY[(sample * len(counts)) + cat, :] = d2r.trainY[srcNdx, :]
+                            catCount[cat] += 1
+                            nextCatNdx[cat] = srcNdx + int(catStep[cat])
+                            break                            
+                        
+            d2r.trainX = npX
+            d2r.trainY = npY
+        elif model_type == INPUT_LAYERTYPE_CNN:
+            raise NameError(ex_txt)
+        elif model_type == INPUT_LAYERTYPE_DENSE:
+            raise NameError(ex_txt)
+        else:
+            raise NameError(ex_txt)
+        labelPatterns, counts = np.unique(d2r.trainY, return_counts=True, axis=0)
+        print("After balancing training labels are\n%s with %s distribution" % (labelPatterns, counts))
     return
 
 def combineMultipleSamples(d2r, model_goal, combineCount, forecastInterval, data_precision, feature_cols, target_cols):
@@ -313,9 +337,16 @@ def np_to_conv1d(data, features, targets, d2r):
     return npx, npy
 
 def np_to_sequence(data, features, targets, seq_size=1):
-    npx = np.empty([len(data) - (seq_size+1), seq_size, len(features)], dtype=float)
-    npy = np.empty([len(data) - (seq_size+1),           len(targets)], dtype=float)
+    '''
+    Convert 2 dimensional data to the 3 dimensional format required by recurrent networks
+    data : 2 dimensional data
+    features : the columns in data (required to be consecutive) containing the features to train on
+    targets : the columns in data (required to be consecutive) containing the labels to train on
+    seq_size : the number of consecutive data samples to use for training
+    '''
 
+    npx = np.zeros([len(data) - (seq_size+1), seq_size, len(features)], dtype=float)
+    npy = np.zeros([len(data) - (seq_size+1),           len(targets)], dtype=float)
     for i in range(len(data) - (seq_size+1)):
         npx[i, :, :]    = data[i : i+seq_size, features[:]]
         npy[i]          = data[    i+seq_size-1, targets[:]]
@@ -323,6 +354,10 @@ def np_to_sequence(data, features, targets, seq_size=1):
     return npx, npy
 
 def arrangeDataForTraining(d2r):
+    '''
+    Final step in creating the data structures used to train the model.
+    All data loading, feature selection, normalization and encoding has been completed
+    '''
     try:
         err_txt = "\nError arranging data for training"
         features = d2r.preparedFeatures
@@ -409,8 +444,12 @@ def arrangeDataForTraining(d2r):
 
                 npX = np.zeros([0, d2r.timesteps, len(feature_cols)], dtype=float)
                 npY = np.zeros([0, len(target_cols)], dtype=float)
+                '''
                 for dkey in d2r.dataDict:
                     npData   = np.array(d2r.dataDict[dkey], dtype=float)
+                '''
+                for dkey in d2r.normDataDict:
+                    npData   = np.array(d2r.normDataDict[dkey], dtype=float)
                     features, labels = np_to_sequence(npData, feature_cols, target_cols, nx_time_steps)
                     npX = np.row_stack((npX, features))
                     npY = np.row_stack((npY, labels))
@@ -524,12 +563,24 @@ def arrangeDataForTraining(d2r):
     return
 
 def generate1hot(d2r, fields, fieldPrepCtrl):
+    '''
+    Modify d2r.data and d2r.normDataDict by
+    1. generating 1 hot versions of data fields (both features and labels)
+    2. inserting the 1 hot data into the modified data structures used to train the model
+    3. removing original fields from d2r.data and d2r.normDataDict
+    '''
+
+    '''
+    process d2r.data
+    '''
     categorizedData = pd.DataFrame()
     ndxField = 0
     for field in fields:
         data = d2r.data[field]
         fieldPrep = fieldPrepCtrl[ndxField]
         if fieldPrep[JSON_1HOT_CATEGORYTYPE] == JSON_1HOT_SERIES_UP_DOWN:
+            ''' Prepare categorized feature - feature float value compared to previous sample, <, =, >'''
+            print("Converting features %s to 1 hot format in d2r.data" % field)
             categories = fieldPrep[JSON_1HOT_CATEGORIES]
             outputFields = fieldPrep[JSON_1HOT_OUTPUTFIELDS]
             
@@ -542,23 +593,72 @@ def generate1hot(d2r, fields, fieldPrepCtrl):
                 else:
                     row = pd.DataFrame(data=[[0, 0]], columns=outputFields)
                 oneHot = pd.concat([oneHot, row])
-        elif fieldPrep[JSON_1HOT_CATEGORYTYPE] == "tbd":
-            print("category to 1 hot")
+
+            ''' prepare one hot version of data field '''
+            for col in outputFields:
+                categorizedData = categorizedData.assign(temp=oneHot[col])
+                categorizedData = categorizedData.rename(columns={'temp':col})                
+
+        elif fieldPrep[JSON_1HOT_CATEGORYTYPE] == JSON_1HOT_LABEL:
+            ''' Prepare categorized labels '''
             label1Hot = preprocessing.LabelBinarizer()
-            label1Hot.fit([-1.0, 0.0, 1.0])
-            label1Hot.transform(d2r.data['MACD_flag'].to_numpy())
+            categories, counts = np.unique(d2r.data[field].to_numpy(), return_counts=True)
+            label1Hot.fit(categories)
+            np_categorizedData = label1Hot.transform(d2r.data[field].to_numpy())
+            categorizedData = pd.DataFrame(data=np_categorizedData)
+        
         else:
             pass
-
-        for col in outputFields:
-            categorizedData = categorizedData.assign(temp=oneHot[col])
-            categorizedData = categorizedData.rename(columns={'temp':col})
-
+        
+        ''' Remove original data (feature or label) '''
         d2r.data.drop(labels=field, axis=1, inplace=True)
         ndxField += 1
 
+    ''' Insert 1 hot data into features or labels / targets '''
+    #print("update d2r with 1 hot column names")
+    categoryNames = []
+    for ndx in range(0, len(categories)):
+        name = field+str(ndx)
+        categoryNames.append(name)
+        categorizedData = categorizedData.rename(columns={ndx:name})
     categorizedData.index=range(0, len(categorizedData))
     d2r.data = pd.concat([d2r.data, categorizedData], axis=1)
+
+    '''
+    process d2r.normDataDict
+    '''
+    for dKey in list(d2r.normDataDict):
+        categorizedData = pd.DataFrame()
+        ndxField = 0
+        for field in fields:
+            fieldPrep = fieldPrepCtrl[ndxField]
+            if fieldPrep[JSON_1HOT_CATEGORYTYPE] == JSON_1HOT_SERIES_UP_DOWN:
+                ''' Prepare categorized labels '''
+                ex_txt = "generate1hot\nWIP .......................\n\tConverting feature to 1 hot format"
+                raise NameError(ex_txt)
+                
+            elif fieldPrep[JSON_1HOT_CATEGORYTYPE] == JSON_1HOT_LABEL:
+                ''' Prepare categorized labels '''
+                label1Hot = preprocessing.LabelBinarizer()
+                categories, counts = np.unique(d2r.normDataDict[dKey][field].to_numpy(), return_counts=True)
+                label1Hot.fit(categories)
+                np_categorizedData = label1Hot.transform(d2r.normDataDict[dKey][field].to_numpy())
+                categorizedData = pd.DataFrame(data=np_categorizedData)
+            
+            else:
+                pass
+        
+            #print("update d2r with 1 hot column names")
+            categoryNames = []
+            for ndx in range(0, len(categories)):
+                name = field+str(ndx)
+                categoryNames.append(name)
+                categorizedData = categorizedData.rename(columns={ndx:name})
+                
+            d2r.normDataDict[dKey].drop(labels=field, axis=1, inplace=True)
+            categorizedData.index=d2r.normDataDict[dKey].index
+            d2r.normDataDict[dKey] = pd.concat([d2r.normDataDict[dKey], categorizedData], axis=1)
+            d2r.preparedTargets = categoryNames
 
     return
 
