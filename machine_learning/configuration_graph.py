@@ -13,6 +13,7 @@ from configuration_constants import JSON_REQUIRED
 from configuration_constants import JSON_CONDITIONAL
 from configuration_constants import JSON_DATA_LOAD_PROCESS
 from configuration_constants import JSON_DATA_PREP_PROCESS
+from configuration_constants import JSON_EXECUTE_MODEL
 from configuration_constants import JSON_TRAIN
 from configuration_constants import JSON_TENSORFLOW
 from configuration_constants import JSON_AUTOKERAS
@@ -33,7 +34,6 @@ from configuration_constants import JSON_FLOW_FROM
 from configuration_constants import JSON_FLOW_TO
 from configuration_constants import JSON_INPUT_FLOWS
 from configuration_constants import JSON_OUTPUT_FLOW
-from configuration_constants import JSON_LOG_FILE
 from configuration_constants import JSON_INPUT_DATA_FILE
 from configuration_constants import JSON_INPUT_DATA_PREPARATION
 from configuration_constants import JSON_DATA_PREPARATION_CTRL
@@ -42,16 +42,18 @@ from configuration_constants import JSON_BALANCED
 from configuration_constants import JSON_TIME_SEQ
 from configuration_constants import JSON_SERIES_ID
 from configuration_constants import JSON_SERIES_DATA_TYPE
-from configuration_constants import JSON_1HOT_CATEGORYTYPE
-from configuration_constants import JSON_1HOT_CATEGORIES
-from configuration_constants import JSON_1HOT_OUTPUTFIELDS
-from configuration_constants import JSON_1HOT_SERIES_UP_DOWN
 from configuration_constants import JSON_IGNORE_BLANKS
 from configuration_constants import JSON_FLOW_DATA_FILE
 from configuration_constants import JSON_FEATURE_FIELDS
 from configuration_constants import JSON_TARGET_FIELDS
-from configuration_constants import JSON_TRAINING
 from configuration_constants import JSON_NORMALIZE_DATA
+''' Unused definitions
+from configuration_constants import JSON_LOG_FILE
+from configuration_constants import JSON_1HOT_CATEGORYTYPE
+from configuration_constants import JSON_1HOT_CATEGORIES
+from configuration_constants import JSON_1HOT_OUTPUTFIELDS
+from configuration_constants import JSON_1HOT_SERIES_UP_DOWN
+from configuration_constants import JSON_TRAINING
 from configuration_constants import JSON_SHUFFLE_DATA
 from configuration_constants import JSON_BATCH
 from configuration_constants import JSON_REGULARIZATION
@@ -68,6 +70,7 @@ from configuration_constants import JSON_OPTIMIZER
 from configuration_constants import JSON_CONV1D
 from configuration_constants import JSON_FILTER_COUNT
 from configuration_constants import JSON_FILTER_SIZE
+'''
 
 def add_data_flow_details(js_flow_conditional, nx_graph, nx_edge_key):
 
@@ -215,6 +218,9 @@ def add_meta_process_node (js_config, d2r) :
             nx_regression_forecast_interval = 1
         nx.set_node_attributes(d2r.graph, {nx_process_name:nx_regression_forecast_interval}, JSON_ML_REGRESSION_FORECAST_INTERVAL)
              
+    elif nx_processType == JSON_EXECUTE_MODEL:
+        print("============== WIP =============\n\tIndependent network\n================================")
+
     elif nx_processType == JSON_AUTOKERAS:
         print("============== WIP =============\n\tAuto Keras node details\n================================")
         nx.set_node_attributes(d2r.graph, {nx_process_name:nx_processType}, JSON_TRAIN)

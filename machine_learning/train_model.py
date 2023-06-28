@@ -7,14 +7,14 @@ import sys
 import datetime as dt
 import logging
 import networkx as nx
-import numpy as np
+#import numpy as np
 import tensorflow as tf
 from tensorflow import keras
 ''' autokeras disabled temporarily
 import autokeras as ak
 '''
 
-from configuration_constants import JSON_TRAIN
+#from configuration_constants import JSON_TRAIN
 from configuration_constants import JSON_BATCH
 from configuration_constants import JSON_EPOCHS
 from configuration_constants import JSON_VERBOSE

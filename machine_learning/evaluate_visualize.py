@@ -11,12 +11,22 @@ import pandas as pd
 import networkx as nx
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
-import seaborn as sns
+#import seaborn as sns
 
 from tda_api_library import format_tda_datetime
 
+''' Unused definitions
 from configuration_constants import JSON_TENSORFLOW
 from configuration_constants import JSON_AUTOKERAS
+from TrainingDataAndResults import TRAINING_TENSORFLOW
+from TrainingDataAndResults import INPUT_LAYERTYPE_DENSE
+from TrainingDataAndResults import INPUT_LAYERTYPE_RNN
+from TrainingDataAndResults import INPUT_LAYERTYPE_CNN
+
+from matplotlib.pyplot import tight_layout
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
+'''
+
 from configuration_constants import JSON_OPTIMIZER
 from configuration_constants import JSON_LOSS
 from configuration_constants import JSON_METRICS
@@ -24,14 +34,7 @@ from configuration_constants import JSON_VISUALIZATIONS
 from configuration_constants import JSON_VISUALIZE_TRAINING_FIT
 from configuration_constants import JSON_VISUALIZE_TARGET_SERIES
 
-from TrainingDataAndResults import TRAINING_TENSORFLOW
 from TrainingDataAndResults import TRAINING_AUTO_KERAS
-from TrainingDataAndResults import INPUT_LAYERTYPE_DENSE
-from TrainingDataAndResults import INPUT_LAYERTYPE_RNN
-from TrainingDataAndResults import INPUT_LAYERTYPE_CNN
-
-from matplotlib.pyplot import tight_layout
-from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 
 def confusion_matrix(actual, predicted):
     """Generates a confusion matrix based on the actual and predicted labels.
@@ -728,23 +731,21 @@ def visualize_rnn(d2r):
     return 
 
 def reportEvaluationMatrix(d2r, prediction):
-    #print(prediction)
-    #categories, counts = np.unique(d2r.data, return_counts=True)
-    testCategories, testCounts = np.unique(d2r.testY, return_counts=True, axis=0)
-    categoryCount = len(d2r.categories)
-    print("\nThe shape of the prediction data is [%s, %s]" % (prediction.shape[0], prediction.shape[1]))
-    print("Testing labels are \n%s\nwith %s distribution\n" % (testCategories, testCounts))
-    
-    THRESHOLD = 0.66
-    #confMatrix = confusion_matrix(d2r.testY, prediction)
 
-    bestPrediction = np.zeros(prediction.shape[1])
-    for ndx in range (len(d2r.testY)):
-        bestPrediction[int(max(prediction[ndx]))] += 1
-    print("best prediction distribution: %s" % bestPrediction)
+    print("\nThe predictions contain %s samples with %s labels" % (prediction.shape[0], prediction.shape[1]))
+    
+    testCategories, testCounts = np.unique(d2r.testY, return_counts=True, axis=0)
+    print("\nTesting labels are \n%s\nwith\n%s distribution" % (testCategories, testCounts))    
+    
+    labelCounts = np.zeros(len(testCategories))
+    for ndx in range(prediction.shape[0]):
+        labelCounts[np.argmax(prediction[ndx])] += 1
+    print("\nBest prediction distribution:\n%s" % labelCounts)
         
     cMatrix = confusion_matrix(d2r.testY, prediction)
-    print("Confusion matrix of predictions is\n%s" % cMatrix)
+    print("\nConfusion matrix of predictions is\n%s" % cMatrix.astype(int))
+    
+    print("\nEvaluation of test data resulted in evaluation probability distributions\n%s" % pd.DataFrame(prediction).describe().transpose())
     
     return
 

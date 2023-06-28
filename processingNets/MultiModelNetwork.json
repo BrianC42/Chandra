@@ -1,48 +1,80 @@
 {
 "comment - processing node section" : "Specification details for the processing nodes",
-"comment - description" : "Experimental categorization model to identify MACD_flag based on MACD and MACD_Signal",
+"comment - description" : "Experimental processing network to execute multiple existing models and use the outputs to train a 3rd model",
 "comment - dataflow section" : "Specification details for the flows of data between processing nodes",
 "dataFlows" : [
 	{
-	"flowName" : "TrendLineCross",
+	"flowName" : "ModelOneOutput",
 	"requiredFields" : {
-		"flowFrom" : "LoadData",
-		"flowTo" : "PrepData",
-		"flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\TrendLineCross.csv"
+		"flowFrom" : "ModelOne",
+		"flowTo" : "DataCombine",
+		"flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\M1.csv"
 		},
 	"conditionalFields" : {
 		"TensorflowData" : {
 			"balanceClasses" : true, "ignoreBlanks" : true,
-			"features" : ["MACD", "MACD_Signal"],
-			"targets" : ["MACD_flag"],
+			"features" : ["xxx", "xxx"],
+			"targets" : ["xxx"],
 			"timeSequence" : true, "seriesStepIDField" : ["DateTime"], "seriesDataType" : "TDADateTime", "type" : "relative_time_series"
 			}
 		}
 	},
 	{
-	"flowName" : "TrendLineCrossPrepared",
+	"flowName" : "ModelTwoOutput",
 	"requiredFields" : {
-		"flowFrom" : "PrepData",
-		"flowTo" : "TrendLineCross",
+		"flowFrom" : "ModelTwo",
+		"flowTo" : "DataCombine",
+		"flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\M2.csv"
+		},
+	"conditionalFields" : {
+		"TensorflowData" : {
+			"balanceClasses" : true, "ignoreBlanks" : true,
+			"features" : ["xxx", "xxx"],
+			"targets" : ["xxx"],
+			"timeSequence" : true, "seriesStepIDField" : ["DateTime"], "seriesDataType" : "TDADateTime", "type" : "relative_time_series"
+			}
+		}
+	},
+	{
+	"flowName" : "CombinedData",
+	"requiredFields" : {
+		"flowFrom" : "DataCombine",
+		"flowTo" : "DataPrepare",
+		"flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\MMN.csv"
+		},
+	"conditionalFields" : {
+		"TensorflowData" : {
+			"balanceClasses" : true, "ignoreBlanks" : true,
+			"features" : ["xxx", "xxx"],
+			"targets" : ["xxx"],
+			"timeSequence" : true, "seriesStepIDField" : ["DateTime"], "seriesDataType" : "TDADateTime", "type" : "relative_time_series"
+			}
+		}
+	},
+	{
+	"flowName" : "PreparedData",
+	"requiredFields" : {
+		"flowFrom" : "DataPrepare",
+		"flowTo" : "TrainMultipleModelOutputs",
 		"flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\TrendLineCrossPrepared.csv"
 		},
 	"conditionalFields" : {
 		"TensorflowData" : {
-			"features" : ["MACD", "MACD_Signal"],
-			"targets" : ["MACD_flag"],
+			"features" : ["xxx", "xxx"],
+			"targets" : ["xxx"],
 			"timeSequence" : true, "seriesStepIDField" : ["DateTime"], "seriesDataType" : "TDADateTime", "type" : "relative_time_series"
 			}
 		}
 	}
 ],
-"comment - dataflow" : "definition end",
+"comment - dataflow" : "dataflows definition end",
 "processNodes" : [
 	{
-	"processNodeName" : "LoadData",
+	"processNodeName" : "ModelOne",
 	"requiredFields" : {
-		"processType" : "dataLoad",
+		"processType" : "executeModel",
 		"inputFlows" : [],
-		"outputFlow" : "TrendLineCross"
+		"outputFlow" : "ModelOneOutput", "outputFile" : ""
 	},
 	"conditionalFields" : {
 		"dataLoadCtrl" : {
@@ -54,9 +86,41 @@
 	}
 	},
 	{
-	"processNodeName" : "PrepData",
+	"processNodeName" : "ModelTwo",
 	"requiredFields" : {
-		"processType" : "dataPrep", "inputFlows" : ["TrendLineCross"], "outputFlow" : "TrendLineCrossPrepared"
+		"processType" : "executeModel",
+		"inputFlows" : [],
+		"outputFlow" : "ModelTwoOutput", "outputFile" : ""
+	},
+	"conditionalFields" : {
+		"dataLoadCtrl" : {
+			"comment file spec" : "d:\\brian\\AI-Projects\\tda\\market_analysis_data\\[a-z]*.csv",
+			"inputFile" : [
+				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\c.csv"
+			]
+		}
+	}
+	},
+	{
+	"processNodeName" : "DataCombine",
+	"requiredFields" : {
+		"processType" : "dataLoad",
+		"inputFlows" : ["ModelOneOutput", "ModelTwoOutput"],
+		"outputFlow" : "CombinedData", "outputFile" : ""
+	},
+	"conditionalFields" : {
+		"dataLoadCtrl" : {
+			"comment file spec" : "d:\\brian\\AI-Projects\\tda\\market_analysis_data\\[a-z]*.csv",
+			"inputFile" : [
+				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\c.csv"
+			]
+		}
+	}
+	},
+	{
+	"processNodeName" : "DataPrepare",
+	"requiredFields" : {
+		"processType" : "dataPrep", "inputFlows" : ["CombinedData"], "outputFlow" : "PreparedData"
 	},
 	"conditionalFields" : {
 		"dataPrepCtrl" : {
@@ -69,23 +133,23 @@
 				"comment types supported" : ["standard", "minmax", "relative_time_series"],
 				"type" : "relative_time_series",
 				"features" : [
-					{"feature" : "MACD"},
-					{"feature" : "MACD_Signal"}
+					{"feature" : "xxx"},
+					{"feature" : "xxx"}
 				]
 			},
 			"oneHotEncoding" : {
 				"features" : [
-					{"feature" : "MACD_flag", "categoryType" : "label"}
+					{"feature" : "xxx", "categoryType" : "label"}
 				]
 			}
 		}
 	}
 	},
 	{
-	"processNodeName" : "TrendLineCross",
+	"processNodeName" : "TrainMultipleModelOutputs",
 	"requiredFields" : {
 		"processType" : "Tensorflow",
-		"inputFlows" : ["TrendLineCrossPrepared"],
+		"inputFlows" : ["PreparedData"],
 		"outputFlow" : ""
 	},
 	"conditionalFields" : {
@@ -125,6 +189,5 @@
 	}
 	}
 ],
-
 "comment end of specification" : "------------------------------------------------------------------------------------"
 }

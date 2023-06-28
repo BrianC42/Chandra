@@ -112,7 +112,7 @@
 					],
 				"training" : {
 					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
-					"batchSize" : 16, "epochs" : 5, "validationSplit" : 0.1, "testSplit" : 0.2,
+					"batchSize" : 16, "epochs" : 7, "validationSplit" : 0.1, "testSplit" : 0.2,
 					"shuffle" : false, "balanceClasses" : true,	"verbose" : 2,
 					"optimizer" : {"name" : "adam", "learning_rate" : 0.001}, "compilationLoss" : "categorical_crossentropy", "compilationMetrics" : ["categorical_crossentropy"]
 				},

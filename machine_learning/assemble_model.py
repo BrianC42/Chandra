@@ -31,7 +31,6 @@ from configuration_constants import JSON_AK_DIR
 from configuration_constants import JSON_AK_MAX_TRIALS
 from configuration_constants import JSON_PRECISION
 from configuration_constants import JSON_PROCESS_TYPE
-from configuration_constants import JSON_LAYERS
 from configuration_constants import JSON_LAYER_TYPE
 from configuration_constants import JSON_LAYER_DENSE
 from configuration_constants import JSON_LAYER_LSTM
@@ -50,16 +49,13 @@ from configuration_constants import JSON_LOSS
 from configuration_constants import JSON_METRICS
 from configuration_constants import JSON_LOSS_WTS
 from configuration_constants import JSON_OPTIMIZER
-from configuration_constants import JSON_MODEL_FILE
 
 from configuration_constants import JSON_CONV1D
 from configuration_constants import JSON_FILTER_COUNT
 from configuration_constants import JSON_FILTER_SIZE
-from configuration_constants import JSON_BATCHES
 
 from configuration_constants import JSON_MAXPOOLING_1D
 from configuration_constants import JSON_GLOBAL_MAXPOOLING_1D
-from configuration_constants import JSON_POOL_SIZE
 
 from configuration_constants import JSON_FLATTEN
 
@@ -69,6 +65,13 @@ from TrainingDataAndResults import MODEL_TYPE
 from TrainingDataAndResults import INPUT_LAYERTYPE_DENSE
 from TrainingDataAndResults import INPUT_LAYERTYPE_RNN
 from TrainingDataAndResults import INPUT_LAYERTYPE_CNN
+
+''' Unused imports
+from configuration_constants import JSON_LAYERS
+from configuration_constants import JSON_MODEL_FILE
+from configuration_constants import JSON_BATCHES
+from configuration_constants import JSON_POOL_SIZE
+'''
 
 def build_layer(d2r, layer_type, layer_definition, input_layer):
     ''' some parameters are common across multiple layer type '''

@@ -5,10 +5,10 @@ Created on Apr 7, 2020
 '''
 import sys
 import os
-import time
 import glob
 import logging
-import tkinter
+#import time
+#import tkinter
 
 import networkx as nx
 import pandas as pd
@@ -17,10 +17,10 @@ import tensorflow as tf
 
 from sklearn import preprocessing
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
-from sklearn.preprocessing import  OneHotEncoder
+#from sklearn.preprocessing import  OneHotEncoder
 
 from Scalers import chandraScaler
-from Scalers import NORMALIZE_RELATIVE_TIME_SERIES
+#from Scalers import NORMALIZE_RELATIVE_TIME_SERIES
 
 from configuration_constants import JSON_PRECISION
 from configuration_constants import JSON_OUTPUT_FLOW
@@ -34,7 +34,6 @@ from configuration_constants import JSON_DATA_LOAD_PROCESS
 from configuration_constants import JSON_ML_GOAL
 from configuration_constants import JSON_ML_GOAL_CATEGORIZATION
 from configuration_constants import JSON_ML_GOAL_REGRESSION
-from configuration_constants import JSON_ML_GOAL_COMBINE_SAMPLE_COUNT
 from configuration_constants import JSON_ML_REGRESSION_FORECAST_INTERVAL
 from configuration_constants import JSON_DATA_PREP_PROCESS
 from configuration_constants import JSON_DATA_PREPARATION_CTRL
@@ -47,7 +46,6 @@ from configuration_constants import JSON_DATA_PREP_NORMALIZE_MINMAX
 from configuration_constants import JSON_DATA_PREP_NORMALIZE_RELATIVE_TIME_SERIES
 from configuration_constants import JSON_DATA_PREP_SEQ
 from configuration_constants import JSON_DATA_PREP_ENCODING
-from configuration_constants import JSON_BALANCED
 from configuration_constants import JSON_TENSORFLOW
 from configuration_constants import JSON_AUTOKERAS
 from configuration_constants import JSON_FEATURE_FIELDS
@@ -60,18 +58,17 @@ from configuration_constants import JSON_SERIES_ID
 from configuration_constants import JSON_SERIES_DATA_TYPE
 from configuration_constants import JSON_TIMESTEPS
 
-'''
-from configuration_constants import JSON_1HOT_ENCODING
-from configuration_constants import JSON_1HOT_FIELD
-from configuration_constants import JSON_1HOT_SERIESTREND
-'''
 from configuration_constants import JSON_1HOT_CATEGORYTYPE
 from configuration_constants import JSON_1HOT_CATEGORIES
 from configuration_constants import JSON_1HOT_LABEL
 from configuration_constants import JSON_1HOT_OUTPUTFIELDS
 from configuration_constants import JSON_1HOT_SERIES_UP_DOWN
-
 '''
+from configuration_constants import JSON_ML_GOAL_COMBINE_SAMPLE_COUNT
+from configuration_constants import JSON_BALANCED
+from configuration_constants import JSON_1HOT_ENCODING
+from configuration_constants import JSON_1HOT_FIELD
+from configuration_constants import JSON_1HOT_SERIESTREND
 from configuration_constants import JSON_CONV1D
 from configuration_constants import JSON_FILTER_COUNT
 from configuration_constants import JSON_FILTER_SIZE
