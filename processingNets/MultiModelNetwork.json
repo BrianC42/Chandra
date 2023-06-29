@@ -187,6 +187,15 @@
 			}
 		]
 	}
+	},
+	{
+	"processNodeName" : "stop",
+	"requiredFields" : {
+		"processType" : "stop",
+		"inputFlows" : [""],
+		"outputFlow" : ""
+	},
+	"conditionalFields" : {}
 	}
 ],
 "comment end of specification" : "------------------------------------------------------------------------------------"

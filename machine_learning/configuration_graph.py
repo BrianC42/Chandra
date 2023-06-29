@@ -17,6 +17,7 @@ from configuration_constants import JSON_EXECUTE_MODEL
 from configuration_constants import JSON_TRAIN
 from configuration_constants import JSON_TENSORFLOW
 from configuration_constants import JSON_AUTOKERAS
+from configuration_constants import JSON_STOP
 from configuration_constants import JSON_ML_GOAL
 from configuration_constants import JSON_ML_GOAL_CATEGORIZATION
 from configuration_constants import JSON_ML_GOAL_REGRESSION
@@ -241,6 +242,9 @@ def add_meta_process_node (js_config, d2r) :
             nx_layers = js_conditional[JSON_LAYERS]
             nx.set_node_attributes(d2r.graph, {nx_process_name:nx_layers}, JSON_LAYERS)
             
+    elif nx_processType == JSON_STOP:
+        pass
+        
     else:
         ex_txt = nx_process_name + ", type " + nx_processType + " is not supported"
         raise NameError(ex_txt)

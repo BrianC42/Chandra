@@ -91,6 +91,7 @@ LOGGING_FORMAT = '%(asctime)s: %(levelname)s: %(message)s'
 ''' =============================================================================================== '''
 '''                                                                                                 '''
 JSON_EXECUTE_MODEL = "executeModel"
+JSON_STOP = "stop"
 '''                                                                                                 '''
 ''' =============================================================================================== '''
 ''' =============================================================================================== '''
@@ -254,6 +255,8 @@ JSON_AK_MULTI = 'akMulti'
 JSON_AK_CUSTOM = 'akCustom'
 JSON_AK_DIR = "akDirectory"
 JSON_AK_MAX_TRIALS = "maxTrials"
+JSON_MODEL_FILE = "modelFile"
+TRAINING_AUTO_KERAS = "TBD"
 ''' -------------------------------------------------------------------- end Auto Keras definitions '''
 ''' =============================================================================================== '''
 ''' ================ Configuration file labels and supported values - end ========================= '''
@@ -272,7 +275,6 @@ JSON_1HOT_ENCODING = "oneHotEncoding"
 JSON_1HOT_FIELD = "field"
 JSON_1HOT_SERIESTREND = "seriesTrend"
 JSON_PREPROCESSING = 'preprocessingLayers'
-JSON_MODEL_FILE = "modelFile"
 JSON_BATCHES = "batches"
 JSON_POOL_SIZE = "poolSize"
 JSON_ELEMENTS = 'dataElements'

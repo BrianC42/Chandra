@@ -46,6 +46,8 @@ from configuration import read_config_json
 from configuration import read_processing_network_json
 from configuration_graph import build_configuration_graph
 
+from executeProcessingNodes import executeProcessingNodes
+
 from load_prepare_data import collect_and_select_data
 from load_prepare_data import prepareTrainingData
 from load_prepare_data import loadTrainingData
@@ -102,7 +104,7 @@ if __name__ == '__main__':
         logging.debug(exc_txt)
         sys.exit(exc_txt)
         
-    # Set python path for executing stand alone scripts
+    ''' Set python path for executing stand alone scripts '''
     pPath = gitdir + "\\chandra\\processes\\single"
     pPath += ";"
     pPath += gitdir + "\\chandra\\processes\\multiprocess"
@@ -134,57 +136,8 @@ if __name__ == '__main__':
     
     d2r = d2r()
     build_configuration_graph(d2r, processing_json)
-    #nx.draw(nx_graph, arrows=True, with_labels=True, font_weight='bold')
-    #nx.draw_circular(nx_graph, arrows=True, with_labels=True, font_weight='bold')
-    #plt.show()
-    
-    ''' .......... Step 1 - Load and prepare data .........................
-    ======================================================================= '''
-    step1 = time.time()
-    print ('\nStep 1 - Acquire, assemble and prepare the data for analysis')
-    collect_and_select_data(d2r)
-    prepareTrainingData(d2r)
-
-    for d2r.trainingIteration in range (0, d2r.trainingIterationCount):
-        print("trainNdx = %s" % d2r.trainingIteration)
-
-        ''' ................... Step 2 - Build Model ............................
-        ========================================================================= '''
-        step2 = time.time()
-        print ('\nStep 2 - Structure the data as required by the model, build and train the Model')
-        #node_i, k_model, x_features, y_targets, x_test, y_test, fitting = build_and_train_model(nx_graph)
-        buildModel(d2r)
-        loadTrainingData(d2r)
-        arrangeDataForTraining(d2r)
-        trainModel(d2r)
-    
-        ''' .................... Step 3 - Evaluate the model! ...............
-        ===================================================================== '''
-        step3 = time.time()
-        print ("\nStep 3 - Evaluate the model and visualize accuracy!")
-        #evaluate_and_visualize(nx_graph, node_i, k_model, x_features, y_targets, x_test, y_test, fitting)
-        evaluate_and_visualize(d2r)
-        
-        ''' .................... Step 4 - clean up, archive and visualize accuracy! ...............
-        =========================================================================================== '''
-        step4 = time.time()
-        print ("\nStep 4 - clean up, archive")
-        '''
-        nx_model_file = nx.get_node_attributes(d2r.graph, JSON_MODEL_FILE)[d2r.mlNode]
-        if d2r.trainer == TRAINING_AUTO_KERAS:
-            d2r.model = d2r.model.export_model()
-        d2r.model.save(nx_model_file)
-        '''
-    
-        end = time.time()
-        print ("")
-        print ("\tStep 1 took %.1f secs to Load and prepare the data for training and evaluation" % (step2 - step1)) 
-        print ("\tStep 2 took %.1f secs to Arrange the data for the model, build and train the Model" % (step3 - step2)) 
-        print ("\tStep 3 took %.1f secs to Evaluate the model and visualize the training results" % (step4 - step3)) 
-        print ("\tStep 5 took %.1f secs to Clean up and archive" % (end - step4))
-        
-    '''
-    clean up and prepare to exit
-    '''
+    executeProcessingNodes(d2r)
+            
+    '''     clean up and prepare to exit     '''
     f_out.close()
     print ('\nNow go and make us rich')

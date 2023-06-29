@@ -7,7 +7,7 @@
 "outputFile" : "\\logs\\chandra_output",
 "loggingLevel" : "debug",
 "loggingFormat" : "%(asctime)s: %(levelname)s: %(message)s",
-"processNet" : "\\chandra\\processingNets\\MultiModelNetwork.json",
+"processNet" : "\\chandra\\processingNets\\TrendLineCrossCategorization.json",
 "comment end of specification" : "---------------------------------------------------------------------------",
 "comment - processing networks" : {
 	"00" : "|=============================================================================================|",
