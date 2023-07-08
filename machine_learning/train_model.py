@@ -30,16 +30,22 @@ def trainModel(d2r):
         timeStamp = ' {:4d}{:0>2d}{:0>2d} {:0>2d}{:0>2d}{:0>2d}'.format(now.year, now.month, now.day, \
                                                                         now.hour, now.minute, now.second)
 
-        print("\nTraining shapes x:%s y:%s" % (d2r.trainX.shape, d2r.trainY.shape))
-        print("validating shapes x:%s y:%s" % (d2r.validateX.shape, d2r.validateY.shape))
-        print("Testing shapes x:%s y:%s" % (d2r.testX.shape, d2r.testY.shape))
-        
         nx_modelIterations = nx.get_node_attributes(d2r.graph, "training iterations")[d2r.mlNode]
         iterVariables = nx_modelIterations[d2r.trainingIteration]
         iterParamters = iterVariables["iteration parameters"]
 
         modeFileDir = iterParamters[JSON_MODEL_FILE_DIR]
         iterationID = iterParamters[JSON_ITERATION_ID]
+        
+        '''
+        print("\nTraining shapes x:%s y:%s" % (d2r.trainX.shape, d2r.trainY.shape))
+        print("validating shapes x:%s y:%s" % (d2r.validateX.shape, d2r.validateY.shape))
+        print("Testing shapes x:%s y:%s" % (d2r.testX.shape, d2r.testY.shape))
+        '''
+        print("\n==========================\n\tTraining iteration: {}\n==========================".format(iterationID))
+        print("\nTraining shapes x:{} y:{}".format(d2r.trainX.shape, d2r.trainY.shape))
+        print("validating shapes x:{} y:{}".format(d2r.validateX.shape, d2r.validateY.shape))
+        print("Testing shapes x:{} y:{}\n".format(d2r.testX.shape, d2r.testY.shape))
         
         iterTraining = iterParamters["training"]
         nx_batch = iterTraining[JSON_BATCH]

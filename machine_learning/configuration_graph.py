@@ -16,6 +16,7 @@ from configuration_constants import JSON_DATA_PREP_PROCESS
 from configuration_constants import JSON_EXECUTE_MODEL
 from configuration_constants import JSON_TRAIN
 from configuration_constants import JSON_TENSORFLOW
+from configuration_constants import JSON_TRAINING_ITERATIONS
 from configuration_constants import JSON_AUTOKERAS
 from configuration_constants import JSON_STOP
 from configuration_constants import JSON_ML_GOAL
@@ -80,14 +81,6 @@ def add_data_flow_details(js_flow_conditional, nx_graph, nx_edge_key):
             if JSON_TENSORFLOW_DATA in js_flow_conditional:
                 js_tensorflow_data = js_flow_conditional[JSON_TENSORFLOW_DATA]
                 
-                if JSON_BALANCED in js_tensorflow_data:
-                    nx_balanced = js_tensorflow_data[JSON_BALANCED]
-                    nx.set_edge_attributes(nx_graph, {nx_edge_key:nx_balanced}, JSON_BALANCED)
-        
-                if JSON_IGNORE_BLANKS in js_tensorflow_data:
-                    nx_ignore_blanks = js_tensorflow_data[JSON_IGNORE_BLANKS]
-                    nx.set_edge_attributes(nx_graph, {nx_edge_key:nx_ignore_blanks}, JSON_IGNORE_BLANKS)
-
                 if JSON_FEATURE_FIELDS in js_tensorflow_data:
                     nx_feature_fields = js_tensorflow_data[JSON_FEATURE_FIELDS]
                     nx.set_edge_attributes(nx_graph, {nx_edge_key:nx_feature_fields}, JSON_FEATURE_FIELDS)
@@ -166,17 +159,39 @@ def add_meta_process_node (js_config, d2r) :
     if nx_processType == JSON_DATA_LOAD_PROCESS:
         js_data_prep_ctrl = js_conditional[JSON_INPUT_DATA_PREPARATION]
         add_data_source_details(js_data_prep_ctrl, d2r.graph, nx_process_name)
+        
     elif nx_processType == JSON_DATA_PREP_PROCESS:
         nx_prepCtrl = js_conditional[JSON_DATA_PREPARATION_CTRL]
         nx.set_node_attributes(d2r.graph, {nx_process_name:nx_prepCtrl}, JSON_DATA_PREPARATION_CTRL)
-        '''
         js_data_prep_ctrl = js_conditional[JSON_DATA_PREPARATION_CTRL]
+
+        if JSON_IGNORE_BLANKS in js_data_prep_ctrl:
+            nx_ignore_blanks = js_data_prep_ctrl[JSON_IGNORE_BLANKS]
+        else:
+            nx_ignore_blanks = False
+        nx.set_node_attributes(d2r.graph, {nx_process_name:nx_ignore_blanks}, JSON_IGNORE_BLANKS)
+
+        '''
         add_data_prep_details(js_data_prep_ctrl, nx_graph, nx_process_name)
         '''
+
     elif nx_processType == JSON_TENSORFLOW:
         nx.set_node_attributes(d2r.graph, {nx_process_name:nx_processType}, JSON_TRAIN)
         nx_dataPrecision = js_conditional[JSON_PRECISION]
         nx.set_node_attributes(d2r.graph, {nx_process_name:nx_dataPrecision}, JSON_PRECISION)
+        
+        if JSON_BALANCED in js_conditional:
+            nx_balanced = js_conditional[JSON_BALANCED]
+        else:
+            nx_balanced = False
+        nx.set_node_attributes(d2r.graph, {nx_process_name:nx_balanced}, JSON_BALANCED)
+
+        if JSON_ML_GOAL_COMBINE_SAMPLE_COUNT in js_conditional:
+            nx_ml_goal_combine_sample_count = js_conditional[JSON_ML_GOAL_COMBINE_SAMPLE_COUNT]
+        else:
+            nx_ml_goal_combine_sample_count = 1
+        nx.set_node_attributes(d2r.graph, {nx_process_name:nx_ml_goal_combine_sample_count}, JSON_ML_GOAL_COMBINE_SAMPLE_COUNT)
+                     
         nx_visualizations = js_conditional[JSON_VISUALIZATIONS]
         nx.set_node_attributes(d2r.graph, {nx_process_name:nx_visualizations}, JSON_VISUALIZATIONS)
         
@@ -187,13 +202,13 @@ def add_meta_process_node (js_config, d2r) :
         if "tensorboard" in js_conditional:
             nx_tensorboard = js_conditional["tensorboard"]
             nx.set_node_attributes(d2r.graph, {nx_process_name:nx_tensorboard}, "tensorboard")
-            print ("tensorboard")
+            #print ("tensorboard")
             
-        if "training iterations" in js_conditional:
-            nx_trainingIteration = js_conditional["training iterations"]
-            nx.set_node_attributes(d2r.graph, {nx_process_name:nx_trainingIteration}, "training iterations")
+        if JSON_TRAINING_ITERATIONS in js_conditional:
+            nx_trainingIteration = js_conditional[JSON_TRAINING_ITERATIONS]
+            nx.set_node_attributes(d2r.graph, {nx_process_name:nx_trainingIteration}, JSON_TRAINING_ITERATIONS)
             d2r.trainingIterationCount = len(nx_trainingIteration)
-            print ("training iterations")
+            #print ("training iterations")
 
         if JSON_ML_GOAL  in js_conditional:
             nx_ml_goal = js_conditional[JSON_ML_GOAL]
@@ -207,12 +222,6 @@ def add_meta_process_node (js_config, d2r) :
         else:
             raise NameError(nx_process_name + " requires " + JSON_ML_GOAL)
             
-        if JSON_ML_GOAL_COMBINE_SAMPLE_COUNT in js_conditional:
-            nx_ml_goal_combine_sample_count = js_conditional[JSON_ML_GOAL_COMBINE_SAMPLE_COUNT]
-        else:
-            nx_ml_goal_combine_sample_count = 1
-        nx.set_node_attributes(d2r.graph, {nx_process_name:nx_ml_goal_combine_sample_count}, JSON_ML_GOAL_COMBINE_SAMPLE_COUNT)
-             
         if JSON_ML_REGRESSION_FORECAST_INTERVAL in js_conditional:
             nx_regression_forecast_interval = js_conditional[JSON_ML_REGRESSION_FORECAST_INTERVAL]
         else:
@@ -220,10 +229,10 @@ def add_meta_process_node (js_config, d2r) :
         nx.set_node_attributes(d2r.graph, {nx_process_name:nx_regression_forecast_interval}, JSON_ML_REGRESSION_FORECAST_INTERVAL)
              
     elif nx_processType == JSON_EXECUTE_MODEL:
-        print("============== WIP =============\n\tIndependent network\n================================")
+        print("\n============== WIP =============\n\tAdding execute existing model to procesing network\n")
 
     elif nx_processType == JSON_AUTOKERAS:
-        print("============== WIP =============\n\tAuto Keras node details\n================================")
+        print("\n============== WIP =============\n\tAdding auto Keras node details to procesing network\n")
         nx.set_node_attributes(d2r.graph, {nx_process_name:nx_processType}, JSON_TRAIN)
         nx_dataPrecision = js_conditional[JSON_PRECISION]
         nx.set_node_attributes(d2r.graph, {nx_process_name:nx_dataPrecision}, JSON_PRECISION)

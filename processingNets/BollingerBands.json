@@ -1,0 +1,172 @@
+{
+"comment - description 1" : "A model to identify situation where a stock price increases 10% within 10 trading days",
+"comment - description 2" : "Approach - use the Bollinger Band technical analysis",
+"comment - dataflow section" : "Specification details for the flows of data between processing nodes -----------------------------",
+"dataFlows" : [
+	{
+	"flowName" : "LoadedData",
+	"requiredFields" : {
+		"flowFrom" : "LoadData", "flowTo" : "PrepData", "flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\BBLoadedData.csv"
+		},
+	"conditionalFields" : {
+		"TensorflowData" : {
+			"features" : ["BB_Upper", "BB_Lower", "EMA20", "Open", "High", "Low", "Close"],
+			"targets" : ["10day10pct"],
+			"timeSequence" : true, "seriesStepIDField" : ["DateTime"], "seriesDataType" : "TDADateTime", "type" : "relative_time_series"
+			}
+		}
+	},
+	{
+	"flowName" : "PreparedData",
+	"requiredFields" : {
+		"flowFrom" : "PrepData", "flowTo" : "BollingerBands", "flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\BBPrepared.csv"
+		},
+	"conditionalFields" : {
+		"TensorflowData" : {
+			"features" : ["BB_Upper", "BB_Lower", "EMA20", "Open", "High", "Low", "Close"],
+			"targets" : ["10day10pct"],
+			"timeSequence" : true, "seriesStepIDField" : ["DateTime"], "seriesDataType" : "TDADateTime", "type" : "relative_time_series"
+			}
+		}
+	}
+],
+"comment - dataflow" : "dataflow definition end ----------------------------------------------------------------------------------",
+"comment - processing node section" : "Specification details for the processing nodes --------------------------------------------",
+"processNodes" : [
+	{
+	"processNodeName" : "LoadData",
+	"requiredFields" : {"processType" : "dataLoad", "inputFlows" : [], "outputFlow" : "LoadedData"},
+	"conditionalFields" : {
+		"dataLoadCtrl" : {
+			"comment file spec" : "d:\\brian\\AI-Projects\\tda\\market_analysis_data\\[a-z]*.csv",
+			"inputFile" : [
+				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\[a-z]*.csv"
+			]
+		}
+	}
+	},
+	{
+	"processNodeName" : "PrepData",
+	"requiredFields" : {"processType" : "dataPrep", "inputFlows" : ["LoadedData"], "outputFlow" : "PreparedData"},
+	"conditionalFields" : {
+		"dataPrepCtrl" : {
+			"ignoreBlanks" : true,
+			"preparationSequence" : ["normalize", "oneHotEncoding"],
+			"noPreparation" : {
+				"features" : [
+				]
+			},
+			"normalize" : {
+				"comment types supported" : ["standard", "minmax", "relative_time_series"],
+				"type" : "relative_time_series",
+				"features" : [
+					{"feature" : "BB_Upper"},
+					{"feature" : "BB_Lower"},
+					{"feature" : "EMA20"},
+					{"feature" : "Open"},
+					{"feature" : "High"},
+					{"feature" : "Low"},
+					{"feature" : "Close"}
+				]
+			},
+			"oneHotEncoding" : {
+				"features" : [
+					{"feature" : "10day10pct", "categoryType" : "label", "comment" : "True/False"}
+				]
+			}
+		}
+	}
+	},
+	{
+	"processNodeName" : "BollingerBands",
+	"comment" : "As false positives are costly, a high recall score is most important",
+	"requiredFields" : {"processType" : "Tensorflow", "inputFlows" : ["PreparedData"], "outputFlow" : ""},
+	"conditionalFields" : {
+		"categorizationRegression" : "categorization",
+		"dataPrecision" : "float32", "balanceClasses" : true, "combineSampleCount" : 4,
+		"comment visualizations" : ["summary", "trainingFit", "CategorizedTimeSeries", "categoryMatrix"],
+		"visualizations" : ["summary", "categoryMatrix"],
+		"training iterations" : [
+			{
+			"iteration description" : "binary_crossentropy / [Accuracy, Precision, Recall] / sigmoid (unbalanced)",
+			"iteration parameters" : {
+				"iteration ID" : "BB_003",
+				"modelFileDir" : "d:\\brian\\AI-Projects\\models\\rnn\\lstm\\BB\\",
+				"tensorboard" : {"log file dir" : "d:\\brian\\AI-Projects\\logs\\tensorboard\\categorization\\lstm\\BB\\b_c\\"},
+				"forecastInterval" : 0,
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 7, "timeSteps": 5, "layerUnits" : 256, "returnSequences" : false, "outputActivation" : "tanh"},
+					{"layerName" : "dropout1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hiddenDense1", "layerType" : "dense", "layerUnits" : 128, "outputActivation" : "tanh"},
+					{"layerName" : "dropout2", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hiddenDense2", "layerType" : "dense", "layerUnits" : 128, "outputActivation" : "tanh"},
+					{"layerName" : "dropout3", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "output", "layerType" : "dense", "layerUnits": 1, "outputActivation" : "sigmoid"}
+					],
+				"training" : {
+					"verbose" : 2, "batchSize" : 16, "epochs" : 10, "validationSplit" : 0.1, "testSplit" : 0.2, "shuffle" : false, 
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"optimizer" : {"name" : "adam", "learning_rate" : 0.001}, "compilationLoss" : "binary_crossentropy", "compilationMetrics" : ["Recall"]
+				}
+				}
+			},
+			{
+			"iteration description" : "squared_hinge / [Accuracy, Precision, Recall] / sigmoid (unbalanced)",
+			"iteration parameters" : {
+				"iteration ID" : "BB_203",
+				"modelFileDir" : "d:\\brian\\AI-Projects\\models\\rnn\\lstm\\BB\\",
+				"tensorboard" : {"log file dir" : "d:\\brian\\AI-Projects\\logs\\tensorboard\\categorization\\lstm\\BB\\sq_hinge\\"},
+				"forecastInterval" : 0,
+				
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 7, "timeSteps": 5, "layerUnits" : 256, "returnSequences" : false, "outputActivation" : "tanh"},
+					{"layerName" : "dropout1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hiddenDense1", "layerType" : "dense", "layerUnits" : 128, "outputActivation" : "tanh"},
+					{"layerName" : "dropout2", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hiddenDense2", "layerType" : "dense", "layerUnits" : 128, "outputActivation" : "tanh"},
+					{"layerName" : "dropout3", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "output", "layerType" : "dense", "layerUnits": 1, "outputActivation" : "sigmoid"}
+					],
+				"training" : {
+					"verbose" : 2, "batchSize" : 16, "epochs" : 5, "validationSplit" : 0.1, "testSplit" : 0.2, "shuffle" : false, 
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"optimizer" : {"name" : "adam", "learning_rate" : 0.001}, "compilationLoss" : "squared_hinge", "compilationMetrics" : ["Recall"]
+				}
+				}
+			}
+		]
+	}
+	}
+],
+"comment end of specification" : "------------------------------------------------------------------------------------",
+"comment trial training iterations" : {
+	"comment indent 1" : {
+		"comment most successful" : "TBD",
+		"training iterations" : [
+			{
+			"iteration description" : "hinge / [Accuracy, Precision, Recall] / sigmoid (unbalanced)",
+			"iteration parameters" : {
+				"iteration ID" : "BB_103",
+				"modelFileDir" : "d:\\brian\\AI-Projects\\models\\rnn\\lstm\\BB\\",
+				"tensorboard" : {"log file dir" : "d:\\brian\\AI-Projects\\logs\\tensorboard\\categorization\\lstm\\BB\\hinge\\"},
+				"forecastInterval" : 0,
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 7, "timeSteps": 5, "layerUnits" : 256, "returnSequences" : false, "outputActivation" : "tanh"},
+					{"layerName" : "dropout1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hiddenDense1", "layerType" : "dense", "layerUnits" : 128, "outputActivation" : "tanh"},
+					{"layerName" : "dropout2", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hiddenDense2", "layerType" : "dense", "layerUnits" : 128, "outputActivation" : "tanh"},
+					{"layerName" : "dropout3", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "output", "layerType" : "dense", "layerUnits": 1, "outputActivation" : "sigmoid"}
+					],
+				"training" : {
+					"verbose" : 2, "batchSize" : 16, "epochs" : 3, "validationSplit" : 0.1, "testSplit" : 0.2, "shuffle" : false, 
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"optimizer" : {"name" : "adam", "learning_rate" : 0.001}, "compilationLoss" : "hinge", "compilationMetrics" : ["Recall"]
+				}
+				}
+			}
+		]
+	}
+}
+}

@@ -667,8 +667,9 @@ def visualize_dense(d2r, prediction):
     plt.show()
     return 
 
-def visualize_rnn(d2r):
-    prediction = d2r.model.predict(d2r.testX)
+def visualize_rnn(d2r, prediction):
+    print("\n=======================WIP ====================\n\tneeds enhancement when more than 1 metric is used")
+    #prediction = d2r.model.predict(d2r.testX)
 
     '''
     Screen 1
@@ -811,7 +812,7 @@ def evaluate_and_visualize(d2r):
     nx_visualizations = nx.get_node_attributes(d2r.graph, JSON_VISUALIZATIONS)[d2r.mlNode]
     for vizualize in nx_visualizations:
         if vizualize == JSON_VISUALIZE_TRAINING_FIT:
-            visualize_fit(d2r)
+            visualize_fit(d2r, prediction)
         elif vizualize == JSON_VISUALIZE_TARGET_SERIES:
             fig1, axs1 = plt.subplots(1, 1)
             fig1.suptitle("Training targets for: " + d2r.mlNode, fontsize=14, fontweight='bold')

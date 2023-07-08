@@ -3,7 +3,18 @@ Created on Nov 15, 2021
 
 @author: Brian
 
-Git access error problem
+Data structures and elements used to
+    control processing flow
+    store raw data
+    control data preparation
+    store scaled and normalized data
+    store training, evaluation and testing data set
+
+functions
+    archiveData: data - Source data samples, modified by preparation step and used to train, evaluate and test - DataFrame
+    plotGraph: draw the processing network showing processing nodes and connecting data flows
+    visualize_categorization_samples: plot training, validation and testing time series
+
 '''
 import numpy as np
 import pandas as pd
@@ -19,13 +30,6 @@ INPUT_LAYERTYPE_RNN = 'rnn'
 INPUT_LAYERTYPE_CNN = 'cnn'
 
 class Data2Results():
-    '''
-    Class to prepare training data, store training results and plot results
-    
-        
-    Functions
-        plotGraph
-    '''
 
     def __init__(self):
         '''
@@ -36,11 +40,30 @@ class Data2Results():
         self.maxDictLength = 0
         self.minDictLength = 99999999
         
-    '''
-    definition graph properties
+    ''' json configuration file controlling processing flow '''
+    ''' file directory '''
+    @property
+    def configurationFileDir(self):
+        return self._configurationFileDir
+    
+    @configurationFileDir.setter
+    def configurationFileDir(self, configurationFileDir):
+        self._configurationFileDir = configurationFileDir
+    
+    ''' configuration file contents '''
+    @property
+    def configurationFile(self):
+        return self._configurationFile
+    
+    @configurationFile.setter
+    def configurationFile(self, configurationFile):
+        self._configurationFile = configurationFile
+    
+    ''' processing network elements
         graph - graph of nodes and edges defining the information flow and processing
         mlNode - the node in the graph containing the machine learning definition
     '''        
+        
     @property
     def graph(self):
         return self._graph

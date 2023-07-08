@@ -39,11 +39,13 @@ from configuration_constants import JSON_DATA_PREP_PROCESS
 from configuration_constants import JSON_DATA_PREPARATION_CTRL
 from configuration_constants import JSON_DATA_PREP_FEATURES
 from configuration_constants import JSON_DATA_PREP_FEATURE
+from configuration_constants import JSON_BALANCED
 from configuration_constants import JSON_DATA_PREP_NORMALIZE
 from configuration_constants import JSON_DATA_PREP_NORMALIZATION_TYPE
 from configuration_constants import JSON_DATA_PREP_NORMALIZE_STANDARD
 from configuration_constants import JSON_DATA_PREP_NORMALIZE_MINMAX
 from configuration_constants import JSON_DATA_PREP_NORMALIZE_RELATIVE_TIME_SERIES
+from configuration_constants import JSON_ML_GOAL_COMBINE_SAMPLE_COUNT
 from configuration_constants import JSON_DATA_PREP_SEQ
 from configuration_constants import JSON_DATA_PREP_ENCODING
 from configuration_constants import JSON_TENSORFLOW
@@ -64,7 +66,6 @@ from configuration_constants import JSON_1HOT_LABEL
 from configuration_constants import JSON_1HOT_OUTPUTFIELDS
 from configuration_constants import JSON_1HOT_SERIES_UP_DOWN
 '''
-from configuration_constants import JSON_ML_GOAL_COMBINE_SAMPLE_COUNT
 from configuration_constants import JSON_BALANCED
 from configuration_constants import JSON_1HOT_ENCODING
 from configuration_constants import JSON_1HOT_FIELD
@@ -350,6 +351,28 @@ def np_to_sequence(data, features, targets, seq_size=1):
 
     return npx, npy
 
+def arrangeDataForTrainedModels(d2r):
+    '''
+    Final step in creating the data structures used to use an existing model to generate data suitable for training.
+    Assumes all data loading, feature selection, normalization and encoding has been completed
+    '''
+    try:
+        err_txt = "\nError arranging data for existing model use"
+        print("\n============== WIP =============\n\tArranging data for use by an existing model")
+    
+    except Exception:
+        exc_info = sys.exc_info()
+        exc_str = exc_info[1].args[0]
+        if isinstance(exc_str, str):
+            exc_txt = err_txt + "\n\t" + exc_str
+        elif isinstance(exc_str, tuple):
+            exc_txt = err_txt + "\n\t"
+            for s in exc_str:
+                exc_txt += " " + s
+        logging.debug(exc_txt)
+        sys.exit(exc_txt)
+    return 
+
 def arrangeDataForTraining(d2r):
     '''
     Final step in creating the data structures used to train the model.
@@ -378,6 +401,8 @@ def arrangeDataForTraining(d2r):
             d2r.testLen = int(len(d2r.data) * nx_test_split)
     
             nx_data_precision = nx.get_node_attributes(d2r.graph, JSON_PRECISION)[d2r.mlNode]
+            nx_combine_sample_Count = nx.get_node_attributes(d2r.graph, JSON_ML_GOAL_COMBINE_SAMPLE_COUNT)[d2r.mlNode]            
+            
             ''' Create Numpy arrays suitable for training, training validation and later testing from Pandas dataframe '''
             data        = np.array(d2r.data, dtype=nx_data_precision)
             train       = data[                                 : d2r.trainLen]
@@ -388,9 +413,6 @@ def arrangeDataForTraining(d2r):
                 d2r.normDataDict = d2r.dataDict
             
             nx_model_type = nx.get_node_attributes(d2r.graph, MODEL_TYPE)[d2r.mlNode]
-            nx_dataArrangement = iterParamters["data arrangement"]
-            nx_combine_sample_Count = nx_dataArrangement["combineSampleCount"]
-            #nx_combine_sample_Count = nx.get_node_attributes(d2r.graph, JSON_ML_GOAL_COMBINE_SAMPLE_COUNT)[d2r.mlNode]
             nx_regression_forecast_interval = nx.get_node_attributes(d2r.graph, JSON_ML_REGRESSION_FORECAST_INTERVAL)[d2r.mlNode]
  
             nx_categorization_regression = nx.get_node_attributes(d2r.graph, JSON_ML_GOAL)[d2r.mlNode]
@@ -528,7 +550,8 @@ def arrangeDataForTraining(d2r):
             pass
         =================== Sanity check of data preparation processing =================== '''
 
-        if d2r.categorizationRegression == JSON_ML_GOAL_CATEGORIZATION:
+        nx_dataBalanced = nx.get_node_attributes(d2r.graph, JSON_BALANCED)[d2r.mlNode]
+        if nx_dataBalanced:
             balance_classes(d2r, nx_model_type, d2r.categories)
         
         ''' =================== Sanity check of data preparation processing ===================
@@ -598,12 +621,19 @@ def generate1hot(d2r, fields, fieldPrepCtrl):
 
         elif fieldPrep[JSON_1HOT_CATEGORYTYPE] == JSON_1HOT_LABEL:
             ''' Prepare categorized labels '''
-            label1Hot = preprocessing.LabelBinarizer()
             categories, counts = np.unique(d2r.data[field].to_numpy(), return_counts=True)
+
+            ''' LabelBinarizer - works for 3 category value example '''
+            label1Hot = preprocessing.LabelBinarizer()
+            ''' OneHotEncoder (preferred) - WIP '''
+            #label1Hot = preprocessing.OneHotEncoder()
+            #categories = categories.reshape(-1, 1)
+            #raise NameError("converting to 1 hot format {}".format(field))
+                
             label1Hot.fit(categories)
             np_categorizedData = label1Hot.transform(d2r.data[field].to_numpy())
             categorizedData = pd.DataFrame(data=np_categorizedData)
-        
+            
         else:
             pass
         
@@ -631,13 +661,20 @@ def generate1hot(d2r, fields, fieldPrepCtrl):
             fieldPrep = fieldPrepCtrl[ndxField]
             if fieldPrep[JSON_1HOT_CATEGORYTYPE] == JSON_1HOT_SERIES_UP_DOWN:
                 ''' Prepare categorized labels '''
-                ex_txt = "generate1hot\nWIP .......................\n\tConverting feature to 1 hot format"
+                ex_txt = "generate1hot\nWIP .......................\n\tConverting up/down to 1 hot format"
                 raise NameError(ex_txt)
                 
             elif fieldPrep[JSON_1HOT_CATEGORYTYPE] == JSON_1HOT_LABEL:
                 ''' Prepare categorized labels '''
-                label1Hot = preprocessing.LabelBinarizer()
                 categories, counts = np.unique(d2r.normDataDict[dKey][field].to_numpy(), return_counts=True)
+
+                ''' LabelBinarizer - works for 3 category value example '''
+                label1Hot = preprocessing.LabelBinarizer()
+                ''' OneHotEncoder (preferred) - WIP '''
+                #label1Hot = preprocessing.OneHotEncoder()
+                #categories = categories.reshape(-1, 1)
+                #raise NameError("converting to 1 hot format {}".format(field))
+                
                 label1Hot.fit(categories)
                 np_categorizedData = label1Hot.transform(d2r.normDataDict[dKey][field].to_numpy())
                 categorizedData = pd.DataFrame(data=np_categorizedData)
@@ -709,7 +746,7 @@ def prepareTrainingData(d2r):
         err_txt = "*** An exception occurred preparing the training data ***"
 
         d2r.normalized = False
-    
+        
         for node_i in d2r.graph.nodes():
             nx_read_attr = nx.get_node_attributes(d2r.graph, JSON_PROCESS_TYPE)
             if nx_read_attr[node_i] == JSON_DATA_PREP_PROCESS:
@@ -753,6 +790,13 @@ def prepareTrainingData(d2r):
                     raise NameError(ex_txt)
 
                 js_prepCtrl = nx.get_node_attributes(d2r.graph, JSON_DATA_PREPARATION_CTRL)[node_i]
+                if JSON_IGNORE_BLANKS in js_prepCtrl:
+                    if js_prepCtrl[JSON_IGNORE_BLANKS]:
+                        print("Removing NaN")
+                        d2r.data = d2r.data.dropna()
+                        for dKey in list(d2r.dataDict):
+                            d2r.dataDict[dKey] = d2r.dataDict[dKey].dropna()
+       
                 if JSON_DATA_PREP_SEQ in js_prepCtrl:
                     normalizeFields = []
                     categorizeFields = []
@@ -847,15 +891,6 @@ def selectTrainingData(d2r, node_name, nx_edge):
             count += 1
     print("\nData \n%s\nread from sources\n" % df_combined.describe().transpose())
                         
-    nx_ignoreBlanks = nx.get_edge_attributes(d2r.graph, JSON_IGNORE_BLANKS)
-    if nx_ignoreBlanks != []:
-        ignoreBlanks = nx_ignoreBlanks[nx_edge[0], nx_edge[1], output_flow]
-        if ignoreBlanks:
-            print("Removing NaN")
-            df_combined = df_combined.dropna()
-            for dKey in list(d2r.dataDict):
-                d2r.dataDict[dKey] = d2r.dataDict[dKey].dropna()
-                
     #df_combined.drop(targetFields, axis=1)
     return df_combined
 

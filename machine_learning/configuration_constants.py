@@ -92,6 +92,15 @@ LOGGING_FORMAT = '%(asctime)s: %(levelname)s: %(message)s'
 '''                                                                                                 '''
 JSON_EXECUTE_MODEL = "executeModel"
 JSON_STOP = "stop"
+JSON_ITERATION_PARAMETERS = "iteration parameters"
+JSON_TRAINING_DESCRIPTION = "training iteration description"
+JSON_TRAINING = "training"
+JSON_TRAINING_ITERATIONS = "training iterations"
+JSON_TENSORBOARD = "tensorboard"
+JSON_LOG_DIR = "log file dir"
+JSON_DEPRECATED  = "data arrangement"
+JSON_COMBINE_SAMPLE_COUNT  = "combineSampleCount"
+
 '''                                                                                                 '''
 ''' =============================================================================================== '''
 ''' =============================================================================================== '''
@@ -185,8 +194,9 @@ JSON_VISUALIZE_TARGET_SERIES = "targetSeries"
 '''  end of Supported values '''
 
 '''                                                                      training iteration control '''
-JSON_ML_REGRESSION_FORECAST_INTERVAL = "forecastInterval"
+JSON_TRAINING_ITERATIONS = "training iterations"
 JSON_ITERATION_ID = "iteration ID"
+JSON_ML_REGRESSION_FORECAST_INTERVAL = "forecastInterval"
 JSON_MODEL_FILE_DIR = "modelFileDir"
 
 '''                  data combination used to present serial data to dense and convolutional models '''

@@ -1,15 +1,10 @@
 {
-"comment - processing node section" : "Specification details for the processing nodes",
 "comment - description" : "Experimental processing network to execute multiple existing models and use the outputs to train a 3rd model",
-"comment - dataflow section" : "Specification details for the flows of data between processing nodes",
+"comment - dataflow begin" : "dataflows definition begin -------------------------------------------------------------------------------",
 "dataFlows" : [
 	{
 	"flowName" : "ModelOneOutput",
-	"requiredFields" : {
-		"flowFrom" : "ModelOne",
-		"flowTo" : "DataCombine",
-		"flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\M1.csv"
-		},
+	"requiredFields" : {"flowFrom" : "ModelOne", "flowTo" : "DataCombine", "flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\TrainMultipleModelM1.csv" },
 	"conditionalFields" : {
 		"TensorflowData" : {
 			"balanceClasses" : true, "ignoreBlanks" : true,
@@ -21,11 +16,7 @@
 	},
 	{
 	"flowName" : "ModelTwoOutput",
-	"requiredFields" : {
-		"flowFrom" : "ModelTwo",
-		"flowTo" : "DataCombine",
-		"flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\M2.csv"
-		},
+	"requiredFields" : {"flowFrom" : "ModelTwo", "flowTo" : "DataCombine", "flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\TrainMultipleModelM2.csv" },
 	"conditionalFields" : {
 		"TensorflowData" : {
 			"balanceClasses" : true, "ignoreBlanks" : true,
@@ -37,11 +28,7 @@
 	},
 	{
 	"flowName" : "CombinedData",
-	"requiredFields" : {
-		"flowFrom" : "DataCombine",
-		"flowTo" : "DataPrepare",
-		"flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\MMN.csv"
-		},
+	"requiredFields" : {"flowFrom" : "DataCombine", "flowTo" : "DataPrepare", "flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\TrainMultipleModelCombined.csv" },
 	"conditionalFields" : {
 		"TensorflowData" : {
 			"balanceClasses" : true, "ignoreBlanks" : true,
@@ -53,11 +40,7 @@
 	},
 	{
 	"flowName" : "PreparedData",
-	"requiredFields" : {
-		"flowFrom" : "DataPrepare",
-		"flowTo" : "TrainMultipleModelOutputs",
-		"flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\TrendLineCrossPrepared.csv"
-		},
+	"requiredFields" : {"flowFrom" : "DataPrepare", "flowTo" : "TrainMultipleModelOutputs", "flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\TrainMultipleModelPrepared.csv" },
 	"conditionalFields" : {
 		"TensorflowData" : {
 			"features" : ["xxx", "xxx"],
@@ -67,46 +50,28 @@
 		}
 	}
 ],
-"comment - dataflow" : "dataflows definition end",
+"comment - dataflow end " : "dataflows definition end -------------------------------------------------------------------------------",
+"comment - processNodes" : "process node definitions beginh -------------------------------------------------------------------------",
 "processNodes" : [
 	{
 	"processNodeName" : "ModelOne",
-	"requiredFields" : {
-		"processType" : "executeModel",
-		"inputFlows" : [],
-		"outputFlow" : "ModelOneOutput", "outputFile" : ""
-	},
+	"requiredFields" : {"processType" : "executeModel", "inputFlows" : [], "outputFlow" : "ModelOneOutput"},
 	"conditionalFields" : {
-		"dataLoadCtrl" : {
-			"comment file spec" : "d:\\brian\\AI-Projects\\tda\\market_analysis_data\\[a-z]*.csv",
-			"inputFile" : [
-				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\c.csv"
-			]
+		"executeCtrl" : {
 		}
 	}
 	},
 	{
 	"processNodeName" : "ModelTwo",
-	"requiredFields" : {
-		"processType" : "executeModel",
-		"inputFlows" : [],
-		"outputFlow" : "ModelTwoOutput", "outputFile" : ""
-	},
+	"requiredFields" : {"processType" : "executeModel", "inputFlows" : [], "outputFlow" : "ModelTwoOutput"},
 	"conditionalFields" : {
-		"dataLoadCtrl" : {
-			"comment file spec" : "d:\\brian\\AI-Projects\\tda\\market_analysis_data\\[a-z]*.csv",
-			"inputFile" : [
-				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\c.csv"
-			]
+		"executeCtrl" : {
 		}
 	}
 	},
 	{
 	"processNodeName" : "DataCombine",
-	"requiredFields" : {
-		"processType" : "dataLoad",
-		"inputFlows" : ["ModelOneOutput", "ModelTwoOutput"],
-		"outputFlow" : "CombinedData", "outputFile" : ""
+	"requiredFields" : {"processType" : "dataLoad", "inputFlows" : ["ModelOneOutput", "ModelTwoOutput"], "outputFlow" : "CombinedData"
 	},
 	"conditionalFields" : {
 		"dataLoadCtrl" : {
@@ -119,9 +84,7 @@
 	},
 	{
 	"processNodeName" : "DataPrepare",
-	"requiredFields" : {
-		"processType" : "dataPrep", "inputFlows" : ["CombinedData"], "outputFlow" : "PreparedData"
-	},
+	"requiredFields" : {"processType" : "dataPrep", "inputFlows" : ["CombinedData"], "outputFlow" : "PreparedData"},
 	"conditionalFields" : {
 		"dataPrepCtrl" : {
 			"preparationSequence" : ["normalize", "oneHotEncoding"],
@@ -147,11 +110,7 @@
 	},
 	{
 	"processNodeName" : "TrainMultipleModelOutputs",
-	"requiredFields" : {
-		"processType" : "Tensorflow",
-		"inputFlows" : ["PreparedData"],
-		"outputFlow" : ""
-	},
+	"requiredFields" : {"processType" : "Tensorflow", "inputFlows" : ["PreparedData"], "outputFlow" : ""},
 	"conditionalFields" : {
 		"categorizationRegression" : "categorization",
 		"dataPrecision" : "float32",
@@ -159,7 +118,7 @@
 		"training iterations" : [
 			{
 			"iteration parameters" : {
-				"comment - description" : "Recurrent model categorizing MACD flag (-1, 0 1)",
+				"training iteration description" : "Recurrent model categorizing MACD flag (-1, 0 1)",
 				"modelFileDir" : "d:\\brian\\AI-Projects\\models\\rnn\\lstm\\TrendLineCross",
 				"iteration ID" : "adam_categorical_crossentropy",
 				"forecastInterval" : 0,
@@ -190,13 +149,10 @@
 	},
 	{
 	"processNodeName" : "stop",
-	"requiredFields" : {
-		"processType" : "stop",
-		"inputFlows" : [""],
-		"outputFlow" : ""
-	},
+	"requiredFields" : {"processType" : "stop", "inputFlows" : [""], "outputFlow" : ""},
 	"conditionalFields" : {}
 	}
 ],
-"comment end of specification" : "------------------------------------------------------------------------------------"
+"comment - processNodes end" : "process node definitions end -------------------------------------------------------------------------",
+"comment end of specification" : "----------------------------------------------------------------------------------------------------"
 }

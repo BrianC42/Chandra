@@ -1,0 +1,98 @@
+{
+"comment - description" : "Experimental configuration file to develop the use of existing models to generate training data",
+"comment - processing node section" : "Specification details for the processing nodes",
+"comment - dataflow section" : "Specification details for the flows of data between processing nodes",
+"dataFlows" : [
+	{
+	"flowName" : "TrendLineCross",
+	"requiredFields" : {
+		"flowFrom" : "LoadData",
+		"flowTo" : "PrepData",
+		"flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\TrendLineCross.csv"
+		},
+	"conditionalFields" : {
+		"TensorflowData" : {
+			"balanceClasses" : true, "ignoreBlanks" : true,
+			"features" : ["MACD", "MACD_Signal"],
+			"targets" : ["MACD_flag"],
+			"timeSequence" : true, "seriesStepIDField" : ["DateTime"], "seriesDataType" : "TDADateTime", "type" : "relative_time_series"
+			}
+		}
+	},
+	{
+	"flowName" : "TrendLineCrossPrepared",
+	"requiredFields" : {
+		"flowFrom" : "PrepData",
+		"flowTo" : "executeModel",
+		"flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\TrendLineCrossPrepared.csv"
+		},
+	"conditionalFields" : {
+		"TensorflowData" : {
+			"features" : ["MACD", "MACD_Signal"],
+			"targets" : ["MACD_flag"],
+			"timeSequence" : true, "seriesStepIDField" : ["DateTime"], "seriesDataType" : "TDADateTime", "type" : "relative_time_series"
+			}
+		}
+	}
+],
+"comment - dataflow definition end" : " ========================================================================",
+"comment - processNodes definition start" : " ========================================================================",
+"processNodes" : [
+	{
+	"processNodeName" : "LoadData",
+	"requiredFields" : {
+		"processType" : "dataLoad",
+		"inputFlows" : [],
+		"outputFlow" : "TrendLineCross"
+	},
+	"conditionalFields" : {
+		"dataLoadCtrl" : {
+			"comment file spec" : "d:\\brian\\AI-Projects\\tda\\market_analysis_data\\[a-z]*.csv",
+			"inputFile" : [
+				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\c.csv"
+			]
+		}
+	}
+	},
+	{
+	"processNodeName" : "PrepData",
+	"requiredFields" : {
+		"processType" : "dataPrep", "inputFlows" : ["TrendLineCross"], "outputFlow" : "TrendLineCrossPrepared"
+	},
+	"conditionalFields" : {
+		"dataPrepCtrl" : {
+			"preparationSequence" : ["normalize", "oneHotEncoding"],
+			"noPreparation" : {
+				"features" : [
+				]
+			},
+			"normalize" : {
+				"comment types supported" : ["standard", "minmax", "relative_time_series"],
+				"type" : "relative_time_series",
+				"features" : [
+					{"feature" : "MACD"},
+					{"feature" : "MACD_Signal"}
+				]
+			},
+			"oneHotEncoding" : {
+				"features" : [
+					{"feature" : "MACD_flag", "categoryType" : "label"}
+				]
+			}
+		}
+	}
+	},
+	{
+	"processNodeName" : "executeModel",
+	"requiredFields" : {
+		"processType" : "executeModel",
+		"inputFlows" : ["TrendLineCrossPrepared"],
+		"outputFlow" : ""
+	},
+	"conditionalFields" : {
+		"executeModelCtrl" : {	}
+	}
+	}
+],
+"comment end of specification" : "------------------------------------------------------------------------------------"
+}

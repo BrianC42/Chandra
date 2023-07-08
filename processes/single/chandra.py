@@ -48,16 +48,6 @@ from configuration_graph import build_configuration_graph
 
 from executeProcessingNodes import executeProcessingNodes
 
-from load_prepare_data import collect_and_select_data
-from load_prepare_data import prepareTrainingData
-from load_prepare_data import loadTrainingData
-from load_prepare_data import arrangeDataForTraining
-from assemble_model import buildModel
-from train_model import trainModel
-from evaluate_visualize import evaluate_and_visualize
-
-#from configuration_constants import JSON_MODEL_FILE
-
 if __name__ == '__main__':
     print ("Good morning Dr. Chandra. I am ready for my next lesson.\n\tI'm currently running Tensorflow version %s\n" % tf.__version__)
     ''' requires v1 compatibility mode
@@ -131,10 +121,16 @@ if __name__ == '__main__':
     pd.set_option('display.width', 200)
     pd.set_option('display.max_columns', 20)
     
-    processingNetwork = gitdir + json_config['processNet']
-    processing_json = read_processing_network_json(processingNetwork)
-    
     d2r = d2r()
+
+    configurationDir = gitdir + json_config['processNetDir']
+    d2r.configurationFileDir = configurationDir
+
+    configurationFile = json_config['processNetConfiguration']
+    #processingNetwork = gitdir + json_config['processNet']
+    processing_json = read_processing_network_json(configurationDir + configurationFile)
+    d2r.configurationFile = processing_json
+    
     build_configuration_graph(d2r, processing_json)
     executeProcessingNodes(d2r)
             

@@ -1,14 +1,11 @@
 {
-"comment - processing node section" : "Specification details for the processing nodes",
 "comment - description" : "Experimental categorization model to identify MACD_flag based on MACD and MACD_Signal",
 "comment - dataflow section" : "Specification details for the flows of data between processing nodes",
 "dataFlows" : [
 	{
 	"flowName" : "TrendLineCross",
 	"requiredFields" : {
-		"flowFrom" : "LoadData",
-		"flowTo" : "PrepData",
-		"flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\TrendLineCross.csv"
+		"flowFrom" : "LoadData", "flowTo" : "PrepData", "flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\TrendLineCross.csv"
 		},
 	"conditionalFields" : {
 		"TensorflowData" : {
@@ -22,9 +19,7 @@
 	{
 	"flowName" : "TrendLineCrossPrepared",
 	"requiredFields" : {
-		"flowFrom" : "PrepData",
-		"flowTo" : "TrendLineCross",
-		"flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\TrendLineCrossPrepared.csv"
+		"flowFrom" : "PrepData", "flowTo" : "TrendLineCross", "flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\TrendLineCrossPrepared.csv"
 		},
 	"conditionalFields" : {
 		"TensorflowData" : {
@@ -36,19 +31,18 @@
 	}
 ],
 "comment - dataflow" : "definition end",
+"comment - processing node section" : "Specification details for the processing nodes",
 "processNodes" : [
 	{
 	"processNodeName" : "LoadData",
 	"requiredFields" : {
-		"processType" : "dataLoad",
-		"inputFlows" : [],
-		"outputFlow" : "TrendLineCross"
+		"processType" : "dataLoad", "inputFlows" : [], "outputFlow" : "TrendLineCross"
 	},
 	"conditionalFields" : {
 		"dataLoadCtrl" : {
 			"comment file spec" : "d:\\brian\\AI-Projects\\tda\\market_analysis_data\\[a-z]*.csv",
 			"inputFile" : [
-				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\c.csv"
+				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\[a-z]*.csv"
 			]
 		}
 	}
@@ -95,9 +89,70 @@
 		"training iterations" : [
 			{
 			"iteration parameters" : {
-				"comment - description" : "Recurrent model categorizing MACD flag (-1, 0 1)",
-				"modelFileDir" : "d:\\brian\\AI-Projects\\models\\rnn\\lstm\\TrendLineCross",
-				"iteration ID" : "adam_categorical_crossentropy",
+				"modelFileDir" : "d:\\brian\\AI-Projects\\models\\rnn\\lstm\\MACD\\",
+				"iteration ID" : "MACD_Best",
+				"forecastInterval" : 0,
+				"data arrangement" : {
+					"combineSampleCount" : 4
+					},
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 2, "timeSteps": 5, "layerUnits" : 256, "returnSequences" : true, "outputActivation" : "tanh"},
+					{"layerName" : "hidden-lstm-1", "layerType" : "lstm", "timeSteps" : 5, "layerUnits" : 64, "returnSequences" : false, "outputActivation" : "tanh"},
+					{"layerName" : "dropout1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerType" : "dense", "layerName" : "hiddenDense1", "layerUnits" : 32, "outputActivation" : "tanh"},
+					{"layerName" : "dropout2", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerType" : "dense", "layerName" : "output", "layerUnits": 3, "outputActivation" : "softmax"}
+					],
+				"training" : {
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"batchSize" : 16, "epochs" : 7, "validationSplit" : 0.1, "testSplit" : 0.2,
+					"shuffle" : false, "balanceClasses" : true,	"verbose" : 2,
+					"optimizer" : {"name" : "adam", "learning_rate" : 0.001}, "compilationLoss" : "categorical_crossentropy", "compilationMetrics" : ["categorical_crossentropy"]
+				},
+				"tensorboard" : {
+					"log file dir" : "d:\\brian\\AI-Projects\\logs\\tensorboard\\categorization\\lstm\\MACD-Flag\\"
+					}
+				}
+			}
+		]
+	}
+	}
+],
+"comment end of specification" : "------------------------------------------------------------------------------------",
+"comment trial training iterations" : {
+	"comment indent 1" : {
+		"comment most successful" : "MACD_Flag_adam_4",
+		"training iterations" : [
+			{
+			"iteration parameters" : {
+				"modelFileDir" : "d:\\brian\\AI-Projects\\models\\rnn\\lstm\\TrendLineCross\\",
+				"iteration ID" : "MACD_Flag_adam_1",
+				"forecastInterval" : 0,
+				"data arrangement" : {
+					"combineSampleCount" : 4
+					},
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 2, "timeSteps": 5, "layerUnits" : 256, "returnSequences" : false, "outputActivation" : "linear"},
+					{"layerName" : "dropout1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerType" : "dense", "layerName" : "hiddenDense1", "layerUnits" : 32, "outputActivation" : "linear"},
+					{"layerName" : "dropout2", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerType" : "dense", "layerName" : "output", "layerUnits": 3, "outputActivation" : "softmax"}
+					],
+				"training" : {
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"batchSize" : 16, "epochs" : 7, "validationSplit" : 0.1, "testSplit" : 0.2,
+					"shuffle" : false, "balanceClasses" : true,	"verbose" : 2,
+					"optimizer" : {"name" : "adam", "learning_rate" : 0.001}, "compilationLoss" : "categorical_crossentropy", "compilationMetrics" : ["categorical_crossentropy"]
+				},
+				"tensorboard" : {
+					"log file dir" : "d:\\brian\\AI-Projects\\logs\\tensorboard\\categorization\\lstm\\TrendLineCross\\MACD-Flag\\"
+					}
+				}
+			},
+			{
+			"iteration parameters" : {
+				"modelFileDir" : "d:\\brian\\AI-Projects\\models\\rnn\\lstm\\TrendLineCross\\",
+				"iteration ID" : "MACD_Flag_adam_2",
 				"forecastInterval" : 0,
 				"data arrangement" : {
 					"combineSampleCount" : 4
@@ -112,19 +167,281 @@
 					],
 				"training" : {
 					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
-					"batchSize" : 16, "epochs" : 5, "validationSplit" : 0.1, "testSplit" : 0.2,
+					"batchSize" : 16, "epochs" : 7, "validationSplit" : 0.1, "testSplit" : 0.2,
 					"shuffle" : false, "balanceClasses" : true,	"verbose" : 2,
 					"optimizer" : {"name" : "adam", "learning_rate" : 0.001}, "compilationLoss" : "categorical_crossentropy", "compilationMetrics" : ["categorical_crossentropy"]
 				},
 				"tensorboard" : {
-					"log file dir" : "d:\\brian\\AI-Projects\\logs\\tensorboard\\categorization\\lstm\\TrendLineCross\\"
+					"log file dir" : "d:\\brian\\AI-Projects\\logs\\tensorboard\\categorization\\lstm\\TrendLineCross\\MACD-Flag\\"
+					}
+				}
+			},
+			{
+			"iteration parameters" : {
+				"modelFileDir" : "d:\\brian\\AI-Projects\\models\\rnn\\lstm\\TrendLineCross\\",
+				"iteration ID" : "MACD_Flag_adam_3",
+				"forecastInterval" : 0,
+				"data arrangement" : {
+					"combineSampleCount" : 4
+					},
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 2, "timeSteps": 5, "layerUnits" : 256, "returnSequences" : false, "outputActivation" : "tanh"},
+					{"layerName" : "dropout1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerType" : "dense", "layerName" : "hiddenDense1", "layerUnits" : 32, "outputActivation" : "tanh"},
+					{"layerName" : "dropout2", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerType" : "dense", "layerName" : "output", "layerUnits": 3, "outputActivation" : "softmax"}
+					],
+				"training" : {
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"batchSize" : 16, "epochs" : 7, "validationSplit" : 0.1, "testSplit" : 0.2,
+					"shuffle" : false, "balanceClasses" : true,	"verbose" : 2,
+					"optimizer" : {"name" : "adam", "learning_rate" : 0.001}, "compilationLoss" : "categorical_crossentropy", "compilationMetrics" : ["categorical_crossentropy"]
+				},
+				"tensorboard" : {
+					"log file dir" : "d:\\brian\\AI-Projects\\logs\\tensorboard\\categorization\\lstm\\TrendLineCross\\MACD-Flag\\"
+					}
+				}
+			},
+			{
+			"iteration parameters" : {
+				"modelFileDir" : "d:\\brian\\AI-Projects\\models\\rnn\\lstm\\TrendLineCross\\",
+				"iteration ID" : "MACD_Flag_adam_4",
+				"forecastInterval" : 0,
+				"data arrangement" : {
+					"combineSampleCount" : 4
+					},
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 2, "timeSteps": 5, "layerUnits" : 256, "returnSequences" : true, "outputActivation" : "tanh"},
+					{"layerName" : "hidden-lstm-1", "layerType" : "lstm", "timeSteps" : 5, "layerUnits" : 64, "returnSequences" : false, "outputActivation" : "tanh"},
+					{"layerName" : "dropout1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerType" : "dense", "layerName" : "hiddenDense1", "layerUnits" : 32, "outputActivation" : "tanh"},
+					{"layerName" : "dropout2", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerType" : "dense", "layerName" : "output", "layerUnits": 3, "outputActivation" : "softmax"}
+					],
+				"training" : {
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"batchSize" : 16, "epochs" : 7, "validationSplit" : 0.1, "testSplit" : 0.2,
+					"shuffle" : false, "balanceClasses" : true,	"verbose" : 2,
+					"optimizer" : {"name" : "adam", "learning_rate" : 0.001}, "compilationLoss" : "categorical_crossentropy", "compilationMetrics" : ["categorical_crossentropy"]
+				},
+				"tensorboard" : {
+					"log file dir" : "d:\\brian\\AI-Projects\\logs\\tensorboard\\categorization\\lstm\\TrendLineCross\\MACD-Flag\\"
+					}
+				}
+			},
+			{
+			"iteration parameters" : {
+				"modelFileDir" : "d:\\brian\\AI-Projects\\models\\rnn\\lstm\\TrendLineCross\\",
+				"iteration ID" : "MACD_Flag_SGD_1",
+				"forecastInterval" : 0,
+				"data arrangement" : {
+					"combineSampleCount" : 4
+					},
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 2, "timeSteps": 5, "layerUnits" : 256, "returnSequences" : false, "outputActivation" : "linear"},
+					{"layerName" : "dropout1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerType" : "dense", "layerName" : "hiddenDense1", "layerUnits" : 32, "outputActivation" : "linear"},
+					{"layerName" : "dropout2", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerType" : "dense", "layerName" : "output", "layerUnits": 3, "outputActivation" : "softmax"}
+					],
+				"training" : {
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"batchSize" : 16, "epochs" : 7, "validationSplit" : 0.1, "testSplit" : 0.2,
+					"shuffle" : false, "balanceClasses" : true,	"verbose" : 2,
+					"optimizer" : {"name" : "SGD", "learning_rate" : 0.001}, "compilationLoss" : "categorical_crossentropy", "compilationMetrics" : ["categorical_crossentropy"]
+				},
+				"tensorboard" : {
+					"log file dir" : "d:\\brian\\AI-Projects\\logs\\tensorboard\\categorization\\lstm\\TrendLineCross\\MACD-Flag\\"
+					}
+				}
+			},
+			{
+			"iteration parameters" : {
+				"modelFileDir" : "d:\\brian\\AI-Projects\\models\\rnn\\lstm\\TrendLineCross\\",
+				"iteration ID" : "MACD_Flag_SGD_2",
+				"forecastInterval" : 0,
+				"data arrangement" : {
+					"combineSampleCount" : 4
+					},
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 2, "timeSteps": 5, "layerUnits" : 256, "returnSequences" : true, "outputActivation" : "linear"},
+					{"layerName" : "hidden-lstm-1", "layerType" : "lstm", "timeSteps" : 5, "layerUnits" : 64, "returnSequences" : false, "outputActivation" : "linear"},
+					{"layerName" : "dropout1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerType" : "dense", "layerName" : "hiddenDense1", "layerUnits" : 32, "outputActivation" : "linear"},
+					{"layerName" : "dropout2", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerType" : "dense", "layerName" : "output", "layerUnits": 3, "outputActivation" : "softmax"}
+					],
+				"training" : {
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"batchSize" : 16, "epochs" : 7, "validationSplit" : 0.1, "testSplit" : 0.2,
+					"shuffle" : false, "balanceClasses" : true,	"verbose" : 2,
+					"optimizer" : {"name" : "SGD", "learning_rate" : 0.001}, "compilationLoss" : "categorical_crossentropy", "compilationMetrics" : ["categorical_crossentropy"]
+				},
+				"tensorboard" : {
+					"log file dir" : "d:\\brian\\AI-Projects\\logs\\tensorboard\\categorization\\lstm\\TrendLineCross\\MACD-Flag\\"
+					}
+				}
+			},
+			{
+			"iteration parameters" : {
+				"modelFileDir" : "d:\\brian\\AI-Projects\\models\\rnn\\lstm\\TrendLineCross\\",
+				"iteration ID" : "MACD_Flag_SGD_3",
+				"forecastInterval" : 0,
+				"data arrangement" : {
+					"combineSampleCount" : 4
+					},
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 2, "timeSteps": 5, "layerUnits" : 256, "returnSequences" : false, "outputActivation" : "tanh"},
+					{"layerName" : "dropout1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerType" : "dense", "layerName" : "hiddenDense1", "layerUnits" : 32, "outputActivation" : "tanh"},
+					{"layerName" : "dropout2", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerType" : "dense", "layerName" : "output", "layerUnits": 3, "outputActivation" : "softmax"}
+					],
+				"training" : {
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"batchSize" : 16, "epochs" : 7, "validationSplit" : 0.1, "testSplit" : 0.2,
+					"shuffle" : false, "balanceClasses" : true,	"verbose" : 2,
+					"optimizer" : {"name" : "SGD", "learning_rate" : 0.001}, "compilationLoss" : "categorical_crossentropy", "compilationMetrics" : ["categorical_crossentropy"]
+				},
+				"tensorboard" : {
+					"log file dir" : "d:\\brian\\AI-Projects\\logs\\tensorboard\\categorization\\lstm\\TrendLineCross\\MACD-Flag\\"
+					}
+				}
+			},
+			{
+			"iteration parameters" : {
+				"modelFileDir" : "d:\\brian\\AI-Projects\\models\\rnn\\lstm\\TrendLineCross\\",
+				"iteration ID" : "MACD_Flag_SGD_4",
+				"forecastInterval" : 0,
+				"data arrangement" : {
+					"combineSampleCount" : 4
+					},
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 2, "timeSteps": 5, "layerUnits" : 256, "returnSequences" : true, "outputActivation" : "tanh"},
+					{"layerName" : "hidden-lstm-1", "layerType" : "lstm", "timeSteps" : 5, "layerUnits" : 64, "returnSequences" : false, "outputActivation" : "tanh"},
+					{"layerName" : "dropout1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerType" : "dense", "layerName" : "hiddenDense1", "layerUnits" : 32, "outputActivation" : "linear"},
+					{"layerName" : "dropout2", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerType" : "dense", "layerName" : "output", "layerUnits": 3, "outputActivation" : "softmax"}
+					],
+				"training" : {
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"batchSize" : 16, "epochs" : 7, "validationSplit" : 0.1, "testSplit" : 0.2,
+					"shuffle" : false, "balanceClasses" : true,	"verbose" : 2,
+					"optimizer" : {"name" : "SGD", "learning_rate" : 0.001}, "compilationLoss" : "categorical_crossentropy", "compilationMetrics" : ["categorical_crossentropy"]
+				},
+				"tensorboard" : {
+					"log file dir" : "d:\\brian\\AI-Projects\\logs\\tensorboard\\categorization\\lstm\\TrendLineCross\\MACD-Flag\\"
+					}
+				}
+			},
+			{
+			"iteration parameters" : {
+ 				"modelFileDir" : "d:\\brian\\AI-Projects\\models\\rnn\\lstm\\TrendLineCross\\",
+				"iteration ID" : "MACD_Flag_RMSProp_1",
+				"forecastInterval" : 0,
+				"data arrangement" : {
+					"combineSampleCount" : 4
+					},
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 2, "timeSteps": 5, "layerUnits" : 256, "returnSequences" : false, "outputActivation" : "linear"},
+					{"layerName" : "dropout1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerType" : "dense", "layerName" : "hiddenDense1", "layerUnits" : 32, "outputActivation" : "linear"},
+					{"layerName" : "dropout2", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerType" : "dense", "layerName" : "output", "layerUnits": 3, "outputActivation" : "softmax"}
+					],
+				"training" : {
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"batchSize" : 16, "epochs" : 7, "validationSplit" : 0.1, "testSplit" : 0.2,
+					"shuffle" : false, "balanceClasses" : true,	"verbose" : 2,
+					"optimizer" : {"name" : "RMSprop", "learning_rate" : 0.001}, "compilationLoss" : "categorical_crossentropy", "compilationMetrics" : ["categorical_crossentropy"]
+				},
+				"tensorboard" : {
+					"log file dir" : "d:\\brian\\AI-Projects\\logs\\tensorboard\\categorization\\lstm\\TrendLineCross\\MACD-Flag\\"
+					}
+				}
+			},
+			{
+			"iteration parameters" : {
+ 				"modelFileDir" : "d:\\brian\\AI-Projects\\models\\rnn\\lstm\\TrendLineCross\\",
+				"iteration ID" : "MACD_Flag_RMSProp_2",
+				"forecastInterval" : 0,
+				"data arrangement" : {
+					"combineSampleCount" : 4
+					},
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 2, "timeSteps": 5, "layerUnits" : 256, "returnSequences" : true, "outputActivation" : "linear"},
+					{"layerName" : "hidden-lstm-1", "layerType" : "lstm", "timeSteps" : 5, "layerUnits" : 64, "returnSequences" : false, "outputActivation" : "linear"},
+					{"layerName" : "dropout1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerType" : "dense", "layerName" : "hiddenDense1", "layerUnits" : 32, "outputActivation" : "linear"},
+					{"layerName" : "dropout2", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerType" : "dense", "layerName" : "output", "layerUnits": 3, "outputActivation" : "softmax"}
+					],
+				"training" : {
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"batchSize" : 16, "epochs" : 7, "validationSplit" : 0.1, "testSplit" : 0.2,
+					"shuffle" : false, "balanceClasses" : true,	"verbose" : 2,
+					"optimizer" : {"name" : "RMSprop", "learning_rate" : 0.001}, "compilationLoss" : "categorical_crossentropy", "compilationMetrics" : ["categorical_crossentropy"]
+				},
+				"tensorboard" : {
+					"log file dir" : "d:\\brian\\AI-Projects\\logs\\tensorboard\\categorization\\lstm\\TrendLineCross\\MACD-Flag\\"
+					}
+				}
+			},
+			{
+			"iteration parameters" : {
+ 				"modelFileDir" : "d:\\brian\\AI-Projects\\models\\rnn\\lstm\\TrendLineCross\\",
+				"iteration ID" : "MACD_Flag_RMSProp_3",
+				"forecastInterval" : 0,
+				"data arrangement" : {
+					"combineSampleCount" : 4
+					},
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 2, "timeSteps": 5, "layerUnits" : 256, "returnSequences" : false, "outputActivation" : "tanh"},
+					{"layerName" : "dropout1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerType" : "dense", "layerName" : "hiddenDense1", "layerUnits" : 32, "outputActivation" : "tanh"},
+					{"layerName" : "dropout2", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerType" : "dense", "layerName" : "output", "layerUnits": 3, "outputActivation" : "softmax"}
+					],
+				"training" : {
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"batchSize" : 16, "epochs" : 7, "validationSplit" : 0.1, "testSplit" : 0.2,
+					"shuffle" : false, "balanceClasses" : true,	"verbose" : 2,
+					"optimizer" : {"name" : "RMSprop", "learning_rate" : 0.001}, "compilationLoss" : "categorical_crossentropy", "compilationMetrics" : ["categorical_crossentropy"]
+				},
+				"tensorboard" : {
+					"log file dir" : "d:\\brian\\AI-Projects\\logs\\tensorboard\\categorization\\lstm\\TrendLineCross\\MACD-Flag\\"
+					}
+				}
+			},
+			{
+			"iteration parameters" : {
+ 				"modelFileDir" : "d:\\brian\\AI-Projects\\models\\rnn\\lstm\\TrendLineCross\\",
+				"iteration ID" : "MACD_Flag_RMSProp_4",
+				"forecastInterval" : 0,
+				"data arrangement" : {
+					"combineSampleCount" : 4
+					},
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 2, "timeSteps": 5, "layerUnits" : 256, "returnSequences" : true, "outputActivation" : "tanh"},
+					{"layerName" : "hidden-lstm-1", "layerType" : "lstm", "timeSteps" : 5, "layerUnits" : 64, "returnSequences" : false, "outputActivation" : "tanh"},
+					{"layerName" : "dropout1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerType" : "dense", "layerName" : "hiddenDense1", "layerUnits" : 32, "outputActivation" : "tanh"},
+					{"layerName" : "dropout2", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerType" : "dense", "layerName" : "output", "layerUnits": 3, "outputActivation" : "softmax"}
+					],
+				"training" : {
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"batchSize" : 16, "epochs" : 7, "validationSplit" : 0.1, "testSplit" : 0.2,
+					"shuffle" : false, "balanceClasses" : true,	"verbose" : 2,
+					"optimizer" : {"name" : "RMSprop", "learning_rate" : 0.001}, "compilationLoss" : "categorical_crossentropy", "compilationMetrics" : ["categorical_crossentropy"]
+				},
+				"tensorboard" : {
+					"log file dir" : "d:\\brian\\AI-Projects\\logs\\tensorboard\\categorization\\lstm\\TrendLineCross\\MACD-Flag\\"
 					}
 				}
 			}
 		]
+		}
 	}
-	}
-],
-
-"comment end of specification" : "------------------------------------------------------------------------------------"
 }
