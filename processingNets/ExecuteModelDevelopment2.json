@@ -1,0 +1,102 @@
+{
+"comment - description 1" : "Experimental configuration file to develop the use of existing models to generate training data",
+"comment - description 2" : "Existing model used: TBD",
+"comment - dataflow section" : "Specification details for the flows of data between processing nodes",
+"comment - dataflow definition start" : " ========================================================================",
+"dataFlows" : [
+	{
+	"flowName" : "MMN_dev_M2",
+	"requiredFields" : {
+		"flowFrom" : "LoadDataM2", "flowTo" : "PrepDataM2", "flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\MMN_dev_M2.csv"},
+	"conditionalFields" : {
+		"TensorflowData" : {
+			"features" : ["BB_Upper", "BB_Lower", "EMA20", "Open", "High", "Low", "Close"],
+			"targets" : ["10day10pct"],
+			"timeSequence" : true, "seriesStepIDField" : ["DateTime"], "seriesDataType" : "TDADateTime", "type" : "relative_time_series"
+			}
+		}
+	},
+	{
+	"flowName" : "MMN_dev_M2_Prepared",
+	"requiredFields" : {
+		"flowFrom" : "PrepDataM2", "flowTo" : "executeModelM2", "flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\MMN_dev_M2_prepared.csv"
+		},
+	"conditionalFields" : {
+		"TensorflowData" : {
+			"features" : ["BB_Upper", "BB_Lower", "EMA20", "Open", "High", "Low", "Close"],
+			"targets" : ["10day10pct"],
+			"timeSequence" : true, "seriesStepIDField" : ["DateTime"], "seriesDataType" : "TDADateTime", "type" : "relative_time_series"
+			}
+		}
+	}
+],
+"comment - dataflow definition end" : " ========================================================================",
+"comment - processing node section" : "Specification details for the processing nodes",
+"comment - processNodes definition start" : " ========================================================================",
+"processNodeSequence" : ["LoadDataM2", "PrepDataM2", "executeModelM2"],
+"processNodes" : [
+	{
+	"processNodeName" : "LoadDataM2",
+	"requiredFields" : {
+		"processType" : "dataLoad", "inputFlows" : [], "outputFlow" : "MMN_dev_M2"
+	},
+	"conditionalFields" : {
+		"dataLoadCtrl" : {
+			"comment file spec" : "d:\\brian\\AI-Projects\\tda\\market_analysis_data\\[a-z]*.csv",
+			"inputFile" : [
+				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\c.csv"
+			]
+		}
+	}
+	},
+	{
+	"processNodeName" : "PrepDataM2",
+	"requiredFields" : {
+		"processType" : "dataPrep", "inputFlows" : ["MMN_dev_M2"], "outputFlow" : "MMN_dev_M2_Prepared"
+	},
+	"conditionalFields" : {
+		"dataPrepCtrl" : {		
+			"ignoreBlanks" : true,
+			"preparationSequence" : ["normalize", "oneHotEncoding"],
+			"noPreparation" : {
+				"features" : [
+				]
+			},
+			"normalize" : {
+				"comment types supported" : ["standard", "minmax", "relative_time_series"],
+				"type" : "relative_time_series",
+				"features" : [
+					{"feature" : "BB_Upper"},
+					{"feature" : "BB_Lower"},
+					{"feature" : "EMA20"},
+					{"feature" : "Open"},
+					{"feature" : "High"},
+					{"feature" : "Low"},
+					{"feature" : "Close"}
+				]
+			},
+			"oneHotEncoding" : {
+				"features" : [
+					{"feature" : "10day10pct", "categoryType" : "label", "comment" : "True/False"}
+				]
+			}
+		}
+	}
+	},
+	{
+	"processNodeName" : "executeModelM2",
+	"requiredFields" : {
+		"processType" : "executeModel", "inputFlows" : ["MMN_dev_M2_Prepared"], "outputFlow" : ""
+	},
+	"conditionalFields" : {
+		"executeModelCtrl" : {
+			"trainedModelFile" : "d:\\brian\\AI-Projects\\models\\rnn\\lstm\\BB\\BB_013 20230709 065759",
+			"synchronizationFeature" : "DateTime",
+			"outputLabels" : ["probability10pct10d"],
+			"outputFile" : "d:\\brian\\AI-Projects\\internal_flows\\MMN_dev_M2_output.csv"
+		}
+	}
+	}
+],
+"comment end of specification" : "------------------------------------------------------------------------------------"
+}

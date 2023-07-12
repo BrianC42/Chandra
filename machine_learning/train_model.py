@@ -21,6 +21,7 @@ from configuration_constants import JSON_VERBOSE
 from configuration_constants import JSON_SHUFFLE_DATA
 from configuration_constants import JSON_MODEL_FILE_DIR
 from configuration_constants import JSON_ITERATION_ID
+from configuration_constants import JSON_TENSORBOARD
 
 from TrainingDataAndResults import TRAINING_AUTO_KERAS
 
@@ -53,7 +54,7 @@ def trainModel(d2r):
         nx_verbose = iterTraining[JSON_VERBOSE]
         nx_shuffle = iterTraining[JSON_SHUFFLE_DATA]
         
-        iterTensorboard = iterParamters["tensorboard"]
+        iterTensorboard = iterParamters[JSON_TENSORBOARD]
         logDir = iterTensorboard["log file dir"]
         logFile = logDir + iterationID + timeStamp
         tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=logFile, \
@@ -78,6 +79,10 @@ def trainModel(d2r):
         if d2r.trainer == TRAINING_AUTO_KERAS:
             d2r.model = d2r.model.export_model()
         d2r.model.save(modelFileName)
+        if hasattr(d2r, 'scaler'):
+            print("=========================== WIP ===========================\n\tNeed to archive the scaler used during training")
+        else:
+            print("No scaler to save")
 
         keras.utils.plot_model(d2r.model, to_file=modelFileName + '.png', show_shapes=True)
 

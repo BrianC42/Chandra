@@ -57,7 +57,6 @@ class chandraScaler():
         return self
     
     def transformRelativeTimeSeries(self):
-        #print("Normalizing relative time series features")
         for feature in range (0, self.dfFeatures.shape[1]):
             for sample in range (0, self.dfFeatures.shape[0]):
                 val = self.dfFeatures.iat[sample, feature]
@@ -117,25 +116,25 @@ class chandraScaler():
         return self.npNormalizedFeatures
     
     def fit_transform(self):
-        raise NameError('method not implemented')
+        raise NameError('class chandraScaler method fit_transform not implemented')
         return 
         
     def get_feature_names_out(self):
-        raise NameError('method not implemented')
+        raise NameError('class chandraScaler method get_feature_names_out not implemented')
         return 
         
     def get_params(self):
-        raise NameError('method not implemented')
+        raise NameError('class chandraScaler method get_params not implemented')
         return 
         
     def inverse_transform(self):
-        raise NameError('method not implemented')
+        raise NameError('class chandraScaler method inverse_transform not implemented')
         return 
 
     def partial_fit(self):
-        raise NameError('method not implemented')
+        raise NameError('class chandraScaler method partial_fit not implemented')
         return 
     
     def set_params(self):
-        raise NameError('method not implemented')
+        raise NameError('class chandraScaler method set_params not implemented')
         return 

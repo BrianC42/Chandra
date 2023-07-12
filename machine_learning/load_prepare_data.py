@@ -14,6 +14,7 @@ import networkx as nx
 import pandas as pd
 import numpy as np
 import tensorflow as tf
+import configuration_constants as cc
 
 from sklearn import preprocessing
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
@@ -21,59 +22,6 @@ from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
 from Scalers import chandraScaler
 #from Scalers import NORMALIZE_RELATIVE_TIME_SERIES
-
-from configuration_constants import JSON_PRECISION
-from configuration_constants import JSON_OUTPUT_FLOW
-from configuration_constants import JSON_INPUT_DATA_FILE
-from configuration_constants import JSON_IGNORE_BLANKS
-from configuration_constants import JSON_FLOW_DATA_FILE
-from configuration_constants import JSON_INPUT_FLOWS
-from configuration_constants import JSON_PROCESS_TYPE
-from configuration_constants import JSON_DATA_LOAD_PROCESS
-
-from configuration_constants import JSON_ML_GOAL
-from configuration_constants import JSON_ML_GOAL_CATEGORIZATION
-from configuration_constants import JSON_ML_GOAL_REGRESSION
-from configuration_constants import JSON_ML_REGRESSION_FORECAST_INTERVAL
-from configuration_constants import JSON_DATA_PREP_PROCESS
-from configuration_constants import JSON_DATA_PREPARATION_CTRL
-from configuration_constants import JSON_DATA_PREP_FEATURES
-from configuration_constants import JSON_DATA_PREP_FEATURE
-from configuration_constants import JSON_BALANCED
-from configuration_constants import JSON_DATA_PREP_NORMALIZE
-from configuration_constants import JSON_DATA_PREP_NORMALIZATION_TYPE
-from configuration_constants import JSON_DATA_PREP_NORMALIZE_STANDARD
-from configuration_constants import JSON_DATA_PREP_NORMALIZE_MINMAX
-from configuration_constants import JSON_DATA_PREP_NORMALIZE_RELATIVE_TIME_SERIES
-from configuration_constants import JSON_ML_GOAL_COMBINE_SAMPLE_COUNT
-from configuration_constants import JSON_DATA_PREP_SEQ
-from configuration_constants import JSON_DATA_PREP_ENCODING
-from configuration_constants import JSON_TENSORFLOW
-from configuration_constants import JSON_AUTOKERAS
-from configuration_constants import JSON_FEATURE_FIELDS
-from configuration_constants import JSON_TARGET_FIELDS
-from configuration_constants import JSON_VALIDATION_SPLIT
-from configuration_constants import JSON_TEST_SPLIT
-
-from configuration_constants import JSON_TIME_SEQ
-from configuration_constants import JSON_SERIES_ID
-from configuration_constants import JSON_SERIES_DATA_TYPE
-from configuration_constants import JSON_TIMESTEPS
-
-from configuration_constants import JSON_1HOT_CATEGORYTYPE
-from configuration_constants import JSON_1HOT_CATEGORIES
-from configuration_constants import JSON_1HOT_LABEL
-from configuration_constants import JSON_1HOT_OUTPUTFIELDS
-from configuration_constants import JSON_1HOT_SERIES_UP_DOWN
-'''
-from configuration_constants import JSON_BALANCED
-from configuration_constants import JSON_1HOT_ENCODING
-from configuration_constants import JSON_1HOT_FIELD
-from configuration_constants import JSON_1HOT_SERIESTREND
-from configuration_constants import JSON_CONV1D
-from configuration_constants import JSON_FILTER_COUNT
-from configuration_constants import JSON_FILTER_SIZE
-'''
 
 from TrainingDataAndResults import MODEL_TYPE
 from TrainingDataAndResults import INPUT_LAYERTYPE_DENSE
@@ -99,9 +47,9 @@ def loadTrainingData(d2r):
     try:
         err_txt = "*** An exception occurred preparing the training data for the model ***"
 
-        nx_input_flow = nx.get_node_attributes(d2r.graph, JSON_INPUT_FLOWS)[d2r.mlNode]
+        nx_input_flow = nx.get_node_attributes(d2r.graph, cc.JSON_INPUT_FLOWS)[d2r.mlNode]
         print("\nLoading prepared data defined in flow: %s" % nx_input_flow[0])
-        nx_data_file = nx.get_edge_attributes(d2r.graph, JSON_FLOW_DATA_FILE)
+        nx_data_file = nx.get_edge_attributes(d2r.graph, cc.JSON_FLOW_DATA_FILE)
         inputData = nx_data_file[d2r.mlEdgeIn[0], d2r.mlEdgeIn[1], nx_input_flow[0]]    
         if os.path.isfile(inputData):
             d2r.data = pd.read_csv(inputData)
@@ -289,9 +237,9 @@ def balance_classes(d2r, model_type, categorization):
 def combineMultipleSamples(d2r, model_goal, combineCount, forecastInterval, data_precision, feature_cols, target_cols):
     npData   = np.array(d2r.data, dtype=float)
     numSamples = len(d2r.data)
-    if model_goal == JSON_ML_GOAL_CATEGORIZATION:
+    if model_goal == cc.JSON_ML_GOAL_CATEGORIZATION:
         numBatches = numSamples - combineCount
-    elif  model_goal == JSON_ML_GOAL_REGRESSION:
+    elif  model_goal == cc.JSON_ML_GOAL_REGRESSION:
         numBatches = numSamples - combineCount - forecastInterval
     features = np.zeros([numBatches, len(feature_cols) * combineCount], dtype=data_precision)
     labels = np.zeros([numBatches, len(target_cols)], dtype=data_precision)
@@ -301,9 +249,9 @@ def combineMultipleSamples(d2r, model_goal, combineCount, forecastInterval, data
             startCol = stepndx * len(feature_cols)
             endCol = startCol + len(feature_cols)
             features[ndx, startCol : endCol] = npData[ndx + stepndx, feature_cols]
-        if model_goal == JSON_ML_GOAL_CATEGORIZATION:
+        if model_goal == cc.JSON_ML_GOAL_CATEGORIZATION:
             labelNdx = ndx + stepndx + forecastInterval
-        elif  model_goal == JSON_ML_GOAL_REGRESSION:
+        elif  model_goal == cc.JSON_ML_GOAL_REGRESSION:
             labelNdx = ndx + stepndx + forecastInterval
         labels[ndx, : ] = npData[labelNdx, target_cols]
     d2r.feature_count = features.shape[1]
@@ -357,9 +305,59 @@ def arrangeDataForTrainedModels(d2r):
     Assumes all data loading, feature selection, normalization and encoding has been completed
     '''
     try:
-        err_txt = "\nError arranging data for existing model use"
+        err_txt = "\nError arranging data for prediction by a trained model"
         print("\n============== WIP =============\n\tArranging data for use by an existing model")
     
+        features = d2r.preparedFeatures
+        targets = d2r.preparedTargets
+        feature_cols, target_cols = id_columns(d2r.data, features, targets)
+        
+        print("Removing NaN")
+        d2r.data = d2r.data.dropna()
+        for dKey in list(d2r.dataDict):
+            d2r.dataDict[dKey] = d2r.dataDict[dKey].dropna()
+
+        print("\n============== WIP =============\n\tIf the model was trained on normalized data the prediction data needs to be trained with the same normalization")
+
+        '''
+        nx_read_attr = nx.get_node_attributes(d2r.graph, cc.JSON_PROCESS_TYPE)
+        '''
+        print("\n============== WIP =============\n\tmodel characteristics are not defined and are hard coded")
+        d2r.mlNode = "executeModelM1"
+        modelType = cc.JSON_TENSORFLOW
+        inputLayerType = INPUT_LAYERTYPE_RNN
+        nx_time_steps = 5
+        
+        if modelType == cc.JSON_TENSORFLOW:
+            print("\n============== WIP =============\n\tPreparing the data for prediction as defined in: {} of type {}".format(d2r.mlNode, modelType))
+            if inputLayerType == INPUT_LAYERTYPE_DENSE:
+                raise NameError('Model type {} is not yet supported'.format(modelType))
+                
+            elif inputLayerType == INPUT_LAYERTYPE_RNN:
+                d2r.timesteps = nx_time_steps
+
+                npX = np.zeros([0, d2r.timesteps, len(feature_cols)], dtype=float)
+                #npY = np.zeros([0, len(target_cols)], dtype=float)
+
+                for dkey in d2r.normDataDict:
+                    npData   = np.array(d2r.normDataDict[dkey], dtype=float)
+                    features, labels = np_to_sequence(npData, feature_cols, target_cols, nx_time_steps)
+                    npX = np.row_stack((npX, features))
+                    #npY = np.row_stack((npY, labels))
+
+                d2r.dataX = npX[ : , :]
+                #d2r.dataY = npY[ : , :]
+                
+            elif inputLayerType == INPUT_LAYERTYPE_CNN:
+                raise NameError('Model type {} is not yet supported'.format(modelType))
+
+        elif modelType == cc.JSON_AUTOKERAS:    
+            print("\n============== WIP =============\n\tPreparing the data for prediction as defined in: {} of type {}".format(d2r.mlNode, modelType))
+            raise NameError('Model type {} is not yet supported'.format(modelType))
+            
+        else:
+            raise NameError('Model type {} is not supported'.format(modelType))
+
     except Exception:
         exc_info = sys.exc_info()
         exc_str = exc_info[1].args[0]
@@ -390,18 +388,18 @@ def arrangeDataForTraining(d2r):
         iterParamters = iterVariables["iteration parameters"]
         iterTraining = iterParamters["training"]
     
-        nx_test_split = iterTraining[JSON_TEST_SPLIT]        
-        nx_validation_split = iterTraining[JSON_VALIDATION_SPLIT]        
+        nx_test_split = iterTraining[cc.JSON_TEST_SPLIT]        
+        nx_validation_split = iterTraining[cc.JSON_VALIDATION_SPLIT]        
     
-        nx_read_attr = nx.get_node_attributes(d2r.graph, JSON_PROCESS_TYPE)
-        if nx_read_attr[d2r.mlNode] == JSON_TENSORFLOW:    
+        nx_read_attr = nx.get_node_attributes(d2r.graph, cc.JSON_PROCESS_TYPE)
+        if nx_read_attr[d2r.mlNode] == cc.JSON_TENSORFLOW:    
             print("Preparing the data for training as defined in: %s" % d2r.mlNode)
             d2r.trainLen = int(len(d2r.data) * (1-(nx_test_split+nx_validation_split)))
             d2r.validateLen = int(len(d2r.data) * nx_validation_split)
             d2r.testLen = int(len(d2r.data) * nx_test_split)
     
-            nx_data_precision = nx.get_node_attributes(d2r.graph, JSON_PRECISION)[d2r.mlNode]
-            nx_combine_sample_Count = nx.get_node_attributes(d2r.graph, JSON_ML_GOAL_COMBINE_SAMPLE_COUNT)[d2r.mlNode]            
+            nx_data_precision = nx.get_node_attributes(d2r.graph, cc.JSON_PRECISION)[d2r.mlNode]
+            nx_combine_sample_Count = nx.get_node_attributes(d2r.graph, cc.JSON_ML_GOAL_COMBINE_SAMPLE_COUNT)[d2r.mlNode]            
             
             ''' Create Numpy arrays suitable for training, training validation and later testing from Pandas dataframe '''
             data        = np.array(d2r.data, dtype=nx_data_precision)
@@ -413,14 +411,14 @@ def arrangeDataForTraining(d2r):
                 d2r.normDataDict = d2r.dataDict
             
             nx_model_type = nx.get_node_attributes(d2r.graph, MODEL_TYPE)[d2r.mlNode]
-            nx_regression_forecast_interval = nx.get_node_attributes(d2r.graph, JSON_ML_REGRESSION_FORECAST_INTERVAL)[d2r.mlNode]
+            nx_regression_forecast_interval = nx.get_node_attributes(d2r.graph, cc.JSON_ML_REGRESSION_FORECAST_INTERVAL)[d2r.mlNode]
  
-            nx_categorization_regression = nx.get_node_attributes(d2r.graph, JSON_ML_GOAL)[d2r.mlNode]
+            nx_categorization_regression = nx.get_node_attributes(d2r.graph, cc.JSON_ML_GOAL)[d2r.mlNode]
             d2r.categorizationRegression = nx_categorization_regression
             #sanityCheckMACD(combined=d2r.data)
    
             if nx_model_type == INPUT_LAYERTYPE_DENSE:
-                if d2r.categorizationRegression == JSON_ML_GOAL_CATEGORIZATION:
+                if d2r.categorizationRegression == cc.JSON_ML_GOAL_CATEGORIZATION:
                     if nx_combine_sample_Count > 1:
                         features, labels = combineMultipleSamples(d2r, d2r.categorizationRegression, nx_combine_sample_Count, \
                                                                   nx_regression_forecast_interval, nx_data_precision, feature_cols, target_cols)
@@ -438,7 +436,7 @@ def arrangeDataForTraining(d2r):
                     d2r.testX = features[d2r.trainLen + d2r.validateLen : , :]
                     d2r.testY = labels[d2r.trainLen + d2r.validateLen : , :]
                     d2r.feature_count = features.shape[1]
-                elif  d2r.categorizationRegression == JSON_ML_GOAL_REGRESSION:
+                elif  d2r.categorizationRegression == cc.JSON_ML_GOAL_REGRESSION:
                     if nx_combine_sample_Count > 1:
                         features, labels = combineMultipleSamples(d2r, d2r.categorizationRegression, nx_combine_sample_Count, \
                                                                   nx_regression_forecast_interval, nx_data_precision, feature_cols, target_cols)
@@ -458,7 +456,7 @@ def arrangeDataForTraining(d2r):
                     d2r.feature_count = features.shape[1]
                 
             elif nx_model_type == INPUT_LAYERTYPE_RNN:
-                nx_time_steps = nx.get_node_attributes(d2r.graph, JSON_TIMESTEPS)[d2r.mlNode]
+                nx_time_steps = nx.get_node_attributes(d2r.graph, cc.JSON_TIMESTEPS)[d2r.mlNode]
                 d2r.timesteps = nx_time_steps
 
                 npX = np.zeros([0, d2r.timesteps, len(feature_cols)], dtype=float)
@@ -512,8 +510,8 @@ def arrangeDataForTraining(d2r):
                 d2r.testX     = npX[d2r.trainLen + d2r.validateLen:, :,  :]
                 d2r.testY     = npY[d2r.trainLen + d2r.validateLen:, :,  :]
 
-        elif nx_read_attr[d2r.mlNode] == JSON_AUTOKERAS:    
-            nx_data_precision = nx.get_node_attributes(d2r.graph, JSON_PRECISION)[d2r.mlNode]
+        elif nx_read_attr[d2r.mlNode] == cc.JSON_AUTOKERAS:    
+            nx_data_precision = nx.get_node_attributes(d2r.graph, cc.JSON_PRECISION)[d2r.mlNode]
             
             d2r.trainLen = int(len(d2r.data) * (1-(nx_test_split+nx_validation_split)))
             d2r.validateLen = int(len(d2r.data) * nx_validation_split)
@@ -538,7 +536,7 @@ def arrangeDataForTraining(d2r):
             d2r.testY = d2r.testY.to_frame()
 
         ''' =================== Sanity check of data preparation processing ===================
-        if nx_read_attr[d2r.mlNode] == JSON_TENSORFLOW:    
+        if nx_read_attr[d2r.mlNode] == cc.JSON_TENSORFLOW:    
             if nx_model_type == INPUT_LAYERTYPE_DENSE:
                 pass
             elif nx_model_type == INPUT_LAYERTYPE_RNN:
@@ -546,16 +544,16 @@ def arrangeDataForTraining(d2r):
             elif nx_model_type == INPUT_LAYERTYPE_CNN:
                 sanityCheckMACD(npX=d2r.trainX, npY=d2r.trainY, stage="arranged")
                 d2r.visualize_categorization_samples()
-        elif nx_read_attr[d2r.mlNode] == JSON_AUTOKERAS:
+        elif nx_read_attr[d2r.mlNode] == cc.JSON_AUTOKERAS:
             pass
         =================== Sanity check of data preparation processing =================== '''
 
-        nx_dataBalanced = nx.get_node_attributes(d2r.graph, JSON_BALANCED)[d2r.mlNode]
+        nx_dataBalanced = nx.get_node_attributes(d2r.graph, cc.JSON_BALANCED)[d2r.mlNode]
         if nx_dataBalanced:
             balance_classes(d2r, nx_model_type, d2r.categories)
         
         ''' =================== Sanity check of data preparation processing ===================
-        if nx_read_attr[d2r.mlNode] == JSON_TENSORFLOW:    
+        if nx_read_attr[d2r.mlNode] == cc.JSON_TENSORFLOW:    
             if nx_model_type == INPUT_LAYERTYPE_DENSE:
                 pass
             elif nx_model_type == INPUT_LAYERTYPE_RNN:
@@ -563,7 +561,7 @@ def arrangeDataForTraining(d2r):
             elif nx_model_type == INPUT_LAYERTYPE_CNN:
                 sanityCheckMACD(npX=d2r.trainX, npY=d2r.trainY, stage="after balancing")
                 d2r.visualize_categorization_samples()
-        elif nx_read_attr[d2r.mlNode] == JSON_AUTOKERAS:
+        elif nx_read_attr[d2r.mlNode] == cc.JSON_AUTOKERAS:
             pass
         =================== Sanity check of data preparation processing =================== '''
         
@@ -598,11 +596,11 @@ def generate1hot(d2r, fields, fieldPrepCtrl):
     for field in fields:
         data = d2r.data[field]
         fieldPrep = fieldPrepCtrl[ndxField]
-        if fieldPrep[JSON_1HOT_CATEGORYTYPE] == JSON_1HOT_SERIES_UP_DOWN:
+        if fieldPrep[cc.JSON_1HOT_CATEGORYTYPE] == cc.JSON_1HOT_SERIES_UP_DOWN:
             ''' Prepare categorized feature - feature float value compared to previous sample, <, =, >'''
             print("Converting features %s to 1 hot format in d2r.data" % field)
-            categories = fieldPrep[JSON_1HOT_CATEGORIES]
-            outputFields = fieldPrep[JSON_1HOT_OUTPUTFIELDS]
+            categories = fieldPrep[cc.JSON_1HOT_CATEGORIES]
+            outputFields = fieldPrep[cc.JSON_1HOT_OUTPUTFIELDS]
             
             oneHot = pd.DataFrame([[0,0]], columns=outputFields)
             for i in range(1, len(data)):
@@ -619,7 +617,7 @@ def generate1hot(d2r, fields, fieldPrepCtrl):
                 categorizedData = categorizedData.assign(temp=oneHot[col])
                 categorizedData = categorizedData.rename(columns={'temp':col})                
 
-        elif fieldPrep[JSON_1HOT_CATEGORYTYPE] == JSON_1HOT_LABEL:
+        elif fieldPrep[cc.JSON_1HOT_CATEGORYTYPE] == cc.JSON_1HOT_LABEL:
             ''' Prepare categorized labels '''
             categories, counts = np.unique(d2r.data[field].to_numpy(), return_counts=True)
 
@@ -659,12 +657,12 @@ def generate1hot(d2r, fields, fieldPrepCtrl):
         ndxField = 0
         for field in fields:
             fieldPrep = fieldPrepCtrl[ndxField]
-            if fieldPrep[JSON_1HOT_CATEGORYTYPE] == JSON_1HOT_SERIES_UP_DOWN:
+            if fieldPrep[cc.JSON_1HOT_CATEGORYTYPE] == cc.JSON_1HOT_SERIES_UP_DOWN:
                 ''' Prepare categorized labels '''
                 ex_txt = "generate1hot\nWIP .......................\n\tConverting up/down to 1 hot format"
                 raise NameError(ex_txt)
                 
-            elif fieldPrep[JSON_1HOT_CATEGORYTYPE] == JSON_1HOT_LABEL:
+            elif fieldPrep[cc.JSON_1HOT_CATEGORYTYPE] == cc.JSON_1HOT_LABEL:
                 ''' Prepare categorized labels '''
                 categories, counts = np.unique(d2r.normDataDict[dKey][field].to_numpy(), return_counts=True)
 
@@ -699,15 +697,16 @@ def generate1hot(d2r, fields, fieldPrepCtrl):
 def normalizeFeature(d2r, fields, fieldPrepCtrl, normalizeType):
     #sanityCheckMACD(combined=d2r.data, stage="d2r.data prior to normalization")
 
-    if normalizeType == JSON_DATA_PREP_NORMALIZE_STANDARD:
+    if normalizeType == cc.JSON_DATA_PREP_NORMALIZE_STANDARD:
         d2r.scaler = StandardScaler()
-    elif normalizeType == JSON_DATA_PREP_NORMALIZE_MINMAX:
+    elif normalizeType == cc.JSON_DATA_PREP_NORMALIZE_MINMAX:
         d2r.scaler = MinMaxScaler(feature_range=(0,1))
-    elif normalizeType == JSON_DATA_PREP_NORMALIZE_RELATIVE_TIME_SERIES:
+    elif normalizeType == cc.JSON_DATA_PREP_NORMALIZE_RELATIVE_TIME_SERIES:
         cs = chandraScaler()
         d2r.scaler = cs.relativeTimeSeries()
         
     if len(fields) > 0:
+        print("Normalizing data as relative time series")
         normalizedFields = d2r.data[fields]
         
         d2r.scaler = d2r.scaler.fit(normalizedFields)
@@ -748,11 +747,11 @@ def prepareTrainingData(d2r):
         d2r.normalized = False
         
         for node_i in d2r.graph.nodes():
-            nx_read_attr = nx.get_node_attributes(d2r.graph, JSON_PROCESS_TYPE)
-            if nx_read_attr[node_i] == JSON_DATA_PREP_PROCESS:
+            nx_read_attr = nx.get_node_attributes(d2r.graph, cc.JSON_PROCESS_TYPE)
+            if nx_read_attr[node_i] == cc.JSON_DATA_PREP_PROCESS:
                 #print("Preparing data in %s" % node_i)
             
-                nx_outputFlow = nx.get_node_attributes(d2r.graph, JSON_OUTPUT_FLOW)
+                nx_outputFlow = nx.get_node_attributes(d2r.graph, cc.JSON_OUTPUT_FLOW)
                 output_flow = nx_outputFlow[node_i]
 
                 d2r.preparedFeatures = []
@@ -760,23 +759,23 @@ def prepareTrainingData(d2r):
 
                 nx_output_data_file = ""
                 nx_input_data_file = ""
-                nx_inputFlows = nx.get_node_attributes(d2r.graph, JSON_INPUT_FLOWS)
+                nx_inputFlows = nx.get_node_attributes(d2r.graph, cc.JSON_INPUT_FLOWS)
                 for input_flow in nx_inputFlows[node_i]:
                     for edge_i in d2r.graph.edges():
                         if edge_i[0] == node_i:
-                            nx_output_data_files = nx.get_edge_attributes(d2r.graph, JSON_FLOW_DATA_FILE)
+                            nx_output_data_files = nx.get_edge_attributes(d2r.graph, cc.JSON_FLOW_DATA_FILE)
                             nx_output_data_file = nx_output_data_files[edge_i[0], edge_i[1], output_flow]
                             
-                            nx_dataFields = nx.get_edge_attributes(d2r.graph, JSON_FEATURE_FIELDS)
+                            nx_dataFields = nx.get_edge_attributes(d2r.graph, cc.JSON_FEATURE_FIELDS)
                             d2r.preparedFeatures = nx_dataFields[edge_i[0], edge_i[1], output_flow]
     
-                            nx_targetFields = nx.get_edge_attributes(d2r.graph, JSON_TARGET_FIELDS)
+                            nx_targetFields = nx.get_edge_attributes(d2r.graph, cc.JSON_TARGET_FIELDS)
                             d2r.preparedTargets = nx_targetFields[edge_i[0], edge_i[1], output_flow]    
 
                         if edge_i[1] == node_i:
-                            nx_input_data_files = nx.get_edge_attributes(d2r.graph, JSON_FLOW_DATA_FILE)
+                            nx_input_data_files = nx.get_edge_attributes(d2r.graph, cc.JSON_FLOW_DATA_FILE)
                             nx_input_data_file = nx_input_data_files[edge_i[0], edge_i[1], input_flow]    
-                            nx_seriesDataType = nx.get_edge_attributes(d2r.graph, JSON_SERIES_DATA_TYPE)
+                            nx_seriesDataType = nx.get_edge_attributes(d2r.graph, cc.JSON_SERIES_DATA_TYPE)
                             if nx_seriesDataType == {}:
                                 d2r.seriesDataType = ""
                             else:
@@ -789,33 +788,33 @@ def prepareTrainingData(d2r):
                     ex_txt = node_i + ", input file " + nx_input_data_file + " does not exist"
                     raise NameError(ex_txt)
 
-                js_prepCtrl = nx.get_node_attributes(d2r.graph, JSON_DATA_PREPARATION_CTRL)[node_i]
-                if JSON_IGNORE_BLANKS in js_prepCtrl:
-                    if js_prepCtrl[JSON_IGNORE_BLANKS]:
+                js_prepCtrl = nx.get_node_attributes(d2r.graph, cc.JSON_DATA_PREPARATION_CTRL)[node_i]
+                if cc.JSON_IGNORE_BLANKS in js_prepCtrl:
+                    if js_prepCtrl[cc.JSON_IGNORE_BLANKS]:
                         print("Removing NaN")
                         d2r.data = d2r.data.dropna()
                         for dKey in list(d2r.dataDict):
                             d2r.dataDict[dKey] = d2r.dataDict[dKey].dropna()
        
-                if JSON_DATA_PREP_SEQ in js_prepCtrl:
+                if cc.JSON_DATA_PREP_SEQ in js_prepCtrl:
                     normalizeFields = []
                     categorizeFields = []
-                    for prep in js_prepCtrl[JSON_DATA_PREP_SEQ]:
+                    for prep in js_prepCtrl[cc.JSON_DATA_PREP_SEQ]:
                         prepCtrl = js_prepCtrl[prep]
                         fieldPrepCtrl = []
-                        for feature in prepCtrl[JSON_DATA_PREP_FEATURES]:
-                            if prep == JSON_DATA_PREP_NORMALIZE:
-                                normalizeFields.append(feature[JSON_DATA_PREP_FEATURE])
+                        for feature in prepCtrl[cc.JSON_DATA_PREP_FEATURES]:
+                            if prep == cc.JSON_DATA_PREP_NORMALIZE:
+                                normalizeFields.append(feature[cc.JSON_DATA_PREP_FEATURE])
                                 fieldPrepCtrl.append(feature)
-                            elif prep == JSON_DATA_PREP_ENCODING:
-                                categorizeFields.append(feature[JSON_DATA_PREP_FEATURE])
+                            elif prep == cc.JSON_DATA_PREP_ENCODING:
+                                categorizeFields.append(feature[cc.JSON_DATA_PREP_FEATURE])
                                 fieldPrepCtrl.append(feature)
                             else:
                                 ex_txt = node_i + ", prep type is not specified"
                                 raise NameError(ex_txt)
-                        if prep == JSON_DATA_PREP_NORMALIZE:
-                            normalizeFeature(d2r, normalizeFields, fieldPrepCtrl, prepCtrl[JSON_DATA_PREP_NORMALIZATION_TYPE])
-                        elif prep == JSON_DATA_PREP_ENCODING:
+                        if prep == cc.JSON_DATA_PREP_NORMALIZE:
+                            normalizeFeature(d2r, normalizeFields, fieldPrepCtrl, prepCtrl[cc.JSON_DATA_PREP_NORMALIZATION_TYPE])
+                        elif prep == cc.JSON_DATA_PREP_ENCODING:
                             generate1hot(d2r, categorizeFields, fieldPrepCtrl)
                         else:
                             ex_txt = node_i + ", prep type is not specified"
@@ -844,23 +843,23 @@ def selectTrainingData(d2r, node_name, nx_edge):
     '''
     Select required data elements and discard the rest
     '''
-    nx_data_flow = nx.get_node_attributes(d2r.graph, JSON_OUTPUT_FLOW)
+    nx_data_flow = nx.get_node_attributes(d2r.graph, cc.JSON_OUTPUT_FLOW)
     output_flow = nx_data_flow[node_name]
     
-    nx_dataFields = nx.get_edge_attributes(d2r.graph, JSON_FEATURE_FIELDS)
+    nx_dataFields = nx.get_edge_attributes(d2r.graph, cc.JSON_FEATURE_FIELDS)
     d2r.rawFeatures = nx_dataFields[nx_edge[0], nx_edge[1], output_flow]
     
-    nx_targetFields = nx.get_edge_attributes(d2r.graph, JSON_TARGET_FIELDS)
+    nx_targetFields = nx.get_edge_attributes(d2r.graph, cc.JSON_TARGET_FIELDS)
     d2r.rawTargets = nx_targetFields[nx_edge[0], nx_edge[1], output_flow]
     
-    nx_timeSeries = nx.get_edge_attributes(d2r.graph, JSON_TIME_SEQ)
+    nx_timeSeries = nx.get_edge_attributes(d2r.graph, cc.JSON_TIME_SEQ)
     d2r.timeSeries = nx_timeSeries[nx_edge[0], nx_edge[1], output_flow]
     if d2r.timeSeries:
-        nx_seriesStepIDs = nx.get_edge_attributes(d2r.graph, JSON_SERIES_ID)
+        nx_seriesStepIDs = nx.get_edge_attributes(d2r.graph, cc.JSON_SERIES_ID)
         d2r.dataSeriesIDFields = nx_seriesStepIDs[nx_edge[0], nx_edge[1], output_flow]
     
     df_combined = pd.DataFrame()
-    nx_data_file = nx.get_node_attributes(d2r.graph, JSON_INPUT_DATA_FILE)
+    nx_data_file = nx.get_node_attributes(d2r.graph, cc.JSON_INPUT_DATA_FILE)
     for dataFile in nx_data_file[node_name]:
         fileSpecList = glob.glob(dataFile)
         fileCount = len(fileSpecList)
@@ -900,14 +899,14 @@ def collect_and_select_data(d2r):
         err_txt = "*** An exception occurred collecting and selecting the data ***"
 
         for node_i in d2r.graph.nodes():
-            nx_read_attr = nx.get_node_attributes(d2r.graph, JSON_PROCESS_TYPE)
-            if nx_read_attr[node_i] == JSON_DATA_LOAD_PROCESS:
-                nx_data_flow = nx.get_node_attributes(d2r.graph, JSON_OUTPUT_FLOW)
+            nx_read_attr = nx.get_node_attributes(d2r.graph, cc.JSON_PROCESS_TYPE)
+            if nx_read_attr[node_i] == cc.JSON_DATA_LOAD_PROCESS:
+                nx_data_flow = nx.get_node_attributes(d2r.graph, cc.JSON_OUTPUT_FLOW)
                 output_flow = nx_data_flow[node_i]
                 for edge_i in d2r.graph.edges():
                     if edge_i[0] == node_i:
                         err_txt = "*** An exception occurred analyzing the flow details in the json configuration file ***"
-                        nx_flowFilename = nx.get_edge_attributes(d2r.graph, JSON_FLOW_DATA_FILE)
+                        nx_flowFilename = nx.get_edge_attributes(d2r.graph, cc.JSON_FLOW_DATA_FILE)
                         flowFilename = nx_flowFilename[edge_i[0], edge_i[1], output_flow]
                         d2r.data = selectTrainingData(d2r, node_i, edge_i)
                         d2r.determineCategories()

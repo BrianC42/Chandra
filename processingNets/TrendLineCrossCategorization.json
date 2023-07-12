@@ -1,18 +1,14 @@
 {
-"comment - processing node section" : "Specification details for the processing nodes",
 "comment - description" : "Experimental categorization model to identify MACD_flag based on MACD and MACD_Signal",
 "comment - dataflow section" : "Specification details for the flows of data between processing nodes",
 "dataFlows" : [
 	{
 	"flowName" : "TrendLineCross",
 	"requiredFields" : {
-		"flowFrom" : "LoadData",
-		"flowTo" : "PrepData",
-		"flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\TrendLineCross.csv"
+		"flowFrom" : "LoadData", "flowTo" : "PrepData", "flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\TrendLineCross.csv"
 		},
 	"conditionalFields" : {
 		"TensorflowData" : {
-			"balanceClasses" : true, "ignoreBlanks" : true,
 			"features" : ["MACD", "MACD_Signal"],
 			"targets" : ["MACD_flag"],
 			"timeSequence" : true, "seriesStepIDField" : ["DateTime"], "seriesDataType" : "TDADateTime", "type" : "relative_time_series"
@@ -22,9 +18,7 @@
 	{
 	"flowName" : "TrendLineCrossPrepared",
 	"requiredFields" : {
-		"flowFrom" : "PrepData",
-		"flowTo" : "TrendLineCross",
-		"flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\TrendLineCrossPrepared.csv"
+		"flowFrom" : "PrepData", "flowTo" : "TrendLineCross", "flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\TrendLineCrossPrepared.csv"
 		},
 	"conditionalFields" : {
 		"TensorflowData" : {
@@ -36,19 +30,20 @@
 	}
 ],
 "comment - dataflow" : "definition end",
+"comment - processing node section" : "Specification details for the processing nodes",
+"comment - processNodes definition start" : " ========================================================================",
+"processNodeSequence" : ["LoadData", "PrepData", "TrendLineCross"],
 "processNodes" : [
 	{
 	"processNodeName" : "LoadData",
 	"requiredFields" : {
-		"processType" : "dataLoad",
-		"inputFlows" : [],
-		"outputFlow" : "TrendLineCross"
+		"processType" : "dataLoad", "inputFlows" : [], "outputFlow" : "TrendLineCross"
 	},
 	"conditionalFields" : {
 		"dataLoadCtrl" : {
 			"comment file spec" : "d:\\brian\\AI-Projects\\tda\\market_analysis_data\\[a-z]*.csv",
 			"inputFile" : [
-				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\zm.csv"
+				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\c.csv"
 			]
 		}
 	}
@@ -60,6 +55,7 @@
 	},
 	"conditionalFields" : {
 		"dataPrepCtrl" : {
+			"ignoreBlanks" : true, 
 			"preparationSequence" : ["normalize", "oneHotEncoding"],
 			"noPreparation" : {
 				"features" : [
@@ -84,25 +80,19 @@
 	{
 	"processNodeName" : "TrendLineCross",
 	"comment - description" : "Recurrent model categorizing MACD flag (-1, 0 1)",
-	"requiredFields" : {
-		"processType" : "Tensorflow",
-		"inputFlows" : ["TrendLineCrossPrepared"],
-		"outputFlow" : ""
-	},
+	"requiredFields" : {"processType" : "Tensorflow", "inputFlows" : ["TrendLineCrossPrepared"], "outputFlow" : ""},
 	"conditionalFields" : {
 		"categorizationRegression" : "categorization",
-		"dataPrecision" : "float32",
+		"dataPrecision" : "float32", "balanceClasses" : true, "combineSampleCount" : 4,
 		"comment visualizations" : ["summary", "trainingFit", "CategorizedTimeSeries", "categoryMatrix"],
 		"visualizations" : ["summary", "categoryMatrix"],
 		"training iterations" : [
 			{
 			"iteration parameters" : {
-				"modelFileDir" : "d:\\brian\\AI-Projects\\models\\rnn\\lstm\\TrendLineCross\\",
 				"iteration ID" : "MACD_Flag_adam_1",
+				"modelFileDir" : "d:\\brian\\AI-Projects\\models\\rnn\\lstm\\TrendLineCross\\",
+				"tensorboard" : {"log file dir" : "d:\\brian\\AI-Projects\\logs\\tensorboard\\categorization\\lstm\\TrendLineCross\\MACD-Flag\\"},
 				"forecastInterval" : 0,
-				"data arrangement" : {
-					"combineSampleCount" : 4
-					},
 				"modelLayers" : [
     				{"layerName" : "input", "layerType" : "lstm", "featureCount": 2, "timeSteps": 5, "layerUnits" : 256, "returnSequences" : false, "outputActivation" : "linear"},
 					{"layerName" : "dropout1", "layerType" : "dropout", "dropoutRate" : 0.2},
@@ -115,10 +105,7 @@
 					"batchSize" : 16, "epochs" : 7, "validationSplit" : 0.1, "testSplit" : 0.2,
 					"shuffle" : false, "balanceClasses" : true,	"verbose" : 2,
 					"optimizer" : {"name" : "adam", "learning_rate" : 0.001}, "compilationLoss" : "categorical_crossentropy", "compilationMetrics" : ["categorical_crossentropy"]
-				},
-				"tensorboard" : {
-					"log file dir" : "d:\\brian\\AI-Projects\\logs\\tensorboard\\categorization\\lstm\\TrendLineCross\\MACD-Flag\\"
-					}
+				}
 				}
 			}
 		]

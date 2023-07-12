@@ -1,18 +1,14 @@
 {
-"comment - description" : "Experimental configuration file to develop the use of existing models to generate training data",
-"comment - processing node section" : "Specification details for the processing nodes",
+"comment - description 1" : "Experimental configuration file to develop the use of existing models to generate training data",
+"comment - description 2" : "Existing model used: TBD",
 "comment - dataflow section" : "Specification details for the flows of data between processing nodes",
 "dataFlows" : [
 	{
-	"flowName" : "TrendLineCross",
+	"flowName" : "MMN_dev_M1",
 	"requiredFields" : {
-		"flowFrom" : "LoadData",
-		"flowTo" : "PrepData",
-		"flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\TrendLineCross.csv"
-		},
+		"flowFrom" : "LoadDataM1", "flowTo" : "PrepDataM1", "flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\MMN_dev_M1.csv"},
 	"conditionalFields" : {
 		"TensorflowData" : {
-			"balanceClasses" : true, "ignoreBlanks" : true,
 			"features" : ["MACD", "MACD_Signal"],
 			"targets" : ["MACD_flag"],
 			"timeSequence" : true, "seriesStepIDField" : ["DateTime"], "seriesDataType" : "TDADateTime", "type" : "relative_time_series"
@@ -20,11 +16,9 @@
 		}
 	},
 	{
-	"flowName" : "TrendLineCrossPrepared",
+	"flowName" : "MMN_dev_M1_Prepared",
 	"requiredFields" : {
-		"flowFrom" : "PrepData",
-		"flowTo" : "executeModel",
-		"flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\TrendLineCrossPrepared.csv"
+		"flowFrom" : "PrepDataM1", "flowTo" : "executeModelM1", "flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\MMN_dev_M1_prepared.csv"
 		},
 	"conditionalFields" : {
 		"TensorflowData" : {
@@ -36,14 +30,14 @@
 	}
 ],
 "comment - dataflow definition end" : " ========================================================================",
+"comment - processing node section" : "Specification details for the processing nodes",
 "comment - processNodes definition start" : " ========================================================================",
+"processNodeSequence" : ["LoadDataM1", "PrepDataM1", "executeModelM1"],
 "processNodes" : [
 	{
-	"processNodeName" : "LoadData",
+	"processNodeName" : "LoadDataM1",
 	"requiredFields" : {
-		"processType" : "dataLoad",
-		"inputFlows" : [],
-		"outputFlow" : "TrendLineCross"
+		"processType" : "dataLoad", "inputFlows" : [], "outputFlow" : "MMN_dev_M1"
 	},
 	"conditionalFields" : {
 		"dataLoadCtrl" : {
@@ -55,12 +49,13 @@
 	}
 	},
 	{
-	"processNodeName" : "PrepData",
+	"processNodeName" : "PrepDataM1",
 	"requiredFields" : {
-		"processType" : "dataPrep", "inputFlows" : ["TrendLineCross"], "outputFlow" : "TrendLineCrossPrepared"
+		"processType" : "dataPrep", "inputFlows" : ["MMN_dev_M1"], "outputFlow" : "MMN_dev_M1_Prepared"
 	},
 	"conditionalFields" : {
-		"dataPrepCtrl" : {
+		"dataPrepCtrl" : {		
+			"ignoreBlanks" : true,
 			"preparationSequence" : ["normalize", "oneHotEncoding"],
 			"noPreparation" : {
 				"features" : [
@@ -83,14 +78,17 @@
 	}
 	},
 	{
-	"processNodeName" : "executeModel",
+	"processNodeName" : "executeModelM1",
 	"requiredFields" : {
-		"processType" : "executeModel",
-		"inputFlows" : ["TrendLineCrossPrepared"],
-		"outputFlow" : ""
+		"processType" : "executeModel", "inputFlows" : ["MMN_dev_M1_Prepared"], "outputFlow" : ""
 	},
 	"conditionalFields" : {
-		"executeModelCtrl" : {	}
+		"executeModelCtrl" : {
+			"trainedModelFile" : "d:\\brian\\AI-Projects\\models\\rnn\\lstm\\macd\\MACD_Best 20230704 110719",
+			"synchronizationFeature" : "DateTime",
+			"outputLabels" : ["MACD_sell", "MACD_neutral", "MACD_buy"],
+			"outputFile" : "d:\\brian\\AI-Projects\\internal_flows\\MMN_dev_M1_output.csv"
+		}
 	}
 	}
 ],

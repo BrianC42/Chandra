@@ -1,5 +1,8 @@
 {
-"comment - description" : "Experimental processing network to execute multiple existing models and use the outputs to train a 3rd model",
+"comment - description 1" : "Experimental processing network to execute multiple existing models and use the outputs to train a 3rd model",
+"comment - description 2" : "Approach - use the following pre-trained models",
+"comment - description 3" : "1. Bollinger Band technical analysis - probability of a 10% increase in 10 days",
+"comment - description 4" : "2. MACD technical analysis - identifies MACD trend line cross negative / none / positive",
 "comment - dataflow begin" : "dataflows definition begin -------------------------------------------------------------------------------",
 "dataFlows" : [
 	{
@@ -7,7 +10,6 @@
 	"requiredFields" : {"flowFrom" : "ModelOne", "flowTo" : "DataCombine", "flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\TrainMultipleModelM1.csv" },
 	"conditionalFields" : {
 		"TensorflowData" : {
-			"balanceClasses" : true, "ignoreBlanks" : true,
 			"features" : ["xxx", "xxx"],
 			"targets" : ["xxx"],
 			"timeSequence" : true, "seriesStepIDField" : ["DateTime"], "seriesDataType" : "TDADateTime", "type" : "relative_time_series"
@@ -19,7 +21,6 @@
 	"requiredFields" : {"flowFrom" : "ModelTwo", "flowTo" : "DataCombine", "flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\TrainMultipleModelM2.csv" },
 	"conditionalFields" : {
 		"TensorflowData" : {
-			"balanceClasses" : true, "ignoreBlanks" : true,
 			"features" : ["xxx", "xxx"],
 			"targets" : ["xxx"],
 			"timeSequence" : true, "seriesStepIDField" : ["DateTime"], "seriesDataType" : "TDADateTime", "type" : "relative_time_series"
@@ -31,7 +32,6 @@
 	"requiredFields" : {"flowFrom" : "DataCombine", "flowTo" : "DataPrepare", "flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\TrainMultipleModelCombined.csv" },
 	"conditionalFields" : {
 		"TensorflowData" : {
-			"balanceClasses" : true, "ignoreBlanks" : true,
 			"features" : ["xxx", "xxx"],
 			"targets" : ["xxx"],
 			"timeSequence" : true, "seriesStepIDField" : ["DateTime"], "seriesDataType" : "TDADateTime", "type" : "relative_time_series"
@@ -52,12 +52,15 @@
 ],
 "comment - dataflow end " : "dataflows definition end -------------------------------------------------------------------------------",
 "comment - processNodes" : "process node definitions beginh -------------------------------------------------------------------------",
+"processNodeSequence" : ["ModelOne", "ModelTwo", "stop", "DataCombine", "DataPrepare", "TrainMultipleModelOutputs"],
 "processNodes" : [
 	{
 	"processNodeName" : "ModelOne",
 	"requiredFields" : {"processType" : "executeModel", "inputFlows" : [], "outputFlow" : "ModelOneOutput"},
 	"conditionalFields" : {
 		"executeCtrl" : {
+			"processNetDir" : "\\chandra\\processingNets\\",
+			"executionControl" : "ExecuteModelDevelopment1.json"
 		}
 	}
 	},
@@ -66,6 +69,8 @@
 	"requiredFields" : {"processType" : "executeModel", "inputFlows" : [], "outputFlow" : "ModelTwoOutput"},
 	"conditionalFields" : {
 		"executeCtrl" : {
+			"processNetDir" : "\\chandra\\processingNets\\",
+			"executionControl" : "ExecuteModelDevelopment2.json"
 		}
 	}
 	},
@@ -87,6 +92,7 @@
 	"requiredFields" : {"processType" : "dataPrep", "inputFlows" : ["CombinedData"], "outputFlow" : "PreparedData"},
 	"conditionalFields" : {
 		"dataPrepCtrl" : {
+			"ignoreBlanks" : true,
 			"preparationSequence" : ["normalize", "oneHotEncoding"],
 			"noPreparation" : {
 				"features" : [
@@ -113,18 +119,16 @@
 	"requiredFields" : {"processType" : "Tensorflow", "inputFlows" : ["PreparedData"], "outputFlow" : ""},
 	"conditionalFields" : {
 		"categorizationRegression" : "categorization",
-		"dataPrecision" : "float32",
+		"dataPrecision" : "float32", "balanceClasses" : true, "combineSampleCount" : 4,
 		"visualizations" : ["summary", "trainingFit", "CategorizedTimeSeries", "categoryMatrix"],
 		"training iterations" : [
 			{
+			"iteration description" : "TBD",
 			"iteration parameters" : {
-				"training iteration description" : "Recurrent model categorizing MACD flag (-1, 0 1)",
-				"modelFileDir" : "d:\\brian\\AI-Projects\\models\\rnn\\lstm\\TrendLineCross",
-				"iteration ID" : "adam_categorical_crossentropy",
+				"iteration ID" : "MMN_exp_001",
+				"modelFileDir" : "d:\\brian\\AI-Projects\\models\\rnn\\lstm\\MMN",
+				"tensorboard" : {"log file dir" : "d:\\brian\\AI-Projects\\logs\\tensorboard\\categorization\\lstm\\TrendLineCross\\"},
 				"forecastInterval" : 0,
-				"data arrangement" : {
-					"combineSampleCount" : 4
-					},
 				"modelLayers" : [
     				{"layerName" : "input", "layerType" : "lstm", "featureCount": 2, "timeSteps": 5, "layerUnits" : 256, "returnSequences" : true, "outputActivation" : "linear"},
 					{"layerName" : "hidden-lstm-1", "layerType" : "lstm", "timeSteps" : 5, "layerUnits" : 64, "returnSequences" : false, "outputActivation" : "linear"},
@@ -138,10 +142,7 @@
 					"batchSize" : 16, "epochs" : 5, "validationSplit" : 0.1, "testSplit" : 0.2,
 					"shuffle" : false, "balanceClasses" : true,	"verbose" : 2,
 					"optimizer" : {"name" : "adam", "learning_rate" : 0.001}, "compilationLoss" : "categorical_crossentropy", "compilationMetrics" : ["categorical_crossentropy"]
-				},
-				"tensorboard" : {
-					"log file dir" : "d:\\brian\\AI-Projects\\logs\\tensorboard\\categorization\\lstm\\TrendLineCross\\"
-					}
+				}
 				}
 			}
 		]
@@ -154,5 +155,12 @@
 	}
 ],
 "comment - processNodes end" : "process node definitions end -------------------------------------------------------------------------",
-"comment end of specification" : "----------------------------------------------------------------------------------------------------"
+"comment end of specification" : "----------------------------------------------------------------------------------------------------",
+"comment trial training iterations" : {
+	"comment indent 1" : {
+		"comment most successful" : "TBD",
+		"training iterations" : [		]
+	}
+}
+		
 }

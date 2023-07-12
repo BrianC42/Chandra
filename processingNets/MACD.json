@@ -1,5 +1,6 @@
 {
-"comment - description" : "Experimental categorization model to identify MACD_flag based on MACD and MACD_Signal",
+"comment - description 1" : "Experimental categorization model to identify MACD_flag based on MACD and MACD_Signal",
+"comment - description 2" : "Approach - use the MACD technical analysis",
 "comment - dataflow section" : "Specification details for the flows of data between processing nodes",
 "dataFlows" : [
 	{
@@ -9,7 +10,7 @@
 		},
 	"conditionalFields" : {
 		"TensorflowData" : {
-			"balanceClasses" : true, "ignoreBlanks" : true,
+			"ignoreBlanks" : true,
 			"features" : ["MACD", "MACD_Signal"],
 			"targets" : ["MACD_flag"],
 			"timeSequence" : true, "seriesStepIDField" : ["DateTime"], "seriesDataType" : "TDADateTime", "type" : "relative_time_series"
@@ -19,7 +20,7 @@
 	{
 	"flowName" : "TrendLineCrossPrepared",
 	"requiredFields" : {
-		"flowFrom" : "PrepData", "flowTo" : "TrendLineCross", "flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\TrendLineCrossPrepared.csv"
+		"flowFrom" : "PrepData", "flowTo" : "MACD_Train", "flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\TrendLineCrossPrepared.csv"
 		},
 	"conditionalFields" : {
 		"TensorflowData" : {
@@ -30,8 +31,9 @@
 		}
 	}
 ],
-"comment - dataflow" : "definition end",
+"comment - dataflow" : "dataflow definition end ----------------------------------------------------------------------------------",
 "comment - processing node section" : "Specification details for the processing nodes",
+"processNodeSequence" : ["LoadData", "PrepData", "MACD_Train"],
 "processNodes" : [
 	{
 	"processNodeName" : "LoadData",
@@ -42,18 +44,17 @@
 		"dataLoadCtrl" : {
 			"comment file spec" : "d:\\brian\\AI-Projects\\tda\\market_analysis_data\\[a-z]*.csv",
 			"inputFile" : [
-				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\[a-z]*.csv"
+				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\c.csv"
 			]
 		}
 	}
 	},
 	{
 	"processNodeName" : "PrepData",
-	"requiredFields" : {
-		"processType" : "dataPrep", "inputFlows" : ["TrendLineCross"], "outputFlow" : "TrendLineCrossPrepared"
-	},
+	"requiredFields" : {"processType" : "dataPrep", "inputFlows" : ["TrendLineCross"], "outputFlow" : "TrendLineCrossPrepared"},
 	"conditionalFields" : {
 		"dataPrepCtrl" : {
+			"ignoreBlanks" : true,
 			"preparationSequence" : ["normalize", "oneHotEncoding"],
 			"noPreparation" : {
 				"features" : [
@@ -76,7 +77,7 @@
 	}
 	},
 	{
-	"processNodeName" : "TrendLineCross",
+	"processNodeName" : "MACD_Train",
 	"requiredFields" : {
 		"processType" : "Tensorflow",
 		"inputFlows" : ["TrendLineCrossPrepared"],
@@ -84,17 +85,15 @@
 	},
 	"conditionalFields" : {
 		"categorizationRegression" : "categorization",
-		"dataPrecision" : "float32",
-		"visualizations" : ["summary", "trainingFit", "CategorizedTimeSeries", "categoryMatrix"],
+		"dataPrecision" : "float32", "balanceClasses" : true, "combineSampleCount" : 4,
+		"visualizations" : ["CategorizedTimeSeries", "categoryMatrix"],
 		"training iterations" : [
 			{
 			"iteration parameters" : {
+				"iteration ID" : "MACD_test001",
 				"modelFileDir" : "d:\\brian\\AI-Projects\\models\\rnn\\lstm\\MACD\\",
-				"iteration ID" : "MACD_Best",
+				"tensorboard" : {"log file dir" : "d:\\brian\\AI-Projects\\logs\\tensorboard\\categorization\\lstm\\MACD-Flag\\"},
 				"forecastInterval" : 0,
-				"data arrangement" : {
-					"combineSampleCount" : 4
-					},
 				"modelLayers" : [
     				{"layerName" : "input", "layerType" : "lstm", "featureCount": 2, "timeSteps": 5, "layerUnits" : 256, "returnSequences" : true, "outputActivation" : "tanh"},
 					{"layerName" : "hidden-lstm-1", "layerType" : "lstm", "timeSteps" : 5, "layerUnits" : 64, "returnSequences" : false, "outputActivation" : "tanh"},
@@ -108,10 +107,7 @@
 					"batchSize" : 16, "epochs" : 7, "validationSplit" : 0.1, "testSplit" : 0.2,
 					"shuffle" : false, "balanceClasses" : true,	"verbose" : 2,
 					"optimizer" : {"name" : "adam", "learning_rate" : 0.001}, "compilationLoss" : "categorical_crossentropy", "compilationMetrics" : ["categorical_crossentropy"]
-				},
-				"tensorboard" : {
-					"log file dir" : "d:\\brian\\AI-Projects\\logs\\tensorboard\\categorization\\lstm\\MACD-Flag\\"
-					}
+				}
 				}
 			}
 		]

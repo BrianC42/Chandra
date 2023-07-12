@@ -176,6 +176,8 @@ class Data2Results():
         normDataDict - copy of dataDict modified by preparation steps (normalization and conversion to 1 hot)
         rawData - source data for samples
         data - Source data samples, modified by preparation step and used to train, evaluate and test - DataFrame
+        dataX - Source data sample featuress, modified by preparation step and used for prediction with the trained model
+        dataY - Source data sample labels, modified by preparation step and used for prediction with the trained model 
         trainX - sample data used to train the model. Number of samples = trainLen - DataFrame
         trainY - values matching the trainX samples
         testX -  sample data used to test the model. Number of samples = testLen
@@ -219,7 +221,23 @@ class Data2Results():
     @rawData.setter
     def rawData(self, rawData):
         self._rawData = rawData
+
+    @property
+    def dataX(self):
+        return self._dataX
+    
+    @dataX.setter
+    def dataX(self, dataX):
+        self._dataX = dataX
         
+    @property
+    def dataY(self):
+        return self._dataY
+    
+    @dataY.setter
+    def dataY(self, dataY):
+        self._dataY = dataY
+
     @property
     def trainX(self):
         return self._trainX

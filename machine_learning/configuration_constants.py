@@ -90,14 +90,7 @@ LOGGING_FORMAT = '%(asctime)s: %(levelname)s: %(message)s'
 ''' ========================     configuration labels under development     ======================= '''
 ''' =============================================================================================== '''
 '''                                                                                                 '''
-JSON_EXECUTE_MODEL = "executeModel"
-JSON_STOP = "stop"
-JSON_ITERATION_PARAMETERS = "iteration parameters"
-JSON_TRAINING_DESCRIPTION = "training iteration description"
-JSON_TRAINING = "training"
-JSON_TRAINING_ITERATIONS = "training iterations"
-JSON_TENSORBOARD = "tensorboard"
-JSON_LOG_DIR = "log file dir"
+JSON_PROCESSING_SEQUENCE = "processNodeSequence"
 JSON_DEPRECATED  = "data arrangement"
 JSON_COMBINE_SAMPLE_COUNT  = "combineSampleCount"
 
@@ -108,13 +101,16 @@ JSON_COMBINE_SAMPLE_COUNT  = "combineSampleCount"
 ''' =============================================================================================== '''
 ''' ======================== Configuration file labels and supported values ======================= '''
 ''' =============================================================================================== '''
-'''                                                                                        segments '''
+
+'''                                                           configuration file structure segments '''
 JSON_PROCESS_NODES = 'processNodes'
 JSON_DATA_FLOWS = 'dataFlows'
 
 '''                                                                segments used in multiple places '''
 JSON_REQUIRED = "requiredFields"
 JSON_CONDITIONAL = "conditionalFields"
+JSON_OUTPUT_FILE = "outputFile"
+#JSON_CONDITIONAL_FIELDS = "conditionalFields"
 
 ''' ----------------------------------------------------------------------------------------------- '''
 '''                                                                    information flow definitions '''
@@ -139,6 +135,8 @@ JSON_SERIES_DATA_TYPE = "seriesDataType"
 
 ''' ----------------------------------------------------------------------------------------------- '''
 '''                                                                                processing nodes '''
+''' ----------------------------------------------------------------------------------------------- '''
+JSON_NODES = "processNodes"
 JSON_NODE_NAME = "processNodeName"
 '''                                                              controls used in multiple sections '''
 JSON_DATA_PREP_FEATURES = "features"
@@ -153,13 +151,23 @@ JSON_DATA_LOAD_PROCESS = "dataLoad"
 JSON_DATA_PREP_PROCESS = "dataPrep"
 JSON_TENSORFLOW = "Tensorflow"
 JSON_AUTOKERAS = "AutoKeras"
+JSON_EXECUTE_MODEL = "executeModel"
+JSON_STOP = "stop"
 '''  end of Supported values '''
 
-'''                                                                dataLoad node conditional fields '''
+'''                                           ================ executeModel node conditional fields '''
+JSON_EXECUTE_MODEL_CONTROL = "executeModelCtrl"
+JSON_TRAINED_MODEL_FILE = "trainedModelFile"
+JSON_SYNCHRONIZATION_FEATURE = "synchronizationFeature"
+JSON_OUTPUT_FEATURE_LABELS = "outputLabels"
+JSON_EXECUTE_CONTROL = "executeCtrl"
+JSON_EXECUTION_CONTROL = "executionControl"
+
+'''                                           ==================== dataLoad node conditional fields '''
 JSON_INPUT_DATA_PREPARATION = "dataLoadCtrl"
 JSON_INPUT_DATA_FILE= "inputFile"
 
-'''                                                                dataPrep node conditional fields '''
+'''                                           ==================== dataPrep node conditional fields '''
 JSON_DATA_PREP_CTRL = "dataPrepCtrl"
 JSON_DATA_PREPARATION_CTRL = "dataPrepCtrl"
 JSON_DATA_PREP_SEQ = "preparationSequence"
@@ -178,7 +186,7 @@ JSON_DATA_PREP_NORMALIZE_RELATIVE_TIME_SERIES = 'relative_time_series'
 JSON_DATA_PREP_ENCODING = "oneHotEncoding"
 JSON_1HOT_CATEGORYTYPE = "categoryType"
 
-'''                                                              Tensorflow node conditional fields '''
+'''                                            ================= Tensorflow node conditional fields '''
 JSON_ML_GOAL = "categorizationRegression"
 '''  Supported values - categorizationRegression'''
 JSON_ML_GOAL_CATEGORIZATION = "categorization"
@@ -194,10 +202,15 @@ JSON_VISUALIZE_TARGET_SERIES = "targetSeries"
 '''  end of Supported values '''
 
 '''                                                                      training iteration control '''
+JSON_ITERATION_PARAMETERS = "iteration parameters"
+JSON_TRAINING_DESCRIPTION = "training iteration description"
+JSON_TRAINING = "training"
 JSON_TRAINING_ITERATIONS = "training iterations"
 JSON_ITERATION_ID = "iteration ID"
 JSON_ML_REGRESSION_FORECAST_INTERVAL = "forecastInterval"
 JSON_MODEL_FILE_DIR = "modelFileDir"
+JSON_TENSORBOARD = "tensorboard"
+JSON_LOG_DIR = "log file dir"
 
 '''                  data combination used to present serial data to dense and convolutional models '''
 JSON_ML_GOAL_COMBINE_SAMPLE_COUNT = "combineSampleCount"
