@@ -7,6 +7,7 @@ import sys
 import os
 import glob
 import logging
+import pickle
 #import time
 #import tkinter
 
@@ -318,6 +319,13 @@ def arrangeDataForTrainedModels(d2r):
             d2r.dataDict[dKey] = d2r.dataDict[dKey].dropna()
 
         print("\n============== WIP =============\n\tIf the model was trained on normalized data the prediction data needs to be trained with the same normalization")
+        scalerFile = 'd:\\brian\\AI-Projects\\models\\rnn\\lstm\\TrendLineCross\\TLCC_test001 20230712 154802 scaler XXX.pkl'
+        if os.path.isfile(scalerFile):
+            with open(scalerFile, 'rb') as pf:
+                d2r.scaler = pickle.load(pf)
+            pf.close()
+        else:
+            raise NameError("Specified data normalization file\n\t{}\n\tdoes not exist".format(scalerFile))
 
         '''
         nx_read_attr = nx.get_node_attributes(d2r.graph, cc.JSON_PROCESS_TYPE)

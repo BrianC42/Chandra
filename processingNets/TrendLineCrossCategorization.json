@@ -85,13 +85,13 @@
 		"categorizationRegression" : "categorization",
 		"dataPrecision" : "float32", "balanceClasses" : true, "combineSampleCount" : 4,
 		"comment visualizations" : ["summary", "trainingFit", "CategorizedTimeSeries", "categoryMatrix"],
-		"visualizations" : ["summary", "categoryMatrix"],
+		"visualizations" : ["categoryMatrix"],
 		"training iterations" : [
 			{
 			"iteration parameters" : {
-				"iteration ID" : "MACD_Flag_adam_1",
+				"iteration ID" : "TLCC_test001",
 				"modelFileDir" : "d:\\brian\\AI-Projects\\models\\rnn\\lstm\\TrendLineCross\\",
-				"tensorboard" : {"log file dir" : "d:\\brian\\AI-Projects\\logs\\tensorboard\\categorization\\lstm\\TrendLineCross\\MACD-Flag\\"},
+				"tensorboard" : {"log file dir" : "d:\\brian\\AI-Projects\\logs\\tensorboard\\categorization\\lstm\\TrendLineCross\\"},
 				"forecastInterval" : 0,
 				"modelLayers" : [
     				{"layerName" : "input", "layerType" : "lstm", "featureCount": 2, "timeSteps": 5, "layerUnits" : 256, "returnSequences" : false, "outputActivation" : "linear"},

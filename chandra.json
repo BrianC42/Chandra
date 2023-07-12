@@ -9,7 +9,7 @@
 "loggingFormat" : "%(asctime)s: %(levelname)s: %(message)s",
 "processNet" : "\\chandra\\processingNets\\MultiModelNetwork.json",
 "processNetDir" : "\\chandra\\processingNets\\",
-"processNetConfiguration" : "BollingerBands.json",
+"processNetConfiguration" : "MultiModelNetwork.json",
 "comment end of specification" : "---------------------------------------------------------------------------",
 "comment - processing networks" : {
 	"00" : "|=============================================================================================|",

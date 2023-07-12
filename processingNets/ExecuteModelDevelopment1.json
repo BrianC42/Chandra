@@ -85,6 +85,7 @@
 	"conditionalFields" : {
 		"executeModelCtrl" : {
 			"trainedModelFile" : "d:\\brian\\AI-Projects\\models\\rnn\\lstm\\macd\\MACD_Best 20230704 110719",
+			"balanceClasses" : true,
 			"synchronizationFeature" : "DateTime",
 			"outputLabels" : ["MACD_sell", "MACD_neutral", "MACD_buy"],
 			"outputFile" : "d:\\brian\\AI-Projects\\internal_flows\\MMN_dev_M1_output.csv"

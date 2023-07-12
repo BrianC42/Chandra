@@ -105,6 +105,7 @@ JSON_COMBINE_SAMPLE_COUNT  = "combineSampleCount"
 '''                                                           configuration file structure segments '''
 JSON_PROCESS_NODES = 'processNodes'
 JSON_DATA_FLOWS = 'dataFlows'
+JSON_SCALER_ID = ' scaler'
 
 '''                                                                segments used in multiple places '''
 JSON_REQUIRED = "requiredFields"

@@ -91,6 +91,7 @@
 	"conditionalFields" : {
 		"executeModelCtrl" : {
 			"trainedModelFile" : "d:\\brian\\AI-Projects\\models\\rnn\\lstm\\BB\\BB_013 20230709 065759",
+			"balanceClasses" : true,
 			"synchronizationFeature" : "DateTime",
 			"outputLabels" : ["probability10pct10d"],
 			"outputFile" : "d:\\brian\\AI-Projects\\internal_flows\\MMN_dev_M2_output.csv"
