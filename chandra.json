@@ -9,7 +9,7 @@
 "loggingFormat" : "%(asctime)s: %(levelname)s: %(message)s",
 "processNet" : "\\chandra\\processingNets\\MultiModelNetwork.json",
 "processNetDir" : "\\chandra\\processingNets\\",
-"processNetConfiguration" : "MultiModelNetwork.json",
+"processNetConfiguration" : "BollingerBands.json",
 "comment end of specification" : "---------------------------------------------------------------------------",
 "comment - processing networks" : {
 	"00" : "|=============================================================================================|",
@@ -28,6 +28,7 @@
 	"52" : "|             Dense            |           Convolution         |           Recurrent          |",
 	"53" : "|---------------------------------------------------------------------------------------------|",
 	"60" : "|                              |                               | MACD                         |",
+	"60" : "|                              |                               | MACDTrend                    |",
 	"61" : "|                              |                               | TrendLineCrossCategorization |",
 	"63" : "|                              |                               | BollingerBands               |",
 	"64" : "|                              |                               |                              |",

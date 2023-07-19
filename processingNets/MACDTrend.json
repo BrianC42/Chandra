@@ -1,0 +1,115 @@
+{
+"comment - description" : "Experimental categorization model to identify MACD_flag based on MACD and MACD_Signal",
+"comment - dataflow section" : "Specification details for the flows of data between processing nodes",
+"dataFlows" : [
+	{
+	"flowName" : "MACDTrendCross",
+	"requiredFields" : {"flowFrom" : "LoadData", "flowTo" : "PrepData", "flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\TrendLineCross.csv"},
+	"conditionalFields" : {
+		"TensorflowData" : {
+			"features" : ["MACD", "MACD_Signal"],
+			"targets" : ["MACD_flag"],
+			"timeSequence" : true, "seriesStepIDField" : ["DateTime"], "seriesDataType" : "TDADateTime", "type" : "relative_time_series"
+			}
+		}
+	},
+	{
+	"flowName" : "MACDTrendCrossPrepared",
+	"requiredFields" : {"flowFrom" : "PrepData", "flowTo" : "MACDTrendCross", "flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\TrendLineCrossPrepared.csv"},
+	"conditionalFields" : {
+		"TensorflowData" : {
+			"features" : ["MACD", "MACD_Signal"],
+			"targets" : ["MACD_flag"],
+			"timeSequence" : true, "seriesStepIDField" : ["DateTime"], "seriesDataType" : "TDADateTime", "type" : "relative_time_series"
+			}
+		}
+	}
+],
+"comment - dataflow" : "definition end ----------------------------------------------",
+"comment - processing node section" : "Specification details for the processing nodes",
+"processNodeSequence" : ["LoadData", "PrepData", "MACDTrendCross"],
+"processNodes" : [
+	{
+	"processNodeName" : "LoadData",
+	"requiredFields" : {"processType" : "dataLoad", "inputFlows" : [], "outputFlow" : "MACDTrendCross"},
+	"conditionalFields" : {
+		"dataLoadCtrl" : {
+			"comment file spec" : "d:\\brian\\AI-Projects\\tda\\market_analysis_data\\[a-z]*.csv",
+			"inputFile" : [
+				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\[a-z]*.csv"
+			]
+		}
+	}
+	},
+	{
+	"processNodeName" : "PrepData",
+	"requiredFields" : {"processType" : "dataPrep", "inputFlows" : ["MACDTrendCross"], "outputFlow" : "MACDTrendCrossPrepared"},
+	"conditionalFields" : {
+		"dataPrepCtrl" : {
+			"ignoreBlanks" : true,
+			"preparationSequence" : ["normalize", "oneHotEncoding"],
+			"noPreparation" : {
+				"features" : [
+				]
+			},
+			"normalize" : {
+				"comment types supported" : ["standard", "minmax", "relative_time_series"],
+				"type" : "relative_time_series",
+				"features" : [
+					{"feature" : "MACD"},
+					{"feature" : "MACD_Signal"}
+				]
+			},
+			"oneHotEncoding" : {
+				"features" : [
+					{"feature" : "MACD_flag", "categoryType" : "label"}
+				]
+			}
+		}
+	}
+	},
+	{
+	"processNodeName" : "MACDTrendCross",
+	"requiredFields" : {"processType" : "Tensorflow", "inputFlows" : ["MACDTrendCrossPrepared"], "outputFlow" : ""
+	},
+	"conditionalFields" : {
+		"categorizationRegression" : "categorization",
+		"dataPrecision" : "float32", "balanceClasses" : true, "combineSampleCount" : 4,
+		"visualizations" : ["CategorizedTimeSeries", "categoryMatrix"],
+		"training iterations" : [
+			{
+			"iteration description" : "categorical_crossentropy / [Accuracy, Precision, Recall] / sigmoid (unbalanced)",
+			"iteration parameters" : {
+				"iteration ID" : "MACD_TrendCross_Best",
+				"training iteration description" : "Recurrent model categorizing MACD flag (-1, 0 1) of trend line crossing",
+				"modelFileDir" : "d:\\brian\\AI-Projects\\models\\rnn\\lstm\\MACDTrendLineCross\\",
+				"tensorboard" : {"log file dir" : "d:\\brian\\AI-Projects\\logs\\tensorboard\\categorization\\lstm\\MACDTrendLineCross\\"},
+				"forecastInterval" : 0,
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 2, "timeSteps": 5, "layerUnits" : 256, "returnSequences" : true, "outputActivation" : "tanh"},
+					{"layerName" : "hidden-lstm-1", "layerType" : "lstm", "timeSteps" : 5, "layerUnits" : 64, "returnSequences" : false, "outputActivation" : "tanh"},
+					{"layerName" : "dropout1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerType" : "dense", "layerName" : "hiddenDense1", "layerUnits" : 32, "outputActivation" : "tanh"},
+					{"layerName" : "dropout2", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerType" : "dense", "layerName" : "output", "layerUnits": 3, "outputActivation" : "softmax"}
+					],
+				"training" : {
+					"verbose" : 2, "batchSize" : 16, "epochs" : 7, "validationSplit" : 0.1, "testSplit" : 0.2, "shuffle" : false,
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"optimizer" : {"name" : "adam", "learning_rate" : 0.001}, "compilationLoss" : "categorical_crossentropy", "compilationMetrics" : ["categorical_crossentropy"]
+				}
+				}
+			}
+		]
+	}
+	}
+],
+"comment end of specification" : "------------------------------------------------------------------------------------",
+"comment trial training iterations" : {
+	"comment indent 1" : {
+		"comment most successful" : "MACD_Flag_adam_4",
+		"training iterations" : [
+		]
+		}
+	}
+}
