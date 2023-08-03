@@ -47,7 +47,7 @@ def init_df_trading_strategy():
                                  'volatility', 'ADX', 'probability of loss', \
                                  'Purchase $', 'Earnings', 'Dividend', 'Current Holding', 'Qty', 'max gain APY', \
                                  'Max Profit', 'Risk Management', 'Loss vs. Profit', 'premium', 'commission', \
-                                 'Earnings Date', 'dividend Date', \
+                                 'Earnings Date', 'Dividend Date', \
                                  'delta','gamma', 'theta', 'vega', 'rho', \
                                  'in The Money', 'expiration Date', \
                                  'ROI', 'Max Loss', 'Preferred Outcome', 'Preferred Result', 'Unfavored Result' ])

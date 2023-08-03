@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 '''
 Created on Dec 6, 2021
 
@@ -15,7 +17,33 @@ Works fine in Tensorflow: 2.2.0
 dataset: https://finance.yahoo.com/quote/GE/history/
 Also try S&P: https://finance.yahoo.com/quote/%5EGSPC/history?p=%5EGSPC
 '''
-import tkinter
+
+''' Google workspace requirements start '''
+import os.path
+import json
+import pandas as pd
+import re
+from decimal import *
+
+from configuration import get_ini_data
+from configuration import read_config_json
+
+from google.auth.transport.requests import Request
+from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import InstalledAppFlow
+from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
+''' Google workspace requirements end '''
+
+import sys
+import glob
+import datetime
+from datetime import date
+from datetime import timedelta
+
+from tkinter import *
+from tkinter import ttk
+from tkinter.ttk import Combobox
 
 import numpy as np
 import pandas as pd
@@ -29,6 +57,23 @@ from sklearn.datasets import fetch_california_housing
 import tensorflow as tf
 from tensorflow import keras
 import autokeras as ak
+
+# The ID and range of a sample spreadsheet.
+EXP_SPREADSHEET_ID = "1XJNEWZ0uDdjCOvxJItYOhjq9kOhYtacJ3epORFn_fm4"
+DAILY_OPTIONS = "1T0yNe6EkLLpwzg_rLXQktSF1PCx1IcCX9hq9Xc__73U"
+        
+PROCESS_CONFIGS = "processes"
+MODEL_CONFIGS = "models"
+PROCESS_ID = "name"
+PROCESS_DESCRIPTION = "Description"
+RUN = "run"
+MODEL_FILE = "file"
+OUTPUT_FIELDS = "Outputs"
+CONFIG = "json"
+
+MMDDYYYY = 0
+YYYYMMDD = 1
+
 
 def autoKeras():
     
@@ -318,14 +363,1027 @@ def digitalSreeni_180():
 
     return
 
-if __name__ == '__main__':
-    answer = tkinter.messagebox.askyesno(title="box title", message="dialog message")
-    if answer:
-        print("true - yes")
-    else:
-        print("false - no")
-    #digitalSreeni_180()
-    #linear_regression()
-    #sine_wave_regression()
-    #autoKeras()
+def buildListofMarketDataFiles():
     
+    exc_txt = "\nAn exception occurred - unable to retrieve list of data files"
+
+    try:
+        symbols = []
+        dataFiles = []
+        
+        ''' Find local file directories '''
+        localDirs = get_ini_data("LOCALDIRS")
+        aiwork = localDirs['aiwork']
+        dataDir = aiwork + "\\tda\\market_analysis_data"
+
+        if os.path.exists(dataDir):
+            fileSpecList = glob.glob(dataDir + "\\" + "*.csv")
+            for fileSpec in fileSpecList:
+                subStr = fileSpec.split("\\")
+                symbol = subStr[len(subStr)-1].split(".")
+                if len(symbol) == 2:
+                    symbols.append(symbol[0])
+                    dataFiles.append(fileSpec)
+        else:
+            raise NameError("Error: data directory {} dose not exist".format(dataDir))
+    
+        symList = pd.DataFrame(data=dataFiles, index=symbols, columns=["dataFile"])
+
+    except Exception:
+        exc_info = sys.exc_info()
+        exc_str = exc_info[1].args[0]
+        exc_txt = exc_txt + "\n\t" + exc_str
+        sys.exit(exc_txt)
+
+    return symList
+
+def BollingerBandPrediction(symbol, dataFile):
+    
+    prediction = False
+    if os.path.exists(dataFile[0]):
+        pass
+
+    return prediction
+
+def MACDTrendPrediction(symbol, dataFile):
+    
+    prediction = [0.2, 0.6, 0.2]
+    if os.path.exists(dataFile[0]):
+        pass
+    
+    return prediction
+
+def mlPredictions(dictML):
+    print("\n======================================================= mlPredictions enter")
+    exc_txt = "\nAn exception occurred - mlPredictions"
+    
+    try:
+    
+        for model in iter(dictML):
+            print("Prediction {}: {}".format(model, dictML[model]))
+            
+        localDirs = get_ini_data("LOCALDIRS")
+        gitdir = localDirs['git']
+        #aiwork = localDirs['aiwork']
+        #models = localDirs['trainedmodels']
+        config_data = get_ini_data("DAILY_PROCESS")
+        appConfig = read_config_json(gitdir + config_data['config'])
+        appDefaults = appConfig["defaults"]
+        modelControlDefaults = appDefaults["mlModels"]
+        modelPrep = appConfig["models"]
+        for model in modelControlDefaults:
+            notFound = True
+            for ndxModel in iter(dictML):
+                if ndxModel == model["name"]:
+                    notFound = False
+                    if dictML[model["name"]]:
+                        if model["name"] == "Bollinger Band":
+                            dataFiles = buildListofMarketDataFiles()
+                            for sym in dataFiles.index:
+                                dataFile = dataFiles.loc[sym]
+                                prediction = BollingerBandPrediction(sym, dataFile)
+                        elif model["name"] == "MACD Trend":
+                            dataFiles = buildListofMarketDataFiles()
+                            for sym in dataFiles.index:
+                                dataFile = dataFiles.loc[sym]
+                                prediction = MACDTrendPrediction(sym, dataFile)
+                        else:
+                            raise NameError("Predictions using {} are not implemented".format(model["name"])) 
+                    break
+            if notFound:
+                raise NameError(exc_txt) 
+
+    except Exception:
+        exc_info = sys.exc_info()
+        exc_str = exc_info[1].args[0]
+        exc_txt = exc_txt + "\n\t" + exc_str
+        sys.exit(exc_txt)
+
+    return
+
+def tkInterExp(processCtrl):
+    print("\n======================================================= tkInterExp enter")
+    exc_txt = "\nAn exception occurred - tkInterExp"
+    
+    try:
+        
+        ROW_1 = 50
+        ROW_2 = 100
+        ROW_3 = 200
+        ROW_BUTTON = 300
+        ROW_HEIGHT = 20
+        
+        COL_1 = 100
+        COL_2 = 200
+        COL_3 = 300
+        
+        FORM_WIDTH = '600'
+        FORM_HEIGHT = '400'
+        FORM_BORDER = '10'
+        FORM_GEOMETRY = FORM_WIDTH + 'x' + FORM_HEIGHT + "+" + FORM_BORDER + "+" + FORM_BORDER
+
+        ''' Find local file directories '''
+        exc_txt = "\nAn exception occurred - unable to access local AppData information"
+        localDirs = get_ini_data("LOCALDIRS")
+        gitdir = localDirs['git']
+        aiwork = localDirs['aiwork']
+        trainedModels = localDirs['trainedmodels']
+        print("trainedmodels: {}".format((aiwork + "\\" + trainedModels)))
+
+        ''' read application specific configuration file '''
+        exc_txt = "\nAn exception occurred - unable to process configuration file"
+        config_data = get_ini_data("DAILY_PROCESS")
+        appConfig = read_config_json(gitdir + config_data['config'])
+        
+        ''' =================== Create input window =================== '''
+        exc_txt = "\nAn exception occurred - unable to create and process window"
+        window=Tk()
+        window.title('Morning Process Control')
+        
+        ''' =================== Create all input fields =================== '''
+        lblOps=Label(window, text="Operational processes", fg='blue', font=("ariel", 10))
+        lblOps.configure(bg="white")
+        lblOps.place(x=COL_1, y=(ROW_2 - ROW_HEIGHT))
+
+        processDetails = appConfig[PROCESS_CONFIGS]
+        processCheck = [IntVar()] * len(processDetails)
+        processButton = [None] * len(processDetails)
+        ndx = 0
+        for process in processDetails:
+            print(process[PROCESS_ID])
+            newd={PROCESS_ID : process[PROCESS_ID], \
+                  PROCESS_DESCRIPTION : process[PROCESS_DESCRIPTION], \
+                  RUN : process[RUN], \
+                  CONFIG : process}
+            processCtrl.loc[len(processCtrl)]=newd
+            processCheck[ndx] = IntVar()
+            processButton[ndx] = Checkbutton(window, text = processCtrl.loc[ndx][PROCESS_ID], variable = processCheck[ndx])
+            processButton[ndx].place(x=COL_1, y=ROW_2 + (ROW_HEIGHT * ndx))
+            ndx += 1
+
+        lblML=Label(window, text="Make machine learning predictions", fg='blue', font=("ariel", 10))
+        lblML.configure(bg="white")
+        lblML.place(x=COL_3, y=(ROW_2 - ROW_HEIGHT))
+
+        modelDetails = appConfig[MODEL_CONFIGS]
+        mlCheck = [IntVar()] * len(modelDetails)
+        mlButton = [None] * len(processDetails)
+        ndx = 0
+        for model in modelDetails:
+            print(model[PROCESS_ID])
+            newd={PROCESS_ID : model[PROCESS_ID], \
+                  PROCESS_DESCRIPTION : model[PROCESS_DESCRIPTION], \
+                  RUN : model[RUN], \
+                  MODEL_FILE : model[MODEL_FILE], \
+                  OUTPUT_FIELDS : model[OUTPUT_FIELDS], \
+                  CONFIG : model}
+            processCtrl.loc[len(processCtrl)]=newd
+            mlCheck[ndx] = IntVar()
+            mlButton[ndx] = Checkbutton(window, text = processCtrl.loc[ndx + len(processCheck)][PROCESS_ID], variable = mlCheck[ndx])
+            mlButton[ndx].place(x=COL_3, y=ROW_2 + (ROW_HEIGHT * ndx))
+            ndx += 1
+
+        ''' Select Google sheet file to use for market options details '''
+        localGoogleProject = open(aiwork + "\\Google_Project_Local.json", "rb")
+        jsonGoogle = json.load(localGoogleProject)
+        localGoogleProject.close
+        radioButton = [None] * len(jsonGoogle["Google sheets"])
+        radioValue = [IntVar()] * len(jsonGoogle["Google sheets"])
+        ndx = 0
+        for sheet in jsonGoogle["Google sheets"]:
+            print("Name: {}, ID: {}".format(sheet["name"], sheet["file ID"]))
+            radioButton[ndx] = Radiobutton(window, text=sheet["name"], variable = radioValue[ndx])
+            radioButton[ndx].place(x=COL_3, y=ROW_3 + (ROW_HEIGHT * ndx))
+            ndx += 1
+
+        ''' =================== create button to process inputs =================== '''
+        def go_button():
+            for ndx in range (len(processCheck)):
+                if processCheck[ndx].get() == 1:
+                    processCtrl.loc[ndx][RUN] = True
+            for ndx in range (len(mlCheck)):
+                if mlCheck[ndx].get() == 1:
+                    processCtrl.loc[ndx + len(processCheck)][RUN] = True
+            window.quit()
+
+        btn=Button(window, command=go_button, text="Run processes selected", fg='blue')
+        btn.place(x=COL_2, y=ROW_BUTTON)
+
+        ''' =================== Interact with user =================== '''
+        window.geometry(FORM_GEOMETRY)
+        window.mainloop()
+
+        print("User Interface completing")
+
+    except Exception:
+        exc_info = sys.exc_info()
+        exc_str = exc_info[1].args[0]
+        exc_txt = exc_txt + "\n\t" + exc_str
+        sys.exit(exc_txt)
+
+    return processCtrl
+
+def strToInt(value):
+    try:
+        value = value.replace(",", "")
+        return int(value)
+    
+    except ValueError:
+        return np.nan
+
+def strToFloat(value):
+    try:
+        value = value.replace("'", "")
+        value = value.replace(",", "")
+        return float(value)
+    
+    except ValueError:
+        return np.nan
+
+def dollarStrToFloat(value):
+    try:
+        if value == "-":
+            value = 0.0
+        else:
+            value = value.replace("'", "")
+            value = value.replace(",", "")
+            value = value.replace("$", "")
+        return float(value)
+    
+    except ValueError:
+        return np.nan
+
+def pctStrToFloat(value):
+    try:
+        if value == "-":
+            fVal = 0.0
+        else:
+            value = value.replace("'", "")
+            value = value.replace(",", "")
+            value = value.replace("%", "")
+            fVal = float(value)
+            fVal = fVal / 100
+        return float(fVal)
+    
+    except ValueError:
+        return np.nan
+
+def strToBool(value):
+    try:
+        if value == 'TRUE':
+            return True
+        elif value == 'FALSE':
+            return False
+
+    except ValueError:
+        return np.nan
+        
+def sheetStrToDate(value, fmt, dummy):
+    try:
+        yyyy = datetime.MINYEAR
+        mm = 1
+        dd = 1
+        sheetDate = date(yyyy, mm, dd)
+        
+        mo = re.search("/", value)
+        if mo == None:
+            mo = re.search("-", value)
+            if mo == None:
+                pass
+            else:
+                seperator = "-"
+        else:
+            seperator = "/"
+
+        if value == "-":
+            pass
+        else:
+            elems = re.split(seperator, value)
+            if fmt == MMDDYYYY:
+                yyyy = int(elems[2])
+                mm = int(elems[0])
+                dd = int(elems[1])
+            elif fmt == YYYYMMDD:
+                yyyy = int(elems[0])
+                mm = int(elems[1])
+                dd = int(elems[2])
+            else:
+                pass
+            sheetDate = date(yyyy, mm, dd)
+        
+        return sheetDate
+
+    except ValueError:
+        return sheetDate
+        
+def seperateSymbol(value):
+    try:
+        subStrs = re.split(',', value)
+        return subStrs[0]
+
+    except ValueError:
+        return np.nan
+
+def loadMarketOptionsFile():
+    
+    ''' Find local file directories '''
+    localDirs = get_ini_data("LOCALDIRS")
+    workDir = localDirs['aiwork']
+    optionsFile = workDir + "\\potential_option_trades.csv"
+
+    if os.path.isfile(optionsFile):
+        dfOptions = pd.read_csv(optionsFile)
+
+        ''' convert strings to appropriate data types '''
+        dfOptions['expiration'] = dfOptions['expiration'].apply(sheetStrToDate, args=(YYYYMMDD, np.NaN))
+        
+    else:
+        print("File containing options does not exist")
+
+    return dfOptions
+
+def loadHoldings(sheet):
+    
+    READ_RANGE = 'Holdings!A1:ZZ'
+    
+    result = sheet.values().get(spreadsheetId=EXP_SPREADSHEET_ID, range=READ_RANGE).execute()
+    values = result.get('values', [])
+    if not values:
+        print('\tNo data found.')
+
+    dfHoldings = pd.DataFrame(data=values[1:], columns=values[0])
+    
+    ''' convert strings to appropriate data types '''
+    dfHoldings['Current Holding'] = dfHoldings['Current Holding'].apply(strToInt)
+    dfHoldings['Purchase $'] = dfHoldings['Purchase $'].apply(dollarStrToFloat)
+    dfHoldings['Optioned'] = dfHoldings['Optioned'].apply(strToBool)
+    
+    ''' use the symbols as the index '''
+    dfHoldings = dfHoldings.set_index('Symbol')
+    
+    return dfHoldings
+
+def loadMarketDetails(sheet):
+    
+    READ_RANGE = 'TD Import Inf!A1:ZZ'                        
+
+    result = sheet.values().get(spreadsheetId=EXP_SPREADSHEET_ID, range=READ_RANGE).execute()
+    values = result.get('values', [])
+    if not values:
+        print('\tNo data found.')
+
+    dfMarketDetails = pd.DataFrame(data=values[1:], columns=values[0])
+
+    ''' convert strings to appropriate data types '''
+    dfMarketDetails['Symbol'] = dfMarketDetails['Symbol'].apply(seperateSymbol)
+    dfMarketDetails['Day Change %'] = dfMarketDetails['Day Change %'].apply(pctStrToFloat)
+    dfMarketDetails['Last Price'] = dfMarketDetails['Last Price'].apply(dollarStrToFloat)
+    dfMarketDetails['Dividend Yield %'] = dfMarketDetails['Dividend Yield %'].apply(pctStrToFloat)
+    dfMarketDetails['Dividend $'] = dfMarketDetails['Dividend $'].apply(dollarStrToFloat)
+    dfMarketDetails['Dividend Date'] = dfMarketDetails['Dividend Date'].apply(sheetStrToDate, args=(MMDDYYYY, np.NaN))
+    dfMarketDetails['P/E Ratio'] = dfMarketDetails['P/E Ratio'].apply(strToFloat)
+    dfMarketDetails['52 Week High'] = dfMarketDetails['52 Week High'].apply(dollarStrToFloat)
+    dfMarketDetails['52 Week Low'] = dfMarketDetails['52 Week Low'].apply(dollarStrToFloat)
+    dfMarketDetails['Volume'] = dfMarketDetails['Volume'].apply(strToInt)
+    # Sectore remains a string
+    dfMarketDetails['Earnings Date'] = dfMarketDetails['Earnings Date'].apply(sheetStrToDate, args=(MMDDYYYY, np.NaN))
+
+    ''' use the symbols as the index '''
+    dfMarketDetails = dfMarketDetails.set_index('Symbol')
+    
+    return dfMarketDetails
+    
+def prepMktOptionsForSheets(mktOptions):
+    sheetMktOption = mktOptions
+    
+    sheetMktOption['Dividend Date'] = sheetMktOption['Dividend Date'].apply(date.isoformat)
+    sheetMktOption['Earnings Date'] = sheetMktOption['Earnings Date'].apply(date.isoformat)
+    sheetMktOption['expiration'] = sheetMktOption['expiration'].apply(date.isoformat)
+        
+    return sheetMktOption
+
+def parseSheetErr(errText):
+    '''
+    <HttpError 400 when requesting https://sheets.googleapis.com/v4/spreadsheets/1XJNEWZ0uDdjCOvxJItYOhjq9kOhYtacJ3epORFn_fm4:batchUpdate?alt=json 
+    returned "Invalid requests[0].addSheet: A sheet with the name "chandra42" already exists. Please enter another name.". 
+    Details: "Invalid requests[0].addSheet: A sheet with the name "chandra42" already exists. Please enter another name.">
+    '''
+    
+    return 
+
+def openGoogleSheetService():
+    """
+    Google sheets API documentation
+    
+    https://cloud.google.com/apis/docs/client-libraries-explained
+    https://cloud.google.com/python/docs/reference
+    
+    https://google-auth.readthedocs.io/en/stable/user-guide.html
+    from google.auth.transport.requests import Request
+    from google.oauth2.credentials import Credentials
+    from google_auth_oauthlib.flow import InstalledAppFlow
+    from googleapiclient.discovery import build
+    from googleapiclient.errors import HttpError
+    
+    https://developers.google.com/sheets/api/guides/concepts
+    https://developers.google.com/sheets/api/reference/rest
+    https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/cells
+    
+    https://googleapis.github.io/google-api-python-client/docs/dyn/sheets_v4.spreadsheets.html
+    """
+    
+    # If modifying these scopes, delete the file token.json.
+    SCOPE_LIMITED = ['https://www.googleapis.com/auth/drive.file']
+    SCOPE_RO = ['https://www.googleapis.com/auth/spreadsheets.readonly']
+    SCOPE_RW = ['https://www.googleapis.com/auth/spreadsheets']
+
+    exc_txt = "\nAn exception occurred - unable to open Google sheets service"
+
+    try:
+
+        localDirs = get_ini_data("LOCALDIRS")
+        aiwork = localDirs['aiwork']
+    
+        ''' Google APIs '''
+        googleAuth = get_ini_data("GOOGLE")
+        GoogleTokenPath = aiwork + "\\" + googleAuth["token"]
+        credentialsPath = aiwork + "\\" + googleAuth["credentials"]
+    
+        '''
+        The file token.json stores the user's access and refresh tokens, and is
+        created automatically when the authorization flow completes for the first
+        time.
+        '''
+        creds = None
+
+        if os.path.exists(GoogleTokenPath):
+            creds = Credentials.from_authorized_user_file(GoogleTokenPath, SCOPE_RW)
+        # If there are no (valid) credentials available, let the user log in.
+        if not creds or not creds.valid:
+            if creds and creds.expired and creds.refresh_token:
+                creds.refresh(Request())
+            else:
+                flow = InstalledAppFlow.from_client_secrets_file(credentialsPath, SCOPE_RW)
+                creds = flow.run_local_server(port=0)
+            # Save the credentials for the next run
+            with open(GoogleTokenPath, 'w') as token:
+                token.write(creds.to_json())
+    
+        service = build('sheets', 'v4', credentials=creds)
+        gsheet = service.spreadsheets()
+
+    except Exception:
+        exc_info = sys.exc_info()
+        exc_str = exc_info[1].args[0]
+        sys.exit(exc_txt + "\n\t" + exc_str)
+
+    return gsheet
+
+def marketOprionsPopulate(row, col, dfHoldings, dfMarketData):
+    exc_txt = "Unable to determine purchase price"
+    
+    try:
+        symbol = row['symbol']
+        if symbol in dfHoldings.index:
+            if col == 'Purchase $' or col == 'Current Holding':
+                value = dfHoldings.loc[symbol][col]
+            if col == 'Earnings Date' or col == 'Dividend Date':
+                value = dfMarketData.loc[symbol][col]
+        else:
+            if col == 'Purchase $' or col == 'Current Holding':
+                value = 0.0
+            if col == 'Earnings Date' or col == 'Dividend Date':
+                yyyy = datetime.MINYEAR
+                mm = 1
+                dd = 1
+                sheetDate = date(yyyy, mm, dd)
+                value = sheetDate
+
+    except Exception:
+        exc_info = sys.exc_info()
+        exc_str = exc_info[1].args[0]
+        sys.exit(exc_txt + "\n\t" + exc_str)
+
+    return  value
+
+def dividendRisk(row):
+    exc_txt = "Unable to determine risk due to dividend date"
+    
+    try:
+        now = date.today()
+        if now > row['Dividend Date']:
+            riskStr = "2 - Div Past"
+        elif row['expiration'] > row['Dividend Date']:            
+            riskStr = "9 - Dividend"
+        else:
+            riskStr = "3 - TBD"
+
+    except Exception:
+        exc_info = sys.exc_info()
+        exc_str = exc_info[1].args[0]
+        sys.exit(exc_txt + "\n\t" + exc_str)
+
+    return  riskStr
+
+def earningsRisk(row):
+    exc_txt = "Unable to determine risk due to dividend date"
+    
+    try:
+        now = date.today()
+        if now > row['Earnings Date']:
+            riskStr = "1 - Earnings Past"
+        elif row['expiration'] <= row['Earnings Date']:            
+            riskStr = "2 - No earnings"
+        elif row['expiration'] > row['Earnings Date']:            
+            riskStr = "9 - Earnings"
+        else:
+            riskStr = "3 - Unknown"
+
+    except Exception:
+        exc_info = sys.exc_info()
+        exc_str = exc_info[1].args[0]
+        sys.exit(exc_txt + "\n\t" + exc_str)
+
+    return  riskStr
+
+def optionQty(row):
+    exc_txt = "Unable to determine qty of options to trade"
+    
+    try:
+        if row['strategy'] == "Covered call":
+            optQty = int(row['Current Holding'] / 100)
+        elif row['strategy'] == "Cash Secured Put":            
+            optQty = int(25000 / (row['underlying Price'] * 100))
+        else:
+            optQty = 0
+
+    except Exception:
+        exc_info = sys.exc_info()
+        exc_str = exc_info[1].args[0]
+        sys.exit(exc_txt + "\n\t" + exc_str)
+
+    return  optQty
+
+def annual_yield(discount, face_value, days_to_maturity):
+    """
+      Calculates the annual yield of a discount security.
+    
+      Args:
+        discount: The discount on the security.
+        face_value: The face value of the security.
+        days_to_maturity: The number of days until the security matures.
+    
+      Returns:
+        The annual yield of the security.
+    """
+    
+    annual_yield = (discount / face_value) * (365 / days_to_maturity) * 100
+    
+    return annual_yield
+
+def maxGainApy(row):
+    exc_txt = "Unable to determine maximum gain APY of options if traded"
+    try:
+        now = date.today()
+        exp = row['expiration']
+        dtm = timedelta()
+        dtm = exp - now
+        gain = row['Max Profit']
+        if row['Risk Management'] == "Current holding":
+            ''' yielddisc(today(),C{},((S{}*100)*E{}),((S{}*100)*E{})+U{})
+            YIELDDISC(
+                settlement,      now
+                maturity,        exp
+                price,           s * e * 100
+                redemption,      (s * e * 100) + u
+                [day_count_convention])
+            YIELDDISC(DATE(2010,01,02),DATE(2010,12,31),98.45,100)
+            col c = row['expiration']
+            col s = row['Qty']
+            col e = row['underlying Price']
+            col u = row['Max Profit']
+            '''
+            futureVal = (row['Qty'] * 100 * row['underlying Price']) + row['Max Profit']
+        else:
+            ''' yielddisc(today(),C{},V{},V{}+U{}))
+            col c = row['expiration']
+            col v = row['Risk Management']
+            col u = row['Max Profit']
+            '''
+            futureVal = row['Risk Management'] + row['Max Profit']
+
+        if gain == 0.0 or futureVal == 0.0 or dtm.days == 0:
+            maxGainApy = 0.0
+        else:
+            maxGainApy = annual_yield(gain, futureVal, dtm.days)
+
+    except Exception:
+        exc_info = sys.exc_info()
+        exc_str = exc_info[1].args[0]
+        sys.exit(exc_txt + "\n\t" + exc_str)
+
+    return  maxGainApy
+
+def riskManagement(row):
+    exc_txt = "Unable to determine risk management of options if traded"
+    
+    try:
+        if row['strategy'] == "Covered call":
+            riskMgmt = "Current holding"
+        elif row['strategy'] == "Cash Secured Put":            
+            #riskMgmt = "${}".format(row['Qty'] * 100 * row['strike Price'])
+            riskMgmt = row['Qty'] * 100 * row['strike Price']
+        else:
+            riskMgmt = "TBD"
+
+    except Exception:
+        exc_info = sys.exc_info()
+        exc_str = exc_info[1].args[0]
+        sys.exit(exc_txt + "\n\t" + exc_str)
+
+    return  riskMgmt
+
+def maxProfit(row):
+    exc_txt = "Unable to calculate max profit"    
+    try:
+        profit = row['premium'] - row['commission']
+
+    except Exception:
+        exc_info = sys.exc_info()
+        exc_str = exc_info[1].args[0]
+        sys.exit(exc_txt + "\n\t" + exc_str)
+
+    return  profit
+
+def lossVProfit(row):
+    exc_txt = "Unable to calculate loss vs. profit"
+    try:
+        lvp = row['OTM Probability'] - row['probability of loss']
+
+    except Exception:
+        exc_info = sys.exc_info()
+        exc_str = exc_info[1].args[0]
+        sys.exit(exc_txt + "\n\t" + exc_str)
+
+    return  lvp
+
+def premium(row):
+    exc_txt = "Unable to calculate premium"
+    try:
+        prem = row['Qty'] * 100 *  row['bid']
+
+    except Exception:
+        exc_info = sys.exc_info()
+        exc_str = exc_info[1].args[0]
+        sys.exit(exc_txt + "\n\t" + exc_str)
+
+    return  prem
+
+def commission(row):
+    exc_txt = "Unable to calculate commission"
+    try:
+        com = row['Qty'] * 0.65
+
+    except Exception:
+        exc_info = sys.exc_info()
+        exc_str = exc_info[1].args[0]
+        sys.exit(exc_txt + "\n\t" + exc_str)
+
+    return  com
+
+def calculateFields(mktOptions, dfHoldings, dfMarketData):
+    exc_txt = "Unable to determine calculated field values"
+    
+    try:
+        ''' The order of these updates is important as the later ones use the values calculated earlier '''
+        mktOptions['Purchase $'] = mktOptions.apply(marketOprionsPopulate, axis=1, args=('Purchase $', dfHoldings, dfMarketData))
+        mktOptions['Earnings Date'] = mktOptions.apply(marketOprionsPopulate, axis=1, args=('Earnings Date', dfHoldings, dfMarketData))
+        mktOptions['Dividend Date'] = mktOptions.apply(marketOprionsPopulate, axis=1, args=('Dividend Date', dfHoldings, dfMarketData))
+        mktOptions['Current Holding'] = mktOptions.apply(marketOprionsPopulate, axis=1, args=('Current Holding', dfHoldings, dfMarketData))
+        mktOptions['Dividend'] = mktOptions.apply(dividendRisk, axis=1)
+        mktOptions['Earnings'] = mktOptions.apply(earningsRisk, axis=1)
+        mktOptions['Qty'] = mktOptions.apply(optionQty, axis=1)
+        mktOptions['Risk Management'] = mktOptions.apply(riskManagement, axis=1)
+        mktOptions['premium'] = mktOptions.apply(premium, axis=1)
+        mktOptions['commission'] = mktOptions.apply(commission, axis=1)
+        mktOptions['Max Profit'] = mktOptions.apply(maxProfit, axis=1)
+        mktOptions['Loss vs. Profit'] = mktOptions.apply(lossVProfit, axis=1)
+        mktOptions['max gain APY'] = mktOptions.apply(maxGainApy, axis=1)
+
+    except Exception:
+        exc_info = sys.exc_info()
+        exc_str = exc_info[1].args[0]
+        sys.exit(exc_txt + "\n\t" + exc_str)
+
+    return mktOptions
+
+def eliminateLowReturnOptions(mktOptions):
+    exc_txt = "An error occurred eliminating options"
+    
+    try:
+        pass
+
+    except Exception:
+        exc_info = sys.exc_info()
+        exc_str = exc_info[1].args[0]
+        sys.exit(exc_txt + "\n\t" + exc_str)
+
+    return mktOptions
+
+def workbookExp():
+
+    optionsCols = [ \
+        "Symbol", \
+        "Strategy", \
+        "Expiration", \
+        "Days to Expiration", \
+        "Share price", \
+        "Closing Price", \
+        "Strike Price", \
+        "Break Even", \
+        "Bid", \
+        "Ask", \
+        "OTM Probability", \
+        "volatility", \
+        "ADX (Price trend est.)", \
+        "Probability of Loss", \
+        "Purchase $", \
+        "Earnings", \
+        "Dividend", \
+        "Current Holding", \
+        "Qty", \
+        "Max Gain APY", \
+        "Max Profit", \
+        "Risk Management", \
+        "Loss vs. profit", \
+        "premium", \
+        "commission", \
+        "Earnings Date", \
+        "Dividend Date", \
+        "delta", \
+        "gamma", \
+        "theta", \
+        "vega", \
+        "rho", \
+        "in The Money", \
+        "expiration Date", \
+        "ROI", \
+        "Max Loss", \
+        "Preferred outcome", \
+        "Preferred Result", \
+        "Unfavored Result" \
+    ]
+
+    ''' option evaluation sheet column numbers '''
+    COL_symbol =  0
+    COL_strategy = 1
+    COL_expiration = 2
+    COL_days_To_Expiration = 3
+    COL_underlying_Price = 4
+    COL_Closing_Price = 5
+    COL_strike_Price = 6
+    COL_break_even = 7
+    COL_bid = 8
+    COL_ask = 9
+    COL_OTM_Probability = 10
+    COL_volatility = 11
+    COL_ADX = 12
+    COL_probability_of_loss = 13
+    COL_Purchase_dol = 14
+    COL_Earnings = 15
+    COL_Dividend = 16
+    COL_Current_Holding = 17
+    COL_Qty = 18
+    COL_max_gain_APY = 19
+    COL_Max_Profit = 20
+    COL_Risk_Management = 21
+    COL_Loss_vs_Profit = 22
+    COL_premium = 23
+    COL_commission = 24
+    COL_Earnings_Date = 25
+    COL_dividend_Date = 26
+    COL_delta = 27
+    COL_gamma = 28
+    COL_theta = 29
+    COL_vega = 30
+    COL_rho = 31
+    COL_in_The_Money = 32
+    COL_expiration_Date = 33
+    COL_ROI = 34
+    COL_Max_Loss = 35
+    COL_Preferred_Outcome = 36
+    COL_Preferred_Result = 37
+    COL_Unfavored_Result = 38
+
+    COMMISSION_THRESHOLD = '0.65'
+
+    '''
+    hide rows where Qty = 0
+    hide rows (A-Z) where ITM is TRUE
+    hide rows where Concern = Dividend or Earnings
+    highlighted where risk management > $50,000
+    hide rows where max gain APY < 15%
+    hide rows where max profit <$500
+    sort rows by strategy/symbol/expiration/max gain APY
+    
+    https://developers.google.com/sheets/api/guides/values
+    
+    '''
+    
+    print("\n======================================================= workbookExp enter")
+    exc_txt = "\nAn exception occurred - workbookExp"
+    
+    try:
+        localDirs = get_ini_data("LOCALDIRS")
+        aiwork = localDirs['aiwork']
+
+        ''' Google APIs '''
+        exc_txt = "\nAn exception occurred - unable to retrieve Google authentication information"
+        googleAuth = get_ini_data("GOOGLE")
+        '''
+        GoogleTokenPath = aiwork + "\\" + googleAuth["token"]
+        credentialsPath = aiwork + "\\" + googleAuth["credentials"]
+        '''
+        
+        exc_txt = "\nAn exception occurred - unable to authenticate with Google"
+        
+        sheet = openGoogleSheetService()
+        
+        ''' ================== Call the Sheets API - values - read data ================== '''
+        READ_RANGE = 'Read Test!A1:CZ'                        
+        result = ""
+
+        result = sheet.values().get(spreadsheetId=EXP_SPREADSHEET_ID, range=READ_RANGE).execute()
+        print("\tmajorDimension: {}".format(result.get('majorDimension')))
+        print("\trange: {}".format(result.get('range')))
+
+        values = result.get('values', [])
+        if not values:
+            print('\tNo data found.')
+        else:
+            rowNum = 1
+            for row in values:
+                if len(row) < 2:
+                    print("\tBlank row in calls A-C")
+                else:
+                    print('\trow: {}, col A: {}'.format(rowNum, row[0]))
+                rowNum += 1
+            
+        ''' ================== Call the Sheets API - update - write data ================== '''        
+        WRITE_RANGE_TITLE = 'Write Test!A1:CZ'                        
+        WRITE_RANGE_DATA = 'Write Test!A2:CZ'                        
+        
+        mktOptions = loadMarketOptionsFile()
+        ''' replace NaN with 0 '''
+        mktOptions = mktOptions.fillna(0)
+        dfHoldings = loadHoldings(sheet)
+        dfMarketData = loadMarketDetails(sheet)        
+        mktOptions = calculateFields(mktOptions, dfHoldings, dfMarketData)
+        mktOptions = eliminateLowReturnOptions(mktOptions)
+
+        ''' valueInputOption = USER_ENTERED or RAW    '''
+        sheetMktOptions = prepMktOptionsForSheets(mktOptions)
+        cellValues = sheetMktOptions.values.tolist()
+        requestBody = {'values': cellValues}
+        result = sheet.values().update(spreadsheetId=EXP_SPREADSHEET_ID, range=WRITE_RANGE_DATA, \
+                    valueInputOption="USER_ENTERED", body=requestBody).execute()
+        print("\tspreadsheetId: {}".format(result.get('spreadsheetId')))
+        print("\tupdatedRange: {}".format(result.get('updatedRange')))
+        print("\tupdatedRows: {}".format(result.get('updatedRows')))
+        print("\tupdatedColumns: {}".format(result.get('updatedColumns')))
+        print("\tupdatedCells: {}".format(result.get('updatedCells')))
+        
+        colTitles = mktOptions.columns
+        colTitleList = [colTitles.values.tolist()]
+        requestBody = {'values': colTitleList}
+        result = sheet.values().update(spreadsheetId=EXP_SPREADSHEET_ID, range=WRITE_RANGE_TITLE, \
+                    valueInputOption="USER_ENTERED", body=requestBody).execute()
+                    
+        #COL_bid = 8
+        #COL_ask = 9
+        ''' read back and identify written data '''
+        result = sheet.values().get(spreadsheetId=EXP_SPREADSHEET_ID, range=WRITE_RANGE_DATA).execute()
+        values = result.get('values', [])
+        if not values:
+            print('\tNo data found.')
+        else:
+            rowNum = 1
+            for row in values:
+                rowNum += 1
+            print("Read back {} rows".format(rowNum))
+        
+        ''' ================== Call the Sheets API - batchUpdate - add a new tab ================== '''
+        requests = list([])
+        addSheetRequest = {"properties" : {"title": "chandra42"}}
+        requests.append({"addSheet" : addSheetRequest})
+        requestBody = {"requests" : requests}
+        print("\nbatchUpdate requestBody:\n\t{}".format(requestBody))
+        result = sheet.batchUpdate(spreadsheetId=EXP_SPREADSHEET_ID, body=requestBody).execute()
+
+    except HttpError as err:
+        parseSheetErr(err)
+        sys.exit(err)
+
+    except Exception:
+        exc_info = sys.exc_info()
+        exc_str = exc_info[1].args[0]
+        sys.exit(exc_txt + "\n\t" + exc_str)
+
+    return
+
+def setPythonPath(gitdir):
+    
+    ''' Set python path for executing stand alone scripts '''
+    pPath = gitdir + "\\chandra\\processes\\single"
+    pPath += ";"
+    pPath += gitdir + "\\chandra\\processes\\multiprocess"
+    pPath += ";"
+    pPath += gitdir + "\\chandra\\processes\\child"
+    pPath += ";"
+    pPath += gitdir + "\\chandra\\utility"
+    pPath += ";"
+    pPath += gitdir + "\\chandra\\technical_analysis"
+    pPath += ";"
+    pPath += gitdir + "\\chandra\\td_ameritrade"
+    pPath += ";"
+    pPath += gitdir + "\\chandra\\machine_learning"
+    pPath += ";"
+    pPath += gitdir + "\\chandra\\unit_test"
+    os.environ["PYTHONPATH"] = pPath
+
+    return
+
+def jsonExp():
+
+    print("\n======================================================= jsonExp enter")
+    exc_txt = "\nAn exception occurred - jsonExp"
+    
+    try:
+        ''' access the <user>\AppData\Local\Develoment\<appName>.ini file '''
+        
+        ''' Find local file directories '''
+        exc_txt = "\nAn exception occurred - unable to retrieve <user>\AppData\Local\Develoment\<appName>.ini"
+        localDirs = get_ini_data("LOCALDIRS")
+        gitdir = localDirs['git']
+        aiwork = localDirs['aiwork']
+        models = localDirs['trainedmodels']
+        print("Local computer directories - localDirs: {}\n\taiwork: {}\n\tgitdir: {}\n\ttrained models: {}".format(localDirs, aiwork, gitdir, models))
+    
+        ''' identify information related to TD Ameritrade / Schwab APIs '''
+        exc_txt = "\nAn exception occurred - unable to retrieve TD Ameritrade authentication information"
+        tdaAuth = get_ini_data("TDAMERITRADE")
+        print("TD Ameritrade authentication\n\ttdaAuth: {}\n\tauthentication: {}".format(tdaAuth, tdaAuth["authentication"]))
+
+        ''' Google APIs '''
+        exc_txt = "\nAn exception occurred - unable to retrieve Google authentication information"
+        googleAuth = get_ini_data("GOOGLE")
+        print("Google authentication\n\ttoken: {}\n\tcredentials: {}".format(googleAuth["token"], googleAuth["credentials"]))
+        
+        ''' read application specific configuration file '''
+        exc_txt = "\nAn exception occurred - unable to process configuration file"
+        config_data = get_ini_data("DAILY_PROCESS")
+        appConfig = read_config_json(gitdir + config_data['config'])
+        print("appConfig: {}".format(appConfig))
+        
+        localGoogleProject = open(aiwork + "\\Google_Project_Local.json", "rb")
+        jsonGoogle = json.load(localGoogleProject)
+        localGoogleProject.close
+
+        cols = [PROCESS_ID, PROCESS_DESCRIPTION, RUN, MODEL_FILE, OUTPUT_FIELDS, CONFIG]
+        processCtrl = pd.DataFrame(columns=cols)
+
+    except Exception:
+        exc_info = sys.exc_info()
+        exc_str = exc_info[1].args[0]
+        exc_txt = exc_txt + "\n\t" + exc_str
+        sys.exit(exc_txt)
+
+    return processCtrl
+
+if __name__ == '__main__':
+    print("==================================================== Code experimentation starting")
+    
+    '''
+    Update market data: base on tda_derivative_data_master
+    read option chains: base on assess_trading_signals
+    '''
+    
+    if True:
+        workbookExp()               # Experimentation with Google sheet access
+        
+    else:
+        dataFiles = buildListofMarketDataFiles()
+        processCtrl = jsonExp()                   # Experimentation / development of configuration json file
+        processCtrl = tkInterExp(processCtrl)                # Experimentation with user interface        
+
+        for ndx in range(len(processCtrl)):
+            print("Process: {}: run = {}".format(processCtrl.loc[ndx][PROCESS_ID], processCtrl.loc[ndx][RUN]))
+        mlPredictions(processCtrl)             # Use trained models to make predictions
+
+        digitalSreeni_180()
+        linear_regression()
+        sine_wave_regression()
+        autoKeras()
+        pass
+    
+    print("\n==================================================== Code experimentation ending")

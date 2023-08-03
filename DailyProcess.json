@@ -1,0 +1,50 @@
+{
+"configuration parameters required to control" : "DailyProcess",
+"required fields - comment" : [
+	{
+	"name" : "descriptive name to display to user",
+	"Description" : "currently unused",
+	"run" : "default run or not for user to accept or change"
+	}
+],
+"available processes" : "===========================================",
+"processes" : [
+	{
+	"name" : "Market data update",
+	"Description" : "Use TDA API to update basic market data",
+	"run" : false
+	},
+	{
+	"name" : "Calculate derived market data",
+	"Description" : "Read basic market data and calculate technical analysis details",
+	"run" : false
+	},
+	{
+	"name" : "Secured puts",
+	"Description" : "Download current put option details",
+	"run" : false
+	},
+	{
+	"name" : "Covered calls",
+	"Description" : "Download current call option details",
+	"run" : false
+	}
+],
+"available model details" : "===========================================",
+"models" : [
+	{
+	"name" : "Bollinger Band",
+	"Description" : "predict the probability of a 10% rise in 10 days based on Bollinger Bands",
+	"run" : false,
+	"file" : "rnn\\lstm\\bb\\BB_203 20230708 140028",
+	"Outputs" : ["10PctProbability"]
+	},
+	{
+	"name" : "MACD Trend",
+	"Description" : "Identify MACD and moving average trends crossing ",
+	"run" : false,
+	"file" : "rnn\\lstm\\MACDTrendLineCross\\MACD_TrendCross_Best 20230717 070452",
+	"Outputs" : ["Negative Cross", "Neutral", "Positive Cross"]
+	}
+]
+}

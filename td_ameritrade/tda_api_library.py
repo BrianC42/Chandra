@@ -5,6 +5,7 @@ Created on Jan 31, 2018
 
 '''
 import os
+import sys
 import logging
 from datetime import date
 import time
@@ -58,29 +59,37 @@ def tda_update_authentication_details(json_authentication):
     return
 
 def tda_get_access_token(json_authentication):
-    logging.debug('tda_get_access_token ---->\n')
 
-    if time.time() > (json_authentication['tokenObtained'] + json_authentication['expiresIn']):
-        url = 'https://api.tdameritrade.com/v1/oauth2/token'
-        params = {'grant_type' : 'refresh_token', 'refresh_token' : json_authentication['refreshToken'], 'access_type' : '', 'code' : '', 'client_id' : json_authentication['apikey'], 'redirect_uri' : json_authentication['redirectUri']}
-        response = requests.post(url, data=params)       
-        if response.ok:
-            Authorization_details = json.loads(response.text)
-            json_authentication["currentToken"] = Authorization_details["access_token"]
-            json_authentication["scope"] = Authorization_details["scope"]
-            json_authentication["tokenObtained"] = time.time()
-            json_authentication["expiresIn"] = Authorization_details["expires_in"]
-            json_authentication["token_type"] = Authorization_details["token_type"]
-            tda_update_authentication_details(json_authentication)
-        else:
-            logging.info("Authorization request response not OK, response code=%s, reason %s, %s" % (response.status_code, response.reason, response.text))
-            json_authentication["currentToken"] = ""
-            json_authentication["scope"] = ""
-            json_authentication["tokenObtained"] = 0.0
-            json_authentication["expiresIn"] = 0.0
-            json_authentication["token_type"] = ""
+    try:    
+        exc_txt = "\nAn exception occurred obtaining access token"
+
+        if time.time() > (json_authentication['tokenObtained'] + json_authentication['expiresIn']):
+            url = 'https://api.tdameritrade.com/v1/oauth2/token'
+            params = {'grant_type' : 'refresh_token', 'refresh_token' : json_authentication['refreshToken'], 'access_type' : '', 'code' : '', 'client_id' : json_authentication['apikey'], 'redirect_uri' : json_authentication['redirectUri']}
+            response = requests.post(url, data=params)       
+            if response.ok:
+                Authorization_details = json.loads(response.text)
+                json_authentication["currentToken"] = Authorization_details["access_token"]
+                json_authentication["scope"] = Authorization_details["scope"]
+                json_authentication["tokenObtained"] = time.time()
+                json_authentication["expiresIn"] = Authorization_details["expires_in"]
+                json_authentication["token_type"] = Authorization_details["token_type"]
+                tda_update_authentication_details(json_authentication)
+            else:
+                json_authentication["currentToken"] = ""
+                json_authentication["scope"] = ""
+                json_authentication["tokenObtained"] = 0.0
+                json_authentication["expiresIn"] = 0.0
+                json_authentication["token_type"] = ""
             
-    logging.debug('<---- tda_get_access_token')
+                raise NameError('\n\tAuthorization request response not OK\n\tresponse code={}, reason {}, {}'.format(response.status_code, response.reason, response.text))
+            
+    except Exception:
+        exc_info = sys.exc_info()
+        exc_str = exc_info[1].args[0]
+        exc_txt = exc_txt + " " + exc_str
+        sys.exit(exc_txt)
+
     return json_authentication["currentToken"]
 
 def tda_search_instruments(authentication_parameters, p_symbol):
@@ -265,48 +274,52 @@ def tda_read_option_chain(authentication_parameters, p_symbol):
     return df_tda_options, response.text
         
 def tda_read_watch_lists(json_authentication, watch_list=None):
-    logging.debug('tda_read_watch_lists ---->\n %s')
     
-    currentToken = tda_get_access_token(json_authentication)    
-    url = 'https://api.tdameritrade.com/v1/accounts/' + json_authentication["account"] + '/watchlists'
-    apikey = 'Bearer ' + currentToken
-    headers = {'Authorization' : apikey}
-    response = requests.get(url, headers=headers)
-    if response.ok:
-        print("Watchlists retrieved")
-        symbol_list = []
-        tda_watch_lists_json = json.loads(response.text)
-        for list_details in tda_watch_lists_json:
-            list_name = list_details["name"]
-            listItems = list_details["watchlistItems"]
-            if watch_list == None:
-                for itemDetails in listItems:
-                    instrument = itemDetails["instrument"]
-                    symbol = instrument["symbol"]
-                    if list_name in json_authentication["watchLists"]:
-                        symbol_list.append(symbol)
-            else:
-                for itemDetails in listItems:
-                    instrument = itemDetails["instrument"]
-                    symbol = instrument["symbol"]
-                    if list_name == watch_list:
-                        symbol_list.append(symbol)
-        logging.info("Symbols, %s" % symbol_list)
-    else:
-        print("Unable to get watch list data, response code=%s, reason %s, %s" % (response.status_code, response.reason, response.text))
-        logging.info("Unable to get watch list data, response code=%s, reason %s, %s" % (response.status_code, response.reason, response.text))
+    try:    
+        exc_txt = "\nAn exception occurred reading watchlists"
+        
+        currentToken = tda_get_access_token(json_authentication)    
+        url = 'https://api.tdameritrade.com/v1/accounts/' + json_authentication["account"] + '/watchlists'
+        apikey = 'Bearer ' + currentToken
+        headers = {'Authorization' : apikey}
+        response = requests.get(url, headers=headers)
+        if response.ok:
+            print("\nWatchlists retrieved")
+            symbol_list = []
+            tda_watch_lists_json = json.loads(response.text)
+            for list_details in tda_watch_lists_json:
+                list_name = list_details["name"]
+                listItems = list_details["watchlistItems"]
+                if watch_list == None:
+                    for itemDetails in listItems:
+                        instrument = itemDetails["instrument"]
+                        symbol = instrument["symbol"]
+                        if list_name in json_authentication["watchLists"]:
+                            symbol_list.append(symbol)
+                else:
+                    for itemDetails in listItems:
+                        instrument = itemDetails["instrument"]
+                        symbol = instrument["symbol"]
+                        if list_name == watch_list:
+                            symbol_list.append(symbol)
+        else:
+            raise NameError('\n\tWatchlists could not be retrieved')
             
-    logging.debug('<---- tda_read_watch_lists')
+    except Exception:
+        exc_info = sys.exc_info()
+        exc_str = exc_info[1].args[0]
+        exc_txt = exc_txt + " " + exc_str
+        sys.exit(exc_txt)
+    
     return symbol_list
 
 def update_tda_eod_data(authentication_parameters):
-    logging.debug('update_tda_eod_data ---->')
     
     eod_data_dir = 'd:\\brian\\AI-Projects\\tda\\market_data\\'
     json_authentication = tda_get_authentication_details(authentication_parameters)
     tda_throttle_time = time.time()
     tda_throttle_count = 0
-    print("Now - %s, %s" % (time.ctime(time.time()), '{:.0f}'.format(time.time()*1000)))
+    print("Update market data at: {} {:.0f}".format(time.ctime(time.time()), time.time()*1000))
     for symbol in tda_read_watch_lists(json_authentication):
         if tda_throttle_count < 110:
             tda_throttle_count += 1
@@ -352,13 +365,11 @@ def update_tda_eod_data(authentication_parameters):
                                     #df_eod.drop_duplicates(subset=['DateTime'], keep='last', inplace=True)
                             else:
                                 print("Incremental EOD data for %s was empty" % tda_symbol)
-                                logging.info("Data for %s was empty" % tda_symbol)
                             retry = False
                     except:
                         retry_count += 1
             else:
                 print("Unable to get incremental EOD data for %s, response code=%s" % (symbol, response.status_code))
-                logging.info("Unable to get incremental EOD data for %s, response code=%s" % (symbol, response.status_code))            
         else:
             df_eod = pd.DataFrame(columns=['DateTime', 'Open', 'High', 'Low', 'Close', 'Volume'])
             eod_count = 0
@@ -374,13 +385,8 @@ def update_tda_eod_data(authentication_parameters):
                         eod_count += 1
                 else:
                     print("Data for %s was empty" % tda_symbol)
-                    logging.info("Data for %s was empty" % tda_symbol)
             else:
                 print("Unable to get EOD data for %s, response code=%s" % (symbol, response.status_code))
-                logging.info("Unable to get EOD data for %s, response code=%s" % (symbol, response.status_code))            
         df_eod.to_csv(eod_file, index=False)
-        #print ("\nEOD data for %s\n%s" % (symbol, df_eod))
-        logging.info("nEOD data for %s\n%s" % (symbol, df_eod))
 
-    logging.debug('<---- update_tda_eod_data')
     return
