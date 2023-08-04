@@ -1,0 +1,2 @@
+Following common practice, this file is merely a placeholder to aid Git recognize the folder 
+in the repository.
