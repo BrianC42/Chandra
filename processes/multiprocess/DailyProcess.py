@@ -3,8 +3,12 @@ Created on Jul 27, 2023
 
 @author: Brian
 '''
+import os
 import sys
 import json
+import re
+import time
+import datetime as dt
 
 from tkinter import *
 from tkinter import ttk
@@ -17,8 +21,23 @@ from configuration import get_ini_data
 from configuration import read_config_json
 
 from tda_api_library import update_tda_eod_data
+from tda_api_library import tda_get_authentication_details
+from tda_api_library import tda_read_watch_lists
+from tda_api_library import tda_read_option_chain
+from tda_api_library import format_tda_datetime
+from tda_api_library import tda_manage_throttling
+from tda_api_library import covered_call
+from tda_api_library import cash_secured_put
+
+from tda_derivative_data import loadHoldings
+from tda_derivative_data import loadMarketDetails
+from tda_derivative_data import calculateFields
+from tda_derivative_data import eliminateLowReturnOptions
+from tda_derivative_data import prepMktOptionsForSheets
+from tda_derivative_data import prepMktOptionsForAnalysis
 
 from multiProcess import updateMarketData 
+from GoogleSheets import googleSheet
 
 PROCESS_CONFIGS = "processes"
 MODEL_CONFIGS = "models"
@@ -37,6 +56,8 @@ SECURED_PUTS = "Secured puts"
 COVERED_CALLS = "Covered calls"
 BOLLINGER_BAND_PREDICTION = "Bollinger Band"
 MACD_TREND_CROSS = "MACD Trend"
+
+GOOGLE_SHEET_ID = "Development"
 
 def mlBollingerBandPrediction():
     exc_txt = "\nAn exception occurred - making predictions using Bollinger Band model"
@@ -105,8 +126,15 @@ def marketPutOptions():
     
     try:
         print("performing daily put option process")
-        pass
-        
+
+        ''' Find local file directories '''
+        exc_txt = "\nAn exception occurred - unable to retrieve local <>.ini files"
+        localDirs = get_ini_data("LOCALDIRS")
+        aiwork = localDirs['aiwork']
+        localGoogleProject = open(aiwork + "\\Google_Project_Local.json", "rb")
+        jsonGoogle = json.load(localGoogleProject)
+        localGoogleProject.close
+
     except Exception:
         exc_info = sys.exc_info()
         exc_str = exc_info[1].args[0]
@@ -120,15 +148,76 @@ def marketCallOptions():
     
     try:
         print("performing daily call option process")
-        pass
+
+        ''' Find local file directories '''
+        exc_txt = "\nAn exception occurred - unable to retrieve local <>.ini files"
+        localDirs = get_ini_data("LOCALDIRS")
+        aiwork = localDirs['aiwork']
+        localGoogleProject = open(aiwork + "\\Google_Project_Local.json", "rb")
+        jsonGoogle = json.load(localGoogleProject)
+        localGoogleProject.close
         
+        app_data = get_ini_data("TDAMERITRADE")
+        json_config = read_config_json(app_data['config'])
+        json_authentication = tda_get_authentication_details(app_data['authentication'])
+        analysis_dir = app_data['market_analysis_data']
+        
+        callCount=0
+        periodStart = time.time()
+        callCount, periodStart = tda_manage_throttling(callCount, periodStart)
+    
+        print("\nAnalyzing potential covered calls")
+        exc_txt = "\nAn exception occurred while accessing market call options"
+        df_potential_strategies = pd.DataFrame()
+        for symbol in tda_read_watch_lists(json_authentication, watch_list='Combined Holding'):
+            #print("Accessing covered calls for {}".format(symbol))
+            callCount, periodStart = tda_manage_throttling(callCount, periodStart)
+            df_options, options_json = tda_read_option_chain(app_data['authentication'], symbol)
+            filename = analysis_dir + '\\' + symbol + '.csv'
+            if os.path.isfile(filename):
+                df_data = pd.read_csv(filename)
+            df_covered_calls = covered_call(symbol, df_data, df_options)
+            if df_covered_calls.shape[0] > 0:
+                df_potential_strategies = pd.concat([df_potential_strategies, df_covered_calls])
+        
+        #print("Covered calls accessed")
+        exc_txt = "\nAn exception occurred while updating the Google workbook"
+        gSheet = googleSheet()
+
+        # The ID and range of a sample spreadsheet.
+        EXP_SPREADSHEET_ID = "1XJNEWZ0uDdjCOvxJItYOhjq9kOhYtacJ3epORFn_fm4"
+        DAILY_OPTIONS = "1T0yNe6EkLLpwzg_rLXQktSF1PCx1IcCX9hq9Xc__73U"
+        HOLDING_RANGE = 'Holdings!A1:ZZ'
+        MARKET_DATA_RANGE = 'TD Import Inf!A1:ZZ'
+        OPTIONS_HEADER = '!A1:ZZ'
+        OPTIONS_DATA = '!A2:ZZ'
+
+        ''' convert data elements to formats suitable for analysis '''
+        df_potential_strategies = prepMktOptionsForAnalysis(df_potential_strategies)
+        
+        dfHoldings = loadHoldings(gSheet, EXP_SPREADSHEET_ID, HOLDING_RANGE)
+        dfMarketData = loadMarketDetails(gSheet, EXP_SPREADSHEET_ID, MARKET_DATA_RANGE)        
+        df_potential_strategies = calculateFields(df_potential_strategies, dfHoldings, dfMarketData)
+        df_potential_strategies = eliminateLowReturnOptions(df_potential_strategies)
+
+        ''' valueInputOption = USER_ENTERED or RAW '''
+        sheetMktOptions = prepMktOptionsForSheets(df_potential_strategies)
+        
+        now = dt.datetime.now()
+        timeStamp = ' {:4d}{:0>2d}{:0>2d} {:0>2d}{:0>2d}{:0>2d}'.format(now.year, now.month, now.day, \
+                                                                        now.hour, now.minute, now.second)        
+        sheetName = "Calls" + timeStamp
+        gSheet.addGoogleSheet(EXP_SPREADSHEET_ID, sheetName)
+        gSheet.updateGoogleSheet(EXP_SPREADSHEET_ID, sheetName + OPTIONS_HEADER, sheetMktOptions.columns)
+        gSheet.updateGoogleSheet(EXP_SPREADSHEET_ID, sheetName + OPTIONS_DATA, sheetMktOptions)
+
     except Exception:
         exc_info = sys.exc_info()
         exc_str = exc_info[1].args[0]
         exc_txt = exc_txt + "\n\t" + exc_str
         sys.exit(exc_txt)
     
-    return
+    return sheetName
 
 def userInterfaceControls():
     ''' display a user interface to solicit run time selections '''
@@ -259,10 +348,6 @@ def userInterfaceControls():
 if __name__ == '__main__':
     print ("Perform daily operational processes\n")
     
-    ''' create an empty dataframe to hold the information related to processes that could be performed 
-    cols = [PROCESS_ID, PROCESS_DESCRIPTION, RUN, MODEL_FILE, OUTPUT_FIELDS, CONFIG]
-    processCtrl = pd.DataFrame(columns=cols)    
-    '''
     processCtrl = userInterfaceControls()
     
     for ndx in range (len(processCtrl)):
@@ -274,7 +359,7 @@ if __name__ == '__main__':
             elif processCtrl.iloc[ndx][PROCESS_ID] == SECURED_PUTS:
                 marketPutOptions()
             elif processCtrl.iloc[ndx][PROCESS_ID] == COVERED_CALLS:
-                marketCallOptions()
+                callSheetName = marketCallOptions()
             elif processCtrl.iloc[ndx][PROCESS_ID] == BOLLINGER_BAND_PREDICTION:
                 mlBollingerBandPrediction()
             elif processCtrl.iloc[ndx][PROCESS_ID] == MACD_TREND_CROSS:

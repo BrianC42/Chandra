@@ -13,6 +13,24 @@ import requests
 import json
 import pandas as pd
 
+MIN_DURATION = 20
+MAX_DURATION = 65
+MAX_OTM_PCT = 30
+UNDERLYING_MAX = 500
+
+def init_df_trading_strategy():
+    df_trading_strategy = pd.DataFrame(columns = ["symbol", "strategy", "expiration", "days To Expiration", \
+                                 "underlying Price", "close", "strike Price", \
+                                 'break even', 'bid', 'ask', 'OTM Probability', \
+                                 'volatility', 'ADX', 'probability of loss', \
+                                 'Purchase $', 'Earnings', 'Dividend', 'Current Holding', 'Qty', 'max gain APY', \
+                                 'Max Profit', 'Risk Management', 'Loss vs. Profit', 'premium', 'commission', \
+                                 'Earnings Date', 'Dividend Date', \
+                                 'delta','gamma', 'theta', 'vega', 'rho', \
+                                 'in The Money', 'expiration Date', \
+                                 'ROI', 'Max Loss', 'Preferred Outcome', 'Preferred Result', 'Unfavored Result' ])
+    return df_trading_strategy
+
 def tda_date_diff(date1, date2):
     d1 = date.fromtimestamp(date1/1000)
     d2 = date.fromtimestamp(date2/1000)
@@ -273,6 +291,114 @@ def tda_read_option_chain(authentication_parameters, p_symbol):
         
     return df_tda_options, response.text
         
+def covered_call(symbol, df_data, df_options):
+    df_covered_calls = init_df_trading_strategy()
+    current_ADX = df_data.at[df_data.shape[0]-1, 'ADX']
+    current_close = df_data.at[df_data.shape[0]-1, 'Close']
+    strategy_ndx = 0
+    option_ndx = 0
+    while option_ndx < df_options.shape[0]:
+        delta = float(df_options.at[option_ndx, "delta"])
+        OTM_probability = 1 - delta
+        if df_options.at[option_ndx, 'putCall'] == 'CALL' and \
+            df_options.at[option_ndx, 'daysToExpiration'] >= MIN_DURATION and \
+            df_options.at[option_ndx, 'daysToExpiration'] <= MAX_DURATION and \
+            delta < (MAX_OTM_PCT / 100):
+                for_review = True
+                f_bid = float(df_options.at[option_ndx, "bid"])
+                f_underlying = float(df_options.at[option_ndx, "underlyingPrice"])
+                f_strike = float(df_options.at[option_ndx, "strikePrice"])
+                ''' implement filter conditions here '''
+                if df_options.at[option_ndx, "delta"] == 'NaN':
+                    for_review = False
+                if f_bid == 0:
+                    for_review = False
+                if delta == 0.0:
+                    for_review = False
+                if for_review:
+                    df_covered_calls.loc[strategy_ndx, 'strategy'] = 'Covered call'
+                    df_covered_calls.loc[strategy_ndx, 'symbol'] = df_options.at[option_ndx, 'underlying symbol']
+                    df_covered_calls.loc[strategy_ndx, "underlying Price"] = df_options.at[option_ndx, "underlyingPrice"]
+                    df_covered_calls.loc[strategy_ndx, "close"] = current_close
+                    df_covered_calls.loc[strategy_ndx, "bid"] = df_options.at[option_ndx, "bid"]
+                    df_covered_calls.loc[strategy_ndx, "ask"] = df_options.at[option_ndx, "ask"]
+                    df_covered_calls.loc[strategy_ndx, "delta"] = df_options.at[option_ndx, "delta"]
+                    df_covered_calls.loc[strategy_ndx, "gamma"] = df_options.at[option_ndx, "gamma"]
+                    df_covered_calls.loc[strategy_ndx, "theta"] = df_options.at[option_ndx, "theta"]
+                    df_covered_calls.loc[strategy_ndx, "vega"] = df_options.at[option_ndx, "vega"]
+                    df_covered_calls.loc[strategy_ndx, "rho"] = df_options.at[option_ndx, "rho"]
+                    df_covered_calls.loc[strategy_ndx, "in The Money"] = df_options.at[option_ndx, "inTheMoney"]
+                    df_covered_calls.loc[strategy_ndx, "strike Price"] = df_options.at[option_ndx, "strikePrice"]
+                    df_covered_calls.loc[strategy_ndx, "expiration Date"] = df_options.at[option_ndx, "expirationDate"]
+                    df_covered_calls.loc[strategy_ndx, "expiration"] = format_tda_datetime(df_options.at[option_ndx, "expirationDate"])
+                    df_covered_calls.loc[strategy_ndx, "days To Expiration"] = df_options.at[option_ndx, "daysToExpiration"]
+                    df_covered_calls.loc[strategy_ndx, "volatility"] = df_options.at[option_ndx, "volatility"]
+                    df_covered_calls.loc[strategy_ndx, "OTM Probability"] = OTM_probability
+                    df_covered_calls.loc[strategy_ndx, "break even"] = f_strike + f_bid
+                    df_covered_calls.loc[strategy_ndx, "ADX"] = current_ADX
+                    strategy_ndx += 1
+        option_ndx += 1
+    return df_covered_calls
+
+def cash_secured_put(symbol, df_data, df_options):
+    df_cash_secured_puts = init_df_trading_strategy()
+    current_ADX = df_data.at[df_data.shape[0]-1, 'ADX']
+    current_close = df_data.at[df_data.shape[0]-1, 'Close']
+    strategy_ndx = 0
+    option_ndx = 0
+    while option_ndx < df_options.shape[0]:
+        '''
+        delta for PUT options appears to be NaN
+        '''
+        if df_options.at[option_ndx, "delta"] == "NaN":
+            delta = 0.0
+        else:
+            delta = float(df_options.at[option_ndx, "delta"])
+        OTM_probability = 1 + delta
+        if df_options.at[option_ndx, 'putCall'] == 'PUT' and \
+            df_options.at[option_ndx, 'daysToExpiration'] >= MIN_DURATION and \
+            df_options.at[option_ndx, 'daysToExpiration'] <= MAX_DURATION and \
+            OTM_probability > 1 - (MAX_OTM_PCT / 100):
+                for_review = True
+                f_bid = float(df_options.at[option_ndx, "bid"])
+                f_underlying = float(df_options.at[option_ndx, "underlyingPrice"])
+                f_strike = float(df_options.at[option_ndx, "strikePrice"])
+                ''' implement filter conditions here '''
+                if df_options.at[option_ndx, "delta"] == 'NaN':
+                    for_review = False
+                if f_bid == 0:
+                    for_review = False
+                if delta == 0.0:
+                    for_review = False
+                '''
+                if f_underlying > UNDERLYING_MAX:
+                    for_review = False
+                '''
+                if for_review:
+                    df_cash_secured_puts.loc[strategy_ndx, 'strategy'] = 'Cash Secured Put'
+                    df_cash_secured_puts.loc[strategy_ndx, 'symbol'] = df_options.at[option_ndx, 'underlying symbol']
+                    df_cash_secured_puts.loc[strategy_ndx, "underlying Price"] = df_options.at[option_ndx, "underlyingPrice"]
+                    df_cash_secured_puts.loc[strategy_ndx, "close"] = current_close
+                    df_cash_secured_puts.loc[strategy_ndx, "bid"] = df_options.at[option_ndx, "bid"]
+                    df_cash_secured_puts.loc[strategy_ndx, "ask"] = df_options.at[option_ndx, "ask"]
+                    df_cash_secured_puts.loc[strategy_ndx, "delta"] = df_options.at[option_ndx, "delta"]
+                    df_cash_secured_puts.loc[strategy_ndx, "gamma"] = df_options.at[option_ndx, "gamma"]
+                    df_cash_secured_puts.loc[strategy_ndx, "theta"] = df_options.at[option_ndx, "theta"]
+                    df_cash_secured_puts.loc[strategy_ndx, "vega"] = df_options.at[option_ndx, "vega"]
+                    df_cash_secured_puts.loc[strategy_ndx, "rho"] = df_options.at[option_ndx, "rho"]
+                    df_cash_secured_puts.loc[strategy_ndx, "in The Money"] = df_options.at[option_ndx, "inTheMoney"]
+                    df_cash_secured_puts.loc[strategy_ndx, "strike Price"] = df_options.at[option_ndx, "strikePrice"]
+                    df_cash_secured_puts.loc[strategy_ndx, "expiration Date"] = df_options.at[option_ndx, "expirationDate"]
+                    df_cash_secured_puts.loc[strategy_ndx, "expiration"] = format_tda_datetime(df_options.at[option_ndx, "expirationDate"])
+                    df_cash_secured_puts.loc[strategy_ndx, "days To Expiration"] = df_options.at[option_ndx, "daysToExpiration"]
+                    df_cash_secured_puts.loc[strategy_ndx, "volatility"] = df_options.at[option_ndx, "volatility"]
+                    df_cash_secured_puts.loc[strategy_ndx, "OTM Probability"] = OTM_probability
+                    df_cash_secured_puts.loc[strategy_ndx, "break even"] = f_strike - f_bid
+                    df_cash_secured_puts.loc[strategy_ndx, "ADX"] = current_ADX
+                    strategy_ndx += 1
+        option_ndx += 1
+    return df_cash_secured_puts
+
 def tda_read_watch_lists(json_authentication, watch_list=None):
     
     try:    

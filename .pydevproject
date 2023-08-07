@@ -19,7 +19,7 @@
     
     <pydev_pathproperty name="org.python.pydev.PROJECT_SOURCE_PATH">
         <path>/${PROJECT_DIR_NAME}/machine_learning</path>
-        <path>/${PROJECT_DIR_NAME}/deprecate files</path>
+        <path>/${PROJECT_DIR_NAME}/deprecated files</path>
         <path>/${PROJECT_DIR_NAME}/processes/child</path>
         <path>/${PROJECT_DIR_NAME}/technical_analysis</path>
         <path>/${PROJECT_DIR_NAME}/utility</path>
