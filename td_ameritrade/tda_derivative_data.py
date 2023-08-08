@@ -5,7 +5,7 @@ Created on Jul 13, 2020
 '''
 import re
 import sys
-import datetime
+import datetime as dt
 from datetime import date
 from datetime import timedelta
 
@@ -120,7 +120,7 @@ def marketOprionsPopulate(row, col, dfHoldings, dfMarketData):
             if col == 'Purchase $' or col == 'Current Holding':
                 value = 0.0
             if col == 'Earnings Date' or col == 'Dividend Date':
-                yyyy = datetime.MINYEAR
+                yyyy = dt.MINYEAR
                 mm = 1
                 dd = 1
                 sheetDate = date(yyyy, mm, dd)
@@ -178,9 +178,9 @@ def optionQty(row):
     
     try:
         if row['strategy'] == "Covered call":
-            optQty = int(row['Current Holding'] / 100)
+            optQty = int(row['Current Holding']) / 100
         elif row['strategy'] == "Cash Secured Put":            
-            optQty = int(25000 / (row['underlying Price'] * 100))
+            optQty = (25000 / int(row['underlying Price']) * 100)
         else:
             optQty = 0
 
@@ -273,7 +273,7 @@ def riskManagement(row):
 def maxProfit(row):
     exc_txt = "Unable to calculate max profit"    
     try:
-        profit = row['premium'] - row['commission']
+        profit = float(row['premium']) - float(row['commission'])
 
     except Exception:
         exc_info = sys.exc_info()
@@ -399,18 +399,154 @@ def calculateFields(mktOptions, dfHoldings, dfMarketData):
 
     return mktOptions
 
-def eliminateLowReturnOptions(mktOptions):
+def eliminateLowReturnOptions(workbookID, putSheetName, callSheetName):
+    '''
+    Access put and call options from Google sheets passed as parameters, eliminate options with high risk
+    and low return, write the remaining options to a new tab for human consideration
+    
+    Eliminate options where:
+    1. Qty == 0
+    2. in The Money == True
+    3. Earnings == "9 - ..."
+    4. Dividend == "9 - ..."
+    5. Max gain APY < 15%
+    6. Max Profit < 500
+    7. OTM Probability < 0.9
+    
+    Sort by
+    1. strategy
+    2. symbol
+    3. expiration
+    4. max gain APY
+    
+    Highlight
+    1. risk management > 50,000
+    '''
+        
     exc_txt = "An error occurred eliminating options"
+    # The ID and range of a sample spreadsheet.
+    EXP_SPREADSHEET_ID = "1XJNEWZ0uDdjCOvxJItYOhjq9kOhYtacJ3epORFn_fm4"
+    DAILY_OPTIONS = "1T0yNe6EkLLpwzg_rLXQktSF1PCx1IcCX9hq9Xc__73U"
+    OPTIONS_HEADER = '!A1:ZZ'
+    OPTIONS_DATA = '!A2:ZZ'
     
     try:
-        pass
+        #print("eliminateLowReturnOptions\n\tworkbook: {}\n\tputs: {}\n\tcalls: {}".format(workbookID, putSheetName, callSheetName))
+        gSheet = gs.googleSheet()
+
+        if len(putSheetName) > 0:
+            ''' load put option '''
+            readRange = putSheetName + '!A1:CZ'
+            puts = gSheet.readGoogleSheet(EXP_SPREADSHEET_ID, readRange)
+            
+        if len(callSheetName) > 0:
+            ''' load call option '''
+            readRange = callSheetName + '!A1:CZ'
+            calls = gSheet.readGoogleSheet(EXP_SPREADSHEET_ID, readRange)
+        
+        if len(putSheetName) > 0 and len(callSheetName):
+            toConsider = pd.concat([puts, calls])
+        elif len(putSheetName) > 0:
+            toConsider = puts
+        elif len(callSheetName) > 0:
+            toConsider = calls
+        
+        ''' Need to set index to avoid duplicates '''
+        toConsider=toConsider.reset_index(drop=True)
+
+        ''' remove Qty==0 rows '''
+        print("removing 0 Qty option trades from {} rows".format(len(toConsider)))
+        testColumn = 'Qty'
+        testFor = '0'
+        rowsToRemove = toConsider.loc[toConsider[testColumn] == testFor]
+        toConsider = toConsider.drop(rowsToRemove.index)
+            
+        ''' remove in The Money==0 rows '''
+        print("removing In The Money options from {} rows".format(len(toConsider)))
+        testColumn = 'in The Money'
+        testFor = 'TRUE'
+        rowsToRemove = toConsider.loc[toConsider[testColumn] == testFor]
+        toConsider = toConsider.drop(rowsToRemove.index)
+        
+        ''' remove Earnings risk rows '''
+        print("removing Earnings risk rows rows from {} rows".format(len(toConsider)))
+        testColumn = 'Earnings'
+        regexPattern = '9 - '
+        earningRiskRows = toConsider.loc[toConsider[testColumn].str.match(regexPattern)]
+        toConsider = toConsider.drop(earningRiskRows.index)
+        
+        ''' remove Dividend risk rows '''
+        print("removing Dividend risk rows from {} rows".format(len(toConsider)))
+        testColumn = 'Dividend'
+        regexPattern = '9 - '
+        earningRiskRows = toConsider.loc[toConsider[testColumn].str.match(regexPattern)]
+        toConsider = toConsider.drop(earningRiskRows.index)
+        
+        ''' max gain APY and Max Profit require fields to be specific types '''
+        toConsider['expiration'] = toConsider['expiration'].apply(date.fromisoformat)
+        toConsider['underlying Price'] = toConsider['underlying Price'].apply(gSheet.gCellDollarStrToFloat)
+        toConsider['strike Price'] = toConsider['strike Price'].apply(gSheet.gCellDollarStrToFloat)
+        toConsider['OTM Probability'] = toConsider['OTM Probability'].apply(gSheet.gCellStrToFloat)
+        toConsider['Qty'] = toConsider['Qty'].apply(gSheet.gCellStrToInt)
+        toConsider['Max Profit'] = toConsider['Max Profit'].apply(gSheet.gCellStrToFloat)
+        toConsider['max gain APY'] = toConsider['max gain APY'].apply(gSheet.gCellStrToFloat)
+        toConsider['Risk Management'] = toConsider['Risk Management'].apply(gSheet.gCellStrToFloat)
+        
+        ''' remove max gain APY < 15% rows '''
+        testColumn = 'max gain APY'
+        testFor = 20
+        print("removing max gain APY < {}% rows from {} rows".format(testFor, len(toConsider)))
+        rowsToRemove = toConsider.loc[toConsider[testColumn] < testFor]
+        toConsider = toConsider.drop(rowsToRemove.index)
+        
+        ''' remove Max Profit < 500 rows '''
+        testColumn = 'Max Profit'
+        testFor = 500
+        print("removing Max Profit < ${} rows from {} rows".format(testFor, len(toConsider)))
+        rowsToRemove = toConsider.loc[toConsider[testColumn] < testFor]
+        toConsider = toConsider.drop(rowsToRemove.index)
+        
+        ''' remove OTM Probability < 0.85 '''
+        testColumn = 'OTM Probability'
+        testFor = 0.8
+        print("removing OTM (option expires worthless) Probability < {}% rows from {} rows".format(testFor, len(toConsider)))
+        rowsToRemove = toConsider.loc[toConsider[testColumn] < testFor]
+        toConsider = toConsider.drop(rowsToRemove.index)
+        
+        ''' Sort remaining options on potential yield (descending) '''
+        toConsider = toConsider.sort_values(by=['max gain APY'], ascending=False)
+        
+        if len(toConsider) > 0:
+            exc_txt = "An error occurred writing potential option trades to Google workbook"
+            now = dt.datetime.now()
+            timeStamp = ' {:4d}{:0>2d}{:0>2d} {:0>2d}{:0>2d}{:0>2d}'.format(now.year, now.month, now.day, \
+                                                                            now.hour, now.minute, now.second)        
+            sheetName = "consider" + timeStamp
+            
+            ''' prepare fields to be written to Google sheet '''
+            toConsider['expiration'] = toConsider['expiration'].apply(date.isoformat)
+            toConsider['underlying Price'] = toConsider['underlying Price'].apply(str)
+            toConsider['strike Price'] = toConsider['strike Price'].apply(str)
+            toConsider['OTM Probability'] = toConsider['OTM Probability'].apply(str)
+            toConsider['Qty'] = toConsider['Qty'].apply(str)
+            toConsider['Max Profit'] = toConsider['Max Profit'].apply(str)
+            toConsider['max gain APY'] = toConsider['max gain APY'].apply(str)
+            toConsider['Risk Management'] = toConsider['Risk Management'].apply(str)
+            
+            gSheet.addGoogleSheet(EXP_SPREADSHEET_ID, sheetName)
+            gSheet.updateGoogleSheet(EXP_SPREADSHEET_ID, sheetName + OPTIONS_HEADER, toConsider.columns)
+            gSheet.updateGoogleSheet(EXP_SPREADSHEET_ID, sheetName + OPTIONS_DATA, toConsider)
+            print("There are {} options with acceptable risk / reward to consider in {}".format(len(toConsider), sheetName))
+    
+        else:
+            print("There are no options with acceptable risk / reward to consider")
 
     except Exception:
         exc_info = sys.exc_info()
         exc_str = exc_info[1].args[0]
         sys.exit(exc_txt + "\n\t" + exc_str)
 
-    return mktOptions
+    return
 
 def prepMktOptionsForSheets(mktOptions):
     ''' convert data elements to formats suitable for writing to Google sheet cells '''

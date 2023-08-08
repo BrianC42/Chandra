@@ -59,6 +59,10 @@ MACD_TREND_CROSS = "MACD Trend"
 
 GOOGLE_SHEET_ID = "Development"
 
+# The ID and range of a sample spreadsheet.
+EXP_SPREADSHEET_ID = "1XJNEWZ0uDdjCOvxJItYOhjq9kOhYtacJ3epORFn_fm4"
+DAILY_OPTIONS = "1T0yNe6EkLLpwzg_rLXQktSF1PCx1IcCX9hq9Xc__73U"
+
 def mlBollingerBandPrediction():
     exc_txt = "\nAn exception occurred - making predictions using Bollinger Band model"
     
@@ -121,6 +125,35 @@ def calculateDerivedData():
         
     return 
 
+def writeOptionsToGsheet(mktOptions, sheetNameBase):    
+    #print("Covered calls accessed")
+    gSheet = googleSheet()
+
+    HOLDING_RANGE = 'Holdings!A1:ZZ'
+    MARKET_DATA_RANGE = 'TD Import Inf!A1:ZZ'
+    OPTIONS_HEADER = '!A1:ZZ'
+    OPTIONS_DATA = '!A2:ZZ'
+
+    ''' convert data elements to formats suitable for analysis '''
+    df_potential_strategies = prepMktOptionsForAnalysis(mktOptions)
+    
+    dfHoldings = loadHoldings(gSheet, EXP_SPREADSHEET_ID, HOLDING_RANGE)
+    dfMarketData = loadMarketDetails(gSheet, EXP_SPREADSHEET_ID, MARKET_DATA_RANGE)        
+    df_potential_strategies = calculateFields(df_potential_strategies, dfHoldings, dfMarketData)
+
+    ''' valueInputOption = USER_ENTERED or RAW '''
+    sheetMktOptions = prepMktOptionsForSheets(df_potential_strategies)
+    
+    now = dt.datetime.now()
+    timeStamp = ' {:4d}{:0>2d}{:0>2d} {:0>2d}{:0>2d}{:0>2d}'.format(now.year, now.month, now.day, \
+                                                                    now.hour, now.minute, now.second)        
+    sheetName = sheetNameBase + timeStamp
+    gSheet.addGoogleSheet(EXP_SPREADSHEET_ID, sheetName)
+    gSheet.updateGoogleSheet(EXP_SPREADSHEET_ID, sheetName + OPTIONS_HEADER, sheetMktOptions.columns)
+    gSheet.updateGoogleSheet(EXP_SPREADSHEET_ID, sheetName + OPTIONS_DATA, sheetMktOptions)
+
+    return sheetName
+
 def marketPutOptions():
     exc_txt = "\nAn exception occurred - daily put option process"
     
@@ -135,13 +168,40 @@ def marketPutOptions():
         jsonGoogle = json.load(localGoogleProject)
         localGoogleProject.close
 
+        app_data = get_ini_data("TDAMERITRADE")
+        json_config = read_config_json(app_data['config'])
+        json_authentication = tda_get_authentication_details(app_data['authentication'])
+        analysis_dir = app_data['market_analysis_data']
+        
+        '''
+        Cash secured put options
+        '''
+        callCount=0
+        periodStart = time.time()
+        callCount, periodStart = tda_manage_throttling(callCount, periodStart)
+    
+        print("\nAnalyzing potential cash secured puts")
+        exc_txt = "\nAn exception occurred while accessing market put options"
+        df_potential_strategies = pd.DataFrame()
+        for symbol in tda_read_watch_lists(json_authentication, watch_list='Potential Buy'):
+            callCount, periodStart = tda_manage_throttling(callCount, periodStart)
+            df_options, options_json = tda_read_option_chain(app_data['authentication'], symbol)
+            filename = analysis_dir + '\\' + symbol + '.csv'
+            if os.path.isfile(filename):
+                df_data = pd.read_csv(filename)
+            df_cash_secured_puts = cash_secured_put(symbol, df_data, df_options)
+            if df_cash_secured_puts.shape[0] > 0:
+                df_potential_strategies = pd.concat([df_potential_strategies, df_cash_secured_puts])
+                  
+        sheetName = writeOptionsToGsheet(df_potential_strategies, "put")
+        
     except Exception:
         exc_info = sys.exc_info()
         exc_str = exc_info[1].args[0]
         exc_txt = exc_txt + "\n\t" + exc_str
         sys.exit(exc_txt)
     
-    return 
+    return sheetName
 
 def marketCallOptions():
     exc_txt = "\nAn exception occurred - daily call option process"
@@ -180,6 +240,8 @@ def marketCallOptions():
             if df_covered_calls.shape[0] > 0:
                 df_potential_strategies = pd.concat([df_potential_strategies, df_covered_calls])
         
+        sheetName = writeOptionsToGsheet(df_potential_strategies, "call")
+        '''
         #print("Covered calls accessed")
         exc_txt = "\nAn exception occurred while updating the Google workbook"
         gSheet = googleSheet()
@@ -191,16 +253,20 @@ def marketCallOptions():
         MARKET_DATA_RANGE = 'TD Import Inf!A1:ZZ'
         OPTIONS_HEADER = '!A1:ZZ'
         OPTIONS_DATA = '!A2:ZZ'
+        '''
 
         ''' convert data elements to formats suitable for analysis '''
+        '''
         df_potential_strategies = prepMktOptionsForAnalysis(df_potential_strategies)
         
         dfHoldings = loadHoldings(gSheet, EXP_SPREADSHEET_ID, HOLDING_RANGE)
         dfMarketData = loadMarketDetails(gSheet, EXP_SPREADSHEET_ID, MARKET_DATA_RANGE)        
         df_potential_strategies = calculateFields(df_potential_strategies, dfHoldings, dfMarketData)
         df_potential_strategies = eliminateLowReturnOptions(df_potential_strategies)
+        '''
 
         ''' valueInputOption = USER_ENTERED or RAW '''
+        '''
         sheetMktOptions = prepMktOptionsForSheets(df_potential_strategies)
         
         now = dt.datetime.now()
@@ -210,7 +276,8 @@ def marketCallOptions():
         gSheet.addGoogleSheet(EXP_SPREADSHEET_ID, sheetName)
         gSheet.updateGoogleSheet(EXP_SPREADSHEET_ID, sheetName + OPTIONS_HEADER, sheetMktOptions.columns)
         gSheet.updateGoogleSheet(EXP_SPREADSHEET_ID, sheetName + OPTIONS_DATA, sheetMktOptions)
-
+        '''
+        
     except Exception:
         exc_info = sys.exc_info()
         exc_str = exc_info[1].args[0]
@@ -348,6 +415,8 @@ def userInterfaceControls():
 if __name__ == '__main__':
     print ("Perform daily operational processes\n")
     
+    putSheetName = ""
+    callSheetName = ""
     processCtrl = userInterfaceControls()
     
     for ndx in range (len(processCtrl)):
@@ -357,12 +426,17 @@ if __name__ == '__main__':
             elif processCtrl.iloc[ndx][PROCESS_ID] == DERIVED_MARKET_DATA:
                 calculateDerivedData()
             elif processCtrl.iloc[ndx][PROCESS_ID] == SECURED_PUTS:
-                marketPutOptions()
+                putSheetName = marketPutOptions()
             elif processCtrl.iloc[ndx][PROCESS_ID] == COVERED_CALLS:
                 callSheetName = marketCallOptions()
             elif processCtrl.iloc[ndx][PROCESS_ID] == BOLLINGER_BAND_PREDICTION:
                 mlBollingerBandPrediction()
             elif processCtrl.iloc[ndx][PROCESS_ID] == MACD_TREND_CROSS:
                 mlMACDTrendCross()
+                
+    #putSheetName = "put 20230808 073454"
+    #callSheetName = "call 20230808 080657"
+    if len(putSheetName) > 0 or len(callSheetName) > 0:
+        eliminateLowReturnOptions(EXP_SPREADSHEET_ID, putSheetName, callSheetName)
     
     print ("\nAll requested processes have completed")
