@@ -414,8 +414,8 @@ if __name__ == '__main__':
             elif processCtrl.iloc[ndx][PROCESS_ID] == MACD_TREND_CROSS:
                 mlMACDTrendCross()
                 
-    #putSheetName = "put 20230810 062151"
-    #callSheetName = "call 20230810 070005"
+    putSheetName = "put 20230810 072953"
+    callSheetName = "call 20230810 073519"
     if len(putSheetName) > 0 or len(callSheetName) > 0:
         eliminateLowReturnOptions(EXP_SPREADSHEET_ID, putSheetName, callSheetName, dictOptionsThresholds)
     
