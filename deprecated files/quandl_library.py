@@ -8,11 +8,13 @@ Created on Jan 31, 2018
 *************************************
 '''
 import datetime
-import quandl
 import logging
-import pandas as pd
 
 from numpy.distutils.fcompiler import none
+
+import pandas as pd
+import quandl
+
 
 def get_devdata_dir():
     logging.info('get_devdata_dir')

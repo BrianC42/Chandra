@@ -3,9 +3,10 @@ Created on Jan 31, 2018
 
 @author: Brian
 '''
-import numpy as np
 from lstm import fetch_timeseries_data
 from lstm import normalise_windows
+import numpy as np
+
 
 if __name__ == '__main__':
     print ("\nUnit Test Data Preparation ...")

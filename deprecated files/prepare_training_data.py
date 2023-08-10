@@ -8,23 +8,21 @@ deprecated: based on Quandl data
 import logging
 import time
 
-import numpy as np
-
-from quandl_library import get_ini_data
-
-from configuration_constants import TICKERS
 from configuration_constants import ANALASIS_SAMPLE_LENGTH
-from configuration_constants import FORECAST_LENGTH
 from configuration_constants import ANALYSIS
-from configuration_constants import RESULT_DRIVERS
 from configuration_constants import FEATURE_TYPE
 from configuration_constants import FORECAST_FEATURE
-from configuration_constants import LOGGING_LEVEL
+from configuration_constants import FORECAST_LENGTH
 from configuration_constants import LOGGING_FORMAT
-
-from lstm import prepare_ts_lstm
+from configuration_constants import LOGGING_LEVEL
+from configuration_constants import RESULT_DRIVERS
+from configuration_constants import TICKERS
 from lstm import pickle_dump_training_data
 from lstm import pickle_load_training_data
+from lstm import prepare_ts_lstm
+import numpy as np
+from quandl_library import get_ini_data
+
 
 def compare_elements(copy_1, copy_2):
     print("Let's see if the data content is different")

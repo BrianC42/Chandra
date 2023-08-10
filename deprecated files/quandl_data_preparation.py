@@ -7,23 +7,25 @@ Created on Jan 31, 2018
     deprecated: based on Quandl data
 *********************************************
 '''
-import sys
-sys.path.append("../Technical_Analysis/")
-
+import datetime
+import logging
 from multiprocessing import Process, Pipe
 import os
-import datetime
+import sys
 import time
-import logging
 
 import pandas as pd
-
-#from test.libregrtest.save_env import multiprocessing
-from quandl_worker import quandl_worker_pipe
+from quandl_library import get_ini_data
+from quandl_library import read_historical_data
 from quandl_library import save_enhanced_historical_data
 from quandl_library import save_enhanced_symbol_data
-from quandl_library import read_historical_data
-from quandl_library import get_ini_data
+from quandl_worker import quandl_worker_pipe
+
+sys.path.append("../Technical_Analysis/")
+
+
+
+#from test.libregrtest.save_env import multiprocessing
 
 def mp_prep_quandl_data():
     lstm_config_data = get_ini_data("LSTM")

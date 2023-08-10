@@ -3,27 +3,28 @@ Created on Jan 31, 2018
 
 @author: Brian
 '''
-import os
-import datetime as dt
-import time
 import logging
-import pandas as pd
+import os
+import time
 
-from configuration import get_ini_data
-from configuration import read_config_json
-from tda_api_library import update_tda_eod_data
-from tda_api_library import tda_get_authentication_details
-from tda_api_library import tda_read_watch_lists
-from tda_derivative_data import add_trending_data
-from tda_derivative_data import add_change_data
-from macd import macd
-from on_balance_volume import on_balance_volume
-from bollinger_bands import bollinger_bands
 from accumulation_distribution import accumulation_distribution
 from aroon_indicator import aroon_indicator
 from average_directional_index import average_directional_index
-from stochastic_oscillator import stochastic_oscillator
+from bollinger_bands import bollinger_bands
+from configuration import get_ini_data
+from configuration import read_config_json
+import datetime as dt
+from macd import macd
+from on_balance_volume import on_balance_volume
+import pandas as pd
 from relative_strength import relative_strength
+from stochastic_oscillator import stochastic_oscillator
+from tda_api_library import tda_get_authentication_details
+from tda_api_library import tda_read_watch_lists
+from tda_api_library import update_tda_eod_data
+from tda_derivative_data import add_change_data
+from tda_derivative_data import add_trending_data
+
 
 def technical_analysis(json_config, authentication_parameters, data_dir, analysis_dir):
     logger.info('technical_analysis ---->')

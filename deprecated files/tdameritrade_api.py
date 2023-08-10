@@ -3,11 +3,12 @@ Created on Jan 31, 2018
 
 @author: Brian
 '''
+from tda_api_library import tda_data
 from tda_api_library import tda_login
 from tda_api_library import tda_logout
-from tda_api_library import tda_data
 from tda_api_library import tda_price_history
 from tda_api_library import tda_symbol_lookup
+
 
 if __name__ == '__main__':
     print ("Good morning Dr. chandra\n")

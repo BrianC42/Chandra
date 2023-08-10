@@ -3,15 +3,6 @@ Created on Aug 29, 2018
 
 @author: Brian
 '''
-import logging
-
-import time
-import warnings
-import logging
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-from numpy import newaxis
 '''
 from keras.layers.core import Dense
 from keras.layers.core import Activation
@@ -23,9 +14,20 @@ from keras.utils import print_summary
 '''
 #from quandl_library import fetch_timeseries_data
 #from quandl_library import get_ini_data
-from time_series_data import series_to_supervised
-from quandl_library import get_ini_data
+
+import logging
+import logging
+import time
+import warnings
+
+from numpy import newaxis
+
 from lstm import fetch_timeseries_data
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+from quandl_library import get_ini_data
+from time_series_data import series_to_supervised
 
 
 if __name__ == '__main__':

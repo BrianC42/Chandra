@@ -4,26 +4,7 @@ Created on Jan 31, 2018
 @author: Pat
 '''
 
-from keras.models import Sequential
-from keras.layers.core import Dense
-from keras.layers.recurrent import LSTM
-
-from sklearn.preprocessing import MinMaxScaler
-from sklearn.metrics import mean_squared_error
-
-import pandas as pd
-from pandas import DataFrame
-from pandas import concat
-from numpy import concatenate
-from numpy import newaxis
-import numpy as np
 #from string import Template
-
-from matplotlib import pyplot
-from math import sqrt
-
-from quandl_library import fetch_timeseries_data
-
 '''
 Problem formulations:
 
@@ -37,7 +18,24 @@ For given stock and time period, get daily adj_close values and calculate 'momen
 Frame the data as a supervised learning problem and normalize the input. Build LSTM model. 
 '''
 
+from math import sqrt
+
+from keras.layers.core import Dense
+from keras.models import Sequential
+from matplotlib import pyplot
+from numpy import concatenate
+from numpy import newaxis
+from pandas import DataFrame
+from pandas import concat
+from sklearn.metrics import mean_squared_error
+from sklearn.preprocessing import MinMaxScaler
+
+from keras.layers.recurrent import LSTM
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+from quandl_library import fetch_timeseries_data
+
 
 def get_data(start,end,symbol):
     field_query = ["WIKI/"+symbol+".11"]

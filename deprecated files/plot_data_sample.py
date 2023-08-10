@@ -5,42 +5,38 @@ Created on Jun 25, 2019
 
 deprecated: based on Quandl data
 '''
-from configuration_constants import LOGGING_LEVEL
-from configuration_constants import LOGGING_FORMAT
-from configuration_constants import TICKERS
-from configuration_constants import ANALASIS_SAMPLE_LENGTH
-from configuration_constants import FORECAST_LENGTH
-from configuration_constants import RESULT_DRIVERS
-from configuration_constants import FEATURE_TYPE
-from configuration_constants import FORECAST_FEATURE
-
 import logging
-import datetime as dt
+import pickle
 import time
 
-import matplotlib.pyplot as plt
-import matplotlib.dates as md 
-import numpy as np
-import pandas as pd
-import pickle
-
-from quandl_library import get_ini_data
-from quandl_library import fetch_timeseries_data
-from quandl_library import get_devdata_dir
-
-from time_series_data import series_to_supervised
-
-from lstm import pickle_load_training_data
-from lstm import prepare_3D_cube
-from lstm import normalize_data
-
 from matplotlib._constrained_layout import do_constrained_layout
-from matplotlib.dates import DateFormatter, WeekdayLocator, DayLocator,  MONDAY,\
+from matplotlib.dates import DateFormatter, WeekdayLocator, DayLocator, MONDAY, \
     num2date
 from matplotlib.dates import date2num
 
-from mpl_finance import candlestick_ohlc
+from configuration_constants import ANALASIS_SAMPLE_LENGTH
+from configuration_constants import FEATURE_TYPE
+from configuration_constants import FORECAST_FEATURE
+from configuration_constants import FORECAST_LENGTH
+from configuration_constants import LOGGING_FORMAT
+from configuration_constants import LOGGING_LEVEL
+from configuration_constants import RESULT_DRIVERS
+from configuration_constants import TICKERS
+import datetime as dt
+from lstm import normalize_data
+from lstm import pickle_load_training_data
+from lstm import prepare_3D_cube
+import matplotlib.dates as md 
+import matplotlib.pyplot as plt
 from mpl_finance import candlestick_ochl
+from mpl_finance import candlestick_ohlc
+import numpy as np
+import pandas as pd
+from quandl_library import fetch_timeseries_data
+from quandl_library import get_devdata_dir
+from quandl_library import get_ini_data
+from time_series_data import series_to_supervised
+
 
 RED = [1.0, 0.0, 0.0]
 GREEN = [0.0, 1.0, 0.0]

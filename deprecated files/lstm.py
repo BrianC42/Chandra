@@ -3,48 +3,6 @@ Created on Jan 31, 2018
 
 @author: Brian
 '''
-import time
-import os
-import sys
-import re
-import warnings
-import logging
-import numpy as np
-import numpy.ma as ma
-import matplotlib.colors as colors
-import pandas as pd
-import pickle
-
-from configuration_constants import BALANCE_CLASSES
-from configuration_constants import BATCH_SIZE
-from configuration_constants import EPOCHS
-from configuration_constants import ANALYSIS
-from configuration_constants import CLASSIFICATION_COUNT
-from configuration_constants import VALIDATION_SPLIT
-from configuration_constants import VERBOSE
-
-from numpy import NAN
-
-from keras.utils import print_summary
-from keras.utils import plot_model
-
-from quandl_library import fetch_timeseries_data
-from quandl_library import get_ini_data
-from quandl_library import get_devdata_dir
-
-from time_series_data import series_to_supervised
-
-from buy_sell_hold import build_bsh_classification_model
-from buy_sell_hold import calculate_sample_bsh_flag
-from buy_sell_hold import calculate_single_bsh_flag
-from buy_sell_hold import balance_bsh_classifications
-from buy_sell_hold import bsh_data_check
-
-from percentage_change import calculate_single_pct_change
-from percentage_change import calculate_sample_pct_change
-from percentage_change import balance_pct_change
-from percentage_change import calculate_single_actual_pct_change
-
 '''
     Layers
         Methods
@@ -132,6 +90,44 @@ from percentage_change import calculate_single_actual_pct_change
             GaussianDropout
             AlphaDropout
 '''
+
+import logging
+import os
+import pickle
+import re
+import sys
+import time
+import warnings
+
+from keras.utils import plot_model
+from keras.utils import print_summary
+from numpy import NAN
+
+from buy_sell_hold import balance_bsh_classifications
+from buy_sell_hold import bsh_data_check
+from buy_sell_hold import build_bsh_classification_model
+from buy_sell_hold import calculate_sample_bsh_flag
+from buy_sell_hold import calculate_single_bsh_flag
+from configuration_constants import ANALYSIS
+from configuration_constants import BALANCE_CLASSES
+from configuration_constants import BATCH_SIZE
+from configuration_constants import CLASSIFICATION_COUNT
+from configuration_constants import EPOCHS
+from configuration_constants import VALIDATION_SPLIT
+from configuration_constants import VERBOSE
+import matplotlib.colors as colors
+import numpy as np
+import numpy.ma as ma
+import pandas as pd
+from percentage_change import balance_pct_change
+from percentage_change import calculate_sample_pct_change
+from percentage_change import calculate_single_actual_pct_change
+from percentage_change import calculate_single_pct_change
+from quandl_library import fetch_timeseries_data
+from quandl_library import get_devdata_dir
+from quandl_library import get_ini_data
+from time_series_data import series_to_supervised
+
 
 warnings.filterwarnings("ignore")
 

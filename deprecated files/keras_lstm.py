@@ -6,43 +6,41 @@ Created on Jan 31, 2018
 deprecated: based on Quandl data
 '''
 import logging
-import datetime as dt
 import time
-
-from quandl_library import get_ini_data
-from configuration_constants import TICKERS
-from configuration_constants import ANALASIS_SAMPLE_LENGTH
-from configuration_constants import FORECAST_LENGTH
-from configuration_constants import ACTIVATION
-from configuration_constants import COMPILATION_LOSS
-from configuration_constants import LOSS_WEIGHTS
-from configuration_constants import COMPILATION_METRICS
-from configuration_constants import OPTIMIZER
-from configuration_constants import BATCH_SIZE
-from configuration_constants import EPOCHS
-from configuration_constants import ANALYSIS
-from configuration_constants import ML_APPROACH
-from configuration_constants import RESULT_DRIVERS
-from configuration_constants import FEATURE_TYPE
-from configuration_constants import FORECAST_FEATURE
-from configuration_constants import LOGGING_LEVEL
-from configuration_constants import LOGGING_FORMAT
-from configuration_constants import GENERATE_DATA
-from configuration_constants import PLOT_DATA
-
-from lstm import build_model
-from lstm import predict_sequences_multiple
-from lstm import prepare_ts_lstm
-from lstm import train_lstm
-from lstm import evaluate_model
-from lstm import save_model
-from lstm import pickle_dump_training_data
-from lstm import pickle_load_training_data
 
 from buy_sell_hold import bsh_results_multiple
 from buy_sell_hold import plot_bsh_results
-
+from configuration_constants import ACTIVATION
+from configuration_constants import ANALASIS_SAMPLE_LENGTH
+from configuration_constants import ANALYSIS
+from configuration_constants import BATCH_SIZE
+from configuration_constants import COMPILATION_LOSS
+from configuration_constants import COMPILATION_METRICS
+from configuration_constants import EPOCHS
+from configuration_constants import FEATURE_TYPE
+from configuration_constants import FORECAST_FEATURE
+from configuration_constants import FORECAST_LENGTH
+from configuration_constants import GENERATE_DATA
+from configuration_constants import LOGGING_FORMAT
+from configuration_constants import LOGGING_LEVEL
+from configuration_constants import LOSS_WEIGHTS
+from configuration_constants import ML_APPROACH
+from configuration_constants import OPTIMIZER
+from configuration_constants import PLOT_DATA
+from configuration_constants import RESULT_DRIVERS
+from configuration_constants import TICKERS
+import datetime as dt
+from lstm import build_model
+from lstm import evaluate_model
+from lstm import pickle_dump_training_data
+from lstm import pickle_load_training_data
+from lstm import predict_sequences_multiple
+from lstm import prepare_ts_lstm
+from lstm import save_model
+from lstm import train_lstm
 from percentage_change import pct_change_multiple
+from quandl_library import get_ini_data
+
 
 if __name__ == '__main__':
     print ("Good morning Dr. chandra. I am ready for my first lesson.\n")

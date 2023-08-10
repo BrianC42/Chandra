@@ -16,60 +16,59 @@ Classification architecture approaches
     Recurrent Neural Networks (RNN)
         LSTM, Dense, Activation
 '''
-import time
 import logging
-import numpy as np
-import matplotlib.pyplot as plt
-import tensorflow as tf
+import time
 
+from matplotlib._constrained_layout import do_constrained_layout
+from matplotlib.dates import DateFormatter, WeekdayLocator, DayLocator, MONDAY, num2date
+from matplotlib.dates import date2num
 from tensorflow import keras
-from tensorflow.keras import backend as K
-from tensorflow.keras import regularizers
-from tensorflow.keras.models import Model
-from tensorflow.keras.layers import Input
-from tensorflow.keras.layers import Concatenate
-from tensorflow.keras.layers import Dropout
-from tensorflow.keras.layers import Dense
-from tensorflow.keras.layers import Flatten
-from tensorflow.keras.layers import LSTM
-from tensorflow.keras.layers import Conv1D
-#from keras import optimizers
-from tensorflow.keras.layers import MaxPooling1D
-from tensorflow.keras.backend import dropout
 
-from configuration_constants import ML_APPROACH
 from configuration_constants import ACTIVATION
-from configuration_constants import OPTIMIZER
-from configuration_constants import USE_BIAS
-from configuration_constants import DROPOUT
 from configuration_constants import ANALASIS_SAMPLE_LENGTH
-from configuration_constants import FORECAST_LENGTH
-from configuration_constants import BUY_INDICATION_THRESHOLD
-from configuration_constants import SELL_INDICATION_THRESHOLD
+from configuration_constants import ANALYSIS_LAYER_COUNT
 from configuration_constants import BUY_INDEX
-from configuration_constants import HOLD_INDEX
-from configuration_constants import SELL_INDEX
+from configuration_constants import BUY_INDICATION_THRESHOLD
 from configuration_constants import CLASSIFICATION_COUNT
 from configuration_constants import CLASSIFICATION_ID
 from configuration_constants import COMPILATION_LOSS
 from configuration_constants import COMPILATION_METRICS
-from configuration_constants import LOSS_WEIGHTS
+from configuration_constants import COMPOSITE_LAYER_COUNT
 from configuration_constants import DENSE_REGULARIZATION
-from configuration_constants import REGULARIZATION_VALUE
+from configuration_constants import DROPOUT
 from configuration_constants import DROPOUT
 from configuration_constants import DROPOUT_RATE
+from configuration_constants import FORECAST_LENGTH
+from configuration_constants import HOLD_INDEX
 from configuration_constants import LAYER_NODES
+from configuration_constants import LOSS_WEIGHTS
+from configuration_constants import ML_APPROACH
+from configuration_constants import OPTIMIZER
 from configuration_constants import PREDICTION_PROBABILITY_THRESHOLD
-from configuration_constants import ANALYSIS_LAYER_COUNT
-from configuration_constants import COMPOSITE_LAYER_COUNT
-
-from matplotlib._constrained_layout import do_constrained_layout
-from matplotlib.dates import DateFormatter, WeekdayLocator, DayLocator,  MONDAY, num2date
-from matplotlib.dates import date2num
-
-from mpl_finance import candlestick_ohlc
+from configuration_constants import REGULARIZATION_VALUE
+from configuration_constants import SELL_INDEX
+from configuration_constants import SELL_INDICATION_THRESHOLD
+from configuration_constants import USE_BIAS
+import matplotlib.pyplot as plt
 from mpl_finance import candlestick_ochl
+from mpl_finance import candlestick_ohlc
+import numpy as np
+import tensorflow as tf
+from tensorflow.keras import backend as K
+from tensorflow.keras import regularizers
+from tensorflow.keras.backend import dropout
+from tensorflow.keras.layers import Concatenate
+from tensorflow.keras.layers import Conv1D
+from tensorflow.keras.layers import Dense
+from tensorflow.keras.layers import Dropout
+from tensorflow.keras.layers import Flatten
+from tensorflow.keras.layers import Input
+from tensorflow.keras.layers import LSTM
+from tensorflow.keras.layers import MaxPooling1D
+from tensorflow.keras.models import Model
 
+
+#from keras import optimizers
 def prepare_inputs(lst_analyses, np_input) :
     logging.info ('====> ==============================================')
     logging.info ('====> prepare_inputs:')

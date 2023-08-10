@@ -5,12 +5,15 @@ Created on Jul 20, 2018
 '''
 
 import logging
+
 from pandas import DataFrame
 from pandas import concat
-from quandl_library import read_symbol_historical_data
-from quandl_library import get_ini_data
-from time_series_data import series_to_supervised
+
 from lstm import prepare_ts_lstm
+from quandl_library import get_ini_data
+from quandl_library import read_symbol_historical_data
+from time_series_data import series_to_supervised
+
 
 if __name__ == '__main__':
     pass
