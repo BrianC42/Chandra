@@ -14,7 +14,6 @@ from quandl_library import get_ini_data
 from quandl_library import read_symbol_historical_data
 from time_series_data import series_to_supervised
 
-
 if __name__ == '__main__':
     pass
 

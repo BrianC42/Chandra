@@ -22,11 +22,13 @@ def get_devdata_dir():
     devdata_dir = devdata['dir']
     return devdata_dir
 
+
 def get_quandl_key():
     logging.info('get_quandl_key')
     quandl_data = get_ini_data("QUANDL")
     quandl.ApiConfig.api_key = quandl_data['key']
     return (quandl_data['key'])
+
 
 def save_list_of_tickers(df_tickers):
     logging.info('save_list_of_tickers')
@@ -35,30 +37,33 @@ def save_list_of_tickers(df_tickers):
     df_tickers.to_csv(output_file)
     return
 
+
 def ticker_status_dict():
     logging.info('ticker_status_dict')
     StatusDict = dict(inactive=-1, unknown=0, active=1)
     
     return(StatusDict)
 
+
 def quandl_data_dict():
     logging.info('quandl_data_dict')
-    QColsDict = dict({'ticker' : 1, \
-                'date' : 2, \
-                'open' : 3, \
-                'high' : 4, \
-                'low' : 5, \
-                'close' : 6, \
-                'volume' : 7, \
-                'ex-dividend' : 8, \
-                'split_ratio' : 9, \
-                'adj_open' : 10, \
-                'adj_high' : 11, \
-                'adj_low' : 12, \
-                'adj_close' : 13, \
-                'adj_volume' : 14 })
+    QColsDict = dict({'ticker': 1, \
+                'date': 2, \
+                'open': 3, \
+                'high': 4, \
+                'low': 5, \
+                'close': 6, \
+                'volume': 7, \
+                'ex-dividend': 8, \
+                'split_ratio': 9, \
+                'adj_open': 10, \
+                'adj_high': 11, \
+                'adj_low': 12, \
+                'adj_close': 13, \
+                'adj_volume': 14 })
     
     return(QColsDict)
+
 
 def update_quandl_eod_data(quandl_key, tickers):
     logging.info('update_eod_data')
@@ -71,7 +76,7 @@ def update_quandl_eod_data(quandl_key, tickers):
             start_date = "2017-12-21"
             end_date = "2017-12-28"
             quandl.ApiConfig.api_key = quandl_key
-            q_data = quandl.get('EOD/'+ticker, start_date=start_date, end_date=end_date, paginate=True)
+            q_data = quandl.get('EOD/' + ticker, start_date=start_date, end_date=end_date, paginate=True)
             print(q_data)
         except:
             logging.info('Error attempting to retrieve quandl data for %s', ticker)
@@ -79,17 +84,18 @@ def update_quandl_eod_data(quandl_key, tickers):
 
     return()
 
-def fetch_timeseries_data(field_of_interest,symbol,source):  
+
+def fetch_timeseries_data(field_of_interest, symbol, source): 
     logging.info('fetch_timeseries_data')
     if source == "remote":
         quandl_data = get_ini_data("QUANDL")
         quandl.ApiConfig.api_key = quandl_data['key']
-        df_data = quandl.get_table("WIKI/PRICES",ticker=symbol,qopts={'columns':{field_of_interest}})
+        df_data = quandl.get_table("WIKI/PRICES", ticker=symbol, qopts={'columns':{field_of_interest}})
     else:
         '''
         From locally stored file
         '''
-        #df_data = read_symbol_historical_data(symbol)
+        # df_data = read_symbol_historical_data(symbol)
         df_data = read_enhanced_symbol_data(symbol)
     data = df_data[field_of_interest].values
     logging.debug ("Time series for %s\n\tfield(s) of interest: %s\n\ttime series has %s data points:\n%s ... %s", \
@@ -98,6 +104,7 @@ def fetch_timeseries_data(field_of_interest,symbol,source):
                   symbol, field_of_interest, len(data))
     
     return (data)
+
 
 def quandl_data_last_updated():
     logging.info('quandl_data_last_updated')
@@ -113,7 +120,7 @@ def quandl_data_last_updated():
 def save_last_quandl_update():
     logging.info('save_last_quandl_update')
     # Save in a file the date of the last download from Quandl
-    date = datetime.datetime.today() # date and time
+    date = datetime.datetime.today()  # date and time
     logging.debug("Saving %s as the date the data from Quandl was last added to the local data set", date)
     output_file = get_devdata_dir() + "\\Quandl_update.csv"
     f = open(output_file, 'w')
@@ -121,6 +128,7 @@ def save_last_quandl_update():
     f.closed
 
     return
+
 
 def save_enhanced_historical_data(df_data):
     logging.debug('save_enhanced_historical_data')
@@ -132,6 +140,7 @@ def save_enhanced_historical_data(df_data):
     
     return
 
+
 def save_enhanced_symbol_data(ticker, df_data):
     logging.debug('save_enhanced_symbol_data')
     output_file = get_devdata_dir() + "\\symbols\\" + ticker + "_enriched.csv"
@@ -141,6 +150,7 @@ def save_enhanced_symbol_data(ticker, df_data):
     df_data.to_csv(output_file)
     
     return
+
 
 def save_symbol_historical_data(ticker, df_data):
     logging.debug('save_symbol_historical_data')
@@ -152,6 +162,7 @@ def save_symbol_historical_data(ticker, df_data):
     
     return
 
+
 def read_enhanced_symbol_data(ticker):
     logging.debug('====> ==============================================')
     logging.info ('====> read_enhanced_symbol_data start(ticker=%s)', ticker)
@@ -161,13 +172,14 @@ def read_enhanced_symbol_data(ticker):
     df_data = pd.read_csv(input_file)
     df_data = df_data.set_index('date')
 
-    #logging.debug("ticker %s, shape %s - data file: %s", ticker, df_data.shape, input_file)
-    #logging.debug("data head:\n%s", df_data.head(5))
-    #logging.debug("data tail:\n%s", df_data.tail(5))
+    # logging.debug("ticker %s, shape %s - data file: %s", ticker, df_data.shape, input_file)
+    # logging.debug("data head:\n%s", df_data.head(5))
+    # logging.debug("data tail:\n%s", df_data.tail(5))
     logging.debug('<==== ==============================================')
     logging.info ('<==== read_enhanced_symbol_data end')
     logging.debug('<==== ==============================================')
     return (df_data)
+
 
 def read_symbol_historical_data(ticker):
     logging.info('read_symbol_historical_data')
@@ -179,7 +191,8 @@ def read_symbol_historical_data(ticker):
     
     return (df_data)
 
-def read_historical_data(recs=none):  
+
+def read_historical_data(recs=none): 
     logging.debug('====> ==============================================')
     logging.info ('====> read_historical_data start')
     logging.debug('====> ==============================================')
@@ -195,7 +208,7 @@ def read_historical_data(recs=none):
     else:
         df_data = pd.read_csv(import_file, nrows=recs)
 
-    logging.debug("Historical ticker %s, shape %s - data file: %s", df_data.loc[2,"ticker"], df_data.shape, import_file)
+    logging.debug("Historical ticker %s, shape %s - data file: %s", df_data.loc[2, "ticker"], df_data.shape, import_file)
     logging.debug("Historical data starts: \n%s", df_data.head(5))
     logging.debug("Historical data tail: \n%s", df_data.tail(2))
     logging.debug('<==== ==============================================')

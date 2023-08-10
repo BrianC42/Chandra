@@ -32,25 +32,26 @@ def compare_elements(copy_1, copy_2):
     mismatch_2 = 0
     mismatch = False
     if (len(copy_1) == len(copy_2)):
-        for i_ndx in range (0, len(copy_1)) :
+        for i_ndx in range (0, len(copy_1)):
             print("Shapes - 1: %s, 2: %s" % (copy_1[i_ndx].shape, copy_2[i_ndx].shape))
             for ndx_0 in range (0, copy_1[i_ndx].shape[0]):
                 for ndx_1 in range (0, copy_1[i_ndx].shape[1]):
                     for ndx_2 in range (0, copy_1[i_ndx].shape[2]):
-                        if (copy_1[i_ndx][ndx_0, ndx_1, ndx_2] != copy_2[i_ndx][ndx_0, ndx_1, ndx_2]) :
+                        if (copy_1[i_ndx][ndx_0, ndx_1, ndx_2] != copy_2[i_ndx][ndx_0, ndx_1, ndx_2]):
                             print("Data mismatch at [%d][%d][%d]" % (ndx_0, ndx_1, ndx_2))
                             mismatch = True
                             mismatch_0 = ndx_0
                             mismatch_1 = ndx_1
                             mismatch_2 = ndx_2
                             break
-        if (mismatch) :
+        if (mismatch):
             print("copies are not the same at index[%d)[%d][%d][%d]" % (i_ndx, mismatch_0, mismatch_1, mismatch_2))
-        else :
+        else:
             print("It looks as if we are OK after all")
-    else :
+    else:
         print("ERROR: copies are different lengths")
     return
+
 
 if __name__ == '__main__':
     print ("OK Hal, I think this will get you started.\n")
@@ -78,26 +79,26 @@ if __name__ == '__main__':
     
     lst_analyses_2, x_train_2, y_train_2, x_test_2, y_test_2 = pickle_load_training_data()
     
-    if (np.array_equal(lst_analyses_2, lst_analyses) == False) :
+    if (np.array_equal(lst_analyses_2, lst_analyses) == False):
         print("Houston we have a problem with lst_analyses")
 
-    if (np.array_equal(x_train_2, x_train) == False) :
+    if (np.array_equal(x_train_2, x_train) == False):
         print("\nHouston we have a problem with x_train")
         compare_elements(x_train, x_train_2)
         
-    if (np.array_equal(y_train_2, y_train) == False) :
+    if (np.array_equal(y_train_2, y_train) == False):
         print("\nHouston we have a problem with y_train")
         
-    if (np.array_equal(x_test_2, x_test) == False) :
+    if (np.array_equal(x_test_2, x_test) == False):
         print("\nHouston we have a problem with x_test")
         compare_elements(x_test, x_test_2)
         
-    if (np.array_equal(y_test_2, y_test) == False) :
+    if (np.array_equal(y_test_2, y_test) == False):
         print("\nHouston we have a problem with y_test")
 
     logger.info('Data preparation complete')
 
     end = time.time()
-    print('\nThat took %0.1f seconds ... Now go and train' % (end-start))
+    print('\nThat took %0.1f seconds ... Now go and train' % (end - start))
 
     pass

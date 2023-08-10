@@ -38,7 +38,7 @@ def technical_analysis(json_config, authentication_parameters, data_dir, analysi
         if os.path.isfile(filename):
             print("File: %s" % filename)
             df_data = pd.read_csv(filename)
-            #print("EOD data for %s\n%s" % (filename, df_data))
+            # print("EOD data for %s\n%s" % (filename, df_data))
             df_data = add_trending_data(df_data)
             df_data = add_change_data(df_data)
             df_data = macd(df_data[:], value_label="Close")
@@ -50,9 +50,10 @@ def technical_analysis(json_config, authentication_parameters, data_dir, analysi
             df_data = stochastic_oscillator(df_data)
             df_data = relative_strength(df_data, value_label="Close", relative_to=data_dir + '\\$spx.x.csv')
             df_data.to_csv(analysis_dir + "\\" + symbol + '.csv', index=False)
-            #print("Analytic data for %s\n%s" % (filename, df_data))
+            # print("Analytic data for %s\n%s" % (filename, df_data))
     logger.info('<---- technical_analysis')
     return
+
 
 if __name__ == '__main__':
     print ("Affirmative, Dave. I read you\n")
@@ -66,7 +67,7 @@ if __name__ == '__main__':
     app_data = get_ini_data("TDAMERITRADE")
     json_config = read_config_json(app_data['config'])
 
-    try:    
+    try: 
         log_file = json_config['logFile']
         if json_config['loggingLevel'] == "debug":
             logging.basicConfig(filename=log_file, level=logging.DEBUG, format=json_config['loggingFormat'])
@@ -81,7 +82,7 @@ if __name__ == '__main__':
         f_out = open(output_file, 'w')    
         
         # global parameters
-        #logging.debug("Global parameters")
+        # logging.debug("Global parameters")
     
     except Exception:
         print("\nAn exception occurred - log file details are missing from json configuration")
@@ -91,7 +92,7 @@ if __name__ == '__main__':
     log_fmt = logging.Formatter('%(asctime)s - %(name)s - %levelname - %(messages)s')
     logger.info('Updating stock data')
 
-    #update_tda_eod_data(app_data['authentication'])
+    # update_tda_eod_data(app_data['authentication'])
     technical_analysis(json_config, app_data['authentication'], app_data['eod_data'], app_data['market_analysis_data'])
     
     '''

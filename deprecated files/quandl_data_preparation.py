@@ -23,9 +23,8 @@ from quandl_worker import quandl_worker_pipe
 
 sys.path.append("../Technical_Analysis/")
 
+# from test.libregrtest.save_env import multiprocessing
 
-
-#from test.libregrtest.save_env import multiprocessing
 
 def mp_prep_quandl_data():
     lstm_config_data = get_ini_data("LSTM")
@@ -55,7 +54,7 @@ def mp_prep_quandl_data():
     
     output_data = pd.DataFrame()
     core_count = os.cpu_count()
-    print ("Starting {:d} processes:".format(core_count) )
+    print ("Starting {:d} processes:".format(core_count))
     c_send = []
     c_rcv = []
     data_worker = []
@@ -85,21 +84,21 @@ def mp_prep_quandl_data():
     print ("Read {1} Rows of data and discovered {0} tickers to analyze:\n".format(df_tickers.shape[0], len(df_data)), indices)
 
     last_slice = False
-    while idx < df_tickers.shape[0]:   
+    while idx < df_tickers.shape[0]: 
         '''================= Send slices to workers ================'''
         p_ndx = 0
         p_active = core_count
         while p_ndx < core_count and last_slice == False:
             if idx < df_tickers.shape[0] - 1:
                 slice_start = indices[idx]
-                slice_end = indices[idx+1]
-                #print ("ticker", tickers.ix[slice_start, 'ticker'], "Not last ticker. Slice:", slice_start, "to", slice_end)
+                slice_end = indices[idx + 1]
+                # print ("ticker", tickers.ix[slice_start, 'ticker'], "Not last ticker. Slice:", slice_start, "to", slice_end)
             else:
-                slice_start = indices[len(indices)-1]
+                slice_start = indices[len(indices) - 1]
                 slice_end = len(df_data) - 1
                 last_slice = True
                 p_active = p_ndx
-                #print ("ticker", tickers.ix[slice_start, 'ticker'], "Last ticker. Slice", slice_start, "to", slice_end)
+                # print ("ticker", tickers.ix[slice_start, 'ticker'], "Last ticker. Slice", slice_start, "to", slice_end)
             print ("Passing data to worker", p_ndx, slice_start, slice_end)
             c_send[p_ndx].send(df_data[slice_start:slice_end])
             p_ndx += 1
@@ -111,7 +110,7 @@ def mp_prep_quandl_data():
             data_enh = c_send[p_ndx].recv()        
             print ("Data from technical analysis worker: ...", data_enh.ix[0, 'ticker'], " ", len(data_enh), "data points")
             save_enhanced_symbol_data(data_enh.ix[0, 'ticker'], data_enh)
-            #print (data_enh.head(2), "\n", data_enh.tail(2))
+            # print (data_enh.head(2), "\n", data_enh.tail(2))
             output_data = pd.concat([output_data, data_enh])
             p_ndx += 1
  
@@ -135,6 +134,7 @@ def mp_prep_quandl_data():
     save_enhanced_historical_data(output_data)
 
     print ("\nDave, this conversation can serve no purpose anymore. Goodbye")
+
     
 if __name__ == '__main__':
     mp_prep_quandl_data()

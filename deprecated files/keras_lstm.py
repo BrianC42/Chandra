@@ -41,7 +41,6 @@ from lstm import train_lstm
 from percentage_change import pct_change_multiple
 from quandl_library import get_ini_data
 
-
 if __name__ == '__main__':
     print ("Good morning Dr. chandra. I am ready for my first lesson.\n")
     
@@ -64,7 +63,7 @@ if __name__ == '__main__':
     f_out = open(output_file, 'w')
     
     str_drivers = ''
-    for ndx_driver in range (0, len(RESULT_DRIVERS)) :
+    for ndx_driver in range (0, len(RESULT_DRIVERS)):
         str_drivers += RESULT_DRIVERS[ndx_driver]
         str_drivers += ' '
     
@@ -80,14 +79,14 @@ if __name__ == '__main__':
     ======================================================================= '''
     step1 = time.time()
     print ('\nStep 1 - Load and prepare the data for analysis')
-    if GENERATE_DATA :
+    if GENERATE_DATA:
         lst_analyses, x_train, y_train, x_test, y_test = prepare_ts_lstm(TICKERS, RESULT_DRIVERS, FORECAST_FEATURE, FEATURE_TYPE, \
                                                                          ANALASIS_SAMPLE_LENGTH, FORECAST_LENGTH, \
                                                                          source="local", analysis=ANALYSIS)
         pickle_dump_training_data (lst_analyses, x_train, y_train, x_test, y_test)
     lst_analyses, x_train, y_train, x_test, y_test = pickle_load_training_data()
     
-    if PLOT_DATA :
+    if PLOT_DATA:
         plot_bsh_results(lst_analyses, x_train, y_train, x_test, y_test)
     
     ''' ................... Step 2 - Build Model ............................
@@ -99,7 +98,7 @@ if __name__ == '__main__':
     ''' ...................... Step 3 - Train the model .....................
     ========================================================================= '''
     step3 = time.time()
-    print( "\nStep 3 - Train the model")
+    print("\nStep 3 - Train the model")
     train_lstm(model, x_train, y_train, f_out)
     
     ''' .................... Step 4 - Evaluate the model! ...............
@@ -122,11 +121,11 @@ if __name__ == '__main__':
     print ("\tStep 4 took %.1f secs to Evaluate the model" % (step5 - step4)) 
     print ("\tStep 5 took %.1f secs to Visualize accuracy, clean up and archive" % (end - step5))
     
-    if (ANALYSIS == 'value') :
+    if (ANALYSIS == 'value'):
         pct_change_multiple()
-    elif (ANALYSIS == 'classification') :
+    elif (ANALYSIS == 'classification'):
         bsh_results_multiple(lst_analyses, predictions, y_test, f_out)
-    else :
+    else:
         print ('Analysis model is not specified')
     
     f_out.close()

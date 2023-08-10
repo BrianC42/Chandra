@@ -12,8 +12,8 @@ from keras.models import Sequential
 from keras.utils import plot_model
 from keras.utils import print_summary
 '''
-#from quandl_library import fetch_timeseries_data
-#from quandl_library import get_ini_data
+# from quandl_library import fetch_timeseries_data
+# from quandl_library import get_ini_data
 
 import logging
 import logging
@@ -29,9 +29,8 @@ import pandas as pd
 from quandl_library import get_ini_data
 from time_series_data import series_to_supervised
 
-
 if __name__ == '__main__':
-    #pass
+    # pass
 
     lstm_config_data = get_ini_data("LSTM")
     log_file = lstm_config_data['log']
@@ -61,8 +60,8 @@ if __name__ == '__main__':
     logging.info ("Using %s features as predictors", feature_count)
     logging.info ("data shape: %s", df_data.shape)
     logging.debug('')
-    for ndx_feature_value in range(0, feature_count) :
-        logging.debug("%s: %s ... %s", result_drivers[ndx_feature_value], df_data[ :3, ndx_feature_value], df_data[ -3: , ndx_feature_value])
+    for ndx_feature_value in range(0, feature_count):
+        logging.debug("%s: %s ... %s", result_drivers[ndx_feature_value], df_data[:3, ndx_feature_value], df_data[ -3: , ndx_feature_value])
         ndx_feature_value += 1  
     
     start = time.time()
@@ -73,7 +72,7 @@ if __name__ == '__main__':
         result - 
         forecast_steps of data points (same data as drivers)
     '''
-    #values = ts_data.values
+    # values = ts_data.values
     print ("\tPreparing time series samples of \n\t\t%s" % result_drivers)
     logging.info('Prepare as multi-variant time series data for LSTM')
     logging.info('series_to_supervised(values, time_steps=%s, forecast_steps=%s)', time_steps, forecast_steps)
@@ -92,24 +91,24 @@ if __name__ == '__main__':
     '''
     samples = df_data.shape[0]
 
-    np_data = np.empty([samples, time_steps+forecast_steps, feature_count])
+    np_data = np.empty([samples, time_steps + forecast_steps, feature_count])
     print('\t\tnp_data shape: ', np_data.shape)
 
     '''
     Convert 2D LSTM data frame into 3D Numpy array for data pre-processing
     '''
     logging.debug('')
-    for ndx_feature_value in range(0, feature_count) :
-        for ndx_feature in range(0, time_steps+forecast_steps) :        
-            for ndx_time_period in range(0, samples) :
+    for ndx_feature_value in range(0, feature_count):
+        for ndx_feature in range(0, time_steps + forecast_steps): 
+            for ndx_time_period in range(0, samples):
                 
                 np_data[ndx_time_period, ndx_feature, ndx_feature_value] = \
                     df_data.iloc[ndx_time_period, (ndx_feature_value + (ndx_feature * feature_count))]
                 
                 ndx_time_period += 1            
             ndx_feature += 1
-        #logging.debug('\nnp_data raw feature values: %s, %s', ndx_feature_value, result_drivers[ndx_feature_value])
-        #logging.debug('\n%s', np_data[: , : , ndx_feature_value])
+        # logging.debug('\nnp_data raw feature values: %s, %s', ndx_feature_value, result_drivers[ndx_feature_value])
+        # logging.debug('\n%s', np_data[: , : , ndx_feature_value])
         ndx_feature_value += 1  
     
     step2 = time.time()
@@ -120,22 +119,22 @@ if __name__ == '__main__':
     create a second 3D numpy array and experiment with setting the contents by slicing
     '''
     print ("\tStructuring 3D data by 1 dimension loop and slicing")
-    np_exp = np.empty([samples, time_steps+forecast_steps, feature_count])
+    np_exp = np.empty([samples, time_steps + forecast_steps, feature_count])
     print('\t\tnp_exp shape: ', np_exp.shape)
     
-    #slicing goes here
-    for ndx_feature_value in range(0, feature_count) :
-        #np_exp[ : , : , ndx_feature_value] = df_data[ : , ::5]
-        #np_exp[ : , : , ndx_feature_value] = np_data[:, :, ndx_feature_value] this works and creates an equivalent array
-        #np_exp[ : , : , ndx_feature_value] = df_data.iloc[:, ::feature_count]
+    # slicing goes here
+    for ndx_feature_value in range(0, feature_count):
+        # np_exp[ : , : , ndx_feature_value] = df_data[ : , ::5]
+        # np_exp[ : , : , ndx_feature_value] = np_data[:, :, ndx_feature_value] this works and creates an equivalent array
+        # np_exp[ : , : , ndx_feature_value] = df_data.iloc[:, ::feature_count]
         
         #                                         df.iloc[:, np.r_[1, 2                 : df.shape[1]      : 2]]
-        np_exp[ : , : , ndx_feature_value] = df_data.iloc[:, np.r_[   ndx_feature_value : df_data.shape[1] : feature_count]]
+        np_exp[: ,: , ndx_feature_value] = df_data.iloc[:, np.r_[   ndx_feature_value: df_data.shape[1]: feature_count]]
         ndx_feature_value += 1  
     
-    if (np.array_equiv(np_exp, np_data)) :
+    if (np.array_equiv(np_exp, np_data)):
         print ("\t\t***     np_exp is EQUIVALENT to np_data     ****")
-    else :
+    else:
         print ("\t\tnp_exp differs from np_data")
 
     print("np_exp data shape: %s", np_exp.shape)
