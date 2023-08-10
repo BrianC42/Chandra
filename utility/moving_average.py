@@ -3,8 +3,9 @@ Created on Jan 31, 2018
 
 @author: Brian
 '''
-import pandas as pd
 import numpy as np    
+import pandas as pd
+
 
 def simple_moving_average(df_data, value_label=None, \
         avg_interval=None, \
@@ -13,6 +14,7 @@ def simple_moving_average(df_data, value_label=None, \
     df_data[SMA_data_label] = df_data[value_label].rolling(window=avg_interval, min_periods=1).mean()
     
     return (df_data)
+
 
 def exponential_moving_average(df_data, value_label=None, \
         date_label=None, interval=None, \

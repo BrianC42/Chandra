@@ -3,10 +3,11 @@ Created on Jul 6, 2020
 
 @author: Brian
 '''
-import os
-import sys
 import configparser
 import json
+import os
+import sys
+
 
 def get_ini_data(csection):
 
@@ -27,7 +28,8 @@ def get_ini_data(csection):
     
     return ini_data
 
-def read_config_json(json_file) :
+
+def read_config_json(json_file):
     print ("reading configuration details from ", json_file)
     
     json_f = open(json_file, "rb")
@@ -35,6 +37,7 @@ def read_config_json(json_file) :
     json_f.close
     
     return (json_config)
+
 
 def read_processing_network_json(json_file):
     print ("reading processing network details from ", json_file)

@@ -5,14 +5,16 @@ Copied from https://www.tensorflow.org/tutorials/structured_data/time_series
 
 @author: Brian
 '''
+import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
-import matplotlib.pyplot as plt
+
 
 class WindowGenerator():
     '''
     classdocs
     '''
+
     def __init__(self, input_width, label_width, shift, \
                df_train=None, df_values=None, df_test=None, \
                label_columns=None):
@@ -52,10 +54,10 @@ class WindowGenerator():
             f'Label column name(s): {self.label_columns}'])
 
     def split_window(self, features):
-        inputs = features[:, self.input_slice, :]
-        labels = features[:, self.labels_slice, :]
+        inputs = features[:, self.input_slice,:]
+        labels = features[:, self.labels_slice,:]
         if self.label_columns is not None:
-            labels = tf.stack([labels[:, :, self.column_indices[name]] for name in self.label_columns], \
+            labels = tf.stack([labels[:,:, self.column_indices[name]] for name in self.label_columns], \
                               axis=-1)
 
         # Slicing doesn't preserve static shape information, so set the shapes
@@ -65,7 +67,7 @@ class WindowGenerator():
 
         return inputs, labels
 
-    #WindowGenerator.split_window = split_window
+    # WindowGenerator.split_window = split_window
     
     def plot(self, model=None, plot_col='T (degC)', max_subplots=3):
         inputs, labels = self.example
@@ -73,9 +75,9 @@ class WindowGenerator():
         plot_col_index = self.column_indices[plot_col]
         max_n = min(max_subplots, len(inputs))
         for n in range(max_n):
-            plt.subplot(3, 1, n+1)
+            plt.subplot(3, 1, n + 1)
             plt.ylabel(f'{plot_col} [normed]')
-            plt.plot(self.input_indices, inputs[n, :, plot_col_index], \
+            plt.plot(self.input_indices, inputs[n,:, plot_col_index], \
                      label='Inputs', marker='.', zorder=-10)
 
             if self.label_columns:
@@ -86,11 +88,11 @@ class WindowGenerator():
             if label_col_index is None:
                 continue
 
-            plt.scatter(self.label_indices, labels[n, :, label_col_index], \
+            plt.scatter(self.label_indices, labels[n,:, label_col_index], \
                         edgecolors='k', label='Labels', c='#2ca02c', s=64)
             if model is not None:
                 predictions = model(inputs)
-                plt.scatter(self.label_indices, predictions[n, :, label_col_index], \
+                plt.scatter(self.label_indices, predictions[n,:, label_col_index], \
                             marker='X', edgecolors='k', label='Predictions', \
                             c='#ff7f0e', s=64)
 
@@ -99,7 +101,7 @@ class WindowGenerator():
 
         plt.xlabel('Time [h]')
 
-    #WindowGenerator.plot = plot
+    # WindowGenerator.plot = plot
 
     def make_dataset(self, data):
         data = np.array(data, dtype=np.float64)
@@ -113,7 +115,7 @@ class WindowGenerator():
 
         return ds
 
-    #WindowGenerator.make_dataset = make_dataset
+    # WindowGenerator.make_dataset = make_dataset
     
     @property
     def train(self):
@@ -138,7 +140,7 @@ class WindowGenerator():
             self._example = result
         return result
 
-    #WindowGenerator.train = train
-    #WindowGenerator.val = val
-    #WindowGenerator.test = test
-    #WindowGenerator.example = example
+    # WindowGenerator.train = train
+    # WindowGenerator.val = val
+    # WindowGenerator.test = test
+    # WindowGenerator.example = example
