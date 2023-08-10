@@ -28,6 +28,18 @@
 	"name" : "Covered calls",
 	"Description" : "Download current call option details",
 	"run" : false
+	},
+	{
+	"name" : "Assess market options",
+	"Description" : "Assess market options for risk / reward",
+	"run" : false,
+	"controls" : [
+		{"put tab name" : "put ..."},
+		{"call tab name" : "call ..."},
+		{"max gain APY %" : 20},
+        {"max profit" : 500},
+        {"out of the money probability %" : 80}
+		]
 	}
 ],
 "available model details" : "===========================================",

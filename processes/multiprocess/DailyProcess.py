@@ -241,42 +241,6 @@ def marketCallOptions():
                 df_potential_strategies = pd.concat([df_potential_strategies, df_covered_calls])
         
         sheetName = writeOptionsToGsheet(df_potential_strategies, "call")
-        '''
-        #print("Covered calls accessed")
-        exc_txt = "\nAn exception occurred while updating the Google workbook"
-        gSheet = googleSheet()
-
-        # The ID and range of a sample spreadsheet.
-        EXP_SPREADSHEET_ID = "1XJNEWZ0uDdjCOvxJItYOhjq9kOhYtacJ3epORFn_fm4"
-        DAILY_OPTIONS = "1T0yNe6EkLLpwzg_rLXQktSF1PCx1IcCX9hq9Xc__73U"
-        HOLDING_RANGE = 'Holdings!A1:ZZ'
-        MARKET_DATA_RANGE = 'TD Import Inf!A1:ZZ'
-        OPTIONS_HEADER = '!A1:ZZ'
-        OPTIONS_DATA = '!A2:ZZ'
-        '''
-
-        ''' convert data elements to formats suitable for analysis '''
-        '''
-        df_potential_strategies = prepMktOptionsForAnalysis(df_potential_strategies)
-        
-        dfHoldings = loadHoldings(gSheet, EXP_SPREADSHEET_ID, HOLDING_RANGE)
-        dfMarketData = loadMarketDetails(gSheet, EXP_SPREADSHEET_ID, MARKET_DATA_RANGE)        
-        df_potential_strategies = calculateFields(df_potential_strategies, dfHoldings, dfMarketData)
-        df_potential_strategies = eliminateLowReturnOptions(df_potential_strategies)
-        '''
-
-        ''' valueInputOption = USER_ENTERED or RAW '''
-        '''
-        sheetMktOptions = prepMktOptionsForSheets(df_potential_strategies)
-        
-        now = dt.datetime.now()
-        timeStamp = ' {:4d}{:0>2d}{:0>2d} {:0>2d}{:0>2d}{:0>2d}'.format(now.year, now.month, now.day, \
-                                                                        now.hour, now.minute, now.second)        
-        sheetName = "Calls" + timeStamp
-        gSheet.addGoogleSheet(EXP_SPREADSHEET_ID, sheetName)
-        gSheet.updateGoogleSheet(EXP_SPREADSHEET_ID, sheetName + OPTIONS_HEADER, sheetMktOptions.columns)
-        gSheet.updateGoogleSheet(EXP_SPREADSHEET_ID, sheetName + OPTIONS_DATA, sheetMktOptions)
-        '''
         
     except Exception:
         exc_info = sys.exc_info()
@@ -286,16 +250,15 @@ def marketCallOptions():
     
     return sheetName
 
-def userInterfaceControls():
+def userInterfaceControls(dictOptionsThresholds):
     ''' display a user interface to solicit run time selections '''
     exc_txt = "\nAn exception occurred - tkInterExp"
     
     try:
         
-        ROW_1 = 50
         ROW_2 = 100
-        ROW_3 = 300
-        ROW_BUTTON = 400
+        ROW_3 = 400
+        ROW_BUTTON = 450
         ROW_HEIGHT = 20
         
         COL_1 = 100
@@ -337,6 +300,8 @@ def userInterfaceControls():
         processDetails = appConfig[PROCESS_CONFIGS]
         processCheck = [IntVar()] * len(processDetails)
         processButton = [None] * len(processDetails)
+        controlCheck = [IntVar()] * 99
+        controlButton = [None] * 99
         ndx = 0
         for process in processDetails:
             processData = np.array([process[PROCESS_ID], \
@@ -348,6 +313,17 @@ def userInterfaceControls():
             processButton[ndx] = Checkbutton(window, text = process[PROCESS_ID], variable = processCheck[ndx])
             processButton[ndx].place(x=COL_1, y=ROW_2 + (ROW_HEIGHT * ndx))
             processCtrl = pd.concat([processCtrl, dfTemp])
+            if 'controls' in process:
+                ndx2 = 0
+                for control in process['controls']:
+                    print("{} = {}".format(list(control)[0], control.get(list(control)[0])))
+                    '''
+                    controlCheck[ndx2] = IntVar()
+                    controlButton[ndx2] = controlButton(window, text = list(control)[0], variable = controlCheck[ndx2])
+                    controlButton[ndx2].place(x=COL_1 + 50, y=ROW_2 + (ROW_HEIGHT * ndx) + (ROW_HEIGHT * (ndx2 + 1)))
+                    processCtrl = pd.concat([processCtrl, dfTemp])
+                    '''
+                    ndx2 += 1
             ndx += 1
 
         lblML=Label(window, text="Make machine learning predictions", fg='blue', font=("ariel", 10))
@@ -417,7 +393,11 @@ if __name__ == '__main__':
     
     putSheetName = ""
     callSheetName = ""
-    processCtrl = userInterfaceControls()
+    dictOptionsThresholds = {'minimum max gain APY' : 20, \
+                             'minimum max profit' : 500, \
+                             'out of the money threshold' : 0.8 \
+                            }
+    processCtrl = userInterfaceControls(dictOptionsThresholds)
     
     for ndx in range (len(processCtrl)):
         if processCtrl.iloc[ndx][RUN]:
@@ -434,9 +414,9 @@ if __name__ == '__main__':
             elif processCtrl.iloc[ndx][PROCESS_ID] == MACD_TREND_CROSS:
                 mlMACDTrendCross()
                 
-    #putSheetName = "put 20230808 073454"
-    #callSheetName = "call 20230808 080657"
+    #putSheetName = "put 20230810 062151"
+    #callSheetName = "call 20230810 070005"
     if len(putSheetName) > 0 or len(callSheetName) > 0:
-        eliminateLowReturnOptions(EXP_SPREADSHEET_ID, putSheetName, callSheetName)
+        eliminateLowReturnOptions(EXP_SPREADSHEET_ID, putSheetName, callSheetName, dictOptionsThresholds)
     
     print ("\nAll requested processes have completed")
