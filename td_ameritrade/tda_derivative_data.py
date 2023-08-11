@@ -107,15 +107,25 @@ def add_derived_data(df_data):
     return df_data
 
 def marketOprionsPopulate(row, col, dfHoldings, dfMarketData):
+    '''
+        mktOptions['Purchase $'] = mktOptions.apply(marketOprionsPopulate, axis=1, args=('Purchase $', dfHoldings, dfMarketData))
+        mktOptions['Earnings Date'] = mktOptions.apply(marketOprionsPopulate, axis=1, args=('Earnings Date', dfHoldings, dfMarketData))
+        mktOptions['Dividend Date'] = mktOptions.apply(marketOprionsPopulate, axis=1, args=('Dividend Date', dfHoldings, dfMarketData))
+        mktOptions['Current Holding'] = mktOptions.apply(marketOprionsPopulate, axis=1, args=('Current Holding', dfHoldings, dfMarketData))
+    '''
     exc_txt = "Unable to determine purchase price"
     
     try:
         symbol = row['symbol']
         if symbol in dfHoldings.index:
-            if col == 'Purchase $' or col == 'Current Holding':
-                value = dfHoldings.loc[symbol][col]
-            if col == 'Earnings Date' or col == 'Dividend Date':
-                value = dfMarketData.loc[symbol][col]
+            if col == 'Purchase $':
+                value = dfHoldings.loc[symbol]['Purchase $']
+            elif col == 'Current Holding':
+                value = dfHoldings.loc[symbol]['Current Holding']
+            elif col == 'Earnings Date':
+                value = dfMarketData.loc[symbol]['Next Earnings Date']
+            elif col == 'Dividend Date':
+                value = dfMarketData.loc[symbol]['Dividend Ex-Date']
         else:
             if col == 'Purchase $' or col == 'Current Holding':
                 value = 0.0
@@ -360,13 +370,13 @@ def loadMarketDetails(sheet, sheetID, readRange):
     dfMarketDetails['Last Price'] = dfMarketDetails['Last Price'].apply(sheet.gCellDollarStrToFloat)
     dfMarketDetails['Dividend Yield %'] = dfMarketDetails['Dividend Yield %'].apply(sheet.gCellPctStrToFloat)
     dfMarketDetails['Dividend $'] = dfMarketDetails['Dividend $'].apply(sheet.gCellDollarStrToFloat)
-    dfMarketDetails['Dividend Date'] = dfMarketDetails['Dividend Date'].apply(sheet.gCellDateStrToDate, args=('MMDDYYYY', np.NaN))
+    dfMarketDetails['Dividend Ex-Date'] = dfMarketDetails['Dividend Ex-Date'].apply(sheet.gCellDateStrToDate, args=('MMDDYYYY', np.NaN))
     dfMarketDetails['P/E Ratio'] = dfMarketDetails['P/E Ratio'].apply(sheet.gCellDollarStrToFloat)
     dfMarketDetails['52 Week High'] = dfMarketDetails['52 Week High'].apply(sheet.gCellDollarStrToFloat)
     dfMarketDetails['52 Week Low'] = dfMarketDetails['52 Week Low'].apply(sheet.gCellDollarStrToFloat)
     dfMarketDetails['Volume'] = dfMarketDetails['Volume'].apply(sheet.gCellStrToInt)
     # Sectore remains a string
-    dfMarketDetails['Earnings Date'] = dfMarketDetails['Earnings Date'].apply(sheet.gCellDateStrToDate, args=('MMDDYYYY', np.NaN))
+    dfMarketDetails['Next Earnings Date'] = dfMarketDetails['Next Earnings Date'].apply(sheet.gCellDateStrToDate, args=('MMDDYYYY', np.NaN))
 
     ''' use the symbols as the index '''
     dfMarketDetails = dfMarketDetails.set_index('Symbol')
@@ -485,7 +495,7 @@ def eliminateLowReturnOptions(workbookID, putSheetName, callSheetName, dictOptio
         ''' remove OTM Probability < 0.8 '''
         testColumn = 'OTM Probability'
         testFor = dictOptionsThresholds['out of the money threshold']
-        print("removing OTM (option expires worthless) Probability < {}% rows from {} rows".format(testFor, len(toConsider)))
+        print("removing OTM (option expires worthless) Probability < {} rows from {} rows".format(testFor, len(toConsider)))
         toConsider[testColumn] = toConsider[testColumn].apply(gSheet.gCellStrToFloat)
         rowsToRemove = toConsider.loc[toConsider[testColumn] < testFor]
         toConsider = toConsider.drop(rowsToRemove.index)

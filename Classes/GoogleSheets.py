@@ -242,7 +242,7 @@ class googleSheet():
             requestBody = {"requests" : self.batchRequests}
             #print("\nbatchUpdate requestBody:\n\t{}".format(requestBody))
             result = self.googleSheet.batchUpdate(spreadsheetId=spreadsheetID, body=requestBody).execute()
-            self.batchRequests = list([])
+            self.batchRequests.clear()
             
         except Exception:
             exc_info = sys.exc_info()
