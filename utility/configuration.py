@@ -9,7 +9,7 @@ import os
 import sys
 
 
-def get_ini_data(csection):
+def get_ini_data(csection, file=""):
 
     try:
 

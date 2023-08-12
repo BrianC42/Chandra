@@ -25,6 +25,8 @@ import pandas as pd
 import re
 from decimal import *
 
+from GoogleSheets import googleSheet
+
 from configuration import get_ini_data
 from configuration import read_config_json
 
@@ -459,16 +461,16 @@ def mlPredictions(dictML):
 
     return
 
-def tkInterExp(processCtrl):
-    print("\n======================================================= tkInterExp enter")
-    exc_txt = "\nAn exception occurred - tkInterExp"
+def tkInterExp(dictOptionsThresholds):
+    ''' display a user interface to solicit run time selections '''
+    exc_txt = "\nAn exception occurred - tkInterExp - stage 1"
     
     try:
+        RUN_COL = 2
         
-        ROW_1 = 50
         ROW_2 = 100
-        ROW_3 = 200
-        ROW_BUTTON = 300
+        ROW_3 = 400
+        ROW_BUTTON = 450
         ROW_HEIGHT = 20
         
         COL_1 = 100
@@ -476,7 +478,7 @@ def tkInterExp(processCtrl):
         COL_3 = 300
         
         FORM_WIDTH = '600'
-        FORM_HEIGHT = '400'
+        FORM_HEIGHT = '500'
         FORM_BORDER = '10'
         FORM_GEOMETRY = FORM_WIDTH + 'x' + FORM_HEIGHT + "+" + FORM_BORDER + "+" + FORM_BORDER
 
@@ -486,19 +488,38 @@ def tkInterExp(processCtrl):
         gitdir = localDirs['git']
         aiwork = localDirs['aiwork']
         trainedModels = localDirs['trainedmodels']
-        print("trainedmodels: {}".format((aiwork + "\\" + trainedModels)))
+
+        ''' Google APIs '''
+        exc_txt = "\nAn exception occurred - unable to retrieve Google authentication information"
+        googleAuth = get_ini_data("GOOGLE")
+        
+        ''' local list of file Google Drive file ID '''
+        #localGoogleProject = open(aiwork + "\\Google_Project_Local.json", "rb")
+        localGoogleProject = open(aiwork + "\\" + googleAuth["fileIDs"], "rb")
+        jsonGoogle = json.load(localGoogleProject)
+        localGoogleProject.close
 
         ''' read application specific configuration file '''
         exc_txt = "\nAn exception occurred - unable to process configuration file"
         config_data = get_ini_data("DAILY_PROCESS")
         appConfig = read_config_json(gitdir + config_data['config'])
         
+        ''' ============ set exception description to narrow problem location ============ '''
+        exc_txt = "\nAn exception occurred - tkInterExp - window initialization"
+
+        ''' create an empty dataframe to hold the information related to processes that could be performed '''
+        cols = [PROCESS_ID, PROCESS_DESCRIPTION, RUN, CONFIG]
+        processCtrl = pd.DataFrame(columns=cols)
+        processCtrl[RUN] = processCtrl[RUN].astype(bool)
+
         ''' =================== Create input window =================== '''
         exc_txt = "\nAn exception occurred - unable to create and process window"
         window=Tk()
         window.title('Morning Process Control')
         
         ''' =================== Create all input fields =================== '''
+        ''' ============ set exception description to narrow problem location ============ '''
+        exc_txt = "\nAn exception occurred - tkInterExp - creating input fields"
         lblOps=Label(window, text="Operational processes", fg='blue', font=("ariel", 10))
         lblOps.configure(bg="white")
         lblOps.place(x=COL_1, y=(ROW_2 - ROW_HEIGHT))
@@ -506,17 +527,30 @@ def tkInterExp(processCtrl):
         processDetails = appConfig[PROCESS_CONFIGS]
         processCheck = [IntVar()] * len(processDetails)
         processButton = [None] * len(processDetails)
+        controlCheck = [IntVar()] * 99
+        controlButton = [None] * 99
         ndx = 0
         for process in processDetails:
-            print(process[PROCESS_ID])
-            newd={PROCESS_ID : process[PROCESS_ID], \
-                  PROCESS_DESCRIPTION : process[PROCESS_DESCRIPTION], \
-                  RUN : process[RUN], \
-                  CONFIG : process}
-            processCtrl.loc[len(processCtrl)]=newd
+            processData = np.array([process[PROCESS_ID], \
+                                    process[PROCESS_DESCRIPTION], \
+                                    process[RUN], \
+                                    process])
+            dfTemp = pd.DataFrame([processData], columns=cols)
             processCheck[ndx] = IntVar()
-            processButton[ndx] = Checkbutton(window, text = processCtrl.loc[ndx][PROCESS_ID], variable = processCheck[ndx])
+            processButton[ndx] = Checkbutton(window, text = process[PROCESS_ID], variable = processCheck[ndx])
             processButton[ndx].place(x=COL_1, y=ROW_2 + (ROW_HEIGHT * ndx))
+            processCtrl = pd.concat([processCtrl, dfTemp])
+            if 'controls' in process:
+                ndx2 = 0
+                for control in process['controls']:
+                    print("{} = {}".format(list(control)[0], control.get(list(control)[0])))
+                    '''
+                    controlCheck[ndx2] = IntVar()
+                    controlButton[ndx2] = controlButton(window, text = list(control)[0], variable = controlCheck[ndx2])
+                    controlButton[ndx2].place(x=COL_1 + 50, y=ROW_2 + (ROW_HEIGHT * ndx) + (ROW_HEIGHT * (ndx2 + 1)))
+                    processCtrl = pd.concat([processCtrl, dfTemp])
+                    '''
+                    ndx2 += 1
             ndx += 1
 
         lblML=Label(window, text="Make machine learning predictions", fg='blue', font=("ariel", 10))
@@ -528,20 +562,24 @@ def tkInterExp(processCtrl):
         mlButton = [None] * len(processDetails)
         ndx = 0
         for model in modelDetails:
-            print(model[PROCESS_ID])
-            newd={PROCESS_ID : model[PROCESS_ID], \
-                  PROCESS_DESCRIPTION : model[PROCESS_DESCRIPTION], \
-                  RUN : model[RUN], \
-                  MODEL_FILE : model[MODEL_FILE], \
-                  OUTPUT_FIELDS : model[OUTPUT_FIELDS], \
-                  CONFIG : model}
-            processCtrl.loc[len(processCtrl)]=newd
+            modelData = np.array([model[PROCESS_ID], \
+                                    model[PROCESS_DESCRIPTION], \
+                                    model[RUN], \
+                                    model])
+            dfTemp = pd.DataFrame([modelData], columns=cols)
             mlCheck[ndx] = IntVar()
-            mlButton[ndx] = Checkbutton(window, text = processCtrl.loc[ndx + len(processCheck)][PROCESS_ID], variable = mlCheck[ndx])
+            mlButton[ndx] = Checkbutton(window, text = model[PROCESS_ID], variable = mlCheck[ndx])
             mlButton[ndx].place(x=COL_3, y=ROW_2 + (ROW_HEIGHT * ndx))
+            processCtrl = pd.concat([processCtrl, dfTemp])
             ndx += 1
 
         ''' Select Google sheet file to use for market options details '''
+        ''' ============ set exception description to narrow problem location ============ '''
+        exc_txt = "\nAn exception occurred - tkInterExp - creating additional fields"
+        lblSheet=Label(window, text="Tracking sheet to record and track results", fg='blue', font=("ariel", 10))
+        lblSheet.configure(bg="white")
+        lblSheet.place(x=COL_1, y=(ROW_3 - ROW_HEIGHT))
+
         localGoogleProject = open(aiwork + "\\Google_Project_Local.json", "rb")
         jsonGoogle = json.load(localGoogleProject)
         localGoogleProject.close
@@ -551,17 +589,17 @@ def tkInterExp(processCtrl):
         for sheet in jsonGoogle["Google sheets"]:
             print("Name: {}, ID: {}".format(sheet["name"], sheet["file ID"]))
             radioButton[ndx] = Radiobutton(window, text=sheet["name"], variable = radioValue[ndx])
-            radioButton[ndx].place(x=COL_3, y=ROW_3 + (ROW_HEIGHT * ndx))
+            radioButton[ndx].place(x=COL_1, y=ROW_3 + (ROW_HEIGHT * ndx))
             ndx += 1
 
         ''' =================== create button to process inputs =================== '''
         def go_button():
             for ndx in range (len(processCheck)):
                 if processCheck[ndx].get() == 1:
-                    processCtrl.loc[ndx][RUN] = True
+                    processCtrl.iat[ndx, RUN_COL] = True
             for ndx in range (len(mlCheck)):
                 if mlCheck[ndx].get() == 1:
-                    processCtrl.loc[ndx + len(processCheck)][RUN] = True
+                    processCtrl.iat[ndx + len(processCheck), RUN_COL] = True
             window.quit()
 
         btn=Button(window, command=go_button, text="Run processes selected", fg='blue')
@@ -571,268 +609,15 @@ def tkInterExp(processCtrl):
         window.geometry(FORM_GEOMETRY)
         window.mainloop()
 
-        print("User Interface completing")
-
     except Exception:
         exc_info = sys.exc_info()
         exc_str = exc_info[1].args[0]
         exc_txt = exc_txt + "\n\t" + exc_str
         sys.exit(exc_txt)
-
+    
     return processCtrl
 
-def loadMarketOptionsFile():
-    
-    ''' Find local file directories '''
-    localDirs = get_ini_data("LOCALDIRS")
-    workDir = localDirs['aiwork']
-    optionsFile = workDir + "\\potential_option_trades.csv"
-
-    if os.path.isfile(optionsFile):
-        dfOptions = pd.read_csv(optionsFile)
-
-        ''' convert strings to appropriate data types '''
-        dfOptions['expiration'] = dfOptions['expiration'].apply(sheetStrToDate, args=(YYYYMMDD, np.NaN))
-        
-    else:
-        print("File containing options does not exist")
-
-    return dfOptions
-
-def parseSheetErr(errText):
-    '''
-    <HttpError 400 when requesting https://sheets.googleapis.com/v4/spreadsheets/1XJNEWZ0uDdjCOvxJItYOhjq9kOhYtacJ3epORFn_fm4:batchUpdate?alt=json 
-    returned "Invalid requests[0].addSheet: A sheet with the name "chandra42" already exists. Please enter another name.". 
-    Details: "Invalid requests[0].addSheet: A sheet with the name "chandra42" already exists. Please enter another name.">
-    '''
-    
-    return 
-
-def workbookExp():
-
-    optionsCols = [ \
-        "Symbol", \
-        "Strategy", \
-        "Expiration", \
-        "Days to Expiration", \
-        "Share price", \
-        "Closing Price", \
-        "Strike Price", \
-        "Break Even", \
-        "Bid", \
-        "Ask", \
-        "OTM Probability", \
-        "volatility", \
-        "ADX (Price trend est.)", \
-        "Probability of Loss", \
-        "Purchase $", \
-        "Earnings", \
-        "Dividend", \
-        "Current Holding", \
-        "Qty", \
-        "Max Gain APY", \
-        "Max Profit", \
-        "Risk Management", \
-        "Loss vs. profit", \
-        "premium", \
-        "commission", \
-        "Earnings Date", \
-        "Dividend Date", \
-        "delta", \
-        "gamma", \
-        "theta", \
-        "vega", \
-        "rho", \
-        "in The Money", \
-        "expiration Date", \
-        "ROI", \
-        "Max Loss", \
-        "Preferred outcome", \
-        "Preferred Result", \
-        "Unfavored Result" \
-    ]
-
-    ''' option evaluation sheet column numbers '''
-    COL_symbol =  0
-    COL_strategy = 1
-    COL_expiration = 2
-    COL_days_To_Expiration = 3
-    COL_underlying_Price = 4
-    COL_Closing_Price = 5
-    COL_strike_Price = 6
-    COL_break_even = 7
-    COL_bid = 8
-    COL_ask = 9
-    COL_OTM_Probability = 10
-    COL_volatility = 11
-    COL_ADX = 12
-    COL_probability_of_loss = 13
-    COL_Purchase_dol = 14
-    COL_Earnings = 15
-    COL_Dividend = 16
-    COL_Current_Holding = 17
-    COL_Qty = 18
-    COL_max_gain_APY = 19
-    COL_Max_Profit = 20
-    COL_Risk_Management = 21
-    COL_Loss_vs_Profit = 22
-    COL_premium = 23
-    COL_commission = 24
-    COL_Earnings_Date = 25
-    COL_dividend_Date = 26
-    COL_delta = 27
-    COL_gamma = 28
-    COL_theta = 29
-    COL_vega = 30
-    COL_rho = 31
-    COL_in_The_Money = 32
-    COL_expiration_Date = 33
-    COL_ROI = 34
-    COL_Max_Loss = 35
-    COL_Preferred_Outcome = 36
-    COL_Preferred_Result = 37
-    COL_Unfavored_Result = 38
-
-    COMMISSION_THRESHOLD = '0.65'
-
-    '''
-    hide rows where Qty = 0
-    hide rows (A-Z) where ITM is TRUE
-    hide rows where Concern = Dividend or Earnings
-    highlighted where risk management > $50,000
-    hide rows where max gain APY < 15%
-    hide rows where max profit <$500
-    sort rows by strategy/symbol/expiration/max gain APY
-    
-    https://developers.google.com/sheets/api/guides/values
-    
-    '''
-    
-    print("\n======================================================= workbookExp enter")
-    exc_txt = "\nAn exception occurred - workbookExp"
-    
-    try:
-        localDirs = get_ini_data("LOCALDIRS")
-        aiwork = localDirs['aiwork']
-
-        ''' Google APIs '''
-        exc_txt = "\nAn exception occurred - unable to retrieve Google authentication information"
-        googleAuth = get_ini_data("GOOGLE")
-        '''
-        GoogleTokenPath = aiwork + "\\" + googleAuth["token"]
-        credentialsPath = aiwork + "\\" + googleAuth["credentials"]
-        '''
-        
-        exc_txt = "\nAn exception occurred - unable to authenticate with Google"
-        
-        sheet = openGoogleSheetService()
-        
-        ''' ================== Call the Sheets API - values - read data ================== '''
-        READ_RANGE = 'Read Test!A1:CZ'                        
-        result = ""
-
-        result = sheet.values().get(spreadsheetId=EXP_SPREADSHEET_ID, range=READ_RANGE).execute()
-        print("\tmajorDimension: {}".format(result.get('majorDimension')))
-        print("\trange: {}".format(result.get('range')))
-
-        values = result.get('values', [])
-        if not values:
-            print('\tNo data found.')
-        else:
-            rowNum = 1
-            for row in values:
-                if len(row) < 2:
-                    print("\tBlank row in calls A-C")
-                else:
-                    print('\trow: {}, col A: {}'.format(rowNum, row[0]))
-                rowNum += 1
-            
-        ''' ================== Call the Sheets API - update - write data ================== '''        
-        WRITE_RANGE_TITLE = 'Write Test!A1:CZ'                        
-        WRITE_RANGE_DATA = 'Write Test!A2:CZ'                        
-        
-        mktOptions = loadMarketOptionsFile()
-        ''' replace NaN with 0 '''
-        mktOptions = mktOptions.fillna(0)
-        dfHoldings = loadHoldings(sheet)
-        dfMarketData = loadMarketDetails(sheet)        
-        mktOptions = calculateFields(mktOptions, dfHoldings, dfMarketData)
-        mktOptions = eliminateLowReturnOptions(mktOptions)
-
-        ''' valueInputOption = USER_ENTERED or RAW    '''
-        sheetMktOptions = prepMktOptionsForSheets(mktOptions)
-
-        cellValues = sheetMktOptions.values.tolist()
-        requestBody = {'values': cellValues}
-        result = sheet.values().update(spreadsheetId=EXP_SPREADSHEET_ID, range=WRITE_RANGE_DATA, \
-                    valueInputOption="USER_ENTERED", body=requestBody).execute()
-        print("\tspreadsheetId: {}".format(result.get('spreadsheetId')))
-        print("\tupdatedRange: {}".format(result.get('updatedRange')))
-        print("\tupdatedRows: {}".format(result.get('updatedRows')))
-        print("\tupdatedColumns: {}".format(result.get('updatedColumns')))
-        print("\tupdatedCells: {}".format(result.get('updatedCells')))
-        
-        colTitles = mktOptions.columns
-        colTitleList = [colTitles.values.tolist()]
-        requestBody = {'values': colTitleList}
-        result = sheet.values().update(spreadsheetId=EXP_SPREADSHEET_ID, range=WRITE_RANGE_TITLE, \
-                    valueInputOption="USER_ENTERED", body=requestBody).execute()
-                    
-        #COL_bid = 8
-        #COL_ask = 9
-        ''' read back and identify written data '''
-        result = sheet.values().get(spreadsheetId=EXP_SPREADSHEET_ID, range=WRITE_RANGE_DATA).execute()
-        values = result.get('values', [])
-        if not values:
-            print('\tNo data found.')
-        else:
-            rowNum = 1
-            for row in values:
-                rowNum += 1
-            print("Read back {} rows".format(rowNum))
-        
-        ''' ================== Call the Sheets API - batchUpdate - add a new tab ================== '''
-        requests = list([])
-        addSheetRequest = {"properties" : {"title": "chandra42"}}
-        requests.append({"addSheet" : addSheetRequest})
-        requestBody = {"requests" : requests}
-        print("\nbatchUpdate requestBody:\n\t{}".format(requestBody))
-        result = sheet.batchUpdate(spreadsheetId=EXP_SPREADSHEET_ID, body=requestBody).execute()
-
-    except HttpError as err:
-        parseSheetErr(err)
-        sys.exit(err)
-
-    except Exception:
-        exc_info = sys.exc_info()
-        exc_str = exc_info[1].args[0]
-        sys.exit(exc_txt + "\n\t" + exc_str)
-
-    return
-
-def setPythonPath(gitdir):
-    
-    ''' Set python path for executing stand alone scripts '''
-    pPath = gitdir + "\\chandra\\processes\\single"
-    pPath += ";"
-    pPath += gitdir + "\\chandra\\processes\\multiprocess"
-    pPath += ";"
-    pPath += gitdir + "\\chandra\\processes\\child"
-    pPath += ";"
-    pPath += gitdir + "\\chandra\\utility"
-    pPath += ";"
-    pPath += gitdir + "\\chandra\\technical_analysis"
-    pPath += ";"
-    pPath += gitdir + "\\chandra\\td_ameritrade"
-    pPath += ";"
-    pPath += gitdir + "\\chandra\\machine_learning"
-    pPath += ";"
-    pPath += gitdir + "\\chandra\\unit_test"
-    os.environ["PYTHONPATH"] = pPath
-
-    return
-
-def jsonExp():
+def iniRead():
 
     print("\n======================================================= jsonExp enter")
     exc_txt = "\nAn exception occurred - jsonExp"
@@ -864,7 +649,9 @@ def jsonExp():
         appConfig = read_config_json(gitdir + config_data['config'])
         print("appConfig: {}".format(appConfig))
         
-        localGoogleProject = open(aiwork + "\\Google_Project_Local.json", "rb")
+        ''' local list of file Google Drive file ID '''
+        #localGoogleProject = open(aiwork + "\\Google_Project_Local.json", "rb")
+        localGoogleProject = open(aiwork + "\\" + googleAuth["fileIDs"], "rb")
         jsonGoogle = json.load(localGoogleProject)
         localGoogleProject.close
 
@@ -882,18 +669,17 @@ def jsonExp():
 if __name__ == '__main__':
     print("==================================================== Code experimentation starting")
     
-    '''
-    Update market data: base on tda_derivative_data_master
-    read option chains: base on assess_trading_signals
-    '''
+    processCtrl = iniRead()                   # Experimentation / development of configuration json file
     
     if True:
-        workbookExp()               # Experimentation with Google sheet access
+        dictOptionsThresholds = {'minimum max gain APY' : 20, \
+                                 'minimum max profit' : 500, \
+                                 'out of the money threshold' : 0.8 \
+                                }
+        processCtrl = tkInterExp(dictOptionsThresholds)
         
     else:
         dataFiles = buildListofMarketDataFiles()
-        processCtrl = jsonExp()                   # Experimentation / development of configuration json file
-        processCtrl = tkInterExp(processCtrl)                # Experimentation with user interface        
 
         for ndx in range(len(processCtrl)):
             print("Process: {}: run = {}".format(processCtrl.loc[ndx][PROCESS_ID], processCtrl.loc[ndx][RUN]))

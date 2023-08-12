@@ -34,11 +34,10 @@
 	"Description" : "Assess market options for risk / reward",
 	"run" : false,
 	"controls" : [
-		{"put tab name" : "put ..."},
-		{"call tab name" : "call ..."},
-		{"max gain APY %" : 20},
-        {"max profit" : 500},
-        {"out of the money probability %" : 80}
+		{"max gain APY" : 20},
+        {"Max Profit" : 500},
+        {"OTM Probability" : 80},
+        {"Workbook ID" : ["Production", "Development"]}
 		]
 	}
 ],
