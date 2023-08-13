@@ -19,10 +19,14 @@ from average_directional_index import eval_average_directional_index
 from stochastic_oscillator import stochastic_oscillator
 from relative_strength import relative_strength
 
+from configuration import get_ini_data
+
 from technical_analysis_utilities import initialize_eval_results
 
-if __name__ == '__main__':
-    df_data = pd.read_csv('d:\\brian\AI Projects\\tda\market_data\\c.csv')
+if __name__ == '__main__':    
+    localDirs = get_ini_data("LOCALDIRS")
+    aiwork = localDirs['aiwork']
+    df_data = pd.read_csv(aiwork + '\\' + 'tda\\market_data\\c.csv')
     df_data = add_derived_data(df_data)
     '''
     df_data = macd(df_data[:], value_label="Close")

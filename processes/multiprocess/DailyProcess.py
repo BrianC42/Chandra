@@ -391,6 +391,8 @@ def userInterfaceControls(dictOptionsThresholds):
 if __name__ == '__main__':
     print ("Perform daily operational processes\n")
     
+    print("WIP =====================\n\tCheck duplicate market data rows in TDA data\n===================\n")
+    
     putSheetName = ""
     callSheetName = ""
     dictOptionsThresholds = {'minimum max gain APY' : 20, \

@@ -448,7 +448,9 @@ def tda_read_watch_lists(json_authentication, watch_list=None):
 
 def update_tda_eod_data(authentication_parameters):
     
-    eod_data_dir = 'd:\\brian\\AI-Projects\\tda\\market_data\\'
+    localDirs = get_ini_data("LOCALDIRS")
+    aiwork = localDirs['aiwork']
+    eod_data_dir = aiwork + '\\tda\\market_data\\'
     json_authentication = tda_get_authentication_details(authentication_parameters)
     tda_throttle_time = time.time()
     tda_throttle_count = 0
