@@ -18,9 +18,11 @@ from tda_api_library import tda_search_instruments
 
 def scan_fundamentals(app_data, json_config):
     df_fundamentals = pd.DataFrame()
-    tda_auth = read_config_json(json_config['tokenAttributes'])
+    localDirs = get_ini_data("LOCALDIRS")
+    aiwork = localDirs['aiwork']
+    tda_auth = read_config_json(aiwork + '\\' + json_config['tokenAttributes'])
     symbol_list = tda_read_watch_lists(tda_auth)
-    fundamentals_dir = json_config['fundamentals']
+    fundamentals_dir = aiwork + '\\' + json_config['fundamentals']
     tda_throttle_time = time.time()
     tda_throttle_count = 0
     for symbol in symbol_list:
@@ -51,11 +53,13 @@ if __name__ == '__main__':
     now = dt.datetime.now()
     
     # Get external initialization details
+    localDirs = get_ini_data("LOCALDIRS")
+    aiwork = localDirs['aiwork']
     app_data = get_ini_data("TDAMERITRADE")
     json_config = read_config_json(app_data['config'])
 
     try:    
-        log_file = json_config['fundamentalslog']
+        log_file = aiwork + '\\' + json_config['fundamentalslog']
         if json_config['loggingLevel'] == "debug":
             logging.basicConfig(filename=log_file, level=logging.DEBUG, format=json_config['loggingFormat'])
         elif json_config['loggingLevel'] == "info":
@@ -63,7 +67,7 @@ if __name__ == '__main__':
         else:
             logging.basicConfig(filename=log_file, level=logging.WARNING, format=json_config['loggingFormat'])
             
-        output_file = json_config['fundamentalsoutputfile']
+        output_file = aiwork + '\\' + json_config['fundamentalsoutputfile']
         output_file = output_file + ' {:4d} {:0>2d} {:0>2d} {:0>2d} {:0>2d} {:0>2d}'.format(now.year, now.month, now.day, \
                                                                                        now.hour, now.minute, now.second) + '.txt'
         f_out = open(output_file, 'w')    

@@ -29,7 +29,9 @@ def coordinate_evaluation_child_processes(authentication_parameters, analysis_di
     c_send = []
     c_rcv = []
     data_worker = []
-    segmentation = json_config['evaluatesegmentationfile']
+    localDirs = get_ini_data("LOCALDIRS")
+    aiwork = localDirs['aiwork']
+    segmentation = aiwork + '\\' + json_config['evaluatesegmentationfile']
     
     p_ndx = 0
     while p_ndx < core_count:
@@ -96,11 +98,13 @@ if __name__ == '__main__':
     now = dt.datetime.now()
     
     # Get external initialization details
+    localDirs = get_ini_data("LOCALDIRS")
+    aiwork = localDirs['aiwork']
     app_data = get_ini_data("TDAMERITRADE")
     json_config = read_config_json(app_data['config'])
 
     try:    
-        log_file = json_config['evaluatelogFile']
+        log_file = aiwork + '\\' + json_config['evaluatelogFile']
         if json_config['loggingLevel'] == "debug":
             logging.basicConfig(filename=log_file, level=logging.DEBUG, format=json_config['loggingFormat'])
         elif json_config['loggingLevel'] == "info":
@@ -108,7 +112,7 @@ if __name__ == '__main__':
         else:
             logging.basicConfig(filename=log_file, level=logging.WARNING, format=json_config['loggingFormat'])
             
-        output_file = json_config['evaluateoutputFile']
+        output_file = aiwork + '\\' + json_config['evaluateoutputFile']
         output_file = output_file + ' {:4d} {:0>2d} {:0>2d} {:0>2d} {:0>2d} {:0>2d}'.format(now.year, now.month, now.day, \
                                                                                        now.hour, now.minute, now.second) + '.txt'
         f_out = open(output_file, 'w')    

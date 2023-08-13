@@ -628,8 +628,8 @@ def iniRead():
         ''' Find local file directories '''
         exc_txt = "\nAn exception occurred - unable to retrieve <user>\AppData\Local\Develoment\<appName>.ini"
         localDirs = get_ini_data("LOCALDIRS")
-        gitdir = localDirs['git']
         aiwork = localDirs['aiwork']
+        gitdir = localDirs['git']
         models = localDirs['trainedmodels']
         print("Local computer directories - localDirs: {}\n\taiwork: {}\n\tgitdir: {}\n\ttrained models: {}".format(localDirs, aiwork, gitdir, models))
     

@@ -308,6 +308,8 @@ if __name__ == '__main__':
     now = dt.datetime.now()
     
     # Get external initialization details
+    localDirs = get_ini_data("LOCALDIRS")
+    aiwork = localDirs['aiwork']
     app_data = get_ini_data("TDAMERITRADE")
     json_config = read_config_json(app_data['config'])
     #EODData = app_data['eod_data']
@@ -317,7 +319,7 @@ if __name__ == '__main__':
     #AIWork = dir_data['aiwork']
 
     try:    
-        log_file = json_config['logFile']
+        log_file = aiwork + '\\' + json_config['logFile']
         if json_config['loggingLevel'] == "debug":
             logging.basicConfig(filename=log_file, level=logging.DEBUG, format=json_config['loggingFormat'])
         elif json_config['loggingLevel'] == "info":

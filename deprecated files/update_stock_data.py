@@ -64,11 +64,13 @@ if __name__ == '__main__':
     now = dt.datetime.now()
     
     # Get external initialization details
+    localDirs = get_ini_data("LOCALDIRS")
+    aiwork = localDirs['aiwork']
     app_data = get_ini_data("TDAMERITRADE")
     json_config = read_config_json(app_data['config'])
 
     try: 
-        log_file = json_config['logFile']
+        log_file = aiwork + '\\' + json_config['logFile']
         if json_config['loggingLevel'] == "debug":
             logging.basicConfig(filename=log_file, level=logging.DEBUG, format=json_config['loggingFormat'])
         elif json_config['loggingLevel'] == "info":
@@ -76,7 +78,7 @@ if __name__ == '__main__':
         else:
             logging.basicConfig(filename=log_file, level=logging.WARNING, format=json_config['loggingFormat'])
             
-        output_file = json_config['outputFile']
+        output_file = aiwork + '\\' + json_config['outputFile']
         output_file = output_file + ' {:4d} {:0>2d} {:0>2d} {:0>2d} {:0>2d} {:0>2d}'.format(now.year, now.month, now.day, \
                                                                                        now.hour, now.minute, now.second) + '.txt'
         f_out = open(output_file, 'w')    

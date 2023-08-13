@@ -91,13 +91,15 @@ def assess_trading_signals(symbol, df_data):
 def search_for_trading_opportunities(f_out, authentication_parameters, analysis_dir, json_config):
     print("\nScanning for technical analysis trading opportunities")
     logger.info('searching for trading opportunities ---->')
+    localDirs = get_ini_data("LOCALDIRS")
+    aiwork = localDirs['aiwork']
     guidance = pd.DataFrame()
     df_potential_strategies = pd.DataFrame()
     '''
     Trading signals based on technical analysis
     '''
     json_authentication = tda_get_authentication_details(authentication_parameters)
-    potential_option_trades = json_config['potentialoptionstrades']
+    potential_option_trades = aiwork + '\\' + json_config['potentialoptionstrades']
     for symbol in tda_read_watch_lists(json_authentication):
         #print("Assessing: %s" % symbol)
         filename = analysis_dir + '\\' + symbol + '.csv'
@@ -161,12 +163,16 @@ if __name__ == '__main__':
     start = time.time()
     now = dt.datetime.now()
     
+    localDirs = get_ini_data("LOCALDIRS")
+    gitdir = localDirs['git']
+    aiwork = localDirs['aiwork']
+    
     # Get external initialization details
     app_data = get_ini_data("TDAMERITRADE")
     json_config = read_config_json(app_data['config'])
 
     try:    
-        log_file = json_config['logFile']
+        log_file = aiwork + '\\' + json_config['logFile']
         if json_config['loggingLevel'] == "debug":
             logging.basicConfig(filename=log_file, level=logging.DEBUG, format=json_config['loggingFormat'])
         elif json_config['loggingLevel'] == "info":
@@ -174,7 +180,7 @@ if __name__ == '__main__':
         else:
             logging.basicConfig(filename=log_file, level=logging.WARNING, format=json_config['loggingFormat'])
             
-        output_file = json_config['outputFile']
+        output_file = aiwork + '\\' + json_config['outputFile']
         output_file = output_file + ' {:4d} {:0>2d} {:0>2d} {:0>2d} {:0>2d} {:0>2d}'.format(now.year, now.month, now.day, \
                                                                                        now.hour, now.minute, now.second) + '.txt'
         f_out = open(output_file, 'w')    

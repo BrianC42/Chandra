@@ -19,7 +19,9 @@ from tda_api_library import tda_read_option_chain
 def scan_option_chains(app_data, json_config):
     tda_auth = read_config_json(json_config['tokenAttributes'])
     symbol_list = tda_read_watch_lists(tda_auth)
-    options_dir = json_config['optionchains']
+    localDirs = get_ini_data("LOCALDIRS")
+    aiwork = localDirs['aiwork']
+    options_dir = aiwork + '\\' + json_config['optionchains']
     for symbol in symbol_list:
         print(symbol)
         df_options, options_json = tda_read_option_chain(app_data['authentication'], symbol)
@@ -39,11 +41,13 @@ if __name__ == '__main__':
     now = dt.datetime.now()
     
     # Get external initialization details
+    localDirs = get_ini_data("LOCALDIRS")
+    aiwork = localDirs['aiwork']
     app_data = get_ini_data("TDAMERITRADE")
     json_config = read_config_json(app_data['config'])
 
     try:    
-        log_file = json_config['optionchainlog']
+        log_file = aiwork + '\\' + json_config['optionchainlog']
         if json_config['loggingLevel'] == "debug":
             logging.basicConfig(filename=log_file, level=logging.DEBUG, format=json_config['loggingFormat'])
         elif json_config['loggingLevel'] == "info":
@@ -51,7 +55,7 @@ if __name__ == '__main__':
         else:
             logging.basicConfig(filename=log_file, level=logging.WARNING, format=json_config['loggingFormat'])
             
-        output_file = json_config['optionchainoutputfile']
+        output_file = aiwork + '\\' + json_config['optionchainoutputfile']
         output_file = output_file + ' {:4d} {:0>2d} {:0>2d} {:0>2d} {:0>2d} {:0>2d}'.format(now.year, now.month, now.day, \
                                                                                        now.hour, now.minute, now.second) + '.txt'
         f_out = open(output_file, 'w')    

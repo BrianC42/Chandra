@@ -35,7 +35,9 @@ BASELINE_COLS = ["duration", "Neg", '-5', '-4', '-3',  '-2',  '-1', 'Neutral',  
 
 
 def read_evaluation_result(json_config):
-    segmentation = json_config['evaluateoutputFile' ] +'.csv'
+    localDirs = get_ini_data("LOCALDIRS")
+    aiwork = localDirs['aiwork']
+    segmentation = aiwork + '\\' + json_config['evaluateoutputFile' ] +'.csv'
     if os.path.isfile(segmentation):
         df_eval = pd.read_csv(segmentation)
     return df_eval

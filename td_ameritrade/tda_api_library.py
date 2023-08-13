@@ -13,6 +13,9 @@ import requests
 import json
 import pandas as pd
 
+from configuration import get_ini_data
+from configuration import read_config_json
+
 MIN_DURATION = 20
 MAX_DURATION = 65
 MAX_OTM_PCT = 30
@@ -69,7 +72,11 @@ def tda_get_authentication_details(auth_file):
 def tda_update_authentication_details(json_authentication):
     logging.debug('tda_update_authentication_details ---->\n')
     
-    json_f = open('d:\\brian\\AI-Projects\\tda_local.json', "w")
+    # Get external initialization details
+    localDirs = get_ini_data("LOCALDIRS")
+    aiwork = localDirs['aiwork']
+
+    json_f = open(aiwork + '\\tda_local.json', "w")
     json.dump(json_authentication, json_f, indent=0)
     json_f.close
     
