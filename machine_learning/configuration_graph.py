@@ -7,6 +7,7 @@ import sys
 import logging
 import networkx as nx
 import configuration_constants as cc
+from configuration import get_ini_data
 
 def add_data_flow_details(js_flow_conditional, nx_graph, nx_edge_key):
 
@@ -37,11 +38,20 @@ def add_data_flow_details(js_flow_conditional, nx_graph, nx_edge_key):
     return 
 
 def add_data_source_details(js_config, nx_graph, nx_process_name):
+    localDirs = get_ini_data("LOCALDIRS")
+    aiwork = localDirs['aiwork']
+    ndx = 0
+    for fileSpec in js_config[cc.JSON_INPUT_DATA_FILE]:
+        fileSpec = aiwork + '\\' + js_config[cc.JSON_INPUT_DATA_FILE][ndx]
+        js_config[cc.JSON_INPUT_DATA_FILE][ndx]=fileSpec
+        ndx += 1
     nx_inputFile = js_config[cc.JSON_INPUT_DATA_FILE]
     nx.set_node_attributes(nx_graph, {nx_process_name:nx_inputFile}, cc.JSON_INPUT_DATA_FILE)
     return
 
 def add_meta_data_edge (js_config, d2r):
+    localDirs = get_ini_data("LOCALDIRS")
+    aiwork = localDirs['aiwork']
     nx_flowName = js_config[cc.JSON_FLOW_NAME]
 
     # mandatory elements
@@ -51,7 +61,7 @@ def add_meta_data_edge (js_config, d2r):
     d2r.graph.add_edge(nx_flowFrom, nx_flowTo, key=nx_flowName)
 
     nx_edge_key = (nx_flowFrom, nx_flowTo, nx_flowName)
-    nx_flow_data_file = js_required[cc.JSON_FLOW_DATA_FILE]
+    nx_flow_data_file = aiwork + '\\' + js_required[cc.JSON_FLOW_DATA_FILE]
     nx.set_edge_attributes(d2r.graph, {nx_edge_key:nx_flow_data_file}, cc.JSON_FLOW_DATA_FILE)
 
     if cc.JSON_CONDITIONAL in js_config:

@@ -10,6 +10,7 @@ import pickle
 import networkx as nx
 import tensorflow as tf
 from tensorflow import keras
+from configuration import get_ini_data
 
 ''' autokeras disabled temporarily
 import autokeras as ak
@@ -21,6 +22,9 @@ from TrainingDataAndResults import TRAINING_AUTO_KERAS
 
 def trainModel(d2r):
     try:
+        localDirs = get_ini_data("LOCALDIRS")
+        aiwork = localDirs['aiwork']
+
         now = dt.datetime.now()
         timeStamp = ' {:4d}{:0>2d}{:0>2d} {:0>2d}{:0>2d}{:0>2d}'.format(now.year, now.month, now.day, \
                                                                         now.hour, now.minute, now.second)
@@ -44,7 +48,7 @@ def trainModel(d2r):
         nx_shuffle = iterTraining[cc.JSON_SHUFFLE_DATA]
         
         iterTensorboard = iterParamters[cc.JSON_TENSORBOARD]
-        logDir = iterTensorboard[cc.JSON_LOG_DIR]
+        logDir = aiwork + '\\' + iterTensorboard[cc.JSON_LOG_DIR]
         logFile = logDir + iterationID + timeStamp
         tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=logFile, \
                                                               histogram_freq=1, \
@@ -63,14 +67,14 @@ def trainModel(d2r):
                                     verbose=nx_verbose, \
                                     callbacks=[tensorboard_callback])
     
-        modelFileName = modeFileDir + iterationID + timeStamp
+        modelFileName = aiwork + '\\' + modeFileDir + iterationID + timeStamp
         
         if d2r.trainer == TRAINING_AUTO_KERAS:
             d2r.model = d2r.model.export_model()
         d2r.model.save(modelFileName)
         
         if hasattr(d2r, 'scaler'):
-            scalerFile = modeFileDir + iterationID + timeStamp + cc.JSON_SCALER_ID + '.pkl'
+            scalerFile = aiwork + '\\' + modeFileDir + iterationID + timeStamp + cc.JSON_SCALER_ID + '.pkl'
             with open(scalerFile, 'wb') as pf:
                 pickle.dump(d2r.scaler, pf)
             pf.close()
@@ -80,6 +84,7 @@ def trainModel(d2r):
         keras.utils.plot_model(d2r.model, to_file=modelFileName + '.png', show_shapes=True)
 
     except Exception:
+        exc_txt = "\n*** An exception occurred training the model ***\n\t"
         err_txt = "\n*** An exception occurred training the model ***\n\t"
         
         exc_info = sys.exc_info()
