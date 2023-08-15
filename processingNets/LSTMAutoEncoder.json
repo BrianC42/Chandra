@@ -13,7 +13,7 @@
 		},
 		"conditionalFields" : {
 			"dataPrepCtrl" : {
-				"inputFile" : ["d:\\brian\\AI-Projects\\tda\\market_analysis_data\\gm.csv"]
+				"inputFile" : ["tda\\market_analysis_data\\gm.csv"]
 			}
 		}
 	},
@@ -24,11 +24,11 @@
 			"processType" : "Tensorflow",
 			"inputFlows" : ["marketAutoEncode"],
 			"outputFlow" : "",
-			"outputFile" : "d:\\brian\\AI-Projects\\models\\mktAutoEncode",
-			"logFile" : "d:\\brian\\AI-Projects\\logs\\mktAutoEncode.txt"
+			"outputFile" : "models\\mktAutoEncode",
+			"logFile" : "logs\\mktAutoEncode.txt"
 		},
 		"conditionalFields" : {
-			"modelFile" : "d:\\brian\\AI-Projects\\models\\mktAutoEncode",
+			"modelFile" : "models\\mktAutoEncode",
 			"dataPrecision" : "float32",
 			"normalize" : "minmax",
 			"modelLayers" : [
@@ -96,7 +96,7 @@
 	"requiredFields" : {
 		"flowFrom" : "dataIn",
 		"flowTo" : "mktAutoEncode",
-		"flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\mktAutoEncode.csv"
+		"flowDataFile" : "internal_flows\\mktAutoEncode.csv"
 		},
 	"conditionalFields" : {
 		"TensorflowData" : {

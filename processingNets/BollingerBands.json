@@ -6,7 +6,7 @@
 	{
 	"flowName" : "LoadedData",
 	"requiredFields" : {
-		"flowFrom" : "LoadData", "flowTo" : "PrepData", "flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\BBLoadedData.csv"
+		"flowFrom" : "LoadData", "flowTo" : "PrepData", "flowDataFile" : "internal_flows\\BBLoadedData.csv"
 		},
 	"conditionalFields" : {
 		"TensorflowData" : {
@@ -19,7 +19,7 @@
 	{
 	"flowName" : "PreparedData",
 	"requiredFields" : {
-		"flowFrom" : "PrepData", "flowTo" : "BollingerBands", "flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\BBPrepared.csv"
+		"flowFrom" : "PrepData", "flowTo" : "BollingerBands", "flowDataFile" : "internal_flows\\BBPrepared.csv"
 		},
 	"conditionalFields" : {
 		"TensorflowData" : {
@@ -39,9 +39,9 @@
 	"requiredFields" : {"processType" : "dataLoad", "inputFlows" : [], "outputFlow" : "LoadedData"},
 	"conditionalFields" : {
 		"dataLoadCtrl" : {
-			"comment file spec" : "d:\\brian\\AI-Projects\\tda\\market_analysis_data\\[a-z]*.csv",
+			"comment file spec" : "tda\\market_analysis_data\\[a-z]*.csv",
 			"inputFile" : [
-				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\[a-z]*.csv"
+				"tda\\market_analysis_data\\[a-z]*.csv"
 			]
 		}
 	}
@@ -92,8 +92,8 @@
 			"iteration description" : "binary_crossentropy / [Accuracy, Precision, Recall] / sigmoid (unbalanced)",
 			"iteration parameters" : {
 				"iteration ID" : "BB_test001",
-				"modelFileDir" : "d:\\brian\\AI-Projects\\models\\rnn\\lstm\\BB\\",
-				"tensorboard" : {"log file dir" : "d:\\brian\\AI-Projects\\logs\\tensorboard\\categorization\\lstm\\BB\\b_c\\"},
+				"modelFileDir" : "models\\rnn\\lstm\\BB\\",
+				"tensorboard" : {"log file dir" : "logs\\tensorboard\\categorization\\lstm\\BB\\b_c\\"},
 				"forecastInterval" : 0,
 				"modelLayers" : [
     				{"layerName" : "input", "layerType" : "lstm", "featureCount": 7, "timeSteps": 5, "layerUnits" : 64, "returnSequences" : false, "outputActivation" : "tanh"},

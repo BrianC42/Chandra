@@ -6,7 +6,7 @@
 	{
 	"flowName" : "TrendLineCross",
 	"requiredFields" : {
-		"flowFrom" : "LoadData", "flowTo" : "PrepData", "flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\TrendLineCross.csv"
+		"flowFrom" : "LoadData", "flowTo" : "PrepData", "flowDataFile" : "internal_flows\\TrendLineCross.csv"
 		},
 	"conditionalFields" : {
 		"TensorflowData" : {
@@ -20,7 +20,7 @@
 	{
 	"flowName" : "TrendLineCrossPrepared",
 	"requiredFields" : {
-		"flowFrom" : "PrepData", "flowTo" : "MACD_Train", "flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\TrendLineCrossPrepared.csv"
+		"flowFrom" : "PrepData", "flowTo" : "MACD_Train", "flowDataFile" : "internal_flows\\TrendLineCrossPrepared.csv"
 		},
 	"conditionalFields" : {
 		"TensorflowData" : {
@@ -42,9 +42,9 @@
 	},
 	"conditionalFields" : {
 		"dataLoadCtrl" : {
-			"comment file spec" : "d:\\brian\\AI-Projects\\tda\\market_analysis_data\\[a-z]*.csv",
+			"comment file spec" : "tda\\market_analysis_data\\[a-z]*.csv",
 			"inputFile" : [
-				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\c.csv"
+				"tda\\market_analysis_data\\c.csv"
 			]
 		}
 	}
@@ -91,8 +91,8 @@
 			{
 			"iteration parameters" : {
 				"iteration ID" : "MACD_test001",
-				"modelFileDir" : "d:\\brian\\AI-Projects\\models\\rnn\\lstm\\MACD\\",
-				"tensorboard" : {"log file dir" : "d:\\brian\\AI-Projects\\logs\\tensorboard\\categorization\\lstm\\MACD-Flag\\"},
+				"modelFileDir" : "models\\rnn\\lstm\\MACD\\",
+				"tensorboard" : {"log file dir" : "logs\\tensorboard\\categorization\\lstm\\MACD-Flag\\"},
 				"forecastInterval" : 0,
 				"modelLayers" : [
     				{"layerName" : "input", "layerType" : "lstm", "featureCount": 2, "timeSteps": 5, "layerUnits" : 256, "returnSequences" : true, "outputActivation" : "tanh"},

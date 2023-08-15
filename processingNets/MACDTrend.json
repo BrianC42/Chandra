@@ -4,7 +4,7 @@
 "dataFlows" : [
 	{
 	"flowName" : "MACDTrendCross",
-	"requiredFields" : {"flowFrom" : "LoadData", "flowTo" : "PrepData", "flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\TrendLineCross.csv"},
+	"requiredFields" : {"flowFrom" : "LoadData", "flowTo" : "PrepData", "flowDataFile" : "internal_flows\\TrendLineCross.csv"},
 	"conditionalFields" : {
 		"TensorflowData" : {
 			"features" : ["MACD", "MACD_Signal"],
@@ -15,7 +15,7 @@
 	},
 	{
 	"flowName" : "MACDTrendCrossPrepared",
-	"requiredFields" : {"flowFrom" : "PrepData", "flowTo" : "MACDTrendCross", "flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\TrendLineCrossPrepared.csv"},
+	"requiredFields" : {"flowFrom" : "PrepData", "flowTo" : "MACDTrendCross", "flowDataFile" : "internal_flows\\TrendLineCrossPrepared.csv"},
 	"conditionalFields" : {
 		"TensorflowData" : {
 			"features" : ["MACD", "MACD_Signal"],
@@ -34,9 +34,9 @@
 	"requiredFields" : {"processType" : "dataLoad", "inputFlows" : [], "outputFlow" : "MACDTrendCross"},
 	"conditionalFields" : {
 		"dataLoadCtrl" : {
-			"comment file spec" : "d:\\brian\\AI-Projects\\tda\\market_analysis_data\\[a-z]*.csv",
+			"comment file spec" : "tda\\market_analysis_data\\[a-z]*.csv",
 			"inputFile" : [
-				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\[a-z]*.csv"
+				"tda\\market_analysis_data\\[a-z]*.csv"
 			]
 		}
 	}
@@ -82,8 +82,8 @@
 			"iteration parameters" : {
 				"iteration ID" : "MACD_TrendCross_Best",
 				"training iteration description" : "Recurrent model categorizing MACD flag (-1, 0 1) of trend line crossing",
-				"modelFileDir" : "d:\\brian\\AI-Projects\\models\\rnn\\lstm\\MACDTrendLineCross\\",
-				"tensorboard" : {"log file dir" : "d:\\brian\\AI-Projects\\logs\\tensorboard\\categorization\\lstm\\MACDTrendLineCross\\"},
+				"modelFileDir" : "models\\rnn\\lstm\\MACDTrendLineCross\\",
+				"tensorboard" : {"log file dir" : "logs\\tensorboard\\categorization\\lstm\\MACDTrendLineCross\\"},
 				"forecastInterval" : 0,
 				"modelLayers" : [
     				{"layerName" : "input", "layerType" : "lstm", "featureCount": 2, "timeSteps": 5, "layerUnits" : 256, "returnSequences" : true, "outputActivation" : "tanh"},

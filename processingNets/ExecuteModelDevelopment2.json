@@ -7,7 +7,7 @@
 	{
 	"flowName" : "MMN_dev_M2",
 	"requiredFields" : {
-		"flowFrom" : "LoadDataM2", "flowTo" : "PrepDataM2", "flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\MMN_dev_M2.csv"},
+		"flowFrom" : "LoadDataM2", "flowTo" : "PrepDataM2", "flowDataFile" : "internal_flows\\MMN_dev_M2.csv"},
 	"conditionalFields" : {
 		"TensorflowData" : {
 			"features" : ["BB_Upper", "BB_Lower", "EMA20", "Open", "High", "Low", "Close"],
@@ -19,7 +19,7 @@
 	{
 	"flowName" : "MMN_dev_M2_Prepared",
 	"requiredFields" : {
-		"flowFrom" : "PrepDataM2", "flowTo" : "executeModelM2", "flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\MMN_dev_M2_prepared.csv"
+		"flowFrom" : "PrepDataM2", "flowTo" : "executeModelM2", "flowDataFile" : "internal_flows\\MMN_dev_M2_prepared.csv"
 		},
 	"conditionalFields" : {
 		"TensorflowData" : {
@@ -42,9 +42,9 @@
 	},
 	"conditionalFields" : {
 		"dataLoadCtrl" : {
-			"comment file spec" : "d:\\brian\\AI-Projects\\tda\\market_analysis_data\\[a-z]*.csv",
+			"comment file spec" : "tda\\market_analysis_data\\[a-z]*.csv",
 			"inputFile" : [
-				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\c.csv"
+				"tda\\market_analysis_data\\c.csv"
 			]
 		}
 	}
@@ -90,11 +90,11 @@
 	},
 	"conditionalFields" : {
 		"executeModelCtrl" : {
-			"trainedModelFile" : "d:\\brian\\AI-Projects\\models\\rnn\\lstm\\BB\\BB_013 20230709 065759",
+			"trainedModelFile" : "models\\rnn\\lstm\\BB\\BB_013 20230709 065759",
 			"balanceClasses" : true,
 			"synchronizationFeature" : "DateTime",
 			"outputLabels" : ["probability10pct10d"],
-			"outputFile" : "d:\\brian\\AI-Projects\\internal_flows\\MMN_dev_M2_output.csv"
+			"outputFile" : "internal_flows\\MMN_dev_M2_output.csv"
 		}
 	}
 	}

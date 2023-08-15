@@ -6,7 +6,7 @@
 	{
 	"flowName" : "MMN_dev_M1",
 	"requiredFields" : {
-		"flowFrom" : "LoadDataM1", "flowTo" : "PrepDataM1", "flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\MMN_dev_M1.csv"},
+		"flowFrom" : "LoadDataM1", "flowTo" : "PrepDataM1", "flowDataFile" : "internal_flows\\MMN_dev_M1.csv"},
 	"conditionalFields" : {
 		"TensorflowData" : {
 			"features" : ["MACD", "MACD_Signal"],
@@ -18,7 +18,7 @@
 	{
 	"flowName" : "MMN_dev_M1_Prepared",
 	"requiredFields" : {
-		"flowFrom" : "PrepDataM1", "flowTo" : "executeModelM1", "flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\MMN_dev_M1_prepared.csv"
+		"flowFrom" : "PrepDataM1", "flowTo" : "executeModelM1", "flowDataFile" : "internal_flows\\MMN_dev_M1_prepared.csv"
 		},
 	"conditionalFields" : {
 		"TensorflowData" : {
@@ -41,9 +41,9 @@
 	},
 	"conditionalFields" : {
 		"dataLoadCtrl" : {
-			"comment file spec" : "d:\\brian\\AI-Projects\\tda\\market_analysis_data\\[a-z]*.csv",
+			"comment file spec" : "tda\\market_analysis_data\\[a-z]*.csv",
 			"inputFile" : [
-				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\c.csv"
+				"tda\\market_analysis_data\\c.csv"
 			]
 		}
 	}
@@ -84,11 +84,11 @@
 	},
 	"conditionalFields" : {
 		"executeModelCtrl" : {
-			"trainedModelFile" : "d:\\brian\\AI-Projects\\models\\rnn\\lstm\\macd\\MACD_Best 20230704 110719",
+			"trainedModelFile" : "models\\rnn\\lstm\\macd\\MACD_Best 20230704 110719",
 			"balanceClasses" : true,
 			"synchronizationFeature" : "DateTime",
 			"outputLabels" : ["MACD_sell", "MACD_neutral", "MACD_buy"],
-			"outputFile" : "d:\\brian\\AI-Projects\\internal_flows\\MMN_dev_M1_output.csv"
+			"outputFile" : "internal_flows\\MMN_dev_M1_output.csv"
 		}
 	}
 	}

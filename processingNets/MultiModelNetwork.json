@@ -7,7 +7,7 @@
 "dataFlows" : [
 	{
 	"flowName" : "ModelOneOutput",
-	"requiredFields" : {"flowFrom" : "ModelOne", "flowTo" : "DataCombine", "flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\TrainMultipleModelM1.csv" },
+	"requiredFields" : {"flowFrom" : "ModelOne", "flowTo" : "DataCombine", "flowDataFile" : "internal_flows\\TrainMultipleModelM1.csv" },
 	"conditionalFields" : {
 		"TensorflowData" : {
 			"features" : ["xxx", "xxx"],
@@ -18,7 +18,7 @@
 	},
 	{
 	"flowName" : "ModelTwoOutput",
-	"requiredFields" : {"flowFrom" : "ModelTwo", "flowTo" : "DataCombine", "flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\TrainMultipleModelM2.csv" },
+	"requiredFields" : {"flowFrom" : "ModelTwo", "flowTo" : "DataCombine", "flowDataFile" : "internal_flows\\TrainMultipleModelM2.csv" },
 	"conditionalFields" : {
 		"TensorflowData" : {
 			"features" : ["xxx", "xxx"],
@@ -29,7 +29,7 @@
 	},
 	{
 	"flowName" : "CombinedData",
-	"requiredFields" : {"flowFrom" : "DataCombine", "flowTo" : "DataPrepare", "flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\TrainMultipleModelCombined.csv" },
+	"requiredFields" : {"flowFrom" : "DataCombine", "flowTo" : "DataPrepare", "flowDataFile" : "internal_flows\\TrainMultipleModelCombined.csv" },
 	"conditionalFields" : {
 		"TensorflowData" : {
 			"features" : ["xxx", "xxx"],
@@ -40,7 +40,7 @@
 	},
 	{
 	"flowName" : "PreparedData",
-	"requiredFields" : {"flowFrom" : "DataPrepare", "flowTo" : "TrainMultipleModelOutputs", "flowDataFile" : "d:\\brian\\AI-Projects\\internal_flows\\TrainMultipleModelPrepared.csv" },
+	"requiredFields" : {"flowFrom" : "DataPrepare", "flowTo" : "TrainMultipleModelOutputs", "flowDataFile" : "internal_flows\\TrainMultipleModelPrepared.csv" },
 	"conditionalFields" : {
 		"TensorflowData" : {
 			"features" : ["xxx", "xxx"],
@@ -82,7 +82,7 @@
 		"dataLoadCtrl" : {
 			"comment file spec" : "d:\\brian\\AI-Projects\\tda\\market_analysis_data\\[a-z]*.csv",
 			"inputFile" : [
-				"d:\\brian\\AI-Projects\\tda\\market_analysis_data\\c.csv"
+				"tda\\market_analysis_data\\c.csv"
 			]
 		}
 	}
@@ -126,8 +126,8 @@
 			"iteration description" : "TBD",
 			"iteration parameters" : {
 				"iteration ID" : "MMN_exp_001",
-				"modelFileDir" : "d:\\brian\\AI-Projects\\models\\rnn\\lstm\\MMN",
-				"tensorboard" : {"log file dir" : "d:\\brian\\AI-Projects\\logs\\tensorboard\\categorization\\lstm\\TrendLineCross\\"},
+				"modelFileDir" : "models\\rnn\\lstm\\MMN",
+				"tensorboard" : {"log file dir" : "logs\\tensorboard\\categorization\\lstm\\TrendLineCross\\"},
 				"forecastInterval" : 0,
 				"modelLayers" : [
     				{"layerName" : "input", "layerType" : "lstm", "featureCount": 2, "timeSteps": 5, "layerUnits" : 256, "returnSequences" : true, "outputActivation" : "linear"},
