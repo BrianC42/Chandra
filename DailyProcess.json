@@ -53,14 +53,15 @@
 	"controls" : [
 		{"file" : "rnn\\lstm\\bb\\BB_test001 20230717 073218"},
 		{"scaler" : "rnn\\lstm\\bb\\BB_test001 20230717 073218 scaler.pkl"},
+		{"featureFile" : ["tda\\market_analysis_data\\OPTT.csv"]},
 		{"features" : ["BB_Upper", "BB_Lower", "EMA20", "Open", "High", "Low", "Close"]},
-		{"timeSequence" : true}, 
+		{"timeSteps": 5},
+		{"Outputs" : ["10PctProbability"]},
+		{"threshold" : 0.4},
 		{"seriesStepIDField" : ["DateTime"]}, 
 		{"seriesDataType" : "TDADateTime"}, 
 		{"type" : "relative_time_series"},
-		{"timeSteps": 5},
-		{"Outputs" : ["10PctProbability"]},
-		{"threshold" : 0.4}
+		{"timeSequence" : true}
 		]
 	},
 	{

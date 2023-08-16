@@ -20,6 +20,7 @@ Also try S&P: https://finance.yahoo.com/quote/%5EGSPC/history?p=%5EGSPC
 
 ''' Google workspace requirements start '''
 import os.path
+import datetime as dt
 import json
 import pandas as pd
 import re
@@ -400,10 +401,36 @@ def buildListofMarketDataFiles():
 
     return symList
 
-def BollingerBandPrediction(controls):
+def saveMachineLearningSignal(signal):
+    exc_txt = "\nAn exception occurred - saving machine learning signal"
+    try:
+        EXP_SPREADSHEET_ID = "1XJNEWZ0uDdjCOvxJItYOhjq9kOhYtacJ3epORFn_fm4"
+        HEADER_RANGE = 'ML Signals!A1:Z2'
+        DATA_RANGE = 'ML Signals!A3:Z'
+
+        outputStr = signal['outputs'][0]
+        predictionStr = str(signal['prediction'][0])
+        newSignal = [signal['name'], signal['symbol'], outputStr, dt.datetime.now().strftime("%m/%d/%y"), predictionStr]
+
+        gSheet = googleSheet()
+        result = gSheet.googleSheet.values().get(spreadsheetId=EXP_SPREADSHEET_ID, range=DATA_RANGE).execute()
+        values = result.get('values', [])
+        values.append(newSignal)
+        requestBody = {'values': values}
+        result = gSheet.googleSheet.values().update(spreadsheetId=EXP_SPREADSHEET_ID, range=DATA_RANGE, \
+                                       valueInputOption="USER_ENTERED", body=requestBody).execute()
+
+    except Exception:
+        exc_info = sys.exc_info()
+        exc_str = exc_info[1].args[0]
+        exc_txt = exc_txt + "\n\t" + exc_str
+        sys.exit(exc_txt)
+
+    return
+
+def BollingerBandPrediction(name, controls):
     exc_txt = "\nAn exception occurred - BollingerBandPrediction"
     try:
-        dataFiles = buildListofMarketDataFiles()
         features = ""
         timeSteps = 0
         scalerFile = ""
@@ -423,6 +450,8 @@ def BollingerBandPrediction(controls):
                 outputs =  control['Outputs']
             elif 'threshold' in control:
                 threshold =  control['threshold']
+            elif 'featureFile' in control:
+                inputFileSpec =  control['featureFile']
 
         ''' load local machine directory details '''
         localDirs = get_ini_data("LOCALDIRS") # Find local file directories
@@ -443,26 +472,31 @@ def BollingerBandPrediction(controls):
                 pf.close()
 
         print("\nWIP ==================\n\tinverse_transformation is not yet implemented\n===========================")
+        for fileListSpec in inputFileSpec:
+            fileListSpec = aiwork + '\\' + fileListSpec
+            fileList = glob.glob(fileListSpec)
+            for fileSpec in fileList:
+                if os.path.isfile(fileSpec):
+                    subStr = fileSpec.split("\\")
+                    symbol = subStr[len(subStr)-1].split(".")
+                    if len(symbol) == 2:
+                        sym = symbol[0]
+                    else:
+                        sym = 'UNK'
+                    df_data = pd.read_csv(fileSpec)
+                    dfFeatures = df_data[features]
+                    dfFeatures = dfFeatures[len(dfFeatures)-timeSteps :]
+                    
+                    #dfScaled = scaler.inverse_transform(dfPrediction)
+        
+                    ''' make prediction '''
+                    npFeatures = dfFeatures.to_numpy()
+                    npFeatures = np.reshape(npFeatures, (1,timeSteps,len(features)))
+                    prediction = model.predict(x=npFeatures, verbose=0)
+                    if prediction[0][0] > threshold:
+                        signal = {'symbol':sym, 'name':name, 'outputs':outputs, 'prediction':[prediction[0][0]]}
+                        saveMachineLearningSignal(signal)
 
-        for sym in dataFiles.index:
-            ''' load and prepare model features '''
-            dataFile = dataFiles.loc[sym]['dataFile']
-            df_data = pd.read_csv(dataFile)
-            dfFeatures = df_data[features]
-            dfFeatures = dfFeatures[len(dfFeatures)-timeSteps :]
-            
-            #dfScaled = scaler.inverse_transform(dfPrediction)
-
-            ''' make prediction '''
-            ''' expected shape=(None, 5, 7), found shape=(None, 7) '''
-            npFeatures = dfFeatures.to_numpy()
-            npFeatures = np.reshape(npFeatures, (1,timeSteps,len(features)))
-            prediction = model.predict(x=npFeatures, verbose=0)
-            if prediction[0][0] > threshold:
-                print('Predicted {} for {} is {}'.format(outputs, sym, prediction[0][0]))
-
-        print("\nWIP ==================\n\tprediction storage is not yet implemented\n===========================")
-    
     except Exception:
         exc_info = sys.exc_info()
         exc_str = exc_info[1].args[0]
@@ -496,7 +530,7 @@ def mlPredictions(dfRunControl):
             if dfRunControl.iloc[ndx][MODEL]:
                 if dfRunControl.iloc[ndx][RUN]:
                     if dfRunControl.iloc[ndx][PROCESS_ID] == "Bollinger Band":
-                        BollingerBandPrediction(dfRunControl.iloc[ndx]['json']['controls'])
+                        BollingerBandPrediction(dfRunControl.iloc[ndx][PROCESS_ID], dfRunControl.iloc[ndx]['json']['controls'])
                     elif dfRunControl.iloc[ndx][PROCESS_ID] == "MACD Trend":
                         MACDTrendPrediction(dfRunControl.iloc[ndx]['json']['controls'])
                     else:
