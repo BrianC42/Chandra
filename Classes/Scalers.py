@@ -127,7 +127,7 @@ class chandraScaler():
         raise NameError('class chandraScaler method get_params not implemented')
         return 
         
-    def inverse_transform(self):
+    def inverse_transform(self, features):
         raise NameError('class chandraScaler method inverse_transform not implemented')
         return 
 

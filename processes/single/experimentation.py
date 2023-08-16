@@ -29,6 +29,7 @@ from GoogleSheets import googleSheet
 
 from configuration import get_ini_data
 from configuration import read_config_json
+from Scalers import chandraScaler
 
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
@@ -49,6 +50,7 @@ from tkinter.ttk import Combobox
 
 import numpy as np
 import pandas as pd
+import pickle
 
 from matplotlib import pyplot as plt
 import seaborn as sns
@@ -68,6 +70,7 @@ PROCESS_CONFIGS = "processes"
 MODEL_CONFIGS = "models"
 PROCESS_ID = "name"
 PROCESS_DESCRIPTION = "Description"
+MODEL = "model"
 RUN = "run"
 MODEL_FILE = "file"
 OUTPUT_FIELDS = "Outputs"
@@ -397,62 +400,69 @@ def buildListofMarketDataFiles():
 
     return symList
 
-def BollingerBandPrediction(symbol, dataFile):
-    
-    prediction = False
-    if os.path.exists(dataFile[0]):
-        pass
-
-    return prediction
-
-def MACDTrendPrediction(symbol, dataFile):
-    
-    prediction = [0.2, 0.6, 0.2]
-    if os.path.exists(dataFile[0]):
-        pass
-    
-    return prediction
-
-def mlPredictions(dictML):
-    print("\n======================================================= mlPredictions enter")
-    exc_txt = "\nAn exception occurred - mlPredictions"
-    
+def BollingerBandPrediction(controls):
+    exc_txt = "\nAn exception occurred - BollingerBandPrediction"
     try:
-    
-        for model in iter(dictML):
-            print("Prediction {}: {}".format(model, dictML[model]))
-            
-        localDirs = get_ini_data("LOCALDIRS")
-        gitdir = localDirs['git']
-        #aiwork = localDirs['aiwork']
-        #models = localDirs['trainedmodels']
-        config_data = get_ini_data("DAILY_PROCESS")
-        appConfig = read_config_json(gitdir + config_data['config'])
-        appDefaults = appConfig["defaults"]
-        modelControlDefaults = appDefaults["mlModels"]
-        modelPrep = appConfig["models"]
-        for model in modelControlDefaults:
-            notFound = True
-            for ndxModel in iter(dictML):
-                if ndxModel == model["name"]:
-                    notFound = False
-                    if dictML[model["name"]]:
-                        if model["name"] == "Bollinger Band":
-                            dataFiles = buildListofMarketDataFiles()
-                            for sym in dataFiles.index:
-                                dataFile = dataFiles.loc[sym]
-                                prediction = BollingerBandPrediction(sym, dataFile)
-                        elif model["name"] == "MACD Trend":
-                            dataFiles = buildListofMarketDataFiles()
-                            for sym in dataFiles.index:
-                                dataFile = dataFiles.loc[sym]
-                                prediction = MACDTrendPrediction(sym, dataFile)
-                        else:
-                            raise NameError("Predictions using {} are not implemented".format(model["name"])) 
-                    break
-            if notFound:
-                raise NameError(exc_txt) 
+        dataFiles = buildListofMarketDataFiles()
+        features = ""
+        timeSteps = 0
+        scalerFile = ""
+        modelFile = ""
+        outputs = ""
+        threshold = 0.9
+        for control in controls:
+            if 'file' in control:
+                modelFile = control['file']
+            elif 'features' in control:
+                features = control['features']
+            elif 'timeSteps' in control:
+                timeSteps = control['timeSteps']
+            elif 'scaler' in control:
+                scalerFile =  control['scaler']
+            elif 'Outputs' in control:
+                outputs =  control['Outputs']
+            elif 'threshold' in control:
+                threshold =  control['threshold']
 
+        ''' load local machine directory details '''
+        localDirs = get_ini_data("LOCALDIRS") # Find local file directories
+        aiwork = localDirs['aiwork']
+        models = localDirs['trainedmodels']
+        
+        ''' load trained model '''
+        trainedModel = aiwork + '\\' + models + '\\' + modelFile
+        model = tf.keras.models.load_model(trainedModel)
+
+        ''' load scaler used during training '''
+        if scalerFile != "":
+            scalerFile = aiwork + '\\' + models + '\\' + scalerFile
+            if os.path.isfile(scalerFile):
+                with open(scalerFile, 'rb') as pf:
+                    #d2r.scaler = pickle.load(pf)
+                    scaler = pickle.load(pf)
+                pf.close()
+
+        print("\nWIP ==================\n\tinverse_transformation is not yet implemented\n===========================")
+
+        for sym in dataFiles.index:
+            ''' load and prepare model features '''
+            dataFile = dataFiles.loc[sym]['dataFile']
+            df_data = pd.read_csv(dataFile)
+            dfFeatures = df_data[features]
+            dfFeatures = dfFeatures[len(dfFeatures)-timeSteps :]
+            
+            #dfScaled = scaler.inverse_transform(dfPrediction)
+
+            ''' make prediction '''
+            ''' expected shape=(None, 5, 7), found shape=(None, 7) '''
+            npFeatures = dfFeatures.to_numpy()
+            npFeatures = np.reshape(npFeatures, (1,timeSteps,len(features)))
+            prediction = model.predict(x=npFeatures, verbose=0)
+            if prediction[0][0] > threshold:
+                print('Predicted {} for {} is {}'.format(outputs, sym, prediction[0][0]))
+
+        print("\nWIP ==================\n\tprediction storage is not yet implemented\n===========================")
+    
     except Exception:
         exc_info = sys.exc_info()
         exc_str = exc_info[1].args[0]
@@ -461,13 +471,57 @@ def mlPredictions(dictML):
 
     return
 
-def tkInterExp(dictOptionsThresholds):
+def MACDTrendPrediction(trainedModel, controls):
+    exc_txt = "\nAn exception occurred - MACDTrendPrediction"
+    try:
+        pass
+    
+    except Exception:
+        exc_info = sys.exc_info()
+        exc_str = exc_info[1].args[0]
+        exc_txt = exc_txt + "\n\t" + exc_str
+        sys.exit(exc_txt)
+    
+    return
+
+def mlPredictions(dfRunControl):
+    exc_txt = "\nAn exception occurred - mlPredictions"
+    
+    try:
+        localDirs = get_ini_data("LOCALDIRS")
+        aiwork = localDirs['aiwork']
+        models = aiwork + '\\' + localDirs['trainedmodels']
+
+        for ndx in range (len(dfRunControl)):
+            if dfRunControl.iloc[ndx][MODEL]:
+                if dfRunControl.iloc[ndx][RUN]:
+                    if dfRunControl.iloc[ndx][PROCESS_ID] == "Bollinger Band":
+                        BollingerBandPrediction(dfRunControl.iloc[ndx]['json']['controls'])
+                    elif dfRunControl.iloc[ndx][PROCESS_ID] == "MACD Trend":
+                        MACDTrendPrediction(dfRunControl.iloc[ndx]['json']['controls'])
+                    else:
+                        print("WIP ==============\n\tPredictions using {} are not implemented\n==================".format(dfRunControl.iloc[ndx][PROCESS_ID])) 
+            '''
+                else:
+                    print("Process named {} is a machine learning model but was not selected".format(dfRunControl.iloc[ndx][PROCESS_ID]))
+            else:
+                print("Process named {} is not a machine learning model".format(dfRunControl.iloc[ndx][PROCESS_ID]))
+            '''
+            ndx += 1
+            
+    except Exception:
+        exc_info = sys.exc_info()
+        exc_str = exc_info[1].args[0]
+        exc_txt = exc_txt + "\n\t" + exc_str
+        sys.exit(exc_txt)
+
+    return
+
+def tkInterExp():
     ''' display a user interface to solicit run time selections '''
     exc_txt = "\nAn exception occurred - tkInterExp - stage 1"
     
     try:
-        RUN_COL = 2
-        
         ROW_2 = 100
         ROW_3 = 400
         ROW_BUTTON = 450
@@ -487,7 +541,6 @@ def tkInterExp(dictOptionsThresholds):
         localDirs = get_ini_data("LOCALDIRS")
         gitdir = localDirs['git']
         aiwork = localDirs['aiwork']
-        trainedModels = localDirs['trainedmodels']
 
         ''' Google APIs '''
         exc_txt = "\nAn exception occurred - unable to retrieve Google authentication information"
@@ -508,8 +561,9 @@ def tkInterExp(dictOptionsThresholds):
         exc_txt = "\nAn exception occurred - tkInterExp - window initialization"
 
         ''' create an empty dataframe to hold the information related to processes that could be performed '''
-        cols = [PROCESS_ID, PROCESS_DESCRIPTION, RUN, CONFIG]
+        cols = [PROCESS_ID, MODEL, PROCESS_DESCRIPTION, RUN, CONFIG]
         processCtrl = pd.DataFrame(columns=cols)
+        processCtrl[MODEL] = processCtrl[MODEL].astype(bool)
         processCtrl[RUN] = processCtrl[RUN].astype(bool)
 
         ''' =================== Create input window =================== '''
@@ -520,86 +574,59 @@ def tkInterExp(dictOptionsThresholds):
         ''' =================== Create all input fields =================== '''
         ''' ============ set exception description to narrow problem location ============ '''
         exc_txt = "\nAn exception occurred - tkInterExp - creating input fields"
+        
         lblOps=Label(window, text="Operational processes", fg='blue', font=("ariel", 10))
         lblOps.configure(bg="white")
         lblOps.place(x=COL_1, y=(ROW_2 - ROW_HEIGHT))
 
-        processDetails = appConfig[PROCESS_CONFIGS]
-        processCheck = [IntVar()] * len(processDetails)
-        processButton = [None] * len(processDetails)
-        controlCheck = [IntVar()] * 99
-        controlButton = [None] * 99
-        ndx = 0
-        for process in processDetails:
-            processData = np.array([process[PROCESS_ID], \
-                                    process[PROCESS_DESCRIPTION], \
-                                    process[RUN], \
-                                    process])
-            dfTemp = pd.DataFrame([processData], columns=cols)
-            processCheck[ndx] = IntVar()
-            processButton[ndx] = Checkbutton(window, text = process[PROCESS_ID], variable = processCheck[ndx])
-            processButton[ndx].place(x=COL_1, y=ROW_2 + (ROW_HEIGHT * ndx))
-            processCtrl = pd.concat([processCtrl, dfTemp])
-            if 'controls' in process:
-                ndx2 = 0
-                for control in process['controls']:
-                    print("{} = {}".format(list(control)[0], control.get(list(control)[0])))
-                    '''
-                    controlCheck[ndx2] = IntVar()
-                    controlButton[ndx2] = controlButton(window, text = list(control)[0], variable = controlCheck[ndx2])
-                    controlButton[ndx2].place(x=COL_1 + 50, y=ROW_2 + (ROW_HEIGHT * ndx) + (ROW_HEIGHT * (ndx2 + 1)))
-                    processCtrl = pd.concat([processCtrl, dfTemp])
-                    '''
-                    ndx2 += 1
-            ndx += 1
-
         lblML=Label(window, text="Make machine learning predictions", fg='blue', font=("ariel", 10))
         lblML.configure(bg="white")
         lblML.place(x=COL_3, y=(ROW_2 - ROW_HEIGHT))
+        
+        processDetails = appConfig[PROCESS_CONFIGS]
+        
+        processCheck = [IntVar()] * len(processDetails)
+        processButton = [None] * len(processDetails)
 
-        modelDetails = appConfig[MODEL_CONFIGS]
-        mlCheck = [IntVar()] * len(modelDetails)
-        mlButton = [None] * len(processDetails)
-        ndx = 0
-        for model in modelDetails:
-            modelData = np.array([model[PROCESS_ID], \
-                                    model[PROCESS_DESCRIPTION], \
-                                    model[RUN], \
-                                    model])
-            dfTemp = pd.DataFrame([modelData], columns=cols)
-            mlCheck[ndx] = IntVar()
-            mlButton[ndx] = Checkbutton(window, text = model[PROCESS_ID], variable = mlCheck[ndx])
-            mlButton[ndx].place(x=COL_3, y=ROW_2 + (ROW_HEIGHT * ndx))
+        countProcess = 0
+        countModels = 0
+        ndxProcess = 0
+        for process in processDetails:
+            processCheck[ndxProcess] = IntVar()
+            processButton[ndxProcess] = Checkbutton(window, text = process[PROCESS_ID], variable = processCheck[ndxProcess])
+
+            if process [MODEL]:
+                print("process {} is a machine learning model".format(process[PROCESS_ID]))
+                uiX = COL_3
+                uiY = ROW_2 + (ROW_HEIGHT * countModels)
+                countModels += 1
+            else:
+                print("process {} is a traditional process".format(process[PROCESS_ID]))
+                uiX = COL_1
+                uiY = ROW_2 + (ROW_HEIGHT * countProcess)
+                countProcess += 1
+                
+            processButton[ndxProcess].place(x=uiX, y=uiY)
+            processData = np.array([process[PROCESS_ID], 
+                                    process[MODEL], \
+                                    process[PROCESS_DESCRIPTION], \
+                                    process[RUN], \
+                                    process])
+            runIndex = 3
+        
+            dfTemp = pd.DataFrame([processData], columns=cols)
             processCtrl = pd.concat([processCtrl, dfTemp])
-            ndx += 1
 
-        ''' Select Google sheet file to use for market options details '''
-        ''' ============ set exception description to narrow problem location ============ '''
-        exc_txt = "\nAn exception occurred - tkInterExp - creating additional fields"
-        lblSheet=Label(window, text="Tracking sheet to record and track results", fg='blue', font=("ariel", 10))
-        lblSheet.configure(bg="white")
-        lblSheet.place(x=COL_1, y=(ROW_3 - ROW_HEIGHT))
-
-        localGoogleProject = open(aiwork + "\\Google_Project_Local.json", "rb")
-        jsonGoogle = json.load(localGoogleProject)
-        localGoogleProject.close
-        radioButton = [None] * len(jsonGoogle["Google sheets"])
-        radioValue = [IntVar()] * len(jsonGoogle["Google sheets"])
-        ndx = 0
-        for sheet in jsonGoogle["Google sheets"]:
-            print("Name: {}, ID: {}".format(sheet["name"], sheet["file ID"]))
-            radioButton[ndx] = Radiobutton(window, text=sheet["name"], variable = radioValue[ndx])
-            radioButton[ndx].place(x=COL_1, y=ROW_3 + (ROW_HEIGHT * ndx))
-            ndx += 1
+            if 'controls' in process:
+                for control in process['controls']:
+                    print("\t{} = {}".format(list(control)[0], control.get(list(control)[0])))
+            ndxProcess += 1
 
         ''' =================== create button to process inputs =================== '''
         def go_button():
             for ndx in range (len(processCheck)):
                 if processCheck[ndx].get() == 1:
-                    processCtrl.iat[ndx, RUN_COL] = True
-            for ndx in range (len(mlCheck)):
-                if mlCheck[ndx].get() == 1:
-                    processCtrl.iat[ndx + len(processCheck), RUN_COL] = True
+                    processCtrl.iat[ndx, runIndex] = True
             window.quit()
 
         btn=Button(window, command=go_button, text="Run processes selected", fg='blue')
@@ -655,16 +682,18 @@ def iniRead():
         jsonGoogle = json.load(localGoogleProject)
         localGoogleProject.close
 
+        '''
         cols = [PROCESS_ID, PROCESS_DESCRIPTION, RUN, MODEL_FILE, OUTPUT_FIELDS, CONFIG]
         processCtrl = pd.DataFrame(columns=cols)
-
+        '''
+        
     except Exception:
         exc_info = sys.exc_info()
         exc_str = exc_info[1].args[0]
         exc_txt = exc_txt + "\n\t" + exc_str
         sys.exit(exc_txt)
 
-    return processCtrl
+    return
 
 if __name__ == '__main__':
     print("==================================================== Code experimentation starting")
@@ -672,18 +701,14 @@ if __name__ == '__main__':
     processCtrl = iniRead()                   # Experimentation / development of configuration json file
     
     if True:
-        dictOptionsThresholds = {'minimum max gain APY' : 20, \
-                                 'minimum max profit' : 500, \
-                                 'out of the money threshold' : 0.8 \
-                                }
-        processCtrl = tkInterExp(dictOptionsThresholds)
+        processCtrl = tkInterExp()
         
+        for ndx in range(len(processCtrl)):
+            print("Process: {}: run = {}".format(processCtrl.iloc[ndx][PROCESS_ID], processCtrl.iloc[ndx][RUN]))
+        mlPredictions(processCtrl)             # Use trained models to make predictions
+
     else:
         dataFiles = buildListofMarketDataFiles()
-
-        for ndx in range(len(processCtrl)):
-            print("Process: {}: run = {}".format(processCtrl.loc[ndx][PROCESS_ID], processCtrl.loc[ndx][RUN]))
-        mlPredictions(processCtrl)             # Use trained models to make predictions
 
         digitalSreeni_180()
         linear_regression()

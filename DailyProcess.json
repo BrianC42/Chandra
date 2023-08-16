@@ -11,26 +11,31 @@
 "processes" : [
 	{
 	"name" : "Market data update",
+	"model" : false,
 	"Description" : "Use TDA API to update basic market data",
 	"run" : false
 	},
 	{
 	"name" : "Calculate derived market data",
+	"model" : false,
 	"Description" : "Read basic market data and calculate technical analysis details",
 	"run" : false
 	},
 	{
 	"name" : "Secured puts",
+	"model" : false,
 	"Description" : "Download current put option details",
 	"run" : false
 	},
 	{
 	"name" : "Covered calls",
+	"model" : false,
 	"Description" : "Download current call option details",
 	"run" : false
 	},
 	{
 	"name" : "Assess market options",
+	"model" : false,
 	"Description" : "Assess market options for risk / reward",
 	"run" : false,
 	"controls" : [
@@ -39,23 +44,34 @@
         {"OTM Probability" : 80},
         {"Workbook ID" : ["Production", "Development"]}
 		]
-	}
-],
-"available model details" : "===========================================",
-"models" : [
+	},
 	{
 	"name" : "Bollinger Band",
+	"model" : true,
 	"Description" : "predict the probability of a 10% rise in 10 days based on Bollinger Bands",
 	"run" : false,
-	"file" : "rnn\\lstm\\bb\\BB_203 20230708 140028",
-	"Outputs" : ["10PctProbability"]
+	"controls" : [
+		{"file" : "rnn\\lstm\\bb\\BB_test001 20230717 073218"},
+		{"scaler" : "rnn\\lstm\\bb\\BB_test001 20230717 073218 scaler.pkl"},
+		{"features" : ["BB_Upper", "BB_Lower", "EMA20", "Open", "High", "Low", "Close"]},
+		{"timeSequence" : true}, 
+		{"seriesStepIDField" : ["DateTime"]}, 
+		{"seriesDataType" : "TDADateTime"}, 
+		{"type" : "relative_time_series"},
+		{"timeSteps": 5},
+		{"Outputs" : ["10PctProbability"]},
+		{"threshold" : 0.4}
+		]
 	},
 	{
 	"name" : "MACD Trend",
+	"model" : true,
 	"Description" : "Identify MACD and moving average trends crossing ",
 	"run" : false,
-	"file" : "rnn\\lstm\\MACDTrendLineCross\\MACD_TrendCross_Best 20230717 070452",
-	"Outputs" : ["Negative Cross", "Neutral", "Positive Cross"]
+	"controls" : [
+		{"file" : "rnn\\lstm\\MACDTrendLineCross\\MACD_TrendCross_Best 20230717 070452"},
+		{"Outputs" : ["Negative Cross", "Neutral", "Positive Cross"]}
+		]
 	}
 ]
 }
