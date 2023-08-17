@@ -401,21 +401,24 @@ def buildListofMarketDataFiles():
 
     return symList
 
-def saveMachineLearningSignal(signal):
+def saveMachineLearningSignal(signals):
     exc_txt = "\nAn exception occurred - saving machine learning signal"
     try:
         EXP_SPREADSHEET_ID = "1XJNEWZ0uDdjCOvxJItYOhjq9kOhYtacJ3epORFn_fm4"
         HEADER_RANGE = 'ML Signals!A1:Z2'
         DATA_RANGE = 'ML Signals!A3:Z'
 
-        outputStr = signal['outputs'][0]
-        predictionStr = str(signal['prediction'][0])
-        newSignal = [signal['name'], signal['symbol'], outputStr, dt.datetime.now().strftime("%m/%d/%y"), predictionStr]
-
+        ''' read sheet current cells - do not overwrite these '''
         gSheet = googleSheet()
         result = gSheet.googleSheet.values().get(spreadsheetId=EXP_SPREADSHEET_ID, range=DATA_RANGE).execute()
         values = result.get('values', [])
-        values.append(newSignal)
+
+        for signal in signals:
+            outputStr = signal['outputs'][0]
+            predictionStr = str(signal['prediction'][0])
+            newSignal = [signal['name'], signal['symbol'], outputStr, dt.datetime.now().strftime("%m/%d/%y"), predictionStr]
+            values.append(newSignal)
+        
         requestBody = {'values': values}
         result = gSheet.googleSheet.values().update(spreadsheetId=EXP_SPREADSHEET_ID, range=DATA_RANGE, \
                                        valueInputOption="USER_ENTERED", body=requestBody).execute()
@@ -471,7 +474,7 @@ def BollingerBandPrediction(name, controls):
                     scaler = pickle.load(pf)
                 pf.close()
 
-        print("\nWIP ==================\n\tinverse_transformation is not yet implemented\n===========================")
+        signals = []
         for fileListSpec in inputFileSpec:
             fileListSpec = aiwork + '\\' + fileListSpec
             fileList = glob.glob(fileListSpec)
@@ -480,22 +483,24 @@ def BollingerBandPrediction(name, controls):
                     subStr = fileSpec.split("\\")
                     symbol = subStr[len(subStr)-1].split(".")
                     if len(symbol) == 2:
-                        sym = symbol[0]
-                    else:
-                        sym = 'UNK'
-                    df_data = pd.read_csv(fileSpec)
-                    dfFeatures = df_data[features]
-                    dfFeatures = dfFeatures[len(dfFeatures)-timeSteps :]
-                    
-                    #dfScaled = scaler.inverse_transform(dfPrediction)
-        
-                    ''' make prediction '''
-                    npFeatures = dfFeatures.to_numpy()
-                    npFeatures = np.reshape(npFeatures, (1,timeSteps,len(features)))
-                    prediction = model.predict(x=npFeatures, verbose=0)
-                    if prediction[0][0] > threshold:
-                        signal = {'symbol':sym, 'name':name, 'outputs':outputs, 'prediction':[prediction[0][0]]}
-                        saveMachineLearningSignal(signal)
+                        df_data = pd.read_csv(fileSpec)
+                        dfFeatures = df_data[features]
+                        dfFeatures = dfFeatures[len(dfFeatures)-timeSteps :]
+                        if scalerFile != "":
+                            npScaled = scaler.transform(dfFeatures)
+                            npFeatures = npScaled
+                        else:
+                            npFeatures = dfFeatures.to_numpy()
+                        
+                        ''' make prediction '''
+                        npFeatures = np.reshape(npFeatures, (1,timeSteps,len(features)))
+                        prediction = model.predict(x=npFeatures, verbose=0)
+                        if prediction[0][0] > threshold:
+                            signal = {'symbol':symbol[0], 'name':name, 'outputs':outputs, 'prediction':[prediction[0][0]]}
+                            signals.append(signal)
+                            
+        if len(signals) > 0:
+            saveMachineLearningSignal(signals)
 
     except Exception:
         exc_info = sys.exc_info()

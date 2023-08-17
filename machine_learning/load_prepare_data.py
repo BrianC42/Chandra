@@ -704,7 +704,8 @@ def generate1hot(d2r, fields, fieldPrepCtrl):
 
 def normalizeFeature(d2r, fields, fieldPrepCtrl, normalizeType):
     #sanityCheckMACD(combined=d2r.data, stage="d2r.data prior to normalization")
-
+    print("WIP ================\n\tis scaling being done logically\n\tshould it be refit on every dKey?\n===========================")
+    
     if normalizeType == cc.JSON_DATA_PREP_NORMALIZE_STANDARD:
         d2r.scaler = StandardScaler()
     elif normalizeType == cc.JSON_DATA_PREP_NORMALIZE_MINMAX:

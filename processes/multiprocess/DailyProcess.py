@@ -47,6 +47,7 @@ PROCESS_DESCRIPTION = "Description"
 RUN = "run"
 RUN_COL = 2
 MODEL_FILE = "file"
+MODEL = "model"
 OUTPUT_FIELDS = "Outputs"
 CONFIG = "json"
 
@@ -250,12 +251,11 @@ def marketCallOptions():
     
     return sheetName
 
-def userInterfaceControls(dictOptionsThresholds):
+def userInterfaceControls():
     ''' display a user interface to solicit run time selections '''
-    exc_txt = "\nAn exception occurred - tkInterExp"
+    exc_txt = "\nAn exception occurred - tkInterExp - stage 1"
     
     try:
-        
         ROW_2 = 100
         ROW_3 = 400
         ROW_BUTTON = 450
@@ -275,16 +275,29 @@ def userInterfaceControls(dictOptionsThresholds):
         localDirs = get_ini_data("LOCALDIRS")
         gitdir = localDirs['git']
         aiwork = localDirs['aiwork']
-        trainedModels = localDirs['trainedmodels']
+
+        ''' Google APIs '''
+        exc_txt = "\nAn exception occurred - unable to retrieve Google authentication information"
+        googleAuth = get_ini_data("GOOGLE")
+        
+        ''' local list of file Google Drive file ID '''
+        #localGoogleProject = open(aiwork + "\\Google_Project_Local.json", "rb")
+        localGoogleProject = open(aiwork + "\\" + googleAuth["fileIDs"], "rb")
+        jsonGoogle = json.load(localGoogleProject)
+        localGoogleProject.close
 
         ''' read application specific configuration file '''
         exc_txt = "\nAn exception occurred - unable to process configuration file"
         config_data = get_ini_data("DAILY_PROCESS")
         appConfig = read_config_json(gitdir + config_data['config'])
         
+        ''' ============ set exception description to narrow problem location ============ '''
+        exc_txt = "\nAn exception occurred - tkInterExp - window initialization"
+
         ''' create an empty dataframe to hold the information related to processes that could be performed '''
-        cols = [PROCESS_ID, PROCESS_DESCRIPTION, RUN, CONFIG]
+        cols = [PROCESS_ID, MODEL, PROCESS_DESCRIPTION, RUN, CONFIG]
         processCtrl = pd.DataFrame(columns=cols)
+        processCtrl[MODEL] = processCtrl[MODEL].astype(bool)
         processCtrl[RUN] = processCtrl[RUN].astype(bool)
 
         ''' =================== Create input window =================== '''
@@ -293,84 +306,61 @@ def userInterfaceControls(dictOptionsThresholds):
         window.title('Morning Process Control')
         
         ''' =================== Create all input fields =================== '''
+        ''' ============ set exception description to narrow problem location ============ '''
+        exc_txt = "\nAn exception occurred - tkInterExp - creating input fields"
+        
         lblOps=Label(window, text="Operational processes", fg='blue', font=("ariel", 10))
         lblOps.configure(bg="white")
         lblOps.place(x=COL_1, y=(ROW_2 - ROW_HEIGHT))
 
-        processDetails = appConfig[PROCESS_CONFIGS]
-        processCheck = [IntVar()] * len(processDetails)
-        processButton = [None] * len(processDetails)
-        controlCheck = [IntVar()] * 99
-        controlButton = [None] * 99
-        ndx = 0
-        for process in processDetails:
-            processData = np.array([process[PROCESS_ID], \
-                                    process[PROCESS_DESCRIPTION], \
-                                    process[RUN], \
-                                    process])
-            dfTemp = pd.DataFrame([processData], columns=cols)
-            processCheck[ndx] = IntVar()
-            processButton[ndx] = Checkbutton(window, text = process[PROCESS_ID], variable = processCheck[ndx])
-            processButton[ndx].place(x=COL_1, y=ROW_2 + (ROW_HEIGHT * ndx))
-            processCtrl = pd.concat([processCtrl, dfTemp])
-            if 'controls' in process:
-                ndx2 = 0
-                for control in process['controls']:
-                    print("{} = {}".format(list(control)[0], control.get(list(control)[0])))
-                    '''
-                    controlCheck[ndx2] = IntVar()
-                    controlButton[ndx2] = controlButton(window, text = list(control)[0], variable = controlCheck[ndx2])
-                    controlButton[ndx2].place(x=COL_1 + 50, y=ROW_2 + (ROW_HEIGHT * ndx) + (ROW_HEIGHT * (ndx2 + 1)))
-                    processCtrl = pd.concat([processCtrl, dfTemp])
-                    '''
-                    ndx2 += 1
-            ndx += 1
-
         lblML=Label(window, text="Make machine learning predictions", fg='blue', font=("ariel", 10))
         lblML.configure(bg="white")
         lblML.place(x=COL_3, y=(ROW_2 - ROW_HEIGHT))
+        
+        processDetails = appConfig[PROCESS_CONFIGS]
+        
+        processCheck = [IntVar()] * len(processDetails)
+        processButton = [None] * len(processDetails)
 
-        modelDetails = appConfig[MODEL_CONFIGS]
-        mlCheck = [IntVar()] * len(modelDetails)
-        mlButton = [None] * len(processDetails)
-        ndx = 0
-        for model in modelDetails:
-            modelData = np.array([model[PROCESS_ID], \
-                                    model[PROCESS_DESCRIPTION], \
-                                    model[RUN], \
-                                    model])
-            dfTemp = pd.DataFrame([modelData], columns=cols)
-            mlCheck[ndx] = IntVar()
-            mlButton[ndx] = Checkbutton(window, text = model[PROCESS_ID], variable = mlCheck[ndx])
-            mlButton[ndx].place(x=COL_3, y=ROW_2 + (ROW_HEIGHT * ndx))
+        countProcess = 0
+        countModels = 0
+        ndxProcess = 0
+        for process in processDetails:
+            processCheck[ndxProcess] = IntVar()
+            processButton[ndxProcess] = Checkbutton(window, text = process[PROCESS_ID], variable = processCheck[ndxProcess])
+
+            if process [MODEL]:
+                print("process {} is a machine learning model".format(process[PROCESS_ID]))
+                uiX = COL_3
+                uiY = ROW_2 + (ROW_HEIGHT * countModels)
+                countModels += 1
+            else:
+                print("process {} is a traditional process".format(process[PROCESS_ID]))
+                uiX = COL_1
+                uiY = ROW_2 + (ROW_HEIGHT * countProcess)
+                countProcess += 1
+                
+            processButton[ndxProcess].place(x=uiX, y=uiY)
+            processData = np.array([process[PROCESS_ID], 
+                                    process[MODEL], \
+                                    process[PROCESS_DESCRIPTION], \
+                                    process[RUN], \
+                                    process])
+            runIndex = 3
+        
+            dfTemp = pd.DataFrame([processData], columns=cols)
             processCtrl = pd.concat([processCtrl, dfTemp])
-            ndx += 1
 
-        ''' Select Google sheet file to use for market options details '''
-        lblSheet=Label(window, text="Tracking sheet to record and track results", fg='blue', font=("ariel", 10))
-        lblSheet.configure(bg="white")
-        lblSheet.place(x=COL_1, y=(ROW_3 - ROW_HEIGHT))
-
-        localGoogleProject = open(aiwork + "\\Google_Project_Local.json", "rb")
-        jsonGoogle = json.load(localGoogleProject)
-        localGoogleProject.close
-        radioButton = [None] * len(jsonGoogle["Google sheets"])
-        radioValue = [IntVar()] * len(jsonGoogle["Google sheets"])
-        ndx = 0
-        for sheet in jsonGoogle["Google sheets"]:
-            print("Name: {}, ID: {}".format(sheet["name"], sheet["file ID"]))
-            radioButton[ndx] = Radiobutton(window, text=sheet["name"], variable = radioValue[ndx])
-            radioButton[ndx].place(x=COL_1, y=ROW_3 + (ROW_HEIGHT * ndx))
-            ndx += 1
+            if 'controls' in process:
+                for control in process['controls']:
+                    print("\t{} = {}".format(list(control)[0], control.get(list(control)[0])))
+            ndxProcess += 1
 
         ''' =================== create button to process inputs =================== '''
         def go_button():
             for ndx in range (len(processCheck)):
                 if processCheck[ndx].get() == 1:
-                    processCtrl.iat[ndx, RUN_COL] = True
-            for ndx in range (len(mlCheck)):
-                if mlCheck[ndx].get() == 1:
-                    processCtrl.iat[ndx + len(processCheck), RUN_COL] = True
+                    processCtrl.iat[ndx, runIndex] = True
             window.quit()
 
         btn=Button(window, command=go_button, text="Run processes selected", fg='blue')
@@ -393,12 +383,13 @@ if __name__ == '__main__':
     
     putSheetName = ""
     callSheetName = ""
+    processCtrl = userInterfaceControls()
+    
     dictOptionsThresholds = {'minimum max gain APY' : 20, \
                              'minimum max profit' : 500, \
                              'out of the money threshold' : 0.8 \
                             }
-    processCtrl = userInterfaceControls(dictOptionsThresholds)
-    
+
     for ndx in range (len(processCtrl)):
         if processCtrl.iloc[ndx][RUN]:
             if processCtrl.iloc[ndx][PROCESS_ID] == MARKET_DATA_UPDATE:
@@ -407,16 +398,18 @@ if __name__ == '__main__':
                 calculateDerivedData()
             elif processCtrl.iloc[ndx][PROCESS_ID] == SECURED_PUTS:
                 putSheetName = marketPutOptions()
+                #putSheetName = "put 20230810 072953"
+                if len(putSheetName) > 0:
+                    eliminateLowReturnOptions(EXP_SPREADSHEET_ID, putSheetName, callSheetName, dictOptionsThresholds)
             elif processCtrl.iloc[ndx][PROCESS_ID] == COVERED_CALLS:
                 callSheetName = marketCallOptions()
+                #callSheetName = "call 20230810 073519"
+                if len(callSheetName) > 0:
+                    eliminateLowReturnOptions(EXP_SPREADSHEET_ID, putSheetName, callSheetName, dictOptionsThresholds)
             elif processCtrl.iloc[ndx][PROCESS_ID] == BOLLINGER_BAND_PREDICTION:
                 mlBollingerBandPrediction()
             elif processCtrl.iloc[ndx][PROCESS_ID] == MACD_TREND_CROSS:
                 mlMACDTrendCross()
                 
-    #putSheetName = "put 20230810 072953"
-    #callSheetName = "call 20230810 073519"
-    if len(putSheetName) > 0 or len(callSheetName) > 0:
-        eliminateLowReturnOptions(EXP_SPREADSHEET_ID, putSheetName, callSheetName, dictOptionsThresholds)
     
     print ("\nAll requested processes have completed")

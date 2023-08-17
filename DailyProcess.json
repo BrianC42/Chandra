@@ -3,6 +3,7 @@
 "required fields - comment" : [
 	{
 	"name" : "descriptive name to display to user",
+	"model" : false,
 	"Description" : "currently unused",
 	"run" : "default run or not for user to accept or change"
 	}
@@ -34,18 +35,6 @@
 	"run" : false
 	},
 	{
-	"name" : "Assess market options",
-	"model" : false,
-	"Description" : "Assess market options for risk / reward",
-	"run" : false,
-	"controls" : [
-		{"max gain APY" : 20},
-        {"Max Profit" : 500},
-        {"OTM Probability" : 80},
-        {"Workbook ID" : ["Production", "Development"]}
-		]
-	},
-	{
 	"name" : "Bollinger Band",
 	"model" : true,
 	"Description" : "predict the probability of a 10% rise in 10 days based on Bollinger Bands",
@@ -53,11 +42,11 @@
 	"controls" : [
 		{"file" : "rnn\\lstm\\bb\\BB_test001 20230717 073218"},
 		{"scaler" : "rnn\\lstm\\bb\\BB_test001 20230717 073218 scaler.pkl"},
-		{"featureFile" : ["tda\\market_analysis_data\\OPTT.csv"]},
+		{"featureFile" : ["tda\\market_analysis_data\\*.csv"]},
 		{"features" : ["BB_Upper", "BB_Lower", "EMA20", "Open", "High", "Low", "Close"]},
 		{"timeSteps": 5},
-		{"Outputs" : ["10PctProbability"]},
-		{"threshold" : 0.4},
+		{"Outputs" : ["10% in 10 Days Probability"]},
+		{"threshold" : 0.6},
 		{"seriesStepIDField" : ["DateTime"]}, 
 		{"seriesDataType" : "TDADateTime"}, 
 		{"type" : "relative_time_series"},

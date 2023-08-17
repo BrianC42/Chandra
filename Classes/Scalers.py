@@ -112,6 +112,13 @@ class chandraScaler():
     def transform(self, features):
         #print("transforming %s" % features)
         if self._scalerType == NORMALIZE_RELATIVE_TIME_SERIES:
+            self.dfFeatures = features
+            self.npNormalizedFeatures = np.zeros((self.dfFeatures.shape[0], self.dfFeatures.shape[1]))
+            
+            for feature in features.columns:
+                self.posRatio[feature] = self.maxPos[feature] / self.maxPosMax
+                self.negRatio[feature] = self.minNeg[feature] / self.minNegMin
+
             self.transformRelativeTimeSeries()
         return self.npNormalizedFeatures
     
