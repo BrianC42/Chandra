@@ -469,10 +469,12 @@ def BollingerBandPrediction(name, controls):
         if scalerFile != "":
             scalerFile = aiwork + '\\' + models + '\\' + scalerFile
             if os.path.isfile(scalerFile):
+                scaler = pd.read_pickle(scalerFile)
+                '''
                 with open(scalerFile, 'rb') as pf:
-                    #d2r.scaler = pickle.load(pf)
                     scaler = pickle.load(pf)
                 pf.close()
+                '''
 
         signals = []
         for fileListSpec in inputFileSpec:
