@@ -26,13 +26,33 @@
 	"name" : "Secured puts",
 	"model" : false,
 	"Description" : "Download current put option details",
-	"run" : false
+	"run" : false,
+	"controls" : [
+		{"minimum max gain APY" : 20},
+		{"minimum max profit" : 500},
+		{"out of the money threshold" : 0.8},
+		{"file" : "experimental"},
+	    {"current holdings data range" : "Holdings!A1:ZZ"},
+    	{"market data range" : "TD Import Inf!A1:ZZ"},
+    	{"options header range" : "!A1:ZZ"},
+    	{"options data range" : "!A2:ZZ"}
+		]
 	},
 	{
 	"name" : "Covered calls",
 	"model" : false,
 	"Description" : "Download current call option details",
-	"run" : false
+	"run" : false,
+	"controls" : [
+		{"minimum max gain APY" : 20},
+		{"minimum max profit" : 500},
+		{"out of the money threshold" : 0.8},
+		{"file" : "experimental"},
+	    {"current holdings data range" : "Holdings!A1:ZZ"},
+    	{"market data range" : "TD Import Inf!A1:ZZ"},
+    	{"options header range" : "!A1:ZZ"},
+    	{"options data range" : "!A2:ZZ"}
+		]
 	},
 	{
 	"name" : "Bollinger Band",
@@ -46,11 +66,7 @@
 		{"features" : ["BB_Upper", "BB_Lower", "EMA20", "Open", "High", "Low", "Close"]},
 		{"timeSteps": 5},
 		{"Outputs" : ["10% in 10 Days Probability"]},
-		{"threshold" : 0.6},
-		{"seriesStepIDField" : ["DateTime"]}, 
-		{"seriesDataType" : "TDADateTime"}, 
-		{"type" : "relative_time_series"},
-		{"timeSequence" : true}
+		{"threshold" : 0.6}
 		]
 	},
 	{

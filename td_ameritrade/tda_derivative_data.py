@@ -13,6 +13,7 @@ import numpy as np
 from numpy import NaN
 import pandas as pd
 
+from configuration import get_ini_data
 from moving_average import simple_moving_average
 from moving_average import exponential_moving_average
 from tda_api_library import format_tda_datetime
@@ -409,38 +410,49 @@ def calculateFields(mktOptions, dfHoldings, dfMarketData):
 
     return mktOptions
 
-def eliminateLowReturnOptions(workbookID, putSheetName, callSheetName, dictOptionsThresholds):
+def eliminateLowReturnOptions(processCtrl, putTab="", callTab=""):
     '''
     Access put and call options from Google sheets passed as parameters, eliminate options with high risk
     and low return, write the remaining options to a new tab for human consideration
     '''
         
     exc_txt = "An error occurred eliminating options"
-    # The ID and range of a sample spreadsheet.
-    EXP_SPREADSHEET_ID = "1XJNEWZ0uDdjCOvxJItYOhjq9kOhYtacJ3epORFn_fm4"
-    DAILY_OPTIONS = "1T0yNe6EkLLpwzg_rLXQktSF1PCx1IcCX9hq9Xc__73U"
-    OPTIONS_HEADER = '!A1:ZZ'
-    OPTIONS_DATA = '!A2:ZZ'
+    ''' find Google sheet ID '''
+    googleLocal = get_ini_data("GOOGLE")
+    for control in processCtrl.loc["json"]["controls"]:
+        if "file" in control:
+            fileName = control["file"]
+            fileID = googleLocal[fileName]
+        if "options header range" in control:
+            optionsHeader = control["options header range"]
+        if "options data range" in control:
+            optionsDataRange = control["options data range"]
+        if "minimum max gain APY" in control:
+            testForGainAPY = control['minimum max gain APY']
+        if "minimum max profit" in control:
+            testForProfit = control['minimum max profit']
+        if "out of the money threshold" in control:            
+            testForOTMThreshold = control['out of the money threshold']
     
     try:
         #print("eliminateLowReturnOptions\n\tworkbook: {}\n\tputs: {}\n\tcalls: {}".format(workbookID, putSheetName, callSheetName))
         gSheet = gs.googleSheet()
 
-        if len(putSheetName) > 0:
+        if len(putTab) > 0:
             ''' load put option '''
-            readRange = putSheetName + '!A1:CZ'
-            puts = gSheet.readGoogleSheet(EXP_SPREADSHEET_ID, readRange)
+            readRange = putTab + '!A1:CZ'
+            puts = gSheet.readGoogleSheet(fileID, readRange)
             
-        if len(callSheetName) > 0:
+        if len(callTab) > 0:
             ''' load call option '''
-            readRange = callSheetName + '!A1:CZ'
-            calls = gSheet.readGoogleSheet(EXP_SPREADSHEET_ID, readRange)
+            readRange = callTab + '!A1:CZ'
+            calls = gSheet.readGoogleSheet(fileID, readRange)
         
-        if len(putSheetName) > 0 and len(callSheetName):
+        if len(putTab) > 0 and len(callTab):
             toConsider = pd.concat([puts, calls])
-        elif len(putSheetName) > 0:
+        elif len(putTab) > 0:
             toConsider = puts
-        elif len(callSheetName) > 0:
+        elif len(callTab) > 0:
             toConsider = calls
         
         ''' Need to set index to avoid duplicates '''
@@ -476,7 +488,7 @@ def eliminateLowReturnOptions(workbookID, putSheetName, callSheetName, dictOptio
         
         ''' remove max gain APY < 15% rows '''
         testColumn = 'max gain APY'
-        testFor = dictOptionsThresholds['minimum max gain APY']
+        testFor = testForGainAPY
         print("removing max gain APY < {}% rows from {} rows".format(testFor, len(toConsider)))
         toConsider[testColumn] = toConsider[testColumn].apply(gSheet.gCellStrToFloat)
         rowsToRemove = toConsider.loc[toConsider[testColumn] < testFor]
@@ -485,7 +497,7 @@ def eliminateLowReturnOptions(workbookID, putSheetName, callSheetName, dictOptio
         
         ''' remove Max Profit < 500 rows '''
         testColumn = 'Max Profit'
-        testFor = dictOptionsThresholds['minimum max profit']
+        testFor = testForProfit
         print("removing Max Profit < ${} rows from {} rows".format(testFor, len(toConsider)))
         toConsider[testColumn] = toConsider[testColumn].apply(gSheet.gCellStrToFloat)
         rowsToRemove = toConsider.loc[toConsider[testColumn] < testFor]
@@ -494,7 +506,7 @@ def eliminateLowReturnOptions(workbookID, putSheetName, callSheetName, dictOptio
         
         ''' remove OTM Probability < 0.8 '''
         testColumn = 'OTM Probability'
-        testFor = dictOptionsThresholds['out of the money threshold']
+        testFor = testForOTMThreshold
         print("removing OTM (option expires worthless) Probability < {} rows from {} rows".format(testFor, len(toConsider)))
         toConsider[testColumn] = toConsider[testColumn].apply(gSheet.gCellStrToFloat)
         rowsToRemove = toConsider.loc[toConsider[testColumn] < testFor]
@@ -511,9 +523,9 @@ def eliminateLowReturnOptions(workbookID, putSheetName, callSheetName, dictOptio
                                                                             now.hour, now.minute, now.second)        
             sheetName = "consider" + timeStamp
             
-            gSheet.addGoogleSheet(EXP_SPREADSHEET_ID, sheetName)
-            gSheet.updateGoogleSheet(EXP_SPREADSHEET_ID, sheetName + OPTIONS_HEADER, toConsider.columns)
-            gSheet.updateGoogleSheet(EXP_SPREADSHEET_ID, sheetName + OPTIONS_DATA, toConsider)
+            gSheet.addGoogleSheet(fileID, sheetName)
+            gSheet.updateGoogleSheet(fileID, sheetName + optionsHeader, toConsider.columns)
+            gSheet.updateGoogleSheet(fileID, sheetName + optionsDataRange, toConsider)
             print("There are {} options with acceptable risk / reward to consider in {}".format(len(toConsider), sheetName))
     
         else:

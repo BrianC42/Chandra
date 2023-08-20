@@ -706,16 +706,18 @@ def iniRead():
         tdaAuth = get_ini_data("TDAMERITRADE")
         print("TD Ameritrade authentication\n\ttdaAuth: {}\n\tauthentication: {}".format(tdaAuth, tdaAuth["authentication"]))
 
-        ''' Google APIs '''
-        exc_txt = "\nAn exception occurred - unable to retrieve Google authentication information"
-        googleAuth = get_ini_data("GOOGLE")
-        print("Google authentication\n\ttoken: {}\n\tcredentials: {}".format(googleAuth["token"], googleAuth["credentials"]))
-        
         ''' read application specific configuration file '''
         exc_txt = "\nAn exception occurred - unable to process configuration file"
         config_data = get_ini_data("DAILY_PROCESS")
         appConfig = read_config_json(gitdir + config_data['config'])
         print("appConfig: {}".format(appConfig))
+        
+        ''' Google APIs '''
+        exc_txt = "\nAn exception occurred - unable to retrieve Google authentication information"
+        googleAuth = get_ini_data("GOOGLE")
+        print("Google authentication\n\ttoken: {}\n\tcredentials: {}".format(googleAuth["token"], googleAuth["credentials"]))
+        print("file 1: {} - {}".format('experimental', googleAuth["experimental"]))
+        print("file 2: {} - {}".format('daily_options', googleAuth["daily_options"]))
         
         ''' local list of file Google Drive file ID '''
         #localGoogleProject = open(aiwork + "\\Google_Project_Local.json", "rb")
