@@ -310,6 +310,10 @@ def userInterfaceControls():
         ''' =================== Create input window =================== '''
         exc_txt = "\nAn exception occurred - unable to create and process window"
         window=Tk()
+        
+        frm = ttk.Frame(window)
+        frm.grid()
+        
         window.title('Morning Process Control')
         
         ''' =================== Create all input fields =================== '''

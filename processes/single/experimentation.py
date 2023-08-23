@@ -45,9 +45,12 @@ import datetime
 from datetime import date
 from datetime import timedelta
 
+'''
 from tkinter import *
 from tkinter import ttk
 from tkinter.ttk import Combobox
+'''
+import tkinter as tk
 
 import numpy as np
 import pandas as pd
@@ -609,32 +612,34 @@ def tkInterExp():
 
         ''' =================== Create input window =================== '''
         exc_txt = "\nAn exception occurred - unable to create and process window"
-        window=Tk()
+        window=tk()
         window.title('Morning Process Control')
-        
+
         ''' =================== Create all input fields =================== '''
         ''' ============ set exception description to narrow problem location ============ '''
         exc_txt = "\nAn exception occurred - tkInterExp - creating input fields"
         
-        lblOps=Label(window, text="Operational processes", fg='blue', font=("ariel", 10))
+        lblOps=tk.Label(window, text="Operational processes", fg='blue', font=("ariel", 10))
         lblOps.configure(bg="white")
         lblOps.place(x=COL_1, y=(ROW_2 - ROW_HEIGHT))
 
-        lblML=Label(window, text="Make machine learning predictions", fg='blue', font=("ariel", 10))
+        lblML=tk.Label(window, text="Make machine learning predictions", fg='blue', font=("ariel", 10))
         lblML.configure(bg="white")
         lblML.place(x=COL_3, y=(ROW_2 - ROW_HEIGHT))
         
         processDetails = appConfig[PROCESS_CONFIGS]
         
-        processCheck = [IntVar()] * len(processDetails)
+        processCheck = [tk.IntVar()] * len(processDetails)
         processButton = [None] * len(processDetails)
 
         countProcess = 0
+        countProcessControls = 0
         countModels = 0
+        countModelsControls = 0
         ndxProcess = 0
         for process in processDetails:
-            processCheck[ndxProcess] = IntVar()
-            processButton[ndxProcess] = Checkbutton(window, text = process[PROCESS_ID], variable = processCheck[ndxProcess])
+            processCheck[ndxProcess] = tk.IntVar()
+            processButton[ndxProcess] = tk.Checkbutton(window, text = process[PROCESS_ID], variable = processCheck[ndxProcess])
 
             if process [MODEL]:
                 print("process {} is a machine learning model".format(process[PROCESS_ID]))
@@ -670,7 +675,7 @@ def tkInterExp():
                     processCtrl.iat[ndx, runIndex] = True
             window.quit()
 
-        btn=Button(window, command=go_button, text="Run processes selected", fg='blue')
+        btn=tk.Button(window, command=go_button, text="Run processes selected", fg='blue')
         btn.place(x=COL_2, y=ROW_BUTTON)
 
         ''' =================== Interact with user =================== '''
@@ -738,20 +743,326 @@ def iniRead():
 
     return
 
+def tkInter2():
+    ''' display a user interface to solicit run time selections '''
+    exc_txt = "\nAn exception occurred - tkInter2"
+    '''
+    https://realpython.com/python-gui-tkinter/#assigning-widgets-to-frames-with-frame-widgets
+    
+    Alternatively check out
+    pyqt5
+    pysimplegui
+    '''
+    
+    try:
+        ui=tk.Tk()
+        ui.title('Morning Process Control')
+        ''' either of the following will force the window size as specified '''
+        #root.geometry("1000x600")
+        #root.minsize(1000, 600)
+        #ui.geometry("1000x800+10+10")
+
+        ''' ================== create window frames for top level placement ============ '''
+        frmTop = tk.Frame(ui, relief=tk.GROOVE, borderwidth=5)
+        frmTop.pack(fill=tk.BOTH)
+
+        frmMiddle = tk.Frame(ui, relief=tk.GROOVE, borderwidth=5)
+        frmMiddle.pack(fill=tk.BOTH)
+        ''' frames within frames '''
+        frmLH = tk.Frame(frmMiddle, relief=tk.SUNKEN, borderwidth=5)
+        frmLH.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        frmRH = tk.Frame(frmMiddle, relief=tk.RAISED, borderwidth=5)
+        frmRH.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)        
+
+        frmButtons = tk.Frame(ui, relief=tk.RIDGE, borderwidth=5)
+        frmButtons.pack(fill=tk.BOTH)                
+
+        ''' =================== widgets in top frame =================== '''
+        lblText = "top frame"
+        lblTop = tk.Label(frmTop, text=lblText, fg="yellow", bg="blue", width=len(lblText)+5, height=1)
+        lblTop.pack()
+        entTop = tk.Entry(frmTop, fg="black", bg="white", width=50)
+        entTop.pack()
+        txtTop = tk.Text(frmTop)
+        txtTop.pack(fill=tk.Y, side=tk.LEFT, expand=True)
+
+        entTop.insert(0, "Hello ...")
+        txtTop.insert("1.0", "...1World23")
+        txtTop.insert("2.0", "\nThe meaning of life, the universe and everything ... 42???")
+        
+        ''' ====================== widgets in left hand frame ======================== '''        
+        lblLH = tk.Label(frmLH, text="left frame", width=25, height=2)
+        lblLH.pack()
+        
+        varP1 = tk.IntVar()
+        cbPC1 = tk.Checkbutton(frmLH, text = "varP1", variable = varP1)
+        cbPC1.pack()
+        
+        lblLH2 = tk.Label(frmLH, text="radio button (choice of one)", height=2)
+        lblLH2.pack()
+
+        rbOpt=tk.StringVar()
+        rb1 = tk.Radiobutton(frmLH, text="Opt 1", variable=rbOpt, value="Option 1")
+        rb2 = tk.Radiobutton(frmLH, text="Opt 2", variable=rbOpt, value="Option 2")
+        rb3 = tk.Radiobutton(frmLH, text="Opt 3", variable=rbOpt, value="Option 3")
+        rbOpt.set("Option 2")
+        rb1.pack()
+        rb2.pack()
+        rb3.pack()
+        
+        ''' ======================== widgets in right hand frame ======================== '''
+        lblRH = tk.Label(frmRH, text="right frame", width=25, height=2)
+        lblRH.pack()
+        #lblRH.grid(row=0, column=0)
+
+        mVar=[]
+        mBtn=[]
+        bTxt=[
+            "short str",
+            "2nd description",
+            "this is a very long button description string",
+            "4th",
+            "last choice button description"
+            ]
+        for ndx in range (5):
+            mVar.append(tk.IntVar())
+            mBtn.append(tk.Checkbutton(frmRH, text=bTxt[ndx], variable=mVar[ndx]))
+            #mBtn[ndx].pack()
+            mBtn[ndx].place(x=0,y=25+(25*ndx))
+            #mBtn[ndx].grid(row=ndx+3, column=0)
+
+        ''' ============================= process button press ============================= '''        
+        def go_button():
+            print("varP1={}".format(varP1.get()))
+            print("rbOpt = {}".format(rbOpt.get()))
+            print("entTop={}".format(entTop.get()))
+            print("txtTop(1.4 to 1.9) = {}".format(txtTop.get("1.4", "1.9")))
+            print("txtTop(2.0 to tk.END) = {}".format(txtTop.get("2.0", tk.END)))
+            
+            ui.quit()
+            
+        ''' =================== widgets in bottom frame =================== '''
+        lblBottom = tk.Label(frmButtons, text="bottom frame", width=50, height=2)
+        lblBottom.pack()
+        btnText = "Click me"
+        btnRun=tk.Button(frmButtons, command=go_button, text=btnText, fg='blue', width=len(btnText)+5, height=3)
+        btnRun.pack()
+        
+        ''' =================== Interact with user =================== '''
+        ui.mainloop()
+  
+    except Exception:
+        exc_info = sys.exc_info()
+        exc_str = exc_info[1].args[0]
+        exc_txt = exc_txt + "\n\t" + exc_str
+        sys.exit(exc_txt)
+    
+    return
+
+def dailyProcess():
+    ''' display a user interface to solicit run time selections '''
+    processCtrl=dict()
+    dictBtnRun=dict()
+    
+    try:
+        ''' Find local file directories '''
+        exc_txt = "\nAn exception occurred - unable to identify localization details"
+        localDirs = get_ini_data("LOCALDIRS")
+        aiwork = localDirs['aiwork']
+        gitdir = localDirs['git']
+        models = localDirs['trainedmodels']
+        print("Local computer directories - localDirs: {}\n\taiwork: {}\n\tgitdir: {}\n\ttrained models: {}".format(localDirs, aiwork, gitdir, models))
+    
+        ''' Google API and file details '''
+        exc_txt = "\nAn exception occurred - unable to retrieve Google authentication information"
+        googleAuth = get_ini_data("GOOGLE")
+        print("Google authentication\n\ttoken: {}\n\tcredentials: {}".format(googleAuth["token"], googleAuth["credentials"]))
+        print("file 1: {} - {}".format('experimental', googleAuth["experimental"]))
+        print("file 2: {} - {}".format('daily_options', googleAuth["daily_options"]))
+        
+        ''' read application specific configuration file '''
+        exc_txt = "\nAn exception occurred - unable to access process configuration file"
+        config_data = get_ini_data("DAILY_PROCESS")
+        appConfig = read_config_json(gitdir + config_data['config'])
+        print("appConfig: {}".format(appConfig))
+        
+        ''' =============== build user interface based on configuration json file =========== '''
+        ui=tk.Tk()
+        ui.title('Morning Process Control')
+        ''' either of the following will force the window size as specified '''
+        #root.geometry("1000x600")
+        #root.minsize(1000, 600)
+        #ui.geometry("1000x800+10+10")
+
+        ''' ================== create window frames for top level placement ============ '''
+        frmSelection = tk.Frame(ui, relief=tk.GROOVE, borderwidth=5)
+        frmSelection.pack(fill=tk.BOTH)
+        ''' frames within frames '''
+        frmProcess = tk.Frame(frmSelection, relief=tk.SUNKEN, borderwidth=5)
+        frmProcess.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        frmModel = tk.Frame(frmSelection, relief=tk.RAISED, borderwidth=5)
+        frmModel.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)        
+
+        frmButtons = tk.Frame(ui, relief=tk.RIDGE, borderwidth=5)
+        frmButtons.pack(fill=tk.BOTH)                
+        
+        exc_txt = "\nAn exception occurred selecting processes to run and setting parameters"
+        ''' traditional processes '''
+        lblProcessTitle = tk.Label(frmProcess, text="Traditional processes", height=2)
+        lblProcessTitle.pack()
+        frmTp=[]
+        varTp=[]
+        btnTp=[]
+        frmTpCtrl=[]
+        entTpControl=[]
+        lblTpControl=[]
+        for process in appConfig["processes"]:
+            if not process["model"]:
+                print("Process name: {}".format(process["name"]))
+                
+                frmTp.append(tk.Frame(frmProcess))
+                frmTp[len(frmTp)-1].pack()
+                
+                varTp.append(tk.IntVar())
+                btnTp.append(tk.Checkbutton(frmTp[len(varTp)-1], \
+                                            text=process["name"], \
+                                            variable=varTp[len(varTp)-1]))
+                btnTp[len(btnTp)-1].pack()
+                
+                ''' store controls for later processing '''
+                processCtrl[process["name"]]={"frame":frmTp[len(frmTp)-1], \
+                                              "btnRun":btnTp[len(btnTp)-1], \
+                                              "run":varTp[len(varTp)-1], \
+                                              "controls":""}
+                dControl=dict("")
+                if "controls" in process:
+                    for control in process["controls"]:
+                        for key in control.keys():
+                            print("\tcontrol: {}, value:{}".format(key, control[key]))
+                            frmTpCtrl.append(tk.Frame(frmTp[len(frmTp)-1]))
+                            frmTpCtrl[len(frmTpCtrl)-1].pack()
+
+                            lblTpControl.append(tk.Label(frmTpCtrl[len(frmTpCtrl)-1], text=key))
+                            lblTpControl[len(lblTpControl)-1].pack(side=tk.LEFT)
+
+                            entTpControl.append(tk.Entry(frmTpCtrl[len(frmTpCtrl)-1], \
+                                                         fg="black", bg="white", width=50))
+                            entTpControl[len(entTpControl)-1].pack()
+                            entTpControl[len(entTpControl)-1].insert(0, control[key])
+                            
+                            dictC = {"frame":frmTpCtrl[len(frmTpCtrl)-1], \
+                                     "label":lblTpControl[len(lblTpControl)-1], \
+                                     "description":key, \
+                                     "entry":entTpControl[len(entTpControl)-1]}
+                            dControl[key]=dictC
+                    processCtrl[process["name"]]["controls"]=dControl
+
+        ''' machine learning models '''
+        lblModels = tk.Label(frmModel, text="Trained models", height=2)
+        lblModels.pack()
+        frmMl=[]
+        varMl=[]
+        btnMl=[]
+        frmMlControl=[]
+        entMlControl=[]
+        lblMlControl=[]
+        for process in appConfig["processes"]:
+            if process["model"]:
+                print("model name: {}".format(process["name"]))
+
+                frmMl.append(tk.Frame(frmModel))
+                frmMl[len(frmMl)-1].pack()
+                
+                varMl.append(tk.IntVar())
+                btnMl.append(tk.Checkbutton(frmMl[len(frmMl)-1], \
+                                            text=process["name"], \
+                                            variable=varMl[len(varMl)-1]))
+                btnMl[len(btnMl)-1].pack()
+
+                ''' store controls for later processing '''
+                processCtrl[process["name"]]={"frame":frmMl[len(frmMl)-1], \
+                                              "btnRun":btnMl[len(btnMl)-1], \
+                                              "run":varMl[len(varMl)-1], \
+                                              "controls":""}
+
+                dControl=dict("")
+                if "controls" in process:
+                    for control in process["controls"]:
+                        for key in control.keys():
+                            print("\tcontrol: {}, value:{}".format(key, control[key]))
+                            frmMlControl.append(tk.Frame(frmMl[len(frmMl)-1]))
+                            frmMlControl[len(frmMlControl)-1].pack()
+
+                            lblMlControl.append(tk.Label(frmMlControl[len(frmMlControl)-1], text=key))
+                            lblMlControl[len(lblMlControl)-1].pack(side=tk.LEFT)
+
+                            entMlControl.append(tk.Entry(frmMlControl[len(frmMlControl)-1], \
+                                                         fg="black", bg="white", width=50))
+                            entMlControl[len(entMlControl)-1].pack()
+                            entMlControl[len(entMlControl)-1].insert(0, control[key])
+        
+                            dictC = {"frame":frmMlControl[len(frmMlControl)-1], \
+                                     "label":lblMlControl[len(lblMlControl)-1], \
+                                     "description":key, \
+                                     "entry":entMlControl[len(entMlControl)-1]}
+                            dControl[key]=dictC
+                    processCtrl[process["name"]]["controls"]=dControl
+
+        ''' ============================= process button press ============================= '''        
+        def go_button():
+            print("Choices made")
+            ui.quit()
+            
+        ''' =================== widgets in bottom frame =================== '''
+        #lblBottom = tk.Label(frmButtons, text="bottom frame", width=50, height=2)
+        #lblBottom.pack()
+        btnRun=tk.Button(frmButtons, command=go_button, text="Perform selected processes", fg='blue', height=3)
+        btnRun.pack()
+        
+        ''' =================== Interact with user =================== '''
+        ui.mainloop()
+  
+    except Exception:
+        exc_info = sys.exc_info()
+        exc_str = exc_info[1].args[0]
+        exc_txt = exc_txt + "\n\t" + exc_str
+        sys.exit(exc_txt)
+
+    return processCtrl
+
+def dictexp():
+    d1 = {"file":"a", "scaler":"b"}
+    d2 = {"OTM":0.8, "hdr":"!A2:ZZ"}
+    d3 = {"outputs":"10%","features":["f1", "F2"]}
+    dsum={"procA":d1, "procB":d2, "procC":d3}
+    
+    return
+
 if __name__ == '__main__':
     print("==================================================== Code experimentation starting")
     
-    processCtrl = iniRead()                   # Experimentation / development of configuration json file
-    
     if True:
-        processCtrl = tkInterExp()
+        processCtrl = dailyProcess()
+        for process in processCtrl:
+            print("Process: {}, run={}".format(process, processCtrl[process]["run"].get()))
+            if processCtrl[process]["run"].get() == 1:
+                for control in processCtrl[process]["controls"]:
+                    #for key in processCtrl[process]["controls"][control]:
+                    print("\tcontrol: {} = {}".format(
+                                    processCtrl[process]["controls"][control]["description"], \
+                                    processCtrl[process]["controls"][control]["entry"].get()))
         
+    else:
+        dictexp()
+        processCtrl = iniRead()                   # Experimentation / development of configuration json file
+    
+        dataFiles = buildListofMarketDataFiles()
+
+        processCtrl = tkInter2()
+
         for ndx in range(len(processCtrl)):
             print("Process: {}: run = {}".format(processCtrl.iloc[ndx][PROCESS_ID], processCtrl.iloc[ndx][RUN]))
         mlPredictions(processCtrl)             # Use trained models to make predictions
-
-    else:
-        dataFiles = buildListofMarketDataFiles()
 
         digitalSreeni_180()
         linear_regression()
