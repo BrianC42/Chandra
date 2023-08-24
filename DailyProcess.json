@@ -31,7 +31,7 @@
 		{"minimum max gain APY" : 20},
 		{"minimum max profit" : 500},
 		{"out of the money threshold" : 0.8},
-		{"file" : "experimental"},
+		{"gsheet" : "experimental"},
 	    {"current holdings data range" : "Holdings!A1:ZZ"},
     	{"market data range" : "TD Import Inf!A1:ZZ"},
     	{"options header range" : "!A1:ZZ"},
@@ -47,7 +47,7 @@
 		{"minimum max gain APY" : 20},
 		{"minimum max profit" : 500},
 		{"out of the money threshold" : 0.8},
-		{"file" : "experimental"},
+		{"gsheet" : "experimental"},
 	    {"current holdings data range" : "Holdings!A1:ZZ"},
     	{"market data range" : "TD Import Inf!A1:ZZ"},
     	{"options header range" : "!A1:ZZ"},
@@ -62,10 +62,13 @@
 	"controls" : [
 		{"file" : "rnn\\lstm\\bb\\BB_test001 20230717 073218"},
 		{"scaler" : "rnn\\lstm\\bb\\BB_test001 20230717 073218 scaler.pkl"},
-		{"featureFile" : ["tda\\market_analysis_data\\*.csv"]},
-		{"features" : ["BB_Upper", "BB_Lower", "EMA20", "Open", "High", "Low", "Close"]},
+		{"featureFile" : "tda\\market_analysis_data\\*.csv"},
+		{"features" : "BB_Upper,BB_Lower,EMA20,Open,High,Low,Close"},
+		{"gsheet" : "experimental"},
+    	{"header range" : "ML Signals!A1:Z1"},
+    	{"data range" : "ML Signals!A2:Z"},
 		{"timeSteps": 5},
-		{"Outputs" : ["10% in 10 Days Probability"]},
+		{"Outputs" : "10% in 10 Days Probability"},
 		{"threshold" : 0.6}
 		]
 	},
@@ -76,7 +79,16 @@
 	"run" : false,
 	"controls" : [
 		{"file" : "rnn\\lstm\\MACDTrendLineCross\\MACD_TrendCross_Best 20230717 070452"},
-		{"Outputs" : ["Negative Cross", "Neutral", "Positive Cross"]}
+		{"scaler" : "rnn\\lstm\\MACDTrendLineCross\\MACD_TrendCross_Best 20230717 070452 scaler.pkl"},
+		{"Outputs" : "Negative Cross,Neutral,Positive Cross"},
+		{"featureFile" : "tda\\market_analysis_data\\*.csv"},
+		{"features" : "MACD,MACD_Signal"},
+		{"gsheet" : "experimental"},
+    	{"header range" : "MACD Cross!A1:Z1"},
+    	{"data range" : "MACD Cross!A2:Z"},
+		{"timeSteps": 5},
+		{"Outputs" : "Negative Cross, Neutral, Positive Cross"},
+		{"threshold" : 0.9}
 		]
 	}
 ]

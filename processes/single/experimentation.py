@@ -1038,10 +1038,36 @@ def dictexp():
     
     return
 
+def gSheetToken():
+
+    try:
+        ''' Google API and file details '''
+        exc_txt = "\nAn exception occurred - unable to retrieve Google authentication information"
+        googleAuth = get_ini_data("GOOGLE")
+        print("Google authentication\n\ttoken: {}\n\tcredentials: {}".format(googleAuth["token"], googleAuth["credentials"]))
+        print("file 1: {} - {}".format('experimental', googleAuth["experimental"]))
+        print("file 2: {} - {}".format('daily_options', googleAuth["daily_options"]))
+        gSheet = googleSheet()
+
+    except Exception:
+        exc_info = sys.exc_info()
+        exc_str = exc_info[1].args[0]
+        exc_txt = exc_txt + "\n\t" + exc_str
+        sys.exit(exc_txt)
+
+    return
+
 if __name__ == '__main__':
     print("==================================================== Code experimentation starting")
     
     if True:
+        gSheetToken()
+        
+    else:
+        dictexp()
+        processCtrl = iniRead()                   # Experimentation / development of configuration json file
+    
+        ''' test daily process start '''
         processCtrl = dailyProcess()
         for process in processCtrl:
             print("Process: {}, run={}".format(process, processCtrl[process]["run"].get()))
@@ -1051,11 +1077,8 @@ if __name__ == '__main__':
                     print("\tcontrol: {} = {}".format(
                                     processCtrl[process]["controls"][control]["description"], \
                                     processCtrl[process]["controls"][control]["entry"].get()))
-        
-    else:
-        dictexp()
-        processCtrl = iniRead()                   # Experimentation / development of configuration json file
-    
+        ''' test daily process end '''
+
         dataFiles = buildListofMarketDataFiles()
 
         processCtrl = tkInter2()

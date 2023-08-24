@@ -417,25 +417,26 @@ def eliminateLowReturnOptions(processCtrl, putTab="", callTab=""):
     '''
         
     exc_txt = "An error occurred eliminating options"
-    ''' find Google sheet ID '''
-    googleLocal = get_ini_data("GOOGLE")
-    for control in processCtrl.loc["json"]["controls"]:
-        if "file" in control:
-            fileName = control["file"]
-            fileID = googleLocal[fileName]
-        if "options header range" in control:
-            optionsHeader = control["options header range"]
-        if "options data range" in control:
-            optionsDataRange = control["options data range"]
-        if "minimum max gain APY" in control:
-            testForGainAPY = control['minimum max gain APY']
-        if "minimum max profit" in control:
-            testForProfit = control['minimum max profit']
-        if "out of the money threshold" in control:            
-            testForOTMThreshold = control['out of the money threshold']
-    
+
     try:
         #print("eliminateLowReturnOptions\n\tworkbook: {}\n\tputs: {}\n\tcalls: {}".format(workbookID, putSheetName, callSheetName))
+
+        ''' find Google sheet ID '''
+        googleLocal = get_ini_data("GOOGLE")
+        ''' run time control parameters from json and UI '''
+        ''' text '''
+        fileName = processCtrl["gsheet"]["entry"].get()
+        fileID = googleLocal[fileName]
+        #holdingRange = processCtrl["current holdings data range"]["entry"].get()
+        #marketDataRange = processCtrl["market data range"]["entry"].get()
+        optionsHeader = processCtrl["options header range"]["entry"].get()
+        optionsDataRange = processCtrl["options data range"]["entry"].get()
+        ''' numerical '''
+        testForGainAPY = float(processCtrl['minimum max gain APY']["entry"].get())
+        testForProfit = float(processCtrl['minimum max profit']["entry"].get())
+        testForOTMThreshold = float(processCtrl['out of the money threshold']["entry"].get())
+        ''' controls with multiple values '''
+    
         gSheet = gs.googleSheet()
 
         if len(putTab) > 0:

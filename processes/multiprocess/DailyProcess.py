@@ -5,14 +5,13 @@ Created on Jul 27, 2023
 '''
 import os
 import sys
+import glob
 import json
 import re
 import time
 import datetime as dt
 
-from tkinter import *
-from tkinter import ttk
-from tkinter.ttk import Combobox
+import tkinter as tk
 
 import numpy as np
 import pandas as pd
@@ -39,6 +38,8 @@ from tda_derivative_data import prepMktOptionsForAnalysis
 from multiProcess import updateMarketData 
 from GoogleSheets import googleSheet
 
+import tensorflow as tf
+
 PROCESS_CONFIGS = "processes"
 MODEL_CONFIGS = "models"
 
@@ -58,27 +59,230 @@ COVERED_CALLS = "Covered calls"
 BOLLINGER_BAND_PREDICTION = "Bollinger Band"
 MACD_TREND_CROSS = "MACD Trend"
 
-def mlBollingerBandPrediction(processCtrl):
-    exc_txt = "\nAn exception occurred - making predictions using Bollinger Band model"
-    
+def saveMACDCross(processCtrl, signals):
+    exc_txt = "\nAn exception occurred - saving machine learning signal"
+
     try:
-        print("making daily predictions using the Bollinger Band model")
-        pass
+        ''' Google API and file details '''
+        exc_txt = "\nAn exception occurred - unable to retrieve Google authentication information"
+        googleLocal = get_ini_data("GOOGLE")
+
+        ''' run time control parameters from json and UI '''
+        ''' text '''
+        gSheetName = processCtrl['gsheet']['entry'].get()
+        gSheetID = googleLocal[gSheetName]
+        headerRange = processCtrl['header range']['entry'].get()
+        dataRange = processCtrl['data range']['entry'].get()
+        ''' numerical '''
+        ''' controls with multiple values '''
+
+        ''' read sheet current cells - do not overwrite these '''
+        gSheet = googleSheet()
+        result = gSheet.googleSheet.values().get(spreadsheetId=gSheetID, range=dataRange).execute()
+        values = result.get('values', [])
+
+        for signal in signals:
+            newSignal = [signal['name'], signal['symbol'], dt.datetime.now().strftime("%m/%d/%y"), \
+                         str(signal['prediction'][0]), \
+                         str(signal['prediction'][1]), \
+                         str(signal['prediction'][2]) \
+                         ]
+            values.append(newSignal)
         
+        requestBody = {'values': values}
+        result = gSheet.googleSheet.values().update(spreadsheetId=gSheetID, range=dataRange, \
+                                       valueInputOption="USER_ENTERED", body=requestBody).execute()
+
     except Exception:
         exc_info = sys.exc_info()
         exc_str = exc_info[1].args[0]
         exc_txt = exc_txt + "\n\t" + exc_str
         sys.exit(exc_txt)
-        
+
     return
 
-def mlMACDTrendCross(processCtrl):
+def saveMachineLearningSignal(processCtrl, signals):
+    exc_txt = "\nAn exception occurred - saving machine learning signal"
+
+    try:
+        ''' Google API and file details '''
+        exc_txt = "\nAn exception occurred - unable to retrieve Google authentication information"
+        googleLocal = get_ini_data("GOOGLE")
+
+        ''' run time control parameters from json and UI '''
+        ''' text '''
+        gSheetName = processCtrl['gsheet']['entry'].get()
+        gSheetID = googleLocal[gSheetName]
+        headerRange = processCtrl['header range']['entry'].get()
+        dataRange = processCtrl['data range']['entry'].get()
+        ''' numerical '''
+        ''' controls with multiple values '''
+
+        ''' read sheet current cells - do not overwrite these '''
+        gSheet = googleSheet()
+        result = gSheet.googleSheet.values().get(spreadsheetId=gSheetID, range=dataRange).execute()
+        values = result.get('values', [])
+
+        for signal in signals:
+            outputStr = signal['outputs']
+            predictionStr = str(signal['prediction'][0])
+            newSignal = [signal['name'], signal['symbol'], outputStr, dt.datetime.now().strftime("%m/%d/%y"), predictionStr]
+            values.append(newSignal)
+        
+        requestBody = {'values': values}
+        result = gSheet.googleSheet.values().update(spreadsheetId=gSheetID, range=dataRange, \
+                                       valueInputOption="USER_ENTERED", body=requestBody).execute()
+
+    except Exception:
+        exc_info = sys.exc_info()
+        exc_str = exc_info[1].args[0]
+        exc_txt = exc_txt + "\n\t" + exc_str
+        sys.exit(exc_txt)
+
+    return
+
+def mlBollingerBandPrediction(name, processCtrl):
+    exc_txt = "\nAn exception occurred - making predictions using Bollinger Band model"
+    
+    try:
+        print("making daily predictions using the Bollinger Band model")
+        for control in processCtrl:
+            print("\tcontrol: {} = {}".format(
+                            processCtrl[control]["description"], \
+                            processCtrl[control]["entry"].get()))
+        
+        ''' run time control parameters from json and UI '''
+        ''' text '''
+        modelFile = processCtrl['file']['entry'].get()
+        scalerFile =  processCtrl['scaler']['entry'].get()
+        outputs =  processCtrl['Outputs']['entry'].get()
+        ''' numerical '''
+        timeSteps = int(processCtrl['timeSteps']['entry'].get())
+        threshold =  float(processCtrl['threshold']['entry'].get())
+        ''' controls with multiple values '''
+        features = re.split(',', processCtrl['features']['entry'].get())
+        inputFileSpec =  re.split(',', processCtrl['featureFile']['entry'].get())
+        
+        ''' load local machine directory details '''
+        localDirs = get_ini_data("LOCALDIRS") # Find local file directories
+        aiwork = localDirs['aiwork']
+        models = localDirs['trainedmodels']
+        
+        ''' load trained model '''
+        trainedModel = aiwork + '\\' + models + '\\' + modelFile
+        model = tf.keras.models.load_model(trainedModel)
+
+        ''' load scaler used during training '''
+        if scalerFile != "":
+            scalerFile = aiwork + '\\' + models + '\\' + scalerFile
+            if os.path.isfile(scalerFile):
+                scaler = pd.read_pickle(scalerFile)
+                '''
+                with open(scalerFile, 'rb') as pf:
+                    scaler = pickle.load(pf)
+                pf.close()
+                '''        
+        
+        signals = []
+        for fileListSpec in inputFileSpec:
+            fileListSpec = aiwork + '\\' + fileListSpec
+            fileList = glob.glob(fileListSpec)
+            for fileSpec in fileList:
+                if os.path.isfile(fileSpec):
+                    subStr = fileSpec.split("\\")
+                    symbol = subStr[len(subStr)-1].split(".")
+                    if len(symbol) == 2:
+                        df_data = pd.read_csv(fileSpec)
+                        dfFeatures = df_data[features]
+                        dfFeatures = dfFeatures[len(dfFeatures)-timeSteps :]
+                        if scalerFile != "":
+                            npScaled = scaler.transform(dfFeatures)
+                            npFeatures = npScaled
+                        else:
+                            npFeatures = dfFeatures.to_numpy()
+                        
+                        ''' make prediction '''
+                        npFeatures = np.reshape(npFeatures, (1,timeSteps,len(features)))
+                        prediction = model.predict(x=npFeatures, verbose=0)
+                        if prediction[0][0] > threshold:
+                            signal = {'symbol':symbol[0], 'name':name, 'outputs':outputs, 'prediction':[prediction[0][0]]}
+                            signals.append(signal)
+                            
+        if len(signals) > 0:
+            saveMachineLearningSignal(processCtrl, signals)
+
+    except Exception:
+        exc_info = sys.exc_info()
+        exc_str = exc_info[1].args[0]
+        exc_txt = exc_txt + "\n\t" + exc_str
+        sys.exit(exc_txt)
+
+    return
+
+def mlMACDTrendCross(name, processCtrl):
     exc_txt = "\nAn exception occurred - Identifying MACD trend crossing moving average"
     
     try:
         print("performing daily MACD trend crossing moving average process")
-        pass
+        for control in processCtrl:
+            print("\tcontrol: {} = {}".format(
+                            processCtrl[control]["description"], \
+                            processCtrl[control]["entry"].get()))
+        
+        ''' run time control parameters from json and UI '''
+        ''' text '''
+        modelFile = processCtrl['file']['entry'].get()
+        scalerFile =  processCtrl['scaler']['entry'].get()
+        outputs =  re.split(',', processCtrl['Outputs']['entry'].get())
+        ''' numerical '''
+        timeSteps = int(processCtrl['timeSteps']['entry'].get())
+        threshold =  float(processCtrl['threshold']['entry'].get())
+        ''' controls with multiple values '''
+        features = re.split(',', processCtrl['features']['entry'].get())
+        inputFileSpec =  re.split(',', processCtrl['featureFile']['entry'].get())
+        
+        ''' load local machine directory details '''
+        localDirs = get_ini_data("LOCALDIRS") # Find local file directories
+        aiwork = localDirs['aiwork']
+        models = localDirs['trainedmodels']
+        
+        ''' load trained model '''
+        trainedModel = aiwork + '\\' + models + '\\' + modelFile
+        model = tf.keras.models.load_model(trainedModel)
+
+        ''' load scaler used during training '''
+        if scalerFile != "":
+            scalerFile = aiwork + '\\' + models + '\\' + scalerFile
+            if os.path.isfile(scalerFile):
+                scaler = pd.read_pickle(scalerFile)
+
+        signals = []
+        for fileListSpec in inputFileSpec:
+            fileListSpec = aiwork + '\\' + fileListSpec
+            fileList = glob.glob(fileListSpec)
+            for fileSpec in fileList:
+                if os.path.isfile(fileSpec):
+                    subStr = fileSpec.split("\\")
+                    symbol = subStr[len(subStr)-1].split(".")
+                    if len(symbol) == 2:
+                        df_data = pd.read_csv(fileSpec)
+                        dfFeatures = df_data[features]
+                        dfFeatures = dfFeatures[len(dfFeatures)-timeSteps :]
+                        if scalerFile != "":
+                            npScaled = scaler.transform(dfFeatures)
+                            npFeatures = npScaled
+                        else:
+                            npFeatures = dfFeatures.to_numpy()
+                        
+                        ''' make prediction '''
+                        npFeatures = np.reshape(npFeatures, (1,timeSteps,len(features)))
+                        prediction = model.predict(x=npFeatures, verbose=0)
+                        if prediction[0][0] > threshold or prediction[0][2] > threshold:
+                            signal = {'symbol':symbol[0], 'name':name, 'outputs':outputs, 'prediction':prediction[0]}
+                            signals.append(signal)
+
+        if len(signals) > 0:
+            saveMACDCross(processCtrl, signals)
         
     except Exception:
         exc_info = sys.exc_info()
@@ -93,6 +297,10 @@ def marketDataUpdate(processCtrl):
     
     try:
         print("performing daily daily market data process")
+        for control in processCtrl:
+            print("\tcontrol: {} = {}".format(
+                            processCtrl[control]["description"], \
+                            processCtrl[control]["entry"].get()))
         app_data = get_ini_data("TDAMERITRADE")
         update_tda_eod_data(app_data['authentication'])
         
@@ -105,10 +313,14 @@ def marketDataUpdate(processCtrl):
     return 
 
 def calculateDerivedData(processCtrl):
-    exc_txt = "\nAn exception occurred - daily derived data process"
+    exc_txt = "\nAn exception occurred - calculating derived data"
     
     try:
         print("performing daily daily derived data process")
+        for control in processCtrl:
+            print("\tcontrol: {} = {}".format(
+                            processCtrl[control]["description"], \
+                            processCtrl[control]["entry"].get()))
         app_data = get_ini_data("TDAMERITRADE")
         updateMarketData(app_data['authentication'], app_data['eod_data'], app_data['market_analysis_data'])
         
@@ -121,40 +333,52 @@ def calculateDerivedData(processCtrl):
     return 
 
 def writeOptionsToGsheet(processCtrl, mktOptions, sheetNameBase):    
-    ''' find Google sheet ID '''
-    googleLocal = get_ini_data("GOOGLE")
-    for control in processCtrl.loc["json"]["controls"]:
-        if "file" in control:
-            fileName = control["file"]
-            fileID = googleLocal[fileName]
-        if "current holdings data range" in control:
-            holdingRange = control["current holdings data range"]
-        if "market data range" in control:
-            marketDataRange = control["market data range"]
-        if "options header range" in control:
-            optionsHeader = control["options header range"]
-        if "options data range" in control:
-            optionsDataRange = control["options data range"]
+    exc_txt = "\nAn exception occurred - unable to write to Gsheet"
     
-    gSheet = googleSheet()
+    try:
+        ''' find Google sheet ID '''
+        googleLocal = get_ini_data("GOOGLE")
+        for control in processCtrl:
+            print("\tcontrol: {} = {}".format(
+                            processCtrl[control]["description"], \
+                            processCtrl[control]["entry"].get()))
 
-    ''' convert data elements to formats suitable for analysis '''
-    df_potential_strategies = prepMktOptionsForAnalysis(mktOptions)
+        ''' run time control parameters from json and UI '''
+        ''' text '''
+        fileName = processCtrl["gsheet"]["entry"].get()
+        fileID = googleLocal[fileName]
+        holdingRange = processCtrl["current holdings data range"]["entry"].get()
+        marketDataRange = processCtrl["market data range"]["entry"].get()
+        optionsHeader = processCtrl["options header range"]["entry"].get()
+        optionsDataRange = processCtrl["options data range"]["entry"].get()
+        ''' numerical '''
+        ''' controls with multiple values '''
+                
+        gSheet = googleSheet()
     
-    dfHoldings = loadHoldings(gSheet, fileID, holdingRange)
-    dfMarketData = loadMarketDetails(gSheet, fileID, marketDataRange)        
-    df_potential_strategies = calculateFields(df_potential_strategies, dfHoldings, dfMarketData)
+        ''' convert data elements to formats suitable for analysis '''
+        df_potential_strategies = prepMktOptionsForAnalysis(mktOptions)
+        
+        dfHoldings = loadHoldings(gSheet, fileID, holdingRange)
+        dfMarketData = loadMarketDetails(gSheet, fileID, marketDataRange)        
+        df_potential_strategies = calculateFields(df_potential_strategies, dfHoldings, dfMarketData)
+    
+        ''' valueInputOption = USER_ENTERED or RAW '''
+        sheetMktOptions = prepMktOptionsForSheets(df_potential_strategies)
+        
+        now = dt.datetime.now()
+        timeStamp = ' {:4d}{:0>2d}{:0>2d} {:0>2d}{:0>2d}{:0>2d}'.format(now.year, now.month, now.day, \
+                                                                        now.hour, now.minute, now.second)        
+        sheetName = sheetNameBase + timeStamp
+        gSheet.addGoogleSheet(fileID, sheetName)
+        gSheet.updateGoogleSheet(fileID, sheetName + optionsHeader, sheetMktOptions.columns)
+        gSheet.updateGoogleSheet(fileID, sheetName + optionsDataRange, sheetMktOptions)
 
-    ''' valueInputOption = USER_ENTERED or RAW '''
-    sheetMktOptions = prepMktOptionsForSheets(df_potential_strategies)
-    
-    now = dt.datetime.now()
-    timeStamp = ' {:4d}{:0>2d}{:0>2d} {:0>2d}{:0>2d}{:0>2d}'.format(now.year, now.month, now.day, \
-                                                                    now.hour, now.minute, now.second)        
-    sheetName = sheetNameBase + timeStamp
-    gSheet.addGoogleSheet(fileID, sheetName)
-    gSheet.updateGoogleSheet(fileID, sheetName + optionsHeader, sheetMktOptions.columns)
-    gSheet.updateGoogleSheet(fileID, sheetName + optionsDataRange, sheetMktOptions)
+    except Exception:
+        exc_info = sys.exc_info()
+        exc_str = exc_info[1].args[0]
+        exc_txt = exc_txt + "\n\t" + exc_str
+        sys.exit(exc_txt)
 
     return sheetName
 
@@ -260,133 +484,173 @@ def marketCallOptions(processCtrl):
 
 def userInterfaceControls():
     ''' display a user interface to solicit run time selections '''
-    exc_txt = "\nAn exception occurred - tkInterExp - stage 1"
+    processCtrl=dict()
+    dictBtnRun=dict()
     
     try:
-        ROW_2 = 100
-        ROW_3 = 400
-        ROW_BUTTON = 450
-        ROW_HEIGHT = 20
-        
-        COL_1 = 100
-        COL_2 = 200
-        COL_3 = 300
-        
-        FORM_WIDTH = '600'
-        FORM_HEIGHT = '500'
-        FORM_BORDER = '10'
-        FORM_GEOMETRY = FORM_WIDTH + 'x' + FORM_HEIGHT + "+" + FORM_BORDER + "+" + FORM_BORDER
-
         ''' Find local file directories '''
-        exc_txt = "\nAn exception occurred - unable to access local AppData information"
+        exc_txt = "\nAn exception occurred - unable to identify localization details"
         localDirs = get_ini_data("LOCALDIRS")
-        gitdir = localDirs['git']
         aiwork = localDirs['aiwork']
-
-        ''' Google APIs '''
+        gitdir = localDirs['git']
+        models = localDirs['trainedmodels']
+        print("Local computer directories - localDirs: {}\n\taiwork: {}\n\tgitdir: {}\n\ttrained models: {}".format(localDirs, aiwork, gitdir, models))
+    
+        ''' Google API and file details '''
         exc_txt = "\nAn exception occurred - unable to retrieve Google authentication information"
         googleAuth = get_ini_data("GOOGLE")
+        print("Google authentication\n\ttoken: {}\n\tcredentials: {}".format(googleAuth["token"], googleAuth["credentials"]))
+        print("file 1: {} - {}".format('experimental', googleAuth["experimental"]))
+        print("file 2: {} - {}".format('daily_options', googleAuth["daily_options"]))
         
-        ''' local list of file Google Drive file ID '''
-        #localGoogleProject = open(aiwork + "\\Google_Project_Local.json", "rb")
-        localGoogleProject = open(aiwork + "\\" + googleAuth["fileIDs"], "rb")
-        jsonGoogle = json.load(localGoogleProject)
-        localGoogleProject.close
-
         ''' read application specific configuration file '''
-        exc_txt = "\nAn exception occurred - unable to process configuration file"
+        exc_txt = "\nAn exception occurred - unable to access process configuration file"
         config_data = get_ini_data("DAILY_PROCESS")
         appConfig = read_config_json(gitdir + config_data['config'])
+        print("appConfig: {}".format(appConfig))
         
-        ''' ============ set exception description to narrow problem location ============ '''
-        exc_txt = "\nAn exception occurred - tkInterExp - window initialization"
+        ''' =============== build user interface based on configuration json file =========== '''
+        ui=tk.Tk()
+        ui.title('Morning Process Control')
+        ''' either of the following will force the window size as specified '''
+        #root.geometry("1000x600")
+        #root.minsize(1000, 600)
+        #ui.geometry("1000x800+10+10")
 
-        ''' create an empty dataframe to hold the information related to processes that could be performed '''
-        cols = [PROCESS_ID, MODEL, PROCESS_DESCRIPTION, RUN, CONFIG]
-        processCtrl = pd.DataFrame(columns=cols)
-        processCtrl[MODEL] = processCtrl[MODEL].astype(bool)
-        processCtrl[RUN] = processCtrl[RUN].astype(bool)
+        ''' ================== create window frames for top level placement ============ '''
+        frmSelection = tk.Frame(ui, relief=tk.GROOVE, borderwidth=5)
+        frmSelection.pack(fill=tk.BOTH)
+        ''' frames within frames '''
+        frmProcess = tk.Frame(frmSelection, relief=tk.SUNKEN, borderwidth=5)
+        frmProcess.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        frmModel = tk.Frame(frmSelection, relief=tk.RAISED, borderwidth=5)
+        frmModel.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)        
 
-        ''' =================== Create input window =================== '''
-        exc_txt = "\nAn exception occurred - unable to create and process window"
-        window=Tk()
+        frmButtons = tk.Frame(ui, relief=tk.RIDGE, borderwidth=5)
+        frmButtons.pack(fill=tk.BOTH)                
         
-        frm = ttk.Frame(window)
-        frm.grid()
-        
-        window.title('Morning Process Control')
-        
-        ''' =================== Create all input fields =================== '''
-        ''' ============ set exception description to narrow problem location ============ '''
-        exc_txt = "\nAn exception occurred - tkInterExp - creating input fields"
-        
-        lblOps=Label(window, text="Operational processes", fg='blue', font=("ariel", 10))
-        lblOps.configure(bg="white")
-        lblOps.place(x=COL_1, y=(ROW_2 - ROW_HEIGHT))
-
-        lblML=Label(window, text="Make machine learning predictions", fg='blue', font=("ariel", 10))
-        lblML.configure(bg="white")
-        lblML.place(x=COL_3, y=(ROW_2 - ROW_HEIGHT))
-        
-        processDetails = appConfig[PROCESS_CONFIGS]
-        
-        processCheck = [IntVar()] * len(processDetails)
-        processButton = [None] * len(processDetails)
-
-        countProcess = 0
-        countModels = 0
-        ndxProcess = 0
-        for process in processDetails:
-            processCheck[ndxProcess] = IntVar()
-            processButton[ndxProcess] = Checkbutton(window, text = process[PROCESS_ID], variable = processCheck[ndxProcess])
-
-            if process [MODEL]:
-                print("process {} is a machine learning model".format(process[PROCESS_ID]))
-                uiX = COL_3
-                uiY = ROW_2 + (ROW_HEIGHT * countModels)
-                countModels += 1
-            else:
-                print("process {} is a traditional process".format(process[PROCESS_ID]))
-                uiX = COL_1
-                uiY = ROW_2 + (ROW_HEIGHT * countProcess)
-                countProcess += 1
+        exc_txt = "\nAn exception occurred selecting processes to run and setting parameters"
+        ''' traditional processes '''
+        lblProcessTitle = tk.Label(frmProcess, text="Traditional processes", height=2)
+        lblProcessTitle.pack()
+        frmTp=[]
+        varTp=[]
+        btnTp=[]
+        frmTpCtrl=[]
+        entTpControl=[]
+        lblTpControl=[]
+        for process in appConfig["processes"]:
+            if not process["model"]:
+                print("Process name: {}".format(process["name"]))
                 
-            processButton[ndxProcess].place(x=uiX, y=uiY)
-            processData = np.array([process[PROCESS_ID], 
-                                    process[MODEL], \
-                                    process[PROCESS_DESCRIPTION], \
-                                    process[RUN], \
-                                    process])
-            runIndex = 3
+                frmTp.append(tk.Frame(frmProcess))
+                frmTp[len(frmTp)-1].pack()
+                
+                varTp.append(tk.IntVar())
+                btnTp.append(tk.Checkbutton(frmTp[len(varTp)-1], \
+                                            text=process["name"], \
+                                            variable=varTp[len(varTp)-1]))
+                btnTp[len(btnTp)-1].pack()
+                
+                ''' store controls for later processing '''
+                processCtrl[process["name"]]={"frame":frmTp[len(frmTp)-1], \
+                                              "btnRun":btnTp[len(btnTp)-1], \
+                                              "run":varTp[len(varTp)-1], \
+                                              "controls":""}
+                dControl=dict("")
+                if "controls" in process:
+                    for control in process["controls"]:
+                        for key in control.keys():
+                            print("\tcontrol: {}, value:{}".format(key, control[key]))
+                            frmTpCtrl.append(tk.Frame(frmTp[len(frmTp)-1]))
+                            frmTpCtrl[len(frmTpCtrl)-1].pack()
+
+                            lblTpControl.append(tk.Label(frmTpCtrl[len(frmTpCtrl)-1], text=key))
+                            lblTpControl[len(lblTpControl)-1].pack(side=tk.LEFT)
+
+                            entTpControl.append(tk.Entry(frmTpCtrl[len(frmTpCtrl)-1], \
+                                                         fg="black", bg="white", width=50))
+                            entTpControl[len(entTpControl)-1].pack()
+                            entTpControl[len(entTpControl)-1].insert(0, control[key])
+                            
+                            dictC = {"frame":frmTpCtrl[len(frmTpCtrl)-1], \
+                                     "label":lblTpControl[len(lblTpControl)-1], \
+                                     "description":key, \
+                                     "entry":entTpControl[len(entTpControl)-1]}
+                            dControl[key]=dictC
+                    processCtrl[process["name"]]["controls"]=dControl
+
+        ''' machine learning models '''
+        lblModels = tk.Label(frmModel, text="Trained models", height=2)
+        lblModels.pack()
+        frmMl=[]
+        varMl=[]
+        btnMl=[]
+        frmMlControl=[]
+        entMlControl=[]
+        lblMlControl=[]
+        for process in appConfig["processes"]:
+            if process["model"]:
+                print("model name: {}".format(process["name"]))
+
+                frmMl.append(tk.Frame(frmModel))
+                frmMl[len(frmMl)-1].pack()
+                
+                varMl.append(tk.IntVar())
+                btnMl.append(tk.Checkbutton(frmMl[len(frmMl)-1], \
+                                            text=process["name"], \
+                                            variable=varMl[len(varMl)-1]))
+                btnMl[len(btnMl)-1].pack()
+
+                ''' store controls for later processing '''
+                processCtrl[process["name"]]={"frame":frmMl[len(frmMl)-1], \
+                                              "btnRun":btnMl[len(btnMl)-1], \
+                                              "run":varMl[len(varMl)-1], \
+                                              "controls":""}
+
+                dControl=dict("")
+                if "controls" in process:
+                    for control in process["controls"]:
+                        for key in control.keys():
+                            print("\tcontrol: {}, value:{}".format(key, control[key]))
+                            frmMlControl.append(tk.Frame(frmMl[len(frmMl)-1]))
+                            frmMlControl[len(frmMlControl)-1].pack()
+
+                            lblMlControl.append(tk.Label(frmMlControl[len(frmMlControl)-1], text=key))
+                            lblMlControl[len(lblMlControl)-1].pack(side=tk.LEFT)
+
+                            entMlControl.append(tk.Entry(frmMlControl[len(frmMlControl)-1], \
+                                                         fg="black", bg="white", width=50))
+                            entMlControl[len(entMlControl)-1].pack()
+                            entMlControl[len(entMlControl)-1].insert(0, control[key])
         
-            dfTemp = pd.DataFrame([processData], columns=cols)
-            processCtrl = pd.concat([processCtrl, dfTemp])
+                            dictC = {"frame":frmMlControl[len(frmMlControl)-1], \
+                                     "label":lblMlControl[len(lblMlControl)-1], \
+                                     "description":key, \
+                                     "entry":entMlControl[len(entMlControl)-1]}
+                            dControl[key]=dictC
+                    processCtrl[process["name"]]["controls"]=dControl
 
-            if 'controls' in process:
-                for control in process['controls']:
-                    print("\t{} = {}".format(list(control)[0], control.get(list(control)[0])))
-            ndxProcess += 1
-
-        ''' =================== create button to process inputs =================== '''
+        ''' ============================= process button press ============================= '''        
         def go_button():
-            for ndx in range (len(processCheck)):
-                if processCheck[ndx].get() == 1:
-                    processCtrl.iat[ndx, runIndex] = True
-            window.quit()
-
-        btn=Button(window, command=go_button, text="Run processes selected", fg='blue')
-        btn.place(x=COL_2, y=ROW_BUTTON)
-
+            print("Choices made")
+            ui.quit()
+            
+        ''' =================== widgets in bottom frame =================== '''
+        #lblBottom = tk.Label(frmButtons, text="bottom frame", width=50, height=2)
+        #lblBottom.pack()
+        btnRun=tk.Button(frmButtons, command=go_button, text="Perform selected processes", fg='blue', height=3)
+        btnRun.pack()
+        
         ''' =================== Interact with user =================== '''
-        window.geometry(FORM_GEOMETRY)
-        window.mainloop()
-
+        ui.mainloop()
+  
     except Exception:
         exc_info = sys.exc_info()
         exc_str = exc_info[1].args[0]
         exc_txt = exc_txt + "\n\t" + exc_str
         sys.exit(exc_txt)
-    
+
     return processCtrl
 
 if __name__ == '__main__':
@@ -395,27 +659,34 @@ if __name__ == '__main__':
     putSheetName = ""
     callSheetName = ""
     processCtrl = userInterfaceControls()
+
+    for process in processCtrl:
+        print("Process: {}, run={}".format(process, processCtrl[process]["run"].get()))
+        if processCtrl[process]["run"].get() == 1:
+            
+            for control in processCtrl[process]["controls"]:
+                print("\tcontrol: {} = {}".format(
+                                processCtrl[process]["controls"][control]["description"], \
+                                processCtrl[process]["controls"][control]["entry"].get()))
     
-    for ndx in range (len(processCtrl)):
-        if processCtrl.iloc[ndx][RUN]:
-            if processCtrl.iloc[ndx][PROCESS_ID] == MARKET_DATA_UPDATE:
-                marketDataUpdate(processCtrl.iloc[ndx])
-            elif processCtrl.iloc[ndx][PROCESS_ID] == DERIVED_MARKET_DATA:
-                calculateDerivedData(processCtrl.iloc[ndx])
-            elif processCtrl.iloc[ndx][PROCESS_ID] == SECURED_PUTS:
-                putSheetName = marketPutOptions(processCtrl.iloc[ndx])
+            if process == MARKET_DATA_UPDATE:
+                marketDataUpdate(processCtrl[process]["controls"])
+            elif process == DERIVED_MARKET_DATA:
+                calculateDerivedData(processCtrl[process]["controls"])
+            elif process == SECURED_PUTS:
+                putSheetName = marketPutOptions(processCtrl[process]["controls"])
                 #putSheetName = "put 20230810 072953"
                 if len(putSheetName) > 0:
-                    eliminateLowReturnOptions(processCtrl.iloc[ndx], putTab=putSheetName)
-            elif processCtrl.iloc[ndx][PROCESS_ID] == COVERED_CALLS:
-                callSheetName = marketCallOptions(processCtrl.iloc[ndx])
+                    eliminateLowReturnOptions(processCtrl[process]["controls"], putTab=putSheetName)
+            elif process == COVERED_CALLS:
+                callSheetName = marketCallOptions(processCtrl[process]["controls"])
                 #callSheetName = "call 20230810 073519"
                 if len(callSheetName) > 0:
-                    eliminateLowReturnOptions(processCtrl.iloc[ndx], callTab=callSheetName)
-            elif processCtrl.iloc[ndx][PROCESS_ID] == BOLLINGER_BAND_PREDICTION:
-                mlBollingerBandPrediction(processCtrl.iloc[ndx])
-            elif processCtrl.iloc[ndx][PROCESS_ID] == MACD_TREND_CROSS:
-                mlMACDTrendCross(processCtrl.iloc[ndx])
+                    eliminateLowReturnOptions(processCtrl[process]["controls"], callTab=callSheetName)
+            elif process == BOLLINGER_BAND_PREDICTION:
+                mlBollingerBandPrediction(process, processCtrl[process]["controls"])
+            elif process == MACD_TREND_CROSS:
+                mlMACDTrendCross(process, processCtrl[process]["controls"])
                 
     
     print ("\nAll requested processes have completed")
