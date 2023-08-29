@@ -66,7 +66,7 @@ def executeDataLoad(nodeName, d2rP):
     return
 
 def executeDataPrep(nodeName, d2rP):
-    print("\n============== WIP =============\n\tEnsure data is normalized using training normalization")
+    print("\n============== WIP =============\n\tEnsure data is normalized using training normalization\n============\n")
     prepareTrainingData(d2rP)
 
     return
@@ -99,6 +99,7 @@ def executeExecuteModel(nodeName, d2rP):
     
             build_configuration_graph(d2rEM, d2rEM.processing_json)
             collect_and_select_data(d2rEM)
+            print("\n============== WIP =============\n\tnormalization needs to be done using scaler fit during training")
             prepareTrainingData(d2rEM)    
             arrangeDataForTrainedModels(d2rEM)
 

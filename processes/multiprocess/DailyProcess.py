@@ -146,10 +146,6 @@ def mlBollingerBandPrediction(name, processCtrl):
     
     try:
         print("making daily predictions using the Bollinger Band model")
-        for control in processCtrl:
-            print("\tcontrol: {} = {}".format(
-                            processCtrl[control]["description"], \
-                            processCtrl[control]["entry"].get()))
         
         ''' run time control parameters from json and UI '''
         ''' text '''
@@ -177,11 +173,6 @@ def mlBollingerBandPrediction(name, processCtrl):
             scalerFile = aiwork + '\\' + models + '\\' + scalerFile
             if os.path.isfile(scalerFile):
                 scaler = pd.read_pickle(scalerFile)
-                '''
-                with open(scalerFile, 'rb') as pf:
-                    scaler = pickle.load(pf)
-                pf.close()
-                '''        
         
         signals = []
         for fileListSpec in inputFileSpec:
@@ -224,10 +215,6 @@ def mlMACDTrendCross(name, processCtrl):
     
     try:
         print("performing daily MACD trend crossing moving average process")
-        for control in processCtrl:
-            print("\tcontrol: {} = {}".format(
-                            processCtrl[control]["description"], \
-                            processCtrl[control]["entry"].get()))
         
         ''' run time control parameters from json and UI '''
         ''' text '''
@@ -297,10 +284,6 @@ def marketDataUpdate(processCtrl):
     
     try:
         print("performing daily daily market data process")
-        for control in processCtrl:
-            print("\tcontrol: {} = {}".format(
-                            processCtrl[control]["description"], \
-                            processCtrl[control]["entry"].get()))
         app_data = get_ini_data("TDAMERITRADE")
         update_tda_eod_data(app_data['authentication'])
         
@@ -317,10 +300,6 @@ def calculateDerivedData(processCtrl):
     
     try:
         print("performing daily daily derived data process")
-        for control in processCtrl:
-            print("\tcontrol: {} = {}".format(
-                            processCtrl[control]["description"], \
-                            processCtrl[control]["entry"].get()))
         app_data = get_ini_data("TDAMERITRADE")
         updateMarketData(app_data['authentication'], app_data['eod_data'], app_data['market_analysis_data'])
         
@@ -338,10 +317,6 @@ def writeOptionsToGsheet(processCtrl, mktOptions, sheetNameBase):
     try:
         ''' find Google sheet ID '''
         googleLocal = get_ini_data("GOOGLE")
-        for control in processCtrl:
-            print("\tcontrol: {} = {}".format(
-                            processCtrl[control]["description"], \
-                            processCtrl[control]["entry"].get()))
 
         ''' run time control parameters from json and UI '''
         ''' text '''
@@ -388,31 +363,16 @@ def marketPutOptions(processCtrl):
     try:
         print("performing daily put option process")
 
-        ''' Find local file directories '''
-        '''
-        exc_txt = "\nAn exception occurred - unable to retrieve local <>.ini files"
-        localDirs = get_ini_data("LOCALDIRS")
-        aiwork = localDirs['aiwork']
-        localGoogleProject = open(aiwork + "\\Google_Project_Local.json", "rb")
-        jsonGoogle = json.load(localGoogleProject)
-        localGoogleProject.close
-        '''
-        
         app_data = get_ini_data("TDAMERITRADE")
-        '''
-        json_config = read_config_json(app_data['config'])
-        '''
+        ''' json_config = read_config_json(app_data['config']) '''
         json_authentication = tda_get_authentication_details(app_data['authentication'])
         analysis_dir = app_data['market_analysis_data']
         
-        '''
-        Cash secured put options
-        '''
+        ''' Cash secured put options '''
         callCount=0
         periodStart = time.time()
         callCount, periodStart = tda_manage_throttling(callCount, periodStart)
     
-        print("\nAnalyzing potential cash secured puts")
         exc_txt = "\nAn exception occurred while accessing market put options"
         df_potential_strategies = pd.DataFrame()
         for symbol in tda_read_watch_lists(json_authentication, watch_list='Potential Buy'):
@@ -458,7 +418,6 @@ def marketCallOptions(processCtrl):
         periodStart = time.time()
         callCount, periodStart = tda_manage_throttling(callCount, periodStart)
     
-        print("\nAnalyzing potential covered calls")
         exc_txt = "\nAn exception occurred while accessing market call options"
         df_potential_strategies = pd.DataFrame()
         for symbol in tda_read_watch_lists(json_authentication, watch_list='Combined Holding'):
@@ -494,14 +453,10 @@ def userInterfaceControls():
         aiwork = localDirs['aiwork']
         gitdir = localDirs['git']
         models = localDirs['trainedmodels']
-        print("Local computer directories - localDirs: {}\n\taiwork: {}\n\tgitdir: {}\n\ttrained models: {}".format(localDirs, aiwork, gitdir, models))
     
         ''' Google API and file details '''
         exc_txt = "\nAn exception occurred - unable to retrieve Google authentication information"
         googleAuth = get_ini_data("GOOGLE")
-        print("Google authentication\n\ttoken: {}\n\tcredentials: {}".format(googleAuth["token"], googleAuth["credentials"]))
-        print("file 1: {} - {}".format('experimental', googleAuth["experimental"]))
-        print("file 2: {} - {}".format('daily_options', googleAuth["daily_options"]))
         
         ''' read application specific configuration file '''
         exc_txt = "\nAn exception occurred - unable to access process configuration file"
@@ -512,21 +467,17 @@ def userInterfaceControls():
         ''' =============== build user interface based on configuration json file =========== '''
         ui=tk.Tk()
         ui.title('Morning Process Control')
-        ''' either of the following will force the window size as specified '''
-        #root.geometry("1000x600")
-        #root.minsize(1000, 600)
-        #ui.geometry("1000x800+10+10")
 
         ''' ================== create window frames for top level placement ============ '''
         frmSelection = tk.Frame(ui, relief=tk.GROOVE, borderwidth=5)
         frmSelection.pack(fill=tk.BOTH)
         ''' frames within frames '''
-        frmProcess = tk.Frame(frmSelection, relief=tk.SUNKEN, borderwidth=5)
+        frmProcess = tk.Frame(frmSelection, relief=tk.RAISED, borderwidth=5)
         frmProcess.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         frmModel = tk.Frame(frmSelection, relief=tk.RAISED, borderwidth=5)
         frmModel.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)        
 
-        frmButtons = tk.Frame(ui, relief=tk.RIDGE, borderwidth=5)
+        frmButtons = tk.Frame(ui, relief=tk.SUNKEN, borderwidth=5)
         frmButtons.pack(fill=tk.BOTH)                
         
         exc_txt = "\nAn exception occurred selecting processes to run and setting parameters"
@@ -541,7 +492,7 @@ def userInterfaceControls():
         lblTpControl=[]
         for process in appConfig["processes"]:
             if not process["model"]:
-                print("Process name: {}".format(process["name"]))
+                #print("Process name: {}".format(process["name"]))
                 
                 frmTp.append(tk.Frame(frmProcess))
                 frmTp[len(frmTp)-1].pack()
@@ -561,7 +512,7 @@ def userInterfaceControls():
                 if "controls" in process:
                     for control in process["controls"]:
                         for key in control.keys():
-                            print("\tcontrol: {}, value:{}".format(key, control[key]))
+                            #print("\tcontrol: {}, value:{}".format(key, control[key]))
                             frmTpCtrl.append(tk.Frame(frmTp[len(frmTp)-1]))
                             frmTpCtrl[len(frmTpCtrl)-1].pack()
 
@@ -591,7 +542,7 @@ def userInterfaceControls():
         lblMlControl=[]
         for process in appConfig["processes"]:
             if process["model"]:
-                print("model name: {}".format(process["name"]))
+                #print("model name: {}".format(process["name"]))
 
                 frmMl.append(tk.Frame(frmModel))
                 frmMl[len(frmMl)-1].pack()
@@ -612,7 +563,7 @@ def userInterfaceControls():
                 if "controls" in process:
                     for control in process["controls"]:
                         for key in control.keys():
-                            print("\tcontrol: {}, value:{}".format(key, control[key]))
+                            #print("\tcontrol: {}, value:{}".format(key, control[key]))
                             frmMlControl.append(tk.Frame(frmMl[len(frmMl)-1]))
                             frmMlControl[len(frmMlControl)-1].pack()
 
@@ -633,7 +584,7 @@ def userInterfaceControls():
 
         ''' ============================= process button press ============================= '''        
         def go_button():
-            print("Choices made")
+            #print("Choices made")
             ui.quit()
             
         ''' =================== widgets in bottom frame =================== '''
@@ -661,14 +612,8 @@ if __name__ == '__main__':
     processCtrl = userInterfaceControls()
 
     for process in processCtrl:
-        print("Process: {}, run={}".format(process, processCtrl[process]["run"].get()))
-        if processCtrl[process]["run"].get() == 1:
-            
-            for control in processCtrl[process]["controls"]:
-                print("\tcontrol: {} = {}".format(
-                                processCtrl[process]["controls"][control]["description"], \
-                                processCtrl[process]["controls"][control]["entry"].get()))
-    
+        #print("Process: {}, run={}".format(process, processCtrl[process]["run"].get()))
+        if processCtrl[process]["run"].get() == 1:            
             if process == MARKET_DATA_UPDATE:
                 marketDataUpdate(processCtrl[process]["controls"])
             elif process == DERIVED_MARKET_DATA:

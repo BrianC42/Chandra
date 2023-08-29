@@ -90,7 +90,8 @@
 	},
 	"conditionalFields" : {
 		"executeModelCtrl" : {
-			"trainedModelFile" : "models\\rnn\\lstm\\BB\\BB_013 20230709 065759",
+			"trainedModelFile" : "models\\rnn\\lstm\\BB\\BB_test001 20230827 150310",
+			"training scaler" : "models\\rnn\\lstm\\BB\\BB_test001 20230827 150310 scaler",
 			"balanceClasses" : true,
 			"synchronizationFeature" : "DateTime",
 			"outputLabels" : ["probability10pct10d"],

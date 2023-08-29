@@ -112,93 +112,102 @@ def tda_get_access_token(json_authentication):
     except Exception:
         exc_info = sys.exc_info()
         exc_str = exc_info[1].args[0]
-        exc_txt = exc_txt + " " + exc_str
+        exc_txt = exc_txt + "\n\t" + exc_str
         sys.exit(exc_txt)
 
     return json_authentication["currentToken"]
 
 def tda_search_instruments(authentication_parameters, p_symbol):
-    s_cols = ['symbol', \
-                'high52', 'low52', 'dividendAmount', 'dividendYield', 'dividendDate', \
-                'peRatio', 'pegRatio', 'pbRatio', 'prRatio', 'pcfRatio', 'grossMarginTTM', 'grossMarginMRQ', \
-                'netProfitMarginTTM', 'netProfitMarginMRQ', 'operatingMarginTTM', 'operatingMarginMRQ', \
-                'returnOnEquity', 'returnOnAssets', 'returnOnInvestment', 'quickRatio', 'currentRatio', \
-                'interestCoverage', 'totalDebtToCapital', 'ltDebtToEquity', 'totalDebtToEquity', \
-                'epsTTM', 'epsChangePercentTTM', 'epsChangeYear', 'epsChange', \
-                'revChangeYear', 'revChangeTTM', 'revChangeIn', \
-                'sharesOutstanding', 'marketCapFloat', 'marketCap', 'bookValuePerShare', \
-                'shortIntToFloat', 'shortIntDayToCover', \
-                'divGrowthRate3Year', 'dividendPayAmount', 'dividendPayDate', \
-                'beta', \
-                'vol1DayAvg', 'vol10DayAvg', 'vol3MonthAvg']
-    df_data = pd.DataFrame(columns=s_cols)
-    json_authentication = tda_get_authentication_details(authentication_parameters)
-    currentToken = tda_get_access_token(json_authentication)    
-    url = 'https://api.tdameritrade.com/v1/instruments'
-    apikey = 'Bearer ' + currentToken
-    symbol = p_symbol
-    projection = "fundamental"
-    headers = {'Authorization' : apikey}
-    params = {'symbol' : symbol, 'projection' : projection}
-    response = requests.get(url, headers=headers, params=params)
-    if response.ok:
-        tda_instrument_json = json.loads(response.text)
-        try:
-            details = tda_instrument_json[p_symbol]
-            fundamentals = details['fundamental']
-            df_data['symbol'] = [fundamentals['symbol']]
-            df_data['high52'] = [fundamentals['high52']]
-            df_data['low52'] = [fundamentals['low52']]
-            df_data['dividendAmount'] = [fundamentals['dividendAmount']]
-            df_data['dividendYield'] = [fundamentals['dividendYield']]
-            df_data['dividendDate'] = [fundamentals['dividendDate']]
-            df_data['peRatio'] = [fundamentals['peRatio']]
-            df_data['pegRatio'] = [fundamentals['pegRatio']]
-            df_data['pbRatio'] = [fundamentals['pbRatio']]
-            df_data['prRatio'] = [fundamentals['prRatio']]
-            df_data['pcfRatio'] = [fundamentals['pcfRatio']]
-            df_data['grossMarginTTM'] = [fundamentals['grossMarginTTM']]
-            df_data['grossMarginMRQ'] = [fundamentals['grossMarginMRQ']]
-            df_data['netProfitMarginTTM'] = [fundamentals['netProfitMarginTTM']]
-            df_data['netProfitMarginMRQ'] = [fundamentals['netProfitMarginMRQ']]
-            df_data['operatingMarginTTM'] = [fundamentals['operatingMarginTTM']]
-            df_data['operatingMarginMRQ'] = [fundamentals['operatingMarginMRQ']]
-            df_data['returnOnEquity'] = [fundamentals['returnOnEquity']]
-            df_data['returnOnAssets'] = [fundamentals['returnOnAssets']]
-            df_data['returnOnInvestment'] = [fundamentals['returnOnInvestment']]
-            df_data['quickRatio'] = [fundamentals['quickRatio']]
-            df_data['currentRatio'] = [fundamentals['currentRatio']]
-            df_data['interestCoverage'] = [fundamentals['interestCoverage']]
-            df_data['totalDebtToCapital'] = [fundamentals['totalDebtToCapital']]
-            df_data['ltDebtToEquity'] = [fundamentals['ltDebtToEquity']]
-            df_data['totalDebtToEquity'] = [fundamentals['totalDebtToEquity']]
-            df_data['epsTTM'] = [fundamentals['epsTTM']]
-            df_data['epsChangePercentTTM'] = [fundamentals['epsChangePercentTTM']]
-            df_data['epsChangeYear'] = [fundamentals['epsChangeYear']]
-            df_data['epsChange'] = [fundamentals['epsChange']]
-            df_data['revChangeYear'] = [fundamentals['revChangeYear']]
-            df_data['revChangeTTM'] = [fundamentals['revChangeTTM']]
-            df_data['revChangeIn'] = [fundamentals['revChangeIn']]
-            df_data['sharesOutstanding'] = [fundamentals['sharesOutstanding']]
-            df_data['marketCapFloat'] = [fundamentals['marketCapFloat']]
-            df_data['marketCap'] = [fundamentals['marketCap']]
-            df_data['bookValuePerShare'] = [fundamentals['bookValuePerShare']]
-            df_data['shortIntToFloat'] = [fundamentals['shortIntToFloat']]
-            df_data['shortIntDayToCover'] = [fundamentals['shortIntDayToCover']]
-            df_data['divGrowthRate3Year'] = [fundamentals['divGrowthRate3Year']]
-            df_data['dividendPayAmount'] = [fundamentals['dividendPayAmount']]
-            df_data['dividendPayDate'] = [fundamentals['dividendPayDate']]
-            df_data['beta'] = [fundamentals['beta']]
-            df_data['vol1DayAvg'] = [fundamentals['vol1DayAvg']]
-            df_data['vol10DayAvg'] = [fundamentals['vol10DayAvg']]
-            df_data['vol3MonthAvg'] = [fundamentals['vol3MonthAvg']]
-        except:
-            print("Unable to load fundamental data for %s" % symbol)
-            df_data['symbol'] = [symbol]
-        
-    else:
-        print("Unable to get fundamental data, response code=%s, reason %s, %s" % (response.status_code, response.reason, response.text))
-        logging.info("Unable to get fundamental data, response code=%s, reason %s, %s" % (response.status_code, response.reason, response.text))
+    try:    
+        exc_txt = "\nAn exception occurred requesting market details for {}".format(p_symbol)
+
+        s_cols = ['symbol', \
+                    'high52', 'low52', 'dividendAmount', 'dividendYield', 'dividendDate', \
+                    'peRatio', 'pegRatio', 'pbRatio', 'prRatio', 'pcfRatio', 'grossMarginTTM', 'grossMarginMRQ', \
+                    'netProfitMarginTTM', 'netProfitMarginMRQ', 'operatingMarginTTM', 'operatingMarginMRQ', \
+                    'returnOnEquity', 'returnOnAssets', 'returnOnInvestment', 'quickRatio', 'currentRatio', \
+                    'interestCoverage', 'totalDebtToCapital', 'ltDebtToEquity', 'totalDebtToEquity', \
+                    'epsTTM', 'epsChangePercentTTM', 'epsChangeYear', 'epsChange', \
+                    'revChangeYear', 'revChangeTTM', 'revChangeIn', \
+                    'sharesOutstanding', 'marketCapFloat', 'marketCap', 'bookValuePerShare', \
+                    'shortIntToFloat', 'shortIntDayToCover', \
+                    'divGrowthRate3Year', 'dividendPayAmount', 'dividendPayDate', \
+                    'beta', \
+                    'vol1DayAvg', 'vol10DayAvg', 'vol3MonthAvg']
+        df_data = pd.DataFrame(columns=s_cols)
+        json_authentication = tda_get_authentication_details(authentication_parameters)
+        currentToken = tda_get_access_token(json_authentication)    
+        url = 'https://api.tdameritrade.com/v1/instruments'
+        apikey = 'Bearer ' + currentToken
+        symbol = p_symbol
+        projection = "fundamental"
+        headers = {'Authorization' : apikey}
+        params = {'symbol' : symbol, 'projection' : projection}
+        response = requests.get(url, headers=headers, params=params)
+        if response.ok:
+            tda_instrument_json = json.loads(response.text)
+            try:
+                details = tda_instrument_json[p_symbol]
+                fundamentals = details['fundamental']
+                df_data['symbol'] = [fundamentals['symbol']]
+                df_data['high52'] = [fundamentals['high52']]
+                df_data['low52'] = [fundamentals['low52']]
+                df_data['dividendAmount'] = [fundamentals['dividendAmount']]
+                df_data['dividendYield'] = [fundamentals['dividendYield']]
+                df_data['dividendDate'] = [fundamentals['dividendDate']]
+                df_data['peRatio'] = [fundamentals['peRatio']]
+                df_data['pegRatio'] = [fundamentals['pegRatio']]
+                df_data['pbRatio'] = [fundamentals['pbRatio']]
+                df_data['prRatio'] = [fundamentals['prRatio']]
+                df_data['pcfRatio'] = [fundamentals['pcfRatio']]
+                df_data['grossMarginTTM'] = [fundamentals['grossMarginTTM']]
+                df_data['grossMarginMRQ'] = [fundamentals['grossMarginMRQ']]
+                df_data['netProfitMarginTTM'] = [fundamentals['netProfitMarginTTM']]
+                df_data['netProfitMarginMRQ'] = [fundamentals['netProfitMarginMRQ']]
+                df_data['operatingMarginTTM'] = [fundamentals['operatingMarginTTM']]
+                df_data['operatingMarginMRQ'] = [fundamentals['operatingMarginMRQ']]
+                df_data['returnOnEquity'] = [fundamentals['returnOnEquity']]
+                df_data['returnOnAssets'] = [fundamentals['returnOnAssets']]
+                df_data['returnOnInvestment'] = [fundamentals['returnOnInvestment']]
+                df_data['quickRatio'] = [fundamentals['quickRatio']]
+                df_data['currentRatio'] = [fundamentals['currentRatio']]
+                df_data['interestCoverage'] = [fundamentals['interestCoverage']]
+                df_data['totalDebtToCapital'] = [fundamentals['totalDebtToCapital']]
+                df_data['ltDebtToEquity'] = [fundamentals['ltDebtToEquity']]
+                df_data['totalDebtToEquity'] = [fundamentals['totalDebtToEquity']]
+                df_data['epsTTM'] = [fundamentals['epsTTM']]
+                df_data['epsChangePercentTTM'] = [fundamentals['epsChangePercentTTM']]
+                df_data['epsChangeYear'] = [fundamentals['epsChangeYear']]
+                df_data['epsChange'] = [fundamentals['epsChange']]
+                df_data['revChangeYear'] = [fundamentals['revChangeYear']]
+                df_data['revChangeTTM'] = [fundamentals['revChangeTTM']]
+                df_data['revChangeIn'] = [fundamentals['revChangeIn']]
+                df_data['sharesOutstanding'] = [fundamentals['sharesOutstanding']]
+                df_data['marketCapFloat'] = [fundamentals['marketCapFloat']]
+                df_data['marketCap'] = [fundamentals['marketCap']]
+                df_data['bookValuePerShare'] = [fundamentals['bookValuePerShare']]
+                df_data['shortIntToFloat'] = [fundamentals['shortIntToFloat']]
+                df_data['shortIntDayToCover'] = [fundamentals['shortIntDayToCover']]
+                df_data['divGrowthRate3Year'] = [fundamentals['divGrowthRate3Year']]
+                df_data['dividendPayAmount'] = [fundamentals['dividendPayAmount']]
+                df_data['dividendPayDate'] = [fundamentals['dividendPayDate']]
+                df_data['beta'] = [fundamentals['beta']]
+                df_data['vol1DayAvg'] = [fundamentals['vol1DayAvg']]
+                df_data['vol10DayAvg'] = [fundamentals['vol10DayAvg']]
+                df_data['vol3MonthAvg'] = [fundamentals['vol3MonthAvg']]
+            except:
+                print("Unable to load fundamental data for %s" % symbol)
+                df_data['symbol'] = [symbol]
+            
+        else:
+            print("Unable to get fundamental data, response code=%s, reason %s, %s" % (response.status_code, response.reason, response.text))
+            logging.info("Unable to get fundamental data, response code=%s, reason %s, %s" % (response.status_code, response.reason, response.text))
+
+    except Exception:
+        exc_info = sys.exc_info()
+        exc_str = exc_info[1].args[0]
+        exc_txt = exc_txt + "\n\t" + exc_str
+        sys.exit(exc_txt)
 
     return df_data, response.text
         
@@ -219,83 +228,92 @@ def df_tda_option_chain(rcount):
     return df
 
 def tda_read_option_chain(authentication_parameters, p_symbol):
-    TSA_DATE_MAPS = ['callExpDateMap', 'putExpDateMap']
-    df_tda_options = df_tda_option_chain(0)
-    json_authentication = tda_get_authentication_details(authentication_parameters)
-    currentToken = tda_get_access_token(json_authentication)    
-    url = 'https://api.tdameritrade.com/v1/marketdata/chains'
-    apikey = 'Bearer ' + currentToken
-    symbol = p_symbol
-    headers = {'Authorization' : apikey}
-    params = {'symbol' : symbol}
-    response = requests.get(url, headers=headers, params=params)
-    if response.ok:
-        tda_option_chain_json = json.loads(response.text)
-        for dateMap in TSA_DATE_MAPS:
-            tda_ExpDateMap = tda_option_chain_json[dateMap]
-            ndx = 0
-            for tda_expDate in tda_ExpDateMap:
-                for tda_option in tda_ExpDateMap[tda_expDate]:
-                    for tda_strike in tda_ExpDateMap[tda_expDate][tda_option]:
-                        ndx += 1
-            df_tda = df_tda_option_chain(ndx)
-            ndx = 0
-            for tda_expDate in tda_ExpDateMap:
-                for tda_option in tda_ExpDateMap[tda_expDate]:
-                    for tda_strike in tda_ExpDateMap[tda_expDate][tda_option]:
-                        df_tda.at[ndx, "underlying symbol"] = tda_option_chain_json["symbol"]
-                        df_tda.at[ndx, "strategy"] = tda_option_chain_json["strategy"]
-                        df_tda.at[ndx, "underlyingPrice"] = tda_option_chain_json["underlyingPrice"]
-                        df_tda.at[ndx, "numberOfContracts"] =  tda_option_chain_json["numberOfContracts"]
-                        df_tda.at[ndx, "putCall"] = tda_strike['putCall']
-                        df_tda.at[ndx, "option symbol"] = tda_strike["symbol"]
-                        df_tda.at[ndx, "description"] = tda_strike["description"]
-                        df_tda.at[ndx, "exchangeName"] = tda_strike["exchangeName"]
-                        df_tda.at[ndx, "bid"] = tda_strike["bid"]
-                        df_tda.at[ndx, "ask"] = tda_strike["ask"]
-                        df_tda.at[ndx, "last"] = tda_strike["last"]
-                        df_tda.at[ndx, "mark"] = tda_strike["mark"]
-                        df_tda.at[ndx, "bidSize"] = tda_strike["bidSize"]
-                        df_tda.at[ndx, "askSize"] = tda_strike["askSize"]
-                        df_tda.at[ndx, "lastSize"] = tda_strike["lastSize"]
-                        df_tda.at[ndx, "highPrice"] = tda_strike["highPrice"]
-                        df_tda.at[ndx, "lowPrice"] = tda_strike["lowPrice"]
-                        df_tda.at[ndx, "openPrice"] = tda_strike["openPrice"]
-                        df_tda.at[ndx, "closePrice"] = tda_strike["closePrice"]
-                        df_tda.at[ndx, "totalVolume"] = tda_strike["totalVolume"]
-                        df_tda.at[ndx, "quoteTimeInLong"] = tda_strike["quoteTimeInLong"]
-                        df_tda.at[ndx, "tradeTimeInLong"] = tda_strike["tradeTimeInLong"]
-                        df_tda.at[ndx, "netChange"] = tda_strike["netChange"]
-                        df_tda.at[ndx, "volatility"] = tda_strike["volatility"]
-                        df_tda.at[ndx, "delta"] = tda_strike["delta"]
-                        df_tda.at[ndx, "gamma"] = tda_strike["gamma"]
-                        df_tda.at[ndx, "theta"] = tda_strike["theta"]
-                        df_tda.at[ndx, "vega"] = tda_strike["vega"]
-                        df_tda.at[ndx, "rho"] = tda_strike["rho"]
-                        df_tda.at[ndx, "timeValue"] = tda_strike["timeValue"]
-                        df_tda.at[ndx, "openInterest"] = tda_strike["openInterest"]
-                        df_tda.at[ndx, "inTheMoney"] = tda_strike["inTheMoney"]
-                        df_tda.at[ndx, "theoreticalOptionValue"] = tda_strike["theoreticalOptionValue"]
-                        df_tda.at[ndx, "theoreticalVolatility"] = tda_strike["theoreticalVolatility"]
-                        df_tda.at[ndx, "mini"] = tda_strike["mini"]
-                        df_tda.at[ndx, "nonStandard"] = tda_strike["nonStandard"]
-                        df_tda.at[ndx, "strikePrice"] = tda_strike["strikePrice"]
-                        df_tda.at[ndx, "expirationDate"] = tda_strike["expirationDate"]
-                        df_tda.at[ndx, "daysToExpiration"] = tda_strike["daysToExpiration"]
-                        df_tda.at[ndx, "expirationType"] = tda_strike["expirationType"]
-                        df_tda.at[ndx, "multiplier"] = tda_strike["multiplier"]
-                        df_tda.at[ndx, "settlementType"] = tda_strike["settlementType"]
-                        df_tda.at[ndx, "deliverableNote"] = tda_strike["deliverableNote"]
-                        df_tda.at[ndx, "isIndexOption"] = tda_strike["isIndexOption"]
-                        df_tda.at[ndx, "percentChange"] = tda_strike["percentChange"]
-                        df_tda.at[ndx, "markChange"] = tda_strike["markChange"]
-                        df_tda.at[ndx, "markPercentChange"] = tda_strike["markPercentChange"]
-                        ndx += 1
-            df_tda_options = pd.concat([df_tda_options, df_tda], ignore_index=True)
-    else:
-        print("Unable to get option chains, response code=%s, reason %s, %s" % (response.status_code, response.reason, response.text))
-        logging.info("Unable to get option chains, response code=%s, reason %s, %s" % (response.status_code, response.reason, response.text))
+    try:    
+        exc_txt = "\nAn exception occurred reading option chains for {}".format(p_symbol)
         
+        TSA_DATE_MAPS = ['callExpDateMap', 'putExpDateMap']
+        df_tda_options = df_tda_option_chain(0)
+        json_authentication = tda_get_authentication_details(authentication_parameters)
+        currentToken = tda_get_access_token(json_authentication)    
+        url = 'https://api.tdameritrade.com/v1/marketdata/chains'
+        apikey = 'Bearer ' + currentToken
+        symbol = p_symbol
+        headers = {'Authorization' : apikey}
+        params = {'symbol' : symbol}
+        response = requests.get(url, headers=headers, params=params)
+        if response.ok:
+            tda_option_chain_json = json.loads(response.text)
+            for dateMap in TSA_DATE_MAPS:
+                tda_ExpDateMap = tda_option_chain_json[dateMap]
+                ndx = 0
+                for tda_expDate in tda_ExpDateMap:
+                    for tda_option in tda_ExpDateMap[tda_expDate]:
+                        for tda_strike in tda_ExpDateMap[tda_expDate][tda_option]:
+                            ndx += 1
+                df_tda = df_tda_option_chain(ndx)
+                ndx = 0
+                for tda_expDate in tda_ExpDateMap:
+                    for tda_option in tda_ExpDateMap[tda_expDate]:
+                        for tda_strike in tda_ExpDateMap[tda_expDate][tda_option]:
+                            df_tda.at[ndx, "underlying symbol"] = tda_option_chain_json["symbol"]
+                            df_tda.at[ndx, "strategy"] = tda_option_chain_json["strategy"]
+                            df_tda.at[ndx, "underlyingPrice"] = tda_option_chain_json["underlyingPrice"]
+                            df_tda.at[ndx, "numberOfContracts"] =  tda_option_chain_json["numberOfContracts"]
+                            df_tda.at[ndx, "putCall"] = tda_strike['putCall']
+                            df_tda.at[ndx, "option symbol"] = tda_strike["symbol"]
+                            df_tda.at[ndx, "description"] = tda_strike["description"]
+                            df_tda.at[ndx, "exchangeName"] = tda_strike["exchangeName"]
+                            df_tda.at[ndx, "bid"] = tda_strike["bid"]
+                            df_tda.at[ndx, "ask"] = tda_strike["ask"]
+                            df_tda.at[ndx, "last"] = tda_strike["last"]
+                            df_tda.at[ndx, "mark"] = tda_strike["mark"]
+                            df_tda.at[ndx, "bidSize"] = tda_strike["bidSize"]
+                            df_tda.at[ndx, "askSize"] = tda_strike["askSize"]
+                            df_tda.at[ndx, "lastSize"] = tda_strike["lastSize"]
+                            df_tda.at[ndx, "highPrice"] = tda_strike["highPrice"]
+                            df_tda.at[ndx, "lowPrice"] = tda_strike["lowPrice"]
+                            df_tda.at[ndx, "openPrice"] = tda_strike["openPrice"]
+                            df_tda.at[ndx, "closePrice"] = tda_strike["closePrice"]
+                            df_tda.at[ndx, "totalVolume"] = tda_strike["totalVolume"]
+                            df_tda.at[ndx, "quoteTimeInLong"] = tda_strike["quoteTimeInLong"]
+                            df_tda.at[ndx, "tradeTimeInLong"] = tda_strike["tradeTimeInLong"]
+                            df_tda.at[ndx, "netChange"] = tda_strike["netChange"]
+                            df_tda.at[ndx, "volatility"] = tda_strike["volatility"]
+                            df_tda.at[ndx, "delta"] = tda_strike["delta"]
+                            df_tda.at[ndx, "gamma"] = tda_strike["gamma"]
+                            df_tda.at[ndx, "theta"] = tda_strike["theta"]
+                            df_tda.at[ndx, "vega"] = tda_strike["vega"]
+                            df_tda.at[ndx, "rho"] = tda_strike["rho"]
+                            df_tda.at[ndx, "timeValue"] = tda_strike["timeValue"]
+                            df_tda.at[ndx, "openInterest"] = tda_strike["openInterest"]
+                            df_tda.at[ndx, "inTheMoney"] = tda_strike["inTheMoney"]
+                            df_tda.at[ndx, "theoreticalOptionValue"] = tda_strike["theoreticalOptionValue"]
+                            df_tda.at[ndx, "theoreticalVolatility"] = tda_strike["theoreticalVolatility"]
+                            df_tda.at[ndx, "mini"] = tda_strike["mini"]
+                            df_tda.at[ndx, "nonStandard"] = tda_strike["nonStandard"]
+                            df_tda.at[ndx, "strikePrice"] = tda_strike["strikePrice"]
+                            df_tda.at[ndx, "expirationDate"] = tda_strike["expirationDate"]
+                            df_tda.at[ndx, "daysToExpiration"] = tda_strike["daysToExpiration"]
+                            df_tda.at[ndx, "expirationType"] = tda_strike["expirationType"]
+                            df_tda.at[ndx, "multiplier"] = tda_strike["multiplier"]
+                            df_tda.at[ndx, "settlementType"] = tda_strike["settlementType"]
+                            df_tda.at[ndx, "deliverableNote"] = tda_strike["deliverableNote"]
+                            df_tda.at[ndx, "isIndexOption"] = tda_strike["isIndexOption"]
+                            df_tda.at[ndx, "percentChange"] = tda_strike["percentChange"]
+                            df_tda.at[ndx, "markChange"] = tda_strike["markChange"]
+                            df_tda.at[ndx, "markPercentChange"] = tda_strike["markPercentChange"]
+                            ndx += 1
+                df_tda_options = pd.concat([df_tda_options, df_tda], ignore_index=True)
+        else:
+            print("Unable to get option chains, response code=%s, reason %s, %s" % (response.status_code, response.reason, response.text))
+            logging.info("Unable to get option chains, response code=%s, reason %s, %s" % (response.status_code, response.reason, response.text))
+        
+    except Exception:
+        exc_info = sys.exc_info()
+        exc_str = exc_info[1].args[0]
+        exc_txt = exc_txt + "\n\t" + exc_str
+        sys.exit(exc_txt)
+
     return df_tda_options, response.text
         
 def covered_call(symbol, df_data, df_options):

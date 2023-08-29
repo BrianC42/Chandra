@@ -44,7 +44,7 @@
 		"dataLoadCtrl" : {
 			"comment file spec" : "tda\\market_analysis_data\\[a-z]*.csv",
 			"inputFile" : [
-				"tda\\market_analysis_data\\c.csv"
+				"tda\\market_analysis_data\\*.csv"
 			]
 		}
 	}

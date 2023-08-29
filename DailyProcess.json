@@ -69,7 +69,7 @@
     	{"data range" : "ML Signals!A2:Z"},
 		{"timeSteps": 5},
 		{"Outputs" : "10% in 10 Days Probability"},
-		{"threshold" : 0.6}
+		{"threshold" : 0.585}
 		]
 	},
 	{

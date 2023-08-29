@@ -704,7 +704,6 @@ def generate1hot(d2r, fields, fieldPrepCtrl):
 
 def normalizeFeature(d2r, fields, fieldPrepCtrl, normalizeType):
     #sanityCheckMACD(combined=d2r.data, stage="d2r.data prior to normalization")
-    print("WIP ================\n\tis scaling being done logically\n\tshould it be refit on every dKey?\n===========================")
     
     if normalizeType == cc.JSON_DATA_PREP_NORMALIZE_STANDARD:
         d2r.scaler = StandardScaler()
@@ -724,6 +723,7 @@ def normalizeFeature(d2r, fields, fieldPrepCtrl, normalizeType):
         df_normalizedFields = pd.DataFrame(normalizedFields, columns=fields)
         d2r.data[fields] = df_normalizedFields
         
+        print("WIP ================\n\tis scaling being done logically\n\tshould it be refit on every dKey?\n===========================")
         for dKey in list(d2r.dataDict):
             if d2r.dataDict[dKey].shape[0] == 0:
                 print("Skipping and removing %s" % dKey)
@@ -735,7 +735,7 @@ def normalizeFeature(d2r, fields, fieldPrepCtrl, normalizeType):
                 d2r.normDataDict[dKey] = d2r.dataDict[dKey]
                 normalizedFields = d2r.dataDict[dKey][fields]
 
-                d2r.scaler = d2r.scaler.fit(normalizedFields)
+                #d2r.scaler = d2r.scaler.fit(normalizedFields)
                 normalizedFields = d2r.scaler.transform(normalizedFields)
                 df_normalizedFields = pd.DataFrame(normalizedFields, index=d2r.dataDict[dKey].index, columns=fields)
                 d2r.normDataDict[dKey][fields] = df_normalizedFields

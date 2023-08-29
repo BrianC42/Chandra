@@ -240,7 +240,7 @@ def assemble_layers(d2r):
                 learning_rate = nx_optimizer['learning_rate'],
                 momentum=0.0,
                 nesterov=False,
-                amsgrad=False,
+                #amsgrad=False,
                 weight_decay=None,
                 clipnorm=None,
                 clipvalue=None,

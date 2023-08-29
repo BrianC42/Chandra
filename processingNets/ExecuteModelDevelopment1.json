@@ -84,7 +84,8 @@
 	},
 	"conditionalFields" : {
 		"executeModelCtrl" : {
-			"trainedModelFile" : "models\\rnn\\lstm\\macd\\MACD_Best 20230704 110719",
+			"trainedModelFile" : "models\\rnn\\lstm\\macd\\MACD_TrendCross_Best 20230827 140412",
+			"training scaler" : "models\\rnn\\lstm\\macd\\MACD_TrendCross_Best 20230827 140412 scaler",
 			"balanceClasses" : true,
 			"synchronizationFeature" : "DateTime",
 			"outputLabels" : ["MACD_sell", "MACD_neutral", "MACD_buy"],

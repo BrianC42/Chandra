@@ -9,7 +9,7 @@
 "loggingFormat" : "%(asctime)s: %(levelname)s: %(message)s",
 "deprecated - processNet" : "\\chandra\\processingNets\\MultiModelNetwork.json",
 "processNetDir" : "\\chandra\\processingNets\\",
-"processNetConfiguration" : "TrendLineCrossCategorization.json",
+"processNetConfiguration" : "MultiModelNetwork.json",
 "comment end of specification" : "---------------------------------------------------------------------------",
 "comment - processing networks" : {
 	"00" : "|=============================================================================================|",
