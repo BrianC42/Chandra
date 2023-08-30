@@ -89,7 +89,18 @@
 			"balanceClasses" : true,
 			"synchronizationFeature" : "DateTime",
 			"outputLabels" : ["MACD_sell", "MACD_neutral", "MACD_buy"],
-			"outputFile" : "internal_flows\\MMN_dev_M1_output.csv"
+			"outputFile" : "internal_flows\\MMN_dev_M1_output.csv",
+			
+			"file" : "rnn\\lstm\\MACDTrendLineCross\\MACD_TrendCross_Best 20230717 070452",
+			"scaler" : "rnn\\lstm\\MACDTrendLineCross\\MACD_TrendCross_Best 20230717 070452 scaler.pkl",
+			"Outputs" : ["Negative Cross","Neutral","Positive Cross"],
+			"featureFile" : "tda\\market_analysis_data\\*.csv",
+			"features" : ["MACD", "MACD_Signal"],
+			"gsheet" : "experimental",
+	    	"header range" : "MACD Cross!A1:Z1",
+	    	"data range" : "MACD Cross!A2:Z",
+			"timeSteps": 5,
+			"Outputs" : ["Negative Cross", "Neutral", "Positive Cross"],
 		}
 	}
 	}

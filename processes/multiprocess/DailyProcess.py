@@ -38,6 +38,8 @@ from tda_derivative_data import prepMktOptionsForAnalysis
 from multiProcess import updateMarketData 
 from GoogleSheets import googleSheet
 
+from pretrainedModels import rnnCategorization, rnnPrediction
+
 import tensorflow as tf
 
 PROCESS_CONFIGS = "processes"
@@ -159,46 +161,8 @@ def mlBollingerBandPrediction(name, processCtrl):
         features = re.split(',', processCtrl['features']['entry'].get())
         inputFileSpec =  re.split(',', processCtrl['featureFile']['entry'].get())
         
-        ''' load local machine directory details '''
-        localDirs = get_ini_data("LOCALDIRS") # Find local file directories
-        aiwork = localDirs['aiwork']
-        models = localDirs['trainedmodels']
-        
-        ''' load trained model '''
-        trainedModel = aiwork + '\\' + models + '\\' + modelFile
-        model = tf.keras.models.load_model(trainedModel)
-
-        ''' load scaler used during training '''
-        if scalerFile != "":
-            scalerFile = aiwork + '\\' + models + '\\' + scalerFile
-            if os.path.isfile(scalerFile):
-                scaler = pd.read_pickle(scalerFile)
-        
-        signals = []
-        for fileListSpec in inputFileSpec:
-            fileListSpec = aiwork + '\\' + fileListSpec
-            fileList = glob.glob(fileListSpec)
-            for fileSpec in fileList:
-                if os.path.isfile(fileSpec):
-                    subStr = fileSpec.split("\\")
-                    symbol = subStr[len(subStr)-1].split(".")
-                    if len(symbol) == 2:
-                        df_data = pd.read_csv(fileSpec)
-                        dfFeatures = df_data[features]
-                        dfFeatures = dfFeatures[len(dfFeatures)-timeSteps :]
-                        if scalerFile != "":
-                            npScaled = scaler.transform(dfFeatures)
-                            npFeatures = npScaled
-                        else:
-                            npFeatures = dfFeatures.to_numpy()
-                        
-                        ''' make prediction '''
-                        npFeatures = np.reshape(npFeatures, (1,timeSteps,len(features)))
-                        prediction = model.predict(x=npFeatures, verbose=0)
-                        if prediction[0][0] > threshold:
-                            signal = {'symbol':symbol[0], 'name':name, 'outputs':outputs, 'prediction':[prediction[0][0]]}
-                            signals.append(signal)
-                            
+        signals = rnnPrediction(name, modelFile, inputFileSpec, features, \
+                                 scalerFile, timeSteps, outputs, signalThreshold=threshold)
         if len(signals) > 0:
             saveMachineLearningSignal(processCtrl, signals)
 
@@ -223,51 +187,16 @@ def mlMACDTrendCross(name, processCtrl):
         outputs =  re.split(',', processCtrl['Outputs']['entry'].get())
         ''' numerical '''
         timeSteps = int(processCtrl['timeSteps']['entry'].get())
-        threshold =  float(processCtrl['threshold']['entry'].get())
         ''' controls with multiple values '''
+        thresholdStrs = re.split(',', processCtrl['threshold']['entry'].get())
+        threshold = []
+        for ndx in range (len(thresholdStrs)):       
+            threshold.append(float(thresholdStrs[ndx]))
         features = re.split(',', processCtrl['features']['entry'].get())
         inputFileSpec =  re.split(',', processCtrl['featureFile']['entry'].get())
         
-        ''' load local machine directory details '''
-        localDirs = get_ini_data("LOCALDIRS") # Find local file directories
-        aiwork = localDirs['aiwork']
-        models = localDirs['trainedmodels']
-        
-        ''' load trained model '''
-        trainedModel = aiwork + '\\' + models + '\\' + modelFile
-        model = tf.keras.models.load_model(trainedModel)
-
-        ''' load scaler used during training '''
-        if scalerFile != "":
-            scalerFile = aiwork + '\\' + models + '\\' + scalerFile
-            if os.path.isfile(scalerFile):
-                scaler = pd.read_pickle(scalerFile)
-
-        signals = []
-        for fileListSpec in inputFileSpec:
-            fileListSpec = aiwork + '\\' + fileListSpec
-            fileList = glob.glob(fileListSpec)
-            for fileSpec in fileList:
-                if os.path.isfile(fileSpec):
-                    subStr = fileSpec.split("\\")
-                    symbol = subStr[len(subStr)-1].split(".")
-                    if len(symbol) == 2:
-                        df_data = pd.read_csv(fileSpec)
-                        dfFeatures = df_data[features]
-                        dfFeatures = dfFeatures[len(dfFeatures)-timeSteps :]
-                        if scalerFile != "":
-                            npScaled = scaler.transform(dfFeatures)
-                            npFeatures = npScaled
-                        else:
-                            npFeatures = dfFeatures.to_numpy()
-                        
-                        ''' make prediction '''
-                        npFeatures = np.reshape(npFeatures, (1,timeSteps,len(features)))
-                        prediction = model.predict(x=npFeatures, verbose=0)
-                        if prediction[0][0] > threshold or prediction[0][2] > threshold:
-                            signal = {'symbol':symbol[0], 'name':name, 'outputs':outputs, 'prediction':prediction[0]}
-                            signals.append(signal)
-
+        signals = rnnCategorization(name, modelFile, inputFileSpec, features, \
+                                 scalerFile, timeSteps, outputs, signalThreshold=threshold)
         if len(signals) > 0:
             saveMACDCross(processCtrl, signals)
         

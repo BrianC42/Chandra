@@ -88,7 +88,7 @@
     	{"data range" : "MACD Cross!A2:Z"},
 		{"timeSteps": 5},
 		{"Outputs" : "Negative Cross, Neutral, Positive Cross"},
-		{"threshold" : 0.9}
+		{"threshold" : "0.9,1.0,0.9"}
 		]
 	}
 ]

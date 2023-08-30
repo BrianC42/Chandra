@@ -25,6 +25,8 @@ from evaluate_visualize import evaluate_and_visualize
 from configuration import read_processing_network_json
 from configuration_graph import build_configuration_graph
 
+from pretrainedModels import rnnCategorization, rnnPrediction
+
 def loadModelfromFile(d2rP, nodeConfig):
 
     modelFile = nodeConfig[cc.JSON_TRAINED_MODEL_FILE]
@@ -86,10 +88,7 @@ def executeTensorflow(nodeName, d2rP):
     return
 
 def executeExecuteModel(nodeName, d2rP):
-    
-    #print("\tcreate d2r to control the execution of the pre-existing model")
-
-    ''' search calling configuration for the execution node configuration and create control structure for the node'''
+    '''
     for node in d2rP.configurationFile[cc.JSON_PROCESS_NODES]:
         if node[cc.JSON_NODE_NAME] == nodeName:
             configSpec = d2rP.configurationFileDir + node[cc.JSON_CONDITIONAL][cc.JSON_EXECUTE_CONTROL][cc.JSON_EXECUTION_CONTROL]
@@ -111,6 +110,25 @@ def executeExecuteModel(nodeName, d2rP):
                     archiveModelOutputData(d2rEM, prediction, nodeConfig)
             
                     break
+    '''
+    try:
+        ''' search calling configuration for the execution node configuration and create control structure for the node'''
+        for node in d2rP.configurationFile[cc.JSON_PROCESS_NODES]:
+            exc_txt = "\nAn exception occurred - using pre-trained model as required by process node {}".format(node)
+            if node[cc.JSON_NODE_NAME] == nodeName:
+                configSpec = d2rP.configurationFileDir + node[cc.JSON_CONDITIONAL][cc.JSON_EXECUTE_CONTROL][cc.JSON_EXECUTION_CONTROL]
+                controls = node[cc.JSON_CONDITIONAL][cc.JSON_EXECUTE_CONTROL]
+    
+                '''    
+                signals = rnnCategorization(name, modelFile, inputFileSpec, features, \
+                                            scalerFile, timeSteps, outputs)
+                '''
+            
+    except Exception:
+        exc_info = sys.exc_info()
+        exc_str = exc_info[1].args[0]
+        exc_txt = exc_txt + "\n\t" + exc_str
+        sys.exit(exc_txt)
 
     return
 
