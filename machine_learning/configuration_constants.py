@@ -120,9 +120,10 @@ JSON_FLOW_NAME = 'flowName'
 '''                                                                                 Required fields '''
 JSON_FLOW_FROM = 'flowFrom'
 JSON_FLOW_TO = 'flowTo'
-JSON_FLOW_DATA_FILE = "flowDataFile"
 
 '''                                                                              Conditional fields '''
+JSON_FLOW_DATA_FILE = "flowDataFile"
+JSON_FLOW_DATA_DIR = "flowDataDir"
 JSON_TENSORFLOW_DATA = "TensorflowData"
 JSON_BALANCED = "balanceClasses"
 JSON_IGNORE_BLANKS = "ignoreBlanks"
@@ -149,6 +150,7 @@ JSON_OUTPUT_FLOW = 'outputFlow'
 JSON_PROCESS_TYPE = 'processType'
 '''  Supported values - processType'''
 JSON_DATA_LOAD_PROCESS = "dataLoad"
+JSON_DATA_COMBINE_PROCESS = "DataCombine"
 JSON_DATA_PREP_PROCESS = "dataPrep"
 JSON_TENSORFLOW = "Tensorflow"
 JSON_AUTOKERAS = "AutoKeras"
@@ -159,14 +161,17 @@ JSON_STOP = "stop"
 '''                                           ================ executeModel node conditional fields '''
 JSON_EXECUTE_MODEL_CONTROL = "executeModelCtrl"
 JSON_TRAINED_MODEL_FILE = "trainedModelFile"
-JSON_SYNCHRONIZATION_FEATURE = "synchronizationFeature"
+JSON_SYNCHRONIZATION_FEATURE = "synchronizationFeatures"
 JSON_OUTPUT_FEATURE_LABELS = "outputLabels"
 JSON_EXECUTE_CONTROL = "executeCtrl"
 JSON_EXECUTION_CONTROL = "executionControl"
 
 '''                                           ==================== dataLoad node conditional fields '''
 JSON_INPUT_DATA_PREPARATION = "dataLoadCtrl"
-JSON_INPUT_DATA_FILE= "inputFile"
+JSON_INPUT_DATA_FILE = "inputFile"
+
+'''                                           ==================== DataCombine node conditional fields '''
+JSON_COMBINE_FILE_LIST = "combineFileList"
 
 '''                                           ==================== dataPrep node conditional fields '''
 JSON_DATA_PREP_CTRL = "dataPrepCtrl"

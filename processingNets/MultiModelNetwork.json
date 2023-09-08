@@ -7,60 +7,57 @@
 "dataFlows" : [
 	{
 	"flowName" : "ModelOneOutput",
-	"requiredFields" : {"flowFrom" : "ModelOne", "flowTo" : "DataCombine", "flowDataFile" : "internal_flows\\TrainMultipleModelM1.csv" },
-	"conditionalFields" : {
-		"TensorflowData" : {
-			"features" : ["xxx", "xxx"],
-			"targets" : ["xxx"],
-			"timeSequence" : true, "seriesStepIDField" : ["DateTime"], "seriesDataType" : "TDADateTime", "type" : "relative_time_series"
-			}
-		}
+	"requiredFields" : {"flowFrom" : "ModelOne", "flowTo" : "DataCombine"},
+	"conditionalFields" : {"flowDataDir" : "internal_flows\\MMN_M1"}
 	},
 	{
 	"flowName" : "ModelTwoOutput",
-	"requiredFields" : {"flowFrom" : "ModelTwo", "flowTo" : "DataCombine", "flowDataFile" : "internal_flows\\TrainMultipleModelM2.csv" },
-	"conditionalFields" : {
-		"TensorflowData" : {
-			"features" : ["xxx", "xxx"],
-			"targets" : ["xxx"],
-			"timeSequence" : true, "seriesStepIDField" : ["DateTime"], "seriesDataType" : "TDADateTime", "type" : "relative_time_series"
-			}
-		}
+	"requiredFields" : {"flowFrom" : "ModelTwo", "flowTo" : "DataCombine"},
+	"conditionalFields" : {"flowDataDir" : "internal_flows\\MMN_M2"}
 	},
 	{
 	"flowName" : "CombinedData",
-	"requiredFields" : {"flowFrom" : "DataCombine", "flowTo" : "DataPrepare", "flowDataFile" : "internal_flows\\TrainMultipleModelCombined.csv" },
-	"conditionalFields" : {
-		"TensorflowData" : {
-			"features" : ["xxx", "xxx"],
-			"targets" : ["xxx"],
-			"timeSequence" : true, "seriesStepIDField" : ["DateTime"], "seriesDataType" : "TDADateTime", "type" : "relative_time_series"
-			}
-		}
+	"requiredFields" : {"flowFrom" : "DataCombine", "flowTo" : "DataPrepare"},
+	"conditionalFields" : {"flowDataDir" : "internal_flows\\MMN_M1M2"}
 	},
 	{
 	"flowName" : "PreparedData",
-	"requiredFields" : {"flowFrom" : "DataPrepare", "flowTo" : "TrainMultipleModelOutputs", "flowDataFile" : "internal_flows\\TrainMultipleModelPrepared.csv" },
-	"conditionalFields" : {
-		"TensorflowData" : {
-			"features" : ["xxx", "xxx"],
-			"targets" : ["xxx"],
-			"timeSequence" : true, "seriesStepIDField" : ["DateTime"], "seriesDataType" : "TDADateTime", "type" : "relative_time_series"
-			}
-		}
+	"requiredFields" : {"flowFrom" : "DataPrepare", "flowTo" : "TrainMultipleModelOutputs"},
+	"conditionalFields" : {"flowDataFile" : "internal_flows\\TrainMultipleModelPrepared.csv"}
 	}
 ],
 "comment - dataflow end " : "dataflows definition end -------------------------------------------------------------------------------",
 "comment - processNodes" : "process node definitions beginh -------------------------------------------------------------------------",
-"processNodeSequence" : ["ModelOne", "ModelTwo", "stop", "DataCombine", "DataPrepare", "TrainMultipleModelOutputs"],
+"processNodeSequence" : ["ModelOne", "ModelTwo", "DataCombine", "stop", "DataPrepare", "TrainMultipleModelOutputs"],
 "processNodes" : [
 	{
 	"processNodeName" : "ModelOne",
 	"requiredFields" : {"processType" : "executeModel", "inputFlows" : [], "outputFlow" : "ModelOneOutput"},
 	"conditionalFields" : {
-		"executeCtrl" : {
-			"processNetDir" : "\\chandra\\processingNets\\",
-			"executionControl" : "ExecuteModelDevelopment1.json"
+		"executeModelCtrl" : {
+			"dataLoadCtrl" : {
+				"inputFile" : [
+					"tda\\market_analysis_data\\c.csv","tda\\market_analysis_data\\ib*.csv"
+				]
+			},
+			"dataPrepCtrl" : {
+				"ignoreBlanks" : true,
+				"scaleFeatures" : ["MACD", "MACD_Signal"],
+				"passthruFeatures" : ["DateTime"]
+			},
+			"modelControl" : {
+				"modelFeatures" : ["MACD", "MACD_Signal"],
+				"rnn" : {
+					"timeSequence" : true, "seriesStepIDField" : ["DateTime"], "seriesDataType" : "TDADateTime", "type" : "relative_time_series",
+					"timeSteps": 5
+				}
+			},
+			"trainedModelFile" : "rnn\\lstm\\MACDTrendLineCross\\MACD_TrendCross_Best 20230717 070452",
+			"trained scaler" : "rnn\\lstm\\MACDTrendLineCross\\MACD_TrendCross_Best 20230717 070452 scaler.pkl",
+			"flowDataDir" : "internal_flows\\MMN_M1",
+			"outputLabels" : ["Negative Cross", "Neutral", "Positive Cross"],
+			"outputSynchronizationFeatures" : ["DateTime"],
+			"replaceExistingOutput" : false
 		}
 	}
 	},
@@ -68,23 +65,43 @@
 	"processNodeName" : "ModelTwo",
 	"requiredFields" : {"processType" : "executeModel", "inputFlows" : [], "outputFlow" : "ModelTwoOutput"},
 	"conditionalFields" : {
-		"executeCtrl" : {
-			"processNetDir" : "\\chandra\\processingNets\\",
-			"executionControl" : "ExecuteModelDevelopment2.json"
+		"executeModelCtrl" : {
+			"dataLoadCtrl" : {
+				"inputFile" : [
+					"tda\\market_analysis_data\\c.csv","tda\\market_analysis_data\\ib*.csv"
+				]
+			},
+			"dataPrepCtrl" : {
+				"ignoreBlanks" : true,
+				"scaleFeatures" : ["BB_Upper", "BB_Lower", "EMA20", "Open", "High", "Low", "Close"],
+				"passthruFeatures" : ["DateTime"]
+			},
+			"modelControl" : {
+				"modelFeatures" : ["BB_Upper", "BB_Lower", "EMA20", "Open", "High", "Low", "Close"],
+				"rnn" : {
+					"timeSequence" : true, "seriesStepIDField" : ["DateTime"], "seriesDataType" : "TDADateTime", "type" : "relative_time_series",
+					"timeSteps": 5
+				}
+			},
+			"trainedModelFile" : "rnn\\lstm\\bb\\BB_test001 20230717 073218",
+			"trained scaler" : "rnn\\lstm\\bb\\BB_test001 20230717 073218 scaler.pkl",
+			"flowDataDir" : "internal_flows\\MMN_M2",
+			"outputLabels" : ["BB 10 in 10"],
+			"outputSynchronizationFeatures" : ["DateTime"],
+			"replaceExistingOutput" : false
 		}
 	}
 	},
 	{
 	"processNodeName" : "DataCombine",
-	"requiredFields" : {"processType" : "dataLoad", "inputFlows" : ["ModelOneOutput", "ModelTwoOutput"], "outputFlow" : "CombinedData"
+	"requiredFields" : {"processType" : "DataCombine", 
+		"inputFlows" : ["ModelOneOutput", "ModelTwoOutput"], 
+		"combineFileList" : ["c.csv", "ib*.csv"],
+		"outputFlow" : "CombinedData"
 	},
 	"conditionalFields" : {
-		"dataLoadCtrl" : {
-			"comment file spec" : "d:\\brian\\AI-Projects\\tda\\market_analysis_data\\[a-z]*.csv",
-			"inputFile" : [
-				"tda\\market_analysis_data\\c.csv"
-			]
-		}
+		"flowDataDir" : ["tda\\market_analysis_data"],
+		"synchronizationFeatures" : ["DateTime"]
 	}
 	},
 	{

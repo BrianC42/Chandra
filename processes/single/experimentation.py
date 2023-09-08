@@ -637,8 +637,6 @@ def gSheetToken():
         exc_txt = "\nAn exception occurred - unable to retrieve Google authentication information"
         googleAuth = get_ini_data("GOOGLE")
         print("Google authentication\n\ttoken: {}\n\tcredentials: {}".format(googleAuth["token"], googleAuth["credentials"]))
-        print("file 1: {} - {}".format('experimental', googleAuth["experimental"]))
-        print("file 2: {} - {}".format('daily_options', googleAuth["daily_options"]))
         gSheet = googleSheet()
 
     except Exception:

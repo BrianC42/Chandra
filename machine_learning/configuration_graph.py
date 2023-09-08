@@ -61,12 +61,18 @@ def add_meta_data_edge (js_config, d2r):
     d2r.graph.add_edge(nx_flowFrom, nx_flowTo, key=nx_flowName)
 
     nx_edge_key = (nx_flowFrom, nx_flowTo, nx_flowName)
-    nx_flow_data_file = aiwork + '\\' + js_required[cc.JSON_FLOW_DATA_FILE]
-    nx.set_edge_attributes(d2r.graph, {nx_edge_key:nx_flow_data_file}, cc.JSON_FLOW_DATA_FILE)
 
     if cc.JSON_CONDITIONAL in js_config:
         js_conditional = js_config[cc.JSON_CONDITIONAL]
         add_data_flow_details(js_conditional, d2r.graph, nx_edge_key)
+
+        if cc.JSON_FLOW_DATA_FILE in js_conditional:
+            nx_flow_data_file = aiwork + '\\' + js_conditional[cc.JSON_FLOW_DATA_FILE]
+            nx.set_edge_attributes(d2r.graph, {nx_edge_key:nx_flow_data_file}, cc.JSON_FLOW_DATA_FILE)
+
+        if cc.JSON_FLOW_DATA_DIR in js_conditional:
+            nx_flow_data_file = aiwork + '\\' + js_conditional[cc.JSON_FLOW_DATA_DIR]
+            nx.set_edge_attributes(d2r.graph, {nx_edge_key:nx_flow_data_file}, cc.JSON_FLOW_DATA_DIR)
 
     print("Connected %s to %s by data flow %s" % (nx_flowFrom, nx_flowTo, nx_flowName))
     return
@@ -104,6 +110,9 @@ def add_meta_process_node (js_config, d2r) :
         js_data_prep_ctrl = js_conditional[cc.JSON_INPUT_DATA_PREPARATION]
         add_data_source_details(js_data_prep_ctrl, d2r.graph, nx_process_name)
         
+    elif nx_processType == "DataCombine":
+        pass
+
     elif nx_processType == cc.JSON_DATA_PREP_PROCESS:
         nx_prepCtrl = js_conditional[cc.JSON_DATA_PREPARATION_CTRL]
         nx.set_node_attributes(d2r.graph, {nx_process_name:nx_prepCtrl}, cc.JSON_DATA_PREPARATION_CTRL)

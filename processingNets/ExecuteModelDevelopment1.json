@@ -1,8 +1,37 @@
 {
 "comment - description 1" : "Experimental configuration file to develop the use of existing models to generate training data",
 "comment - description 2" : "Existing model used: TBD",
-"comment - dataflow section" : "Specification details for the flows of data between processing nodes",
+"comment - dataflow definition start"     : " ========================================================================",
+"comment - dataflow section"              : "   Specification details for the flows of data between processing nodes",
 "dataFlows" : [
+],
+"comment - dataflow definition end"       : " ========================================================================",
+"comment - processing node section"       : "           Specification details for the processing nodes",
+"comment - processNodes definition start" : " ========================================================================",
+"processNodeSequence" : ["executeModelM1"],
+"processNodes" : [
+	{
+	"processNodeName" : "executeModelM1",
+	"requiredFields" : {
+		"processType" : "executeModel", "inputFlows" : [], "outputFlow" : ""
+	},
+	"conditionalFields" : {
+		"executeModelCtrl" : {
+			"features" : ["MACD", "MACD_Signal"],
+			"timeSequence" : true, "seriesStepIDField" : ["DateTime"], "seriesDataType" : "TDADateTime", "type" : "relative_time_series",
+			"timeSteps": 5,
+			"trainedModelFile" : "models\\rnn\\lstm\\macd\\MACD_TrendCross_Best 20230717 070452",
+			"trained scaler" : "models\\rnn\\lstm\\macd\\MACD_TrendCross_Best 20230717 070452 scaler",
+			"flowDataDir" : "internal_flows\\MMN_M1",
+			"fileName" : ["symbol"],
+			"outputLabels" : ["Negative Cross", "Neutral", "Positive Cross"],
+			"output synchronization Features" : ["symbol", "DateTime"]
+		}
+	}
+	}
+],
+"comment end of specification" : "------------------------------------------------------------------------------------",
+"DEV - dataFlows" : [
 	{
 	"flowName" : "MMN_dev_M1",
 	"requiredFields" : {
@@ -29,11 +58,11 @@
 		}
 	}
 ],
-"comment - dataflow definition end" : " ========================================================================",
-"comment - processing node section" : "Specification details for the processing nodes",
-"comment - processNodes definition start" : " ========================================================================",
-"processNodeSequence" : ["LoadDataM1", "PrepDataM1", "executeModelM1"],
-"processNodes" : [
+"DEV - comment - dataflow definition end" : " ========================================================================",
+"DEV - comment - processing node section" : "Specification details for the processing nodes",
+"DEV - comment - processNodes definition start" : " ========================================================================",
+"DEV - processNodeSequence" : ["LoadDataM1", "PrepDataM1", "executeModelM1"],
+"DEV - processNodes" : [
 	{
 	"processNodeName" : "LoadDataM1",
 	"requiredFields" : {
@@ -59,19 +88,18 @@
 			"preparationSequence" : ["normalize", "oneHotEncoding"],
 			"noPreparation" : {
 				"features" : [
+					{"feature" : "MACD"},
+					{"feature" : "MACD_Signal"}
 				]
 			},
 			"normalize" : {
 				"comment types supported" : ["standard", "minmax", "relative_time_series"],
 				"type" : "relative_time_series",
 				"features" : [
-					{"feature" : "MACD"},
-					{"feature" : "MACD_Signal"}
 				]
 			},
 			"oneHotEncoding" : {
 				"features" : [
-					{"feature" : "MACD_flag", "categoryType" : "label"}
 				]
 			}
 		}
@@ -86,24 +114,12 @@
 		"executeModelCtrl" : {
 			"trainedModelFile" : "models\\rnn\\lstm\\macd\\MACD_TrendCross_Best 20230827 140412",
 			"training scaler" : "models\\rnn\\lstm\\macd\\MACD_TrendCross_Best 20230827 140412 scaler",
-			"balanceClasses" : true,
-			"synchronizationFeature" : "DateTime",
-			"outputLabels" : ["MACD_sell", "MACD_neutral", "MACD_buy"],
-			"outputFile" : "internal_flows\\MMN_dev_M1_output.csv",
-			
-			"file" : "rnn\\lstm\\MACDTrendLineCross\\MACD_TrendCross_Best 20230717 070452",
-			"scaler" : "rnn\\lstm\\MACDTrendLineCross\\MACD_TrendCross_Best 20230717 070452 scaler.pkl",
-			"Outputs" : ["Negative Cross","Neutral","Positive Cross"],
-			"featureFile" : "tda\\market_analysis_data\\*.csv",
-			"features" : ["MACD", "MACD_Signal"],
-			"gsheet" : "experimental",
-	    	"header range" : "MACD Cross!A1:Z1",
-	    	"data range" : "MACD Cross!A2:Z",
-			"timeSteps": 5,
-			"Outputs" : ["Negative Cross", "Neutral", "Positive Cross"],
+			"synchronizationFeatures" : ["symbol", "DateTime"],
+			"outputLabels" : ["Negative Cross", "Neutral", "Positive Cross"],
+			"outputFile" : "internal_flows\\MMN_dev_M1_output.csv",			
+			"timeSteps": 5
 		}
 	}
 	}
-],
-"comment end of specification" : "------------------------------------------------------------------------------------"
+]
 }
