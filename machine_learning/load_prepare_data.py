@@ -474,10 +474,12 @@ def arrangeDataForTraining(d2r):
                     npData   = np.array(d2r.dataDict[dkey], dtype=float)
                 '''
                 for dkey in d2r.normDataDict:
+                    err_txt = "\nError arranging data for training for " + dkey
                     npData   = np.array(d2r.normDataDict[dkey], dtype=float)
                     features, labels = np_to_sequence(npData, feature_cols, target_cols, nx_time_steps)
                     npX = np.row_stack((npX, features))
                     npY = np.row_stack((npY, labels))
+                err_txt = "\nError creating training, validation and testing data sets"
                 d2r.trainX = npX[ : d2r.trainLen , :]
                 d2r.trainY = npY[ : d2r.trainLen , :]
                 d2r.validateX = npX[d2r.trainLen : (d2r.trainLen + d2r.validateLen) , :]

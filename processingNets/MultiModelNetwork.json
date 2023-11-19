@@ -17,18 +17,37 @@
 	},
 	{
 	"flowName" : "CombinedData",
-	"requiredFields" : {"flowFrom" : "DataCombine", "flowTo" : "DataPrepare"},
+	"requiredFields" : {"flowFrom" : "DataCombine", "flowTo" : "LoadData"},
 	"conditionalFields" : {"flowDataDir" : "internal_flows\\MMN_M1M2"}
+	},
+	{
+	"flowName" : "LoadedData",
+	"requiredFields" : {"flowFrom" : "LoadData", "flowTo" : "DataPrepare"},
+	"conditionalFields" : {
+		"flowDataFile" : "internal_flows\\MMN_M1M2.csv",
+		"TensorflowData" : {
+			"features" : ["Open", "High", "Low", "Close", "Negative Cross", "Neutral", "Positive Cross", "BB 10 in 10"],
+			"targets" : ["10day10pct"],
+			"timeSequence" : true, "seriesStepIDField" : ["DateTime"], "seriesDataType" : "TDADateTime", "type" : "relative_time_series"
+			}
+		}
 	},
 	{
 	"flowName" : "PreparedData",
 	"requiredFields" : {"flowFrom" : "DataPrepare", "flowTo" : "TrainMultipleModelOutputs"},
-	"conditionalFields" : {"flowDataFile" : "internal_flows\\TrainMultipleModelPrepared.csv"}
+	"conditionalFields" : {
+		"flowDataFile" : "internal_flows\\TrainMultipleModelPrepared.csv",
+		"TensorflowData" : {
+			"features" : ["Open", "High", "Low", "Close", "Negative Cross", "Neutral", "Positive Cross", "BB 10 in 10"],
+			"targets" : ["10day10pct"],
+			"timeSequence" : true, "seriesStepIDField" : ["DateTime"], "seriesDataType" : "TDADateTime", "type" : "relative_time_series"
+			}
+		}
 	}
 ],
 "comment - dataflow end " : "dataflows definition end -------------------------------------------------------------------------------",
 "comment - processNodes" : "process node definitions beginh -------------------------------------------------------------------------",
-"processNodeSequence" : ["ModelOne", "ModelTwo", "DataCombine", "stop", "DataPrepare", "TrainMultipleModelOutputs"],
+"processNodeSequence" : ["ModelOne", "ModelTwo", "DataCombine", "LoadData", "DataPrepare", "TrainMultipleModelOutputs"],
 "processNodes" : [
 	{
 	"processNodeName" : "ModelOne",
@@ -37,7 +56,7 @@
 		"executeModelCtrl" : {
 			"dataLoadCtrl" : {
 				"inputFile" : [
-					"tda\\market_analysis_data\\c.csv","tda\\market_analysis_data\\ib*.csv"
+					"tda\\market_analysis_data\\C.csv","tda\\market_analysis_data\\IB*.csv"
 				]
 			},
 			"dataPrepCtrl" : {
@@ -68,7 +87,7 @@
 		"executeModelCtrl" : {
 			"dataLoadCtrl" : {
 				"inputFile" : [
-					"tda\\market_analysis_data\\c.csv","tda\\market_analysis_data\\ib*.csv"
+					"tda\\market_analysis_data\\C.csv","tda\\market_analysis_data\\IB*.csv"
 				]
 			},
 			"dataPrepCtrl" : {
@@ -96,7 +115,7 @@
 	"processNodeName" : "DataCombine",
 	"requiredFields" : {"processType" : "DataCombine", 
 		"inputFlows" : ["ModelOneOutput", "ModelTwoOutput"], 
-		"combineFileList" : ["c.csv", "ib*.csv"],
+		"combineFileList" : ["C.csv", "IB*.csv"],
 		"outputFlow" : "CombinedData"
 	},
 	"conditionalFields" : {
@@ -105,8 +124,20 @@
 	}
 	},
 	{
+	"processNodeName" : "LoadData",
+	"requiredFields" : {"processType" : "dataLoad", "inputFlows" : ["CombinedData"], "outputFlow" : "LoadedData"},
+	"conditionalFields" : {
+		"dataLoadCtrl" : {
+			"comment file spec" : "internal_flows\\MMN_M1M2\\[a-z]*.csv",
+			"inputFile" : [
+				"internal_flows\\MMN_M1M2\\[A-Z]*.csv"
+			]
+		}
+	}
+	},
+	{
 	"processNodeName" : "DataPrepare",
-	"requiredFields" : {"processType" : "dataPrep", "inputFlows" : ["CombinedData"], "outputFlow" : "PreparedData"},
+	"requiredFields" : {"processType" : "dataPrep", "inputFlows" : ["LoadedData"], "outputFlow" : "PreparedData"},
 	"conditionalFields" : {
 		"dataPrepCtrl" : {
 			"ignoreBlanks" : true,
@@ -119,13 +150,19 @@
 				"comment types supported" : ["standard", "minmax", "relative_time_series"],
 				"type" : "relative_time_series",
 				"features" : [
-					{"feature" : "xxx"},
-					{"feature" : "xxx"}
+					{"feature" : "Negative Cross"},
+					{"feature" : "Neutral"},
+					{"feature" : "Positive Cross"},
+					{"feature" : "BB 10 in 10"},
+					{"feature" : "Open"},
+					{"feature" : "High"},
+					{"feature" : "Low"},
+					{"feature" : "Close"}
 				]
 			},
 			"oneHotEncoding" : {
 				"features" : [
-					{"feature" : "xxx", "categoryType" : "label"}
+					{"feature" : "10day10pct", "categoryType" : "label", "comment" : "True/False"}
 				]
 			}
 		}
@@ -137,22 +174,22 @@
 	"conditionalFields" : {
 		"categorizationRegression" : "categorization",
 		"dataPrecision" : "float32", "balanceClasses" : true, "combineSampleCount" : 4,
-		"visualizations" : ["summary", "trainingFit", "CategorizedTimeSeries", "categoryMatrix"],
+		"visualizations" : ["summary"],
 		"training iterations" : [
 			{
-			"iteration description" : "TBD",
+			"iteration description" : "First multi model combination training",
 			"iteration parameters" : {
-				"iteration ID" : "MMN_exp_001",
+				"iteration ID" : "MMN_TA_001",
 				"modelFileDir" : "models\\rnn\\lstm\\MMN",
-				"tensorboard" : {"log file dir" : "logs\\tensorboard\\categorization\\lstm\\TrendLineCross\\"},
+				"tensorboard" : {"log file dir" : "logs\\tensorboard\\categorization\\lstm\\MMTechAnalysis\\"},
 				"forecastInterval" : 0,
 				"modelLayers" : [
-    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 2, "timeSteps": 5, "layerUnits" : 256, "returnSequences" : true, "outputActivation" : "linear"},
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 8, "timeSteps": 5, "layerUnits" : 256, "returnSequences" : true, "outputActivation" : "linear"},
 					{"layerName" : "hidden-lstm-1", "layerType" : "lstm", "timeSteps" : 5, "layerUnits" : 64, "returnSequences" : false, "outputActivation" : "linear"},
 					{"layerName" : "dropout1", "layerType" : "dropout", "dropoutRate" : 0.2},
     				{"layerType" : "dense", "layerName" : "hiddenDense1", "layerUnits" : 32, "outputActivation" : "linear"},
 					{"layerName" : "dropout2", "layerType" : "dropout", "dropoutRate" : 0.2},
-    				{"layerType" : "dense", "layerName" : "output", "layerUnits": 3, "outputActivation" : "softmax"}
+    				{"layerType" : "dense", "layerName" : "output", "layerUnits": 1, "outputActivation" : "sigmoid"}
 					],
 				"training" : {
 					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 

@@ -4,8 +4,9 @@
 "dataFlows" : [
 	{
 	"flowName" : "MACDTrendCross",
-	"requiredFields" : {"flowFrom" : "LoadData", "flowTo" : "PrepData", "flowDataFile" : "internal_flows\\TrendLineCross.csv"},
+	"requiredFields" : {"flowFrom" : "LoadData", "flowTo" : "PrepData"},
 	"conditionalFields" : {
+		"flowDataFile" : "internal_flows\\TrendLineCross.csv",
 		"TensorflowData" : {
 			"features" : ["MACD", "MACD_Signal"],
 			"targets" : ["MACD_flag"],
@@ -15,8 +16,9 @@
 	},
 	{
 	"flowName" : "MACDTrendCrossPrepared",
-	"requiredFields" : {"flowFrom" : "PrepData", "flowTo" : "MACDTrendCross", "flowDataFile" : "internal_flows\\TrendLineCrossPrepared.csv"},
+	"requiredFields" : {"flowFrom" : "PrepData", "flowTo" : "MACDTrendCross"},
 	"conditionalFields" : {
+		"flowDataFile" : "internal_flows\\TrendLineCrossPrepared.csv",
 		"TensorflowData" : {
 			"features" : ["MACD", "MACD_Signal"],
 			"targets" : ["MACD_flag"],
