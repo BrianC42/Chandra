@@ -56,7 +56,7 @@
 		"executeModelCtrl" : {
 			"dataLoadCtrl" : {
 				"inputFile" : [
-					"tda\\market_analysis_data\\C.csv","tda\\market_analysis_data\\IB*.csv"
+					"tda\\market_analysis_data\\[A-Z]*.csv"
 				]
 			},
 			"dataPrepCtrl" : {
@@ -87,7 +87,7 @@
 		"executeModelCtrl" : {
 			"dataLoadCtrl" : {
 				"inputFile" : [
-					"tda\\market_analysis_data\\C.csv","tda\\market_analysis_data\\IB*.csv"
+					"tda\\market_analysis_data\\[A-Z]*.csv"
 				]
 			},
 			"dataPrepCtrl" : {
@@ -115,7 +115,9 @@
 	"processNodeName" : "DataCombine",
 	"requiredFields" : {"processType" : "DataCombine", 
 		"inputFlows" : ["ModelOneOutput", "ModelTwoOutput"], 
-		"combineFileList" : ["C.csv", "IB*.csv"],
+		"combineFileList" : [
+			"[A-Z]*.csv"
+		],
 		"outputFlow" : "CombinedData"
 	},
 	"conditionalFields" : {
@@ -141,9 +143,10 @@
 	"conditionalFields" : {
 		"dataPrepCtrl" : {
 			"ignoreBlanks" : true,
-			"preparationSequence" : ["normalize", "oneHotEncoding"],
+			"preparationSequence" : ["normalize"],
 			"noPreparation" : {
 				"features" : [
+					{"feature" : "10day10pct", "categoryType" : "label", "comment" : "True/False"}
 				]
 			},
 			"normalize" : {
@@ -162,7 +165,6 @@
 			},
 			"oneHotEncoding" : {
 				"features" : [
-					{"feature" : "10day10pct", "categoryType" : "label", "comment" : "True/False"}
 				]
 			}
 		}
@@ -174,7 +176,7 @@
 	"conditionalFields" : {
 		"categorizationRegression" : "categorization",
 		"dataPrecision" : "float32", "balanceClasses" : true, "combineSampleCount" : 4,
-		"visualizations" : ["summary"],
+		"visualizations" : ["CategorizedTimeSeries", "categoryMatrix"],
 		"training iterations" : [
 			{
 			"iteration description" : "First multi model combination training",
@@ -189,13 +191,14 @@
 					{"layerName" : "dropout1", "layerType" : "dropout", "dropoutRate" : 0.2},
     				{"layerType" : "dense", "layerName" : "hiddenDense1", "layerUnits" : 32, "outputActivation" : "linear"},
 					{"layerName" : "dropout2", "layerType" : "dropout", "dropoutRate" : 0.2},
-    				{"layerType" : "dense", "layerName" : "output", "layerUnits": 1, "outputActivation" : "sigmoid"}
+    				{"layerType" : "dense", "layerName" : "output", "layerUnits": 1, "outputActivation" : "linear"}
 					],
 				"training" : {
 					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
 					"batchSize" : 16, "epochs" : 5, "validationSplit" : 0.1, "testSplit" : 0.2,
 					"shuffle" : false, "balanceClasses" : true,	"verbose" : 2,
-					"optimizer" : {"name" : "adam", "learning_rate" : 0.001}, "compilationLoss" : "categorical_crossentropy", "compilationMetrics" : ["categorical_crossentropy"]
+					"optimizer" : {"name" : "adam", "learning_rate" : 0.001}, 
+					"compilationLoss" : "mean_absolute_error", "compilationMetrics" : ["mean_absolute_error"]
 				}
 				}
 			}

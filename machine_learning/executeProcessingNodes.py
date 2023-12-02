@@ -235,7 +235,7 @@ def executeExecuteModel(nodeName, d2rP):
                     scalerFile = aiwork + '\\' + models + '\\' + scalerFile
                     if os.path.isfile(scalerFile):
                         scaler = pd.read_pickle(scalerFile)
-                
+               
                 ''' output path '''
                 outputPath = aiwork + '\\' + flowDataDir
                 os.makedirs(outputPath, exist_ok=True) 
@@ -253,13 +253,13 @@ def executeExecuteModel(nodeName, d2rP):
                                 if not os.path.isfile(outputFile) or replaceExistingOutput:
                                     dfData = pd.read_csv(fileSpec)
                                     
+                                    ''' remove blank data from features of interest '''
+                                    if ignoreBlanks:
+                                        dfData.dropna(inplace=True)
+                                        
                                     ''' select pass thru and scaled features '''
                                     dfFeatures = dfData[featuresOfInterest]
                                     
-                                    ''' remove blank data from features of interest '''
-                                    if ignoreBlanks:
-                                        dfFeatures.dropna(inplace=True)
-                                        
                                     ''' put aside any pass thru data fields '''
                                     if len(passthruFeatures) > 0:
                                         dfPassthruFeatures = dfFeatures[passthruFeatures]
@@ -275,18 +275,10 @@ def executeExecuteModel(nodeName, d2rP):
             
                                     ''' arrange features as required by the model '''
                                     if inputType == "rnn":
-                                        ''' arrange data as required by the model type (dense, cnn, rnn) '''
-                                        modelOutputs = [[] for i in range(len(npModelFeatures) - timeSteps)]
+                                        npPredict = np.zeros((len(npModelFeatures) - timeSteps, timeSteps, npModelFeatures.shape[1]))
                                         for ndx in range (len(npModelFeatures) - timeSteps):
-                                            sample = npModelFeatures[ndx : ndx + timeSteps]
-                                            npFeatures = np.reshape(sample, (1,timeSteps,len(modelFeatureList)))
-                                            
-                                            ''' use identified model to make predictions / categorizations '''
-                                            modelOutput = model.predict(x=npFeatures, verbose=0)
-                                            
-                                            ''' add the pass thru fields aligned on output synchronization Features '''
-                                            modelOutputs[ndx] = modelOutput[0]
-                                            ndx += 1
+                                            npPredict[ndx,:, :] = npModelFeatures[ndx : ndx + timeSteps]
+                                        modelOutputs = model.predict(x=npPredict, verbose=0)
                                     elif inputType == "cnn":
                                         pass
                                     elif inputType == "dense":
