@@ -46,7 +46,7 @@ def loadTrainingData(d2r):
     '''
     # error handling
     try:
-        err_txt = "*** An exception occurred preparing the training data for the model ***"
+        err_txt = "*** An exception occurred loading the training data for the model ***"
 
         nx_input_flow = nx.get_node_attributes(d2r.graph, cc.JSON_INPUT_FLOWS)[d2r.mlNode]
         print("\nLoading prepared data defined in flow: %s" % nx_input_flow[0])

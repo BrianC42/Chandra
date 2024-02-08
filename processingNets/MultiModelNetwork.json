@@ -26,7 +26,12 @@
 	"conditionalFields" : {
 		"flowDataFile" : "internal_flows\\MMN_M1M2.csv",
 		"TensorflowData" : {
-			"features" : ["Open", "High", "Low", "Close", "Negative Cross", "Neutral", "Positive Cross", "BB 10 in 10"],
+			"problem features" : ["Volume", "OBV", "AccumulationDistribution"],
+			"features" : ["Open", "High", "Low", "Close", 
+							"Volume", "OBV", "AccumulationDistribution",
+							"Relative Strength", "ADX",
+							"Negative Cross", "Neutral", "Positive Cross", 
+							"BB 10 in 10"],
 			"targets" : ["10day10pct"],
 			"timeSequence" : true, "seriesStepIDField" : ["DateTime"], "seriesDataType" : "TDADateTime", "type" : "relative_time_series"
 			}
@@ -38,7 +43,12 @@
 	"conditionalFields" : {
 		"flowDataFile" : "internal_flows\\TrainMultipleModelPrepared.csv",
 		"TensorflowData" : {
-			"features" : ["Open", "High", "Low", "Close", "Negative Cross", "Neutral", "Positive Cross", "BB 10 in 10"],
+			"problem features" : ["Volume", "OBV", "AccumulationDistribution"],
+			"features" : ["Open", "High", "Low", "Close", 
+							"Volume", "OBV", "AccumulationDistribution",
+							"Relative Strength", "ADX",
+							"Negative Cross", "Neutral", "Positive Cross", 
+							"BB 10 in 10"],
 			"targets" : ["10day10pct"],
 			"timeSequence" : true, "seriesStepIDField" : ["DateTime"], "seriesDataType" : "TDADateTime", "type" : "relative_time_series"
 			}
@@ -116,7 +126,7 @@
 	"requiredFields" : {"processType" : "DataCombine", 
 		"inputFlows" : ["ModelOneOutput", "ModelTwoOutput"], 
 		"combineFileList" : [
-			"[A-Z]*.csv"
+			"[C]*.csv"
 		],
 		"outputFlow" : "CombinedData"
 	},
@@ -132,7 +142,7 @@
 		"dataLoadCtrl" : {
 			"comment file spec" : "internal_flows\\MMN_M1M2\\[a-z]*.csv",
 			"inputFile" : [
-				"internal_flows\\MMN_M1M2\\[A-Z]*.csv"
+				"internal_flows\\MMN_M1M2\\[C]*.csv"
 			]
 		}
 	}
@@ -143,28 +153,35 @@
 	"conditionalFields" : {
 		"dataPrepCtrl" : {
 			"ignoreBlanks" : true,
-			"preparationSequence" : ["normalize"],
+			"preparationSequence" : ["normalize", "oneHotEncoding"],
 			"noPreparation" : {
+				"problem features" : [
+					{"feature" : "Volume"},
+					{"feature" : "OBV"},
+					{"feature" : "AccumulationDistribution"}
+				],
 				"features" : [
-					{"feature" : "10day10pct", "categoryType" : "label", "comment" : "True/False"}
+					{"feature" : "Negative Cross"},
+					{"feature" : "Neutral"},
+					{"feature" : "Positive Cross"},
+					{"feature" : "BB 10 in 10"},
+					{"feature" : "Relative Strength"}
 				]
 			},
 			"normalize" : {
 				"comment types supported" : ["standard", "minmax", "relative_time_series"],
 				"type" : "relative_time_series",
 				"features" : [
-					{"feature" : "Negative Cross"},
-					{"feature" : "Neutral"},
-					{"feature" : "Positive Cross"},
-					{"feature" : "BB 10 in 10"},
 					{"feature" : "Open"},
 					{"feature" : "High"},
 					{"feature" : "Low"},
-					{"feature" : "Close"}
+					{"feature" : "Close"},
+					{"feature" : "ADX"}
 				]
 			},
 			"oneHotEncoding" : {
 				"features" : [
+					{"feature" : "10day10pct", "categoryType" : "label", "comment" : "True/False"}
 				]
 			}
 		}
@@ -176,7 +193,7 @@
 	"conditionalFields" : {
 		"categorizationRegression" : "categorization",
 		"dataPrecision" : "float32", "balanceClasses" : true, "combineSampleCount" : 4,
-		"visualizations" : ["CategorizedTimeSeries", "categoryMatrix"],
+		"visualizations" : ["categoryMatrix"],
 		"training iterations" : [
 			{
 			"iteration description" : "First multi model combination training",
@@ -186,7 +203,7 @@
 				"tensorboard" : {"log file dir" : "logs\\tensorboard\\categorization\\lstm\\MMTechAnalysis\\"},
 				"forecastInterval" : 0,
 				"modelLayers" : [
-    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 8, "timeSteps": 5, "layerUnits" : 256, "returnSequences" : true, "outputActivation" : "linear"},
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 13, "timeSteps": 5, "layerUnits" : 256, "returnSequences" : true, "outputActivation" : "linear"},
 					{"layerName" : "hidden-lstm-1", "layerType" : "lstm", "timeSteps" : 5, "layerUnits" : 64, "returnSequences" : false, "outputActivation" : "linear"},
 					{"layerName" : "dropout1", "layerType" : "dropout", "dropoutRate" : 0.2},
     				{"layerType" : "dense", "layerName" : "hiddenDense1", "layerUnits" : 32, "outputActivation" : "linear"},

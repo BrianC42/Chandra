@@ -1,0 +1,410 @@
+{
+"comment - network purpose 1" : "work network for development of new networks",
+"comment - network purpose 2" : "initial development done here then copied to named files for refinement",
+"comment - processing node section" : "Specification details for the processing nodes",
+"processNodeSequence" : ["LoadDataFiles", "PrepareData", "TrainModel"],
+"processNodes" : [
+	{
+	"processNodeName" : "LoadDataFiles",
+	"requiredFields" : {"processType" : "dataLoad",	"inputFlows" : [],	"outputFlow" : "LoadedData"},
+	"conditionalFields" : {
+		"dataLoadCtrl" : {
+			"inputFile" : ["tda\\market_analysis_data\\*.csv"]
+		}
+	}
+	},
+	{
+	"processNodeName" : "PrepareData",
+	"requiredFields" : {"processType" : "dataPrep", "inputFlows" : ["LoadedData"], "outputFlow" : "PreparedData"},
+	"conditionalFields" : {
+		"dataPrepCtrl" : {
+			"ignoreBlanks" : true,
+			"preparationSequence" : ["normalize"],
+			"noPreparation" : {
+				"features" : [
+					{"feature" : "10 day change"}
+				]
+			},
+			"normalize" : {
+				"comment types supported" : ["standard", "minmax", "relative_time_series"],
+				"type" : "minmax",
+				"features" : [
+					{"feature" : "OBV"},
+					{"feature" : "Close"},
+					{"feature" : "Volume"}
+				]
+			},
+			"oneHotEncoding" : {
+				"features" : [
+				]
+			},
+			"removeOutliers" : [
+				{"commented - featureName - none" : "", "outlierPct" : 0.02}
+			]
+		}
+	}
+	},
+	{
+	"processNodeName" : "TrainModel",
+	"requiredFields" : {"processType" : "Tensorflow", "inputFlows" : ["PreparedData"], "outputFlow" : ""
+	},
+	"conditionalFields" : {
+		"categorizationRegression" : "regression",
+		"dataPrecision" : "float32", "balanceClasses" : false, "combineSampleCount" : 1,
+		"visualizations" : [],
+		"comment - regression loss functions" : ["MeanSquaredError (mse)", "MeanAbsoluteError (mae)", "MeanAbsolutePercentageError (mape)", "Hubert", "LogCosh"],
+		"comment - regression activation - hidden layers" : ["relu", "selu", "tanh"],
+		"comment - regression activation - output layer" : ["linear"],
+		"training iterations" : [
+			{
+			"iteration description" : "TBD",
+			"iteration parameters" : {
+				"iteration ID" : "wip_mape_selu_003_all",
+				"modelFileDir" : "models\\rnn\\lstm\\wip\\",
+				"tensorboard" : {"log file dir" : "logs\\tensorboard\\regression\\wip\\"},
+				"forecastInterval" : 0,
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 3, "timeSteps": 2, "layerUnits" : 256, "returnSequences" : true, "outputActivation" : "linear"},
+					{"layerName" : "hidden-lstm-1", "layerType" : "lstm", "timeSteps" : 5, "layerUnits" : 256, "returnSequences" : false, "outputActivation" : "selu"},
+					{"layerName" : "dropout1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hiddenDense1", "layerType" : "dense", "layerUnits" : 128, "outputActivation" : "selu"},
+					{"layerName" : "dropout2", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hiddenDense2", "layerType" : "dense", "layerUnits" : 64, "outputActivation" : "selu"},
+					{"layerName" : "dropout3", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hiddenDense3", "layerType" : "dense", "layerUnits" : 32, "outputActivation" : "selu"},
+					{"layerName" : "dropout4", "layerType" : "dropout", "dropoutRate" : 0.2},
+					{"layerName" : "output", "layerType" : "dense", "layerUnits" : 1,  "outputActivation" : "linear"}
+				],
+				"training" : {
+					"verbose" : 2, "batchSize" : 16, "epochs" : 20, "validationSplit" : 0.1, "testSplit" : 0.2, "shuffle" : false,
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"optimizer" : {"name" : "adam", "learning_rate" : 0.001}, "compilationLoss" : "mape", "compilationMetrics" : ["mape"]
+				}
+				}
+			}
+		]
+	}
+	}
+],
+"comment - processing node section end" : "-------------------------------------------------------------------------",
+"comment - dataflow section" : "Specification details for the flows of data between processing nodes",
+"dataFlows" : [
+	{
+	"flowName" : "LoadedData",
+	"requiredFields" : {"flowFrom" : "LoadDataFiles", "flowTo" : "PrepareData"},
+	"conditionalFields" : {
+		"flowDataFile" : "internal_flows\\WIP_Data.csv",
+		"TensorflowData" : {
+			"features" : ["OBV", "Close", "Volume"],
+			"targets" : ["10 day change"],
+			"timeSequence" : true, "seriesStepIDField" : ["DateTime"], "seriesDataType" : "TDADateTime", "type" : "relative_time_series"
+			}
+		}
+	},
+	{
+	"flowName" : "PreparedData",
+	"requiredFields" : {"flowFrom" : "PrepareData", "flowTo" : "TrainModel"},
+	"conditionalFields" : {
+		"flowDataFile" : "internal_flows\\WIP_PreparedData.csv",
+		"TensorflowData" : {
+			"features" : ["OBV", "Close", "Volume"],
+			"targets" : ["10 day change"],
+			"timeSequence" : true, "seriesStepIDField" : ["DateTime"], "seriesDataType" : "TDADateTime", "type" : "relative_time_series"
+			}
+		}
+	}
+],
+"comment - dataflow section end" : "----------------------------------------------------------------------------------",
+"comment end of specification" : "------------------------------------------------------------------------------------",
+"comment - training iterations" : "-----------------------------------------------------------------------------------",
+"training iterations" : [
+			{
+			"iteration description" : "TBD",
+			"iteration parameters" : {
+				"iteration ID" : "wip_mape_selu_001",
+				"modelFileDir" : "models\\rnn\\lstm\\wip\\",
+				"tensorboard" : {"log file dir" : "logs\\tensorboard\\regression\\wip\\"},
+				"forecastInterval" : 0,
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 3, "timeSteps": 2, "layerUnits" : 256, "returnSequences" : true, "outputActivation" : "linear"},
+					{"layerName" : "hidden-lstm-1", "layerType" : "lstm", "timeSteps" : 5, "layerUnits" : 256, "returnSequences" : false, "outputActivation" : "selu"},
+					{"layerName" : "dropout1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hiddenDense1", "layerType" : "dense", "layerUnits" : 64, "outputActivation" : "selu"},
+					{"layerName" : "dropout2", "layerType" : "dropout", "dropoutRate" : 0.2},
+					{"layerName" : "output", "layerType" : "dense", "layerUnits" : 1,  "outputActivation" : "linear"}
+				],
+				"training" : {
+					"verbose" : 2, "batchSize" : 16, "epochs" : 5, "validationSplit" : 0.1, "testSplit" : 0.2, "shuffle" : false,
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"optimizer" : {"name" : "adam", "learning_rate" : 0.001}, "compilationLoss" : "mape", "compilationMetrics" : ["mape"]
+				}
+				}
+			},
+			{
+			"iteration description" : "TBD",
+			"iteration parameters" : {
+				"iteration ID" : "wip_mape_selu_002",
+				"modelFileDir" : "models\\rnn\\lstm\\wip\\",
+				"tensorboard" : {"log file dir" : "logs\\tensorboard\\regression\\wip\\"},
+				"forecastInterval" : 0,
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 3, "timeSteps": 2, "layerUnits" : 256, "returnSequences" : true, "outputActivation" : "linear"},
+					{"layerName" : "hidden-lstm-1", "layerType" : "lstm", "timeSteps" : 5, "layerUnits" : 256, "returnSequences" : false, "outputActivation" : "selu"},
+					{"layerName" : "dropout1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hiddenDense1", "layerType" : "dense", "layerUnits" : 128, "outputActivation" : "selu"},
+					{"layerName" : "dropout2", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hiddenDense2", "layerType" : "dense", "layerUnits" : 32, "outputActivation" : "selu"},
+					{"layerName" : "dropout3", "layerType" : "dropout", "dropoutRate" : 0.2},
+					{"layerName" : "output", "layerType" : "dense", "layerUnits" : 1,  "outputActivation" : "linear"}
+				],
+				"training" : {
+					"verbose" : 2, "batchSize" : 16, "epochs" : 5, "validationSplit" : 0.1, "testSplit" : 0.2, "shuffle" : false,
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"optimizer" : {"name" : "adam", "learning_rate" : 0.001}, "compilationLoss" : "mape", "compilationMetrics" : ["mape"]
+				}
+				}
+			},
+			{
+			"iteration description" : "TBD",
+			"iteration parameters" : {
+				"iteration ID" : "wip_mape_relu",
+				"modelFileDir" : "models\\rnn\\lstm\\wip\\",
+				"tensorboard" : {"log file dir" : "logs\\tensorboard\\regression\\wip\\"},
+				"forecastInterval" : 0,
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 3, "timeSteps": 2, "layerUnits" : 256, "returnSequences" : true, "outputActivation" : "linear"},
+					{"layerName" : "hidden-lstm-1", "layerType" : "lstm", "timeSteps" : 5, "layerUnits" : 64, "returnSequences" : false, "outputActivation" : "relu"},
+					{"layerName" : "dropout1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hiddenDense1", "layerType" : "dense", "layerUnits" : 32, "outputActivation" : "relu"},
+					{"layerName" : "dropout2", "layerType" : "dropout", "dropoutRate" : 0.2},
+					{"layerName" : "output", "layerType" : "dense", "layerUnits" : 1,  "outputActivation" : "linear"}
+				],
+				"training" : {
+					"verbose" : 2, "batchSize" : 16, "epochs" : 5, "validationSplit" : 0.1, "testSplit" : 0.2, "shuffle" : false,
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"optimizer" : {"name" : "adam", "learning_rate" : 0.001}, "compilationLoss" : "mape", "compilationMetrics" : ["mape"]
+				}
+				}
+			},
+			{
+			"iteration description" : "TBD",
+			"iteration parameters" : {
+				"iteration ID" : "wip_mape_selu",
+				"modelFileDir" : "models\\rnn\\lstm\\wip\\",
+				"tensorboard" : {"log file dir" : "logs\\tensorboard\\regression\\wip\\"},
+				"forecastInterval" : 0,
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 3, "timeSteps": 2, "layerUnits" : 256, "returnSequences" : true, "outputActivation" : "linear"},
+					{"layerName" : "hidden-lstm-1", "layerType" : "lstm", "timeSteps" : 5, "layerUnits" : 64, "returnSequences" : false, "outputActivation" : "selu"},
+					{"layerName" : "dropout1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hiddenDense1", "layerType" : "dense", "layerUnits" : 32, "outputActivation" : "selu"},
+					{"layerName" : "dropout2", "layerType" : "dropout", "dropoutRate" : 0.2},
+					{"layerName" : "output", "layerType" : "dense", "layerUnits" : 1,  "outputActivation" : "linear"}
+				],
+				"training" : {
+					"verbose" : 2, "batchSize" : 16, "epochs" : 5, "validationSplit" : 0.1, "testSplit" : 0.2, "shuffle" : false,
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"optimizer" : {"name" : "adam", "learning_rate" : 0.001}, "compilationLoss" : "mape", "compilationMetrics" : ["mape"]
+				}
+				}
+			},
+			{
+			"iteration description" : "TBD",
+			"iteration parameters" : {
+				"iteration ID" : "wip_mape_tanh",
+				"modelFileDir" : "models\\rnn\\lstm\\wip\\",
+				"tensorboard" : {"log file dir" : "logs\\tensorboard\\regression\\wip\\"},
+				"forecastInterval" : 0,
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 3, "timeSteps": 2, "layerUnits" : 256, "returnSequences" : true, "outputActivation" : "linear"},
+					{"layerName" : "hidden-lstm-1", "layerType" : "lstm", "timeSteps" : 5, "layerUnits" : 64, "returnSequences" : false, "outputActivation" : "tanh"},
+					{"layerName" : "dropout1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hiddenDense1", "layerType" : "dense", "layerUnits" : 32, "outputActivation" : "tanh"},
+					{"layerName" : "dropout2", "layerType" : "dropout", "dropoutRate" : 0.2},
+					{"layerName" : "output", "layerType" : "dense", "layerUnits" : 1,  "outputActivation" : "linear"}
+				],
+				"training" : {
+					"verbose" : 2, "batchSize" : 16, "epochs" : 5, "validationSplit" : 0.1, "testSplit" : 0.2, "shuffle" : false,
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"optimizer" : {"name" : "adam", "learning_rate" : 0.001}, "compilationLoss" : "mape", "compilationMetrics" : ["mape"]
+				}
+				}
+			},
+			{
+			"iteration description" : "TBD",
+			"iteration parameters" : {
+				"iteration ID" : "wip_tc",
+				"modelFileDir" : "models\\rnn\\lstm\\wip\\",
+				"tensorboard" : {"log file dir" : "logs\\tensorboard\\regression\\wip\\"},
+				"forecastInterval" : 0,
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 3, "timeSteps": 2, "layerUnits" : 256, "returnSequences" : true, "outputActivation" : "tanh"},
+					{"layerName" : "hidden-lstm-1", "layerType" : "lstm", "timeSteps" : 5, "layerUnits" : 64, "returnSequences" : false, "outputActivation" : "tanh"},
+					{"layerName" : "dropout1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hiddenDense1", "layerType" : "dense", "layerUnits" : 32, "outputActivation" : "tanh"},
+					{"layerName" : "dropout2", "layerType" : "dropout", "dropoutRate" : 0.2},
+					{"layerName" : "output", "layerType" : "dense", "layerUnits" : 1}
+				],
+				"training" : {
+					"verbose" : 2, "batchSize" : 16, "epochs" : 5, "validationSplit" : 0.1, "testSplit" : 0.2, "shuffle" : false,
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"optimizer" : {"name" : "adam", "learning_rate" : 0.001}, "compilationLoss" : "CosineSimilarity", "compilationMetrics" : ["CosineSimilarity"]
+				}
+				}
+			},
+			{
+			"iteration description" : "TBD",
+			"iteration parameters" : {
+				"iteration ID" : "wip_tk",
+				"modelFileDir" : "models\\rnn\\lstm\\wip\\",
+				"tensorboard" : {"log file dir" : "logs\\tensorboard\\regression\\wip\\"},
+				"forecastInterval" : 0,
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 3, "timeSteps": 2, "layerUnits" : 256, "returnSequences" : true, "outputActivation" : "tanh"},
+					{"layerName" : "hidden-lstm-1", "layerType" : "lstm", "timeSteps" : 5, "layerUnits" : 64, "returnSequences" : false, "outputActivation" : "tanh"},
+					{"layerName" : "dropout1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hiddenDense1", "layerType" : "dense", "layerUnits" : 32, "outputActivation" : "tanh"},
+					{"layerName" : "dropout2", "layerType" : "dropout", "dropoutRate" : 0.2},
+					{"layerName" : "output", "layerType" : "dense", "layerUnits" : 1}
+				],
+				"training" : {
+					"verbose" : 2, "batchSize" : 16, "epochs" : 5, "validationSplit" : 0.1, "testSplit" : 0.2, "shuffle" : false,
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"optimizer" : {"name" : "adam", "learning_rate" : 0.001}, "compilationLoss" : "KLDivergence", "compilationMetrics" : ["KLDivergence"]
+				}
+				}
+			},
+			{
+			"iteration description" : "TBD",
+			"iteration parameters" : {
+				"iteration ID" : "wip_rc",
+				"modelFileDir" : "models\\rnn\\lstm\\wip\\",
+				"tensorboard" : {"log file dir" : "logs\\tensorboard\\regression\\wip\\"},
+				"forecastInterval" : 0,
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 3, "timeSteps": 2, "layerUnits" : 256, "returnSequences" : true, "outputActivation" : "relu"},
+					{"layerName" : "hidden-lstm-1", "layerType" : "lstm", "timeSteps" : 5, "layerUnits" : 64, "returnSequences" : false, "outputActivation" : "relu"},
+					{"layerName" : "dropout1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hiddenDense1", "layerType" : "dense", "layerUnits" : 32, "outputActivation" : "relu"},
+					{"layerName" : "dropout2", "layerType" : "dropout", "dropoutRate" : 0.2},
+					{"layerName" : "output", "layerType" : "dense", "layerUnits" : 1}
+				],
+				"training" : {
+					"verbose" : 2, "batchSize" : 16, "epochs" : 5, "validationSplit" : 0.1, "testSplit" : 0.2, "shuffle" : false,
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"optimizer" : {"name" : "adam", "learning_rate" : 0.001}, "compilationLoss" : "CosineSimilarity", "compilationMetrics" : ["CosineSimilarity"]
+				}
+				}
+			},
+			{
+			"iteration description" : "TBD",
+			"iteration parameters" : {
+				"iteration ID" : "wip_rk",
+				"modelFileDir" : "models\\rnn\\lstm\\wip\\",
+				"tensorboard" : {"log file dir" : "logs\\tensorboard\\regression\\wip\\"},
+				"forecastInterval" : 0,
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 3, "timeSteps": 2, "layerUnits" : 256, "returnSequences" : true, "outputActivation" : "relu"},
+					{"layerName" : "hidden-lstm-1", "layerType" : "lstm", "timeSteps" : 5, "layerUnits" : 64, "returnSequences" : false, "outputActivation" : "relu"},
+					{"layerName" : "dropout1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hiddenDense1", "layerType" : "dense", "layerUnits" : 32, "outputActivation" : "relu"},
+					{"layerName" : "dropout2", "layerType" : "dropout", "dropoutRate" : 0.2},
+					{"layerName" : "output", "layerType" : "dense", "layerUnits" : 1}
+				],
+				"training" : {
+					"verbose" : 2, "batchSize" : 16, "epochs" : 5, "validationSplit" : 0.1, "testSplit" : 0.2, "shuffle" : false,
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"optimizer" : {"name" : "adam", "learning_rate" : 0.001}, "compilationLoss" : "KLDivergence", "compilationMetrics" : ["KLDivergence"]
+				}
+				}
+			},
+			{
+			"iteration description" : "TBD",
+			"iteration parameters" : {
+				"iteration ID" : "wip_rm",
+				"modelFileDir" : "models\\rnn\\lstm\\wip\\",
+				"tensorboard" : {"log file dir" : "logs\\tensorboard\\regression\\wip\\"},
+				"forecastInterval" : 0,
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 3, "timeSteps": 2, "layerUnits" : 256, "returnSequences" : true, "outputActivation" : "relu"},
+					{"layerName" : "hidden-lstm-1", "layerType" : "lstm", "timeSteps" : 5, "layerUnits" : 64, "returnSequences" : false, "outputActivation" : "relu"},
+					{"layerName" : "dropout1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hiddenDense1", "layerType" : "dense", "layerUnits" : 32, "outputActivation" : "relu"},
+					{"layerName" : "dropout2", "layerType" : "dropout", "dropoutRate" : 0.2},
+					{"layerName" : "output", "layerType" : "dense", "layerUnits" : 1}
+				],
+				"training" : {
+					"verbose" : 2, "batchSize" : 16, "epochs" : 5, "validationSplit" : 0.1, "testSplit" : 0.2, "shuffle" : false,
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"optimizer" : {"name" : "adam", "learning_rate" : 0.001}, "compilationLoss" : "MeanSquaredError", "compilationMetrics" : ["MeanSquaredError"]
+				}
+				}
+			},
+			{
+			"iteration description" : "TBD",
+			"iteration parameters" : {
+				"iteration ID" : "wip_lc",
+				"modelFileDir" : "models\\rnn\\lstm\\wip\\",
+				"tensorboard" : {"log file dir" : "logs\\tensorboard\\regression\\wip\\"},
+				"forecastInterval" : 0,
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 3, "timeSteps": 2, "layerUnits" : 256, "returnSequences" : true, "outputActivation" : "linear"},
+					{"layerName" : "hidden-lstm-1", "layerType" : "lstm", "timeSteps" : 5, "layerUnits" : 64, "returnSequences" : false, "outputActivation" : "linear"},
+					{"layerName" : "dropout1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hiddenDense1", "layerType" : "dense", "layerUnits" : 32, "outputActivation" : "linear"},
+					{"layerName" : "dropout2", "layerType" : "dropout", "dropoutRate" : 0.2},
+					{"layerName" : "output", "layerType" : "dense", "layerUnits" : 1}
+				],
+				"training" : {
+					"verbose" : 2, "batchSize" : 16, "epochs" : 5, "validationSplit" : 0.1, "testSplit" : 0.2, "shuffle" : false,
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"optimizer" : {"name" : "adam", "learning_rate" : 0.001}, "compilationLoss" : "CosineSimilarity", "compilationMetrics" : ["CosineSimilarity"]
+				}
+				}
+			},
+			{
+			"iteration description" : "TBD",
+			"iteration parameters" : {
+				"iteration ID" : "wip_lk",
+				"modelFileDir" : "models\\rnn\\lstm\\wip\\",
+				"tensorboard" : {"log file dir" : "logs\\tensorboard\\regression\\wip\\"},
+				"forecastInterval" : 0,
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 3, "timeSteps": 2, "layerUnits" : 256, "returnSequences" : true, "outputActivation" : "linear"},
+					{"layerName" : "hidden-lstm-1", "layerType" : "lstm", "timeSteps" : 5, "layerUnits" : 64, "returnSequences" : false, "outputActivation" : "linear"},
+					{"layerName" : "dropout1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hiddenDense1", "layerType" : "dense", "layerUnits" : 32, "outputActivation" : "linear"},
+					{"layerName" : "dropout2", "layerType" : "dropout", "dropoutRate" : 0.2},
+					{"layerName" : "output", "layerType" : "dense", "layerUnits" : 1}
+				],
+				"training" : {
+					"verbose" : 2, "batchSize" : 16, "epochs" : 5, "validationSplit" : 0.1, "testSplit" : 0.2, "shuffle" : false,
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"optimizer" : {"name" : "adam", "learning_rate" : 0.001}, "compilationLoss" : "KLDivergence", "compilationMetrics" : ["KLDivergence"]
+				}
+				}
+			},
+			{
+			"iteration description" : "TBD",
+			"iteration parameters" : {
+				"iteration ID" : "wip_lm",
+				"modelFileDir" : "models\\rnn\\lstm\\wip\\",
+				"tensorboard" : {"log file dir" : "logs\\tensorboard\\regression\\wip\\"},
+				"forecastInterval" : 0,
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 3, "timeSteps": 2, "layerUnits" : 256, "returnSequences" : true, "outputActivation" : "linear"},
+					{"layerName" : "hidden-lstm-1", "layerType" : "lstm", "timeSteps" : 5, "layerUnits" : 64, "returnSequences" : false, "outputActivation" : "linear"},
+					{"layerName" : "dropout1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hiddenDense1", "layerType" : "dense", "layerUnits" : 32, "outputActivation" : "linear"},
+					{"layerName" : "dropout2", "layerType" : "dropout", "dropoutRate" : 0.2},
+					{"layerName" : "output", "layerType" : "dense", "layerUnits" : 1}
+				],
+				"training" : {
+					"verbose" : 2, "batchSize" : 16, "epochs" : 5, "validationSplit" : 0.1, "testSplit" : 0.2, "shuffle" : false,
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"optimizer" : {"name" : "adam", "learning_rate" : 0.001}, "compilationLoss" : "MeanSquaredError", "compilationMetrics" : ["MeanSquaredError"]
+				}
+				}
+			}
+]
+}
