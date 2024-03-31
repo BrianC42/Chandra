@@ -9,7 +9,7 @@
 	"requiredFields" : {"processType" : "dataLoad",	"inputFlows" : [],	"outputFlow" : "LoadedData"},
 	"conditionalFields" : {
 		"dataLoadCtrl" : {
-			"inputFile" : ["tda\\market_analysis_data\\*.csv"]
+			"inputFile" : ["tda\\market_analysis_data\\c*.csv"]
 		}
 	}
 	},
@@ -22,16 +22,17 @@
 			"preparationSequence" : ["normalize"],
 			"noPreparation" : {
 				"features" : [
-					{"feature" : "10 day change"}
+					{"feature" : "DateTime"}
 				]
 			},
 			"normalize" : {
 				"comment types supported" : ["standard", "minmax", "relative_time_series"],
 				"type" : "minmax",
 				"features" : [
-					{"feature" : "OBV"},
-					{"feature" : "Close"},
-					{"feature" : "Volume"}
+					{"feature" : "10 day change"},
+					{"feature" : "ADX"},
+					{"feature" : "ADI -DI"},
+					{"feature" : "ADI +DI"}
 				]
 			},
 			"oneHotEncoding" : {
@@ -57,6 +58,68 @@
 		"comment - regression activation - output layer" : ["linear"],
 		"training iterations" : [
 			{
+			"iteration description" : "Average Directional Index - ADX",
+			"iteration parameters" : {
+				"iteration ID" : "wip_mape_selu_000",
+				"modelFileDir" : "models\\rnn\\lstm\\wip\\",
+				"tensorboard" : {"log file dir" : "logs\\tensorboard\\regression\\wip\\"},
+				"forecastInterval" : 0,
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 3, "timeSteps": 10, "layerUnits" : 256, "returnSequences" : true, "outputActivation" : "linear"},
+					{"layerName" : "hidden-lstm-1", "layerType" : "lstm", "timeSteps" : 5, "layerUnits" : 256, "returnSequences" : false, "outputActivation" : "selu"},
+					{"layerName" : "dropout1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hiddenDense1", "layerType" : "dense", "layerUnits" : 128, "outputActivation" : "selu"},
+					{"layerName" : "dropout2", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hiddenDense2", "layerType" : "dense", "layerUnits" : 64, "outputActivation" : "selu"},
+					{"layerName" : "dropout3", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hiddenDense3", "layerType" : "dense", "layerUnits" : 32, "outputActivation" : "selu"},
+					{"layerName" : "dropout4", "layerType" : "dropout", "dropoutRate" : 0.2},
+					{"layerName" : "output", "layerType" : "dense", "layerUnits" : 1,  "outputActivation" : "linear"}
+				],
+				"training" : {
+					"verbose" : 2, "batchSize" : 16, "epochs" : 5, "validationSplit" : 0.1, "testSplit" : 0.2, "shuffle" : false,
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"optimizer" : {"name" : "adam", "learning_rate" : 0.001}, "compilationLoss" : "mape", "compilationMetrics" : ["mape"]
+				}
+				}
+			}
+		]
+	}
+	}
+],
+"comment - processing node section end" : "-------------------------------------------------------------------------",
+"comment - dataflow section" : "Specification details for the flows of data between processing nodes",
+"dataFlows" : [
+	{
+	"flowName" : "LoadedData",
+	"requiredFields" : {"flowFrom" : "LoadDataFiles", "flowTo" : "PrepareData"},
+	"conditionalFields" : {
+		"flowDataFile" : "internal_flows\\WIP_Data.csv",
+		"TensorflowData" : {
+			"features" : ["ADX", "ADI -DI", "ADI +DI"],
+			"targets" : ["10 day change"],
+			"timeSequence" : true, "seriesStepIDField" : ["DateTime"], "seriesDataType" : "TDADateTime", "type" : "relative_time_series"
+			}
+		}
+	},
+	{
+	"flowName" : "PreparedData",
+	"requiredFields" : {"flowFrom" : "PrepareData", "flowTo" : "TrainModel"},
+	"conditionalFields" : {
+		"flowDataFile" : "internal_flows\\WIP_PreparedData.csv",
+		"TensorflowData" : {
+			"features" : ["ADX", "ADI -DI", "ADI +DI"],
+			"targets" : ["10 day change"],
+			"timeSequence" : true, "seriesStepIDField" : ["DateTime"], "seriesDataType" : "TDADateTime", "type" : "relative_time_series"
+			}
+		}
+	}
+],
+"comment - dataflow section end" : "----------------------------------------------------------------------------------",
+"comment end of specification" : "------------------------------------------------------------------------------------",
+"comment - training iterations" : "-----------------------------------------------------------------------------------",
+"training iterations" : [
+			{
 			"iteration description" : "TBD",
 			"iteration parameters" : {
 				"iteration ID" : "wip_mape_selu_003_all",
@@ -81,43 +144,7 @@
 					"optimizer" : {"name" : "adam", "learning_rate" : 0.001}, "compilationLoss" : "mape", "compilationMetrics" : ["mape"]
 				}
 				}
-			}
-		]
-	}
-	}
-],
-"comment - processing node section end" : "-------------------------------------------------------------------------",
-"comment - dataflow section" : "Specification details for the flows of data between processing nodes",
-"dataFlows" : [
-	{
-	"flowName" : "LoadedData",
-	"requiredFields" : {"flowFrom" : "LoadDataFiles", "flowTo" : "PrepareData"},
-	"conditionalFields" : {
-		"flowDataFile" : "internal_flows\\WIP_Data.csv",
-		"TensorflowData" : {
-			"features" : ["OBV", "Close", "Volume"],
-			"targets" : ["10 day change"],
-			"timeSequence" : true, "seriesStepIDField" : ["DateTime"], "seriesDataType" : "TDADateTime", "type" : "relative_time_series"
-			}
-		}
-	},
-	{
-	"flowName" : "PreparedData",
-	"requiredFields" : {"flowFrom" : "PrepareData", "flowTo" : "TrainModel"},
-	"conditionalFields" : {
-		"flowDataFile" : "internal_flows\\WIP_PreparedData.csv",
-		"TensorflowData" : {
-			"features" : ["OBV", "Close", "Volume"],
-			"targets" : ["10 day change"],
-			"timeSequence" : true, "seriesStepIDField" : ["DateTime"], "seriesDataType" : "TDADateTime", "type" : "relative_time_series"
-			}
-		}
-	}
-],
-"comment - dataflow section end" : "----------------------------------------------------------------------------------",
-"comment end of specification" : "------------------------------------------------------------------------------------",
-"comment - training iterations" : "-----------------------------------------------------------------------------------",
-"training iterations" : [
+			},
 			{
 			"iteration description" : "TBD",
 			"iteration parameters" : {
