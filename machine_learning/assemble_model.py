@@ -9,7 +9,8 @@ import sys
 import logging
 import networkx as nx
 import tensorflow as tf
-from tensorflow import keras
+import keras
+#from tensorflow import keras
 '''
 autokeras disabled for now
 import autokeras as ak
@@ -220,7 +221,7 @@ def assemble_layers(d2r):
         
         if nx_optimizer['name'] == 'adam':
             # learning_rate=0.001
-            optimizer = tf.keras.optimizers.Adam(
+            optimizer = keras.optimizers.Adam(
                 learning_rate = nx_optimizer['learning_rate'],
                 beta_1=0.9,
                 beta_2=0.999,
@@ -233,10 +234,10 @@ def assemble_layers(d2r):
                 use_ema=False,
                 ema_momentum=0.99,
                 ema_overwrite_frequency=None,
-                jit_compile=True,
+                #jit_compile="autoclustering",
                 name='Adam')
         elif nx_optimizer['name'] == 'SGD':
-            optimizer = tf.keras.optimizers.experimental.SGD(
+            optimizer = keras.optimizers.SGD(
                 learning_rate = nx_optimizer['learning_rate'],
                 momentum=0.0,
                 nesterov=False,
@@ -248,10 +249,10 @@ def assemble_layers(d2r):
                 use_ema=False,
                 ema_momentum=0.99,
                 ema_overwrite_frequency=None,
-                jit_compile=True,
+                #jit_compile="autoclustering",
                 name='SGD')
         elif nx_optimizer['name'] == 'RMSprop':
-            optimizer = tf.keras.optimizers.experimental.RMSprop(
+            optimizer = keras.optimizers.RMSprop(
                 learning_rate = nx_optimizer['learning_rate'],
                 rho=0.9,
                 momentum=0.0,
@@ -264,10 +265,10 @@ def assemble_layers(d2r):
                 use_ema=False,
                 ema_momentum=0.99,
                 ema_overwrite_frequency=100,
-                jit_compile=True,
+                #jit_compile="autoclustering",
                 name='RMSprop')
         elif nx_optimizer['name'] == 'Nadam':
-            optimizer = tf.keras.optimizers.experimental.Nadam(
+            optimizer = keras.optimizers.Nadam(
                 learning_rate=nx_optimizer['learning_rate'],
                 beta_1=0.9,
                 beta_2=0.999,
@@ -279,10 +280,10 @@ def assemble_layers(d2r):
                 use_ema=False,
                 ema_momentum=0.99,
                 ema_overwrite_frequency=None,
-                jit_compile=True,
+                #jit_compile="autoclustering",
                 name='Nadam')
         elif nx_optimizer['name'] == 'Adamax':
-            optimizer = tf.keras.optimizers.experimental.Adamax(
+            optimizer = keras.optimizers.Adamax(
                 learning_rate=nx_optimizer['learning_rate'],
                 beta_1=0.9,
                 beta_2=0.999,
@@ -294,10 +295,10 @@ def assemble_layers(d2r):
                 use_ema=False,
                 ema_momentum=0.99,
                 ema_overwrite_frequency=None,
-                jit_compile=True,
+                #jit_compile="autoclustering",
                 name='Adamax')
         elif nx_optimizer['name'] == 'adagrad':
-            optimizer = tf.keras.optimizers.experimental.Adagrad(
+            optimizer = keras.optimizers.Adagrad(
                 learning_rate=nx_optimizer['learning_rate'],
                 initial_accumulator_value=0.1,
                 epsilon=1e-07,
@@ -308,10 +309,10 @@ def assemble_layers(d2r):
                 use_ema=False,
                 ema_momentum=0.99,
                 ema_overwrite_frequency=None,
-                jit_compile=True,
+                #jit_compile="autoclustering",
                 name='Adagrad')
         elif nx_optimizer['name'] == 'adadelta':
-            optimizer = tf.keras.optimizers.experimental.Adadelta(
+            optimizer = keras.optimizers.Adadelta(
                 learning_rate=nx_optimizer['learning_rate'],
                 rho=0.95,
                 epsilon=1e-07,
@@ -322,10 +323,10 @@ def assemble_layers(d2r):
                 use_ema=False,
                 ema_momentum=0.99,
                 ema_overwrite_frequency=None,
-                jit_compile=True,
+                #jit_compile="autoclustering",
                 name='Adadelta')
         elif nx_optimizer['name'] == 'ftrl':
-            optimizer = tf.keras.optimizers.experimental.Ftrl(
+            optimizer = keras.optimizers.Ftrl(
                 learning_rate=nx_optimizer['learning_rate'],
                 learning_rate_power=-0.5,
                 initial_accumulator_value=0.1,
@@ -340,7 +341,7 @@ def assemble_layers(d2r):
                 use_ema=False,
                 ema_momentum=0.99,
                 ema_overwrite_frequency=None,
-                jit_compile=True,
+                #jit_compile="autoclustering",
                 name='Ftrl')
         else:
             err_msg = 'Invalid optimizer: ' + nx_optimizer

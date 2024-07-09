@@ -10,7 +10,7 @@ import glob
 import numpy as np
 import pandas as pd
 import tensorflow as tf
-from tensorflow import keras
+import keras
 
 import networkx as nx
 
@@ -228,7 +228,7 @@ def executeExecuteModel(nodeName, d2rP):
                 exc_txt = "\nAn exception occurred - trained model and scaler for node {} is invalid".format(nodeName)
                 ''' load trained model '''
                 trainedModel = aiwork + '\\' + models + '\\' + modelFile
-                model = tf.keras.models.load_model(trainedModel)
+                model = keras.models.load_model(trainedModel)
         
                 ''' load scaler used during training '''
                 if scalerFile != "":

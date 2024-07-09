@@ -78,7 +78,7 @@
 				],
 				"training" : {
 					"verbose" : 2, "batchSize" : 16, "epochs" : 5, "validationSplit" : 0.1, "testSplit" : 0.2, "shuffle" : false,
-					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"lossWeights" : 1.0, "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
 					"optimizer" : {"name" : "adam", "learning_rate" : 0.001}, "compilationLoss" : "mape", "compilationMetrics" : ["mape"]
 				}
 				}

@@ -13,6 +13,7 @@ import glob
 import numpy as np
 import pandas as pd
 import tensorflow as tf
+import keras
 
 from configuration import get_ini_data
 
@@ -37,7 +38,7 @@ def rnnCategorization(name, modelFile, featureFiles, features, scalerFile, timeS
         
         ''' load trained model '''
         trainedModel = aiwork + '\\' + models + '\\' + modelFile
-        model = tf.keras.models.load_model(trainedModel)
+        model = keras.models.load_model(trainedModel)
 
         ''' load scaler used during training '''
         if scalerFile != "":
@@ -108,7 +109,7 @@ def rnnPrediction(name, modelFile, featureFiles, features, scalerFile, timeSteps
         
         ''' load trained model '''
         trainedModel = aiwork + '\\' + models + '\\' + modelFile
-        model = tf.keras.models.load_model(trainedModel)
+        model = keras.models.load_model(trainedModel)
 
         ''' load scaler used during training '''
         if scalerFile != "":

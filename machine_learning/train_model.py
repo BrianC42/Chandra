@@ -9,7 +9,7 @@ import logging
 import pickle
 import networkx as nx
 import tensorflow as tf
-from tensorflow import keras
+import keras
 from configuration import get_ini_data
 
 ''' autokeras disabled temporarily
@@ -50,7 +50,7 @@ def trainModel(d2r):
         iterTensorboard = iterParamters[cc.JSON_TENSORBOARD]
         logDir = aiwork + '\\' + iterTensorboard[cc.JSON_LOG_DIR]
         logFile = logDir + iterationID + timeStamp
-        tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=logFile, \
+        tensorboard_callback = keras.callbacks.TensorBoard(log_dir=logFile, \
                                                               histogram_freq=1, \
                                                               write_graph=True, \
                                                               write_images=False, \
@@ -71,7 +71,12 @@ def trainModel(d2r):
         
         if d2r.trainer == TRAINING_AUTO_KERAS:
             d2r.model = d2r.model.export_model()
-        d2r.model.save(modelFileName)
+        d2r.model.save(modelFileName + '.keras')
+        '''
+        D:\Apps\Python\Python312\Lib\site-packages\keras\src\layers\rnn\rnn.py:204: 
+        UserWarning: Do not pass an `input_shape`/`input_dim` argument to a layer. 
+        When using Sequential models, prefer using an `Input(shape)` object as the first layer in the model instead.
+        '''
         
         if hasattr(d2r, 'scaler'):
             scalerFile = aiwork + '\\' + modeFileDir + iterationID + timeStamp + cc.JSON_SCALER_ID + '.pkl'
@@ -80,7 +85,7 @@ def trainModel(d2r):
             pf.close()
         else:
             print("No scaler to save")
-
+            
         keras.utils.plot_model(d2r.model, to_file=modelFileName + '.png', show_shapes=True)
 
     except Exception:

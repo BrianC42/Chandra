@@ -15,6 +15,7 @@ import networkx as nx
 import pandas as pd
 import numpy as np
 import tensorflow as tf
+import keras
 import configuration_constants as cc
 
 from sklearn import preprocessing
@@ -874,7 +875,7 @@ def selectTrainingData(d2r, node_name, nx_edge):
     for dataFile in nx_data_file[node_name]:
         fileSpecList = glob.glob(dataFile)
         fileCount = len(fileSpecList)
-        tf_progbar = tf.keras.utils.Progbar(fileCount, width=50, verbose=1, interval=1, stateful_metrics=None, unit_name='file')
+        tf_progbar = keras.utils.Progbar(fileCount, width=50, verbose=1, interval=1, stateful_metrics=None, unit_name='file')
         count = 0
         for FileSpec in fileSpecList:
             if os.path.isfile(FileSpec):

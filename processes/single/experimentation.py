@@ -63,7 +63,7 @@ from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from sklearn.datasets import fetch_california_housing
 
 import tensorflow as tf
-from tensorflow import keras
+import keras
 import autokeras as ak
 
 PROCESS_CONFIGS = "processes"
@@ -310,15 +310,15 @@ def digitalSreeni_180():
     # model.summary()
 
     #Try another model
-    model = tf.keras.Sequential()
-    model.add(tf.keras.layers.LSTM(128, input_shape=(trainX.shape[1], trainX.shape[2])))
-    model.add(tf.keras.layers.Dropout(rate=0.2))
+    model = keras.Sequential()
+    model.add(keras.layers.LSTM(128, input_shape=(trainX.shape[1], trainX.shape[2])))
+    model.add(keras.layers.Dropout(rate=0.2))
 
-    model.add(tf.keras.layers.RepeatVector(trainX.shape[1]))
+    model.add(keras.layers.RepeatVector(trainX.shape[1]))
 
-    model.add(tf.keras.layers.LSTM(128, return_sequences=True))
-    model.add(tf.keras.layers.Dropout(rate=0.2))
-    model.add(tf.keras.layers.TimeDistributed(tf.keras.layers.Dense(trainX.shape[2])))
+    model.add(keras.layers.LSTM(128, return_sequences=True))
+    model.add(keras.layers.Dropout(rate=0.2))
+    model.add(keras.layers.TimeDistributed(keras.layers.Dense(trainX.shape[2])))
     model.compile(optimizer='adam', loss='mae')
     model.summary()
 

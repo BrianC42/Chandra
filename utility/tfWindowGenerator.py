@@ -8,6 +8,7 @@ Copied from https://www.tensorflow.org/tutorials/structured_data/time_series
 import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
+import keras
 
 
 class WindowGenerator():
@@ -105,7 +106,7 @@ class WindowGenerator():
 
     def make_dataset(self, data):
         data = np.array(data, dtype=np.float64)
-        ds = tf.keras.preprocessing.timeseries_dataset_from_array(data=data, \
+        ds = keras.preprocessing.timeseries_dataset_from_array(data=data, \
                                                                   targets=None, \
                                                                   sequence_length=self.total_window_size, \
                                                                   sequence_stride=1, \

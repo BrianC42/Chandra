@@ -3,6 +3,8 @@ Created on Jan 31, 2018
 
 @author: Brian
 
+Convert to Schwab API following acquistion of TD Ameritrade
+
 '''
 import os
 import sys
