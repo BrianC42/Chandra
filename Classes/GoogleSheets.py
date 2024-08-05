@@ -8,9 +8,6 @@ Created on Aug 6, 2023
         https://cloud.google.com/python/docs/reference
         
         https://google-auth.readthedocs.io/en/stable/user-guide.html
-        from google.auth.transport.requests import Request
-        from google.oauth2.credentials import Credentials
-        from google_auth_oauthlib.flow import InstalledAppFlow
         from googleapiclient.discovery import build
         from googleapiclient.errors import HttpError
         
@@ -19,6 +16,10 @@ Created on Aug 6, 2023
         https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/cells
         
         https://googleapis.github.io/google-api-python-client/docs/dyn/sheets_v4.spreadsheets.html
+
+        from google.auth.transport.requests import Request
+            
+            
 '''
 import sys
 import os.path
@@ -30,18 +31,91 @@ from datetime import date
 import numpy as np
 import pandas as pd
 
-from google.auth.transport.requests import Request
-from google.oauth2.credentials import Credentials
+'''    https://github.com/googleapis/google-api-python-client/blob/main/docs/oauth-installed.md '''
+from google_auth_oauthlib.flow import Flow
+'''
+        dir(Flow)
+        ['__class__', '__delattr__', '__dict__', '__dir__', '__doc__', '__eq__', '__format__', 
+        '__ge__', '__getattribute__', '__getstate__', '__gt__', '__hash__', '__init__', 
+        '__init_subclass__', '__le__', '__lt__', '__module__', '__ne__', '__new__', '__reduce__', 
+        '__reduce_ex__', '__repr__', '__setattr__', '__sizeof__', '__str__', '__subclasshook__', 
+        '__weakref__', 
+        'authorization_url', 'authorized_session', 'credentials', 'fetch_token', 
+        'from_client_config', 'from_client_secrets_file', 'redirect_uri']
+'''
 from google_auth_oauthlib.flow import InstalledAppFlow
+'''
+        dir(InstalledAppFlow)
+        ['_DEFAULT_AUTH_CODE_MESSAGE', '_DEFAULT_AUTH_PROMPT_MESSAGE', '_DEFAULT_WEB_SUCCESS_MESSAGE', 
+        '__class__', '__delattr__', '__dict__', '__dir__', '__doc__', '__eq__', '__format__', '__ge__', 
+        '__getattribute__', '__getstate__', '__gt__', '__hash__', '__init__', '__init_subclass__', 
+        '__le__', '__lt__', '__module__', '__ne__', '__new__', '__reduce__', '__reduce_ex__', '__repr__', 
+        '__setattr__', '__sizeof__', '__str__', '__subclasshook__', '__weakref__', 
+        'authorization_url', 'authorized_session', 'credentials', 'fetch_token', 'from_client_config', 
+        'from_client_secrets_file', 'redirect_uri', 'run_local_server']
+'''
+
+from google.oauth2.credentials import Credentials
+'''
+    from google.oauth2.credentials import Credentials
+    dir(Credentials)
+    ['__abstractmethods__', '__class__', '__delattr__', '__dict__', 
+    '__dir__', '__doc__', '__eq__', '__format__', '__ge__', '__getattribute__', 
+    '__getstate__', '__gt__', '__hash__', '__init__', '__init_subclass__', 
+    '__le__', '__lt__', '__module__', '__ne__', '__new__', '__reduce__', 
+    '__reduce_ex__', '__repr__', '__setattr__', '__setstate__', '__sizeof__', 
+    '__str__', '__subclasshook__', '__weakref__', '_abc_impl', '_blocking_refresh', 
+    '_metric_header_for_usage', '_non_blocking_refresh', 
+    'account', 'apply', 'before_request', 'client_id', 'client_secret', 
+    'default_scopes', 'expired', 'from_authorized_user_file', 
+    'from_authorized_user_info', 'granted_scopes', 'has_scopes', 
+    'id_token', 'quota_project_id', 'rapt_token', 'refresh', 
+    'refresh_handler', 'refresh_token', 'requires_scopes', 'scopes', 
+    'to_json', 'token_state', 'token_uri', 'universe_domain', 'valid', 
+    'with_account', 'with_non_blocking_refresh', 'with_quota_project', 
+    'with_quota_project_from_environment', 'with_token_uri', 
+    'with_universe_domain']
+'''
+    
+from google.oauth2.credentials import UserAccessTokenCredentials
+'''
+     dir(UserAccessTokenCredentials)
+    ['__abstractmethods__', '__class__', '__delattr__', '__dict__', '__dir__', 
+    '__doc__', '__eq__', '__format__', '__ge__', '__getattribute__', 
+    '__getstate__', '__gt__', '__hash__', '__init__', '__init_subclass__', 
+    '__le__', '__lt__', '__module__', '__ne__', '__new__', '__reduce__', 
+    '__reduce_ex__', '__repr__', '__setattr__', '__sizeof__', '__str__', 
+    '__subclasshook__', '__weakref__', '_abc_impl', '_blocking_refresh', 
+    '_metric_header_for_usage', '_non_blocking_refresh', 
+    'apply', 'before_request', 'expired', 'quota_project_id', 'refresh', 
+    'token_state', 'universe_domain', 'valid', 'with_account', 
+    'with_non_blocking_refresh', 'with_quota_project', 
+    'with_quota_project_from_environment']
+'''
+
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
+from google.auth.transport.requests import Request
+
 from configuration import get_ini_data
+from configuration import read_config_json
 
 class googleSheet():
     '''
     classdocs
     '''
+
+    ''' 
+    class data 
+    '''
+    ''' credentials '''
+    creds = None
+    ''' token '''
+    token = None
+
+    '''  '''
+    googleDriveFiles = ""
 
     # If modifying these scopes, delete the file token.json.
     SCOPE_LIMITED = ['https://www.googleapis.com/auth/drive.file']
@@ -66,7 +140,14 @@ class googleSheet():
     def __init__(self):
         '''
         Constructor
+        googleAuth = get_ini_data("GOOGLE")
+        print("Google authentication\n\ttoken: {}\n\tcredentials: {}".format(googleAuth["token"], googleAuth["credentials"]))
+
+        localDirs = get_ini_data("LOCALDIRS")
+        aiwork = localDirs['aiwork']
+        googleDriveFiles = read_config_json(aiwork + "\\" + googleAuth['fileIDs'])
         '''
+
         self.openGoogleSheetService()
         return
 
@@ -201,9 +282,9 @@ class googleSheet():
                     dfVals = pd.DataFrame(values[1:], columns=values[0])
         
         except Exception:
-            exc_info = sys.exc_info()
-            exc_str = exc_info[1].args[0]
-            sys.exit(exc_txt + "\n\t" + exc_str)
+            #exc_info = sys.exc_info()
+            #exc_str = exc_info[1].args[0]
+            sys.exit(exc_txt)
     
         return dfVals
     
@@ -270,22 +351,27 @@ class googleSheet():
             The file token.json stores the user's access and refresh tokens, and is
             created automatically when the authorization flow completes for the first time
             '''
-            creds = None
+            self.creds = None
     
             if os.path.exists(self.GoogleTokenPath):
-                creds = Credentials.from_authorized_user_file(self.GoogleTokenPath, self.SCOPE_RW)
+                self.creds = Credentials.from_authorized_user_file(self.GoogleTokenPath, self.SCOPE_RW)
+                
             # If there are no (valid) credentials available, let the user log in.
-            if not creds or not creds.valid:
-                if creds and creds.expired and creds.refresh_token:
-                    creds.refresh(Request())
+            if not self.creds or not self.creds.valid:
+                if self.creds and self.creds.expired and self.creds.refresh_token:
+                    self.creds.refresh(Request())
+                    print("Google project token received or refreshed")
                 else:
                     flow = InstalledAppFlow.from_client_secrets_file(self.credentialsPath, self.SCOPE_RW)
-                    creds = flow.run_local_server(port=0)
+                    self.creds = flow.run_local_server(port=0)
                 # Save the credentials for the next run
-                with open(self.GoogleTokenPath, 'w') as token:
-                    token.write(creds.to_json())
-        
-            self.sheetService = build('sheets', 'v4', credentials=creds)
+                with open(self.GoogleTokenPath, 'w') as self.token:
+                    self.token.write(self.creds.to_json())
+            
+            '''
+            With valid credentials
+            '''
+            self.sheetService = build('sheets', 'v4', credentials=self.creds)
             self.googleSheet = self.sheetService.spreadsheets()
     
         except Exception:

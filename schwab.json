@@ -1,0 +1,18 @@
+{
+"logFile" : "logs\\Update_EOD_log.txt",
+"outputFile" : "logs\\Update_EOD_output",
+"loggingLevel" : "debug",
+"loggingFormat" : "%(asctime)s: %(levelname)s: %(message)s",
+"tokenAttributes" : "schwab_local.json",
+"MACDfuture" : "10",
+"evaluatelogFile" : "logs\\Evaluate_log.txt",
+"evaluateoutputFile" : "logs\\Evaluation_output",
+"evaluatesegmentationfile" : "logs\\segmentation.csv",
+"optionchainlog" : "logs\\Option_Chain_log.txt",
+"optionchainoutputfile" : "logs\\Option_Chain_Output",
+"optionchains" : "tda\\options\\",
+"fundamentalslog" : "logs\\Fundamentals_log.txt",
+"fundamentalsoutputfile" : "logs\\fundamentals",
+"fundamentals" : "fundamentals\\",
+"potentialoptionstrades" : ""
+}

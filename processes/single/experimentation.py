@@ -17,6 +17,7 @@ Works fine in Tensorflow: 2.2.0
 dataset: https://finance.yahoo.com/quote/GE/history/
 Also try S&P: https://finance.yahoo.com/quote/%5EGSPC/history?p=%5EGSPC
 '''
+from tensorflow.python.training import input
 
 ''' Google workspace requirements start '''
 import os.path
@@ -27,6 +28,7 @@ import re
 from decimal import *
 
 from GoogleSheets import googleSheet
+from MarketData import MarketData
 
 from configuration import get_ini_data
 from configuration import read_config_json
@@ -64,7 +66,6 @@ from sklearn.datasets import fetch_california_housing
 
 import tensorflow as tf
 import keras
-import autokeras as ak
 
 PROCESS_CONFIGS = "processes"
 MODEL_CONFIGS = "models"
@@ -76,98 +77,6 @@ MODEL_FILE = "file"
 OUTPUT_FIELDS = "Outputs"
 CONFIG = "json"
 
-def autoKeras():
-    
-    house_dataset = fetch_california_housing()
-    df = pd.DataFrame(np.concatenate((house_dataset.data, house_dataset.target.reshape(-1, 1)), axis=1), \
-                      columns=house_dataset.feature_names + ["Price"], )
-    train_size = int(df.shape[0] * 0.9)
-    df[:train_size].to_csv("train.csv", index=False)
-    df[train_size:].to_csv("eval.csv", index=False)
-    train_file_path = "train.csv"
-    test_file_path = "eval.csv"
-    
-    # Initialize the structured data regressor.
-    reg = ak.StructuredDataRegressor(overwrite=True, max_trials=3)  # It tries 3 different models.
-    # Feed the structured data regressor with training data.
-    # The path to the train.csv file.
-    # The name of the label column.
-    reg.fit(train_file_path,"Price",epochs=10,)
-    # Predict with the best model.
-    predicted_y = reg.predict(test_file_path)
-    # Evaluate the best model with testing data.
-    print(reg.evaluate(test_file_path, "Price"))
-    
-    '''
-    Data Format
-    The AutoKeras StructuredDataRegressor is quite flexible for the data format.
-
-    The example above shows how to use the CSV files directly. Besides CSV files, 
-    it also supports numpy.ndarray, pandas.DataFrame or tf.data.Dataset. 
-    The data should be two-dimensional with numerical or categorical values.
-
-    For the regression targets, it should be a vector of numerical values. 
-    AutoKeras accepts numpy.ndarray, pandas.DataFrame, or pandas.Series.
-
-    The following examples show how the data can be prepared with 
-    numpy.ndarray, pandas.DataFrame, and tensorflow.data.Dataset.
-    '''
-    # x_train as pandas.DataFrame, y_train as pandas.Series
-    x_train = pd.read_csv(train_file_path)
-    print(type(x_train))  # pandas.DataFrame
-    y_train = x_train.pop("Price")
-    print(type(y_train))  # pandas.Series
-
-    # You can also use pandas.DataFrame for y_train.
-    y_train = pd.DataFrame(y_train)
-    print(type(y_train))  # pandas.DataFrame
-
-    # You can also use numpy.ndarray for x_train and y_train.
-    x_train = x_train.to_numpy()
-    y_train = y_train.to_numpy()
-    print(type(x_train))  # numpy.ndarray
-    print(type(y_train))  # numpy.ndarray
-
-    # Preparing testing data.
-    x_test = pd.read_csv(test_file_path)
-    y_test = x_test.pop("Price")
-
-    # It tries 10 different models.
-    reg = ak.StructuredDataRegressor(max_trials=3, overwrite=True)
-    # Feed the structured data regressor with training data.
-    reg.fit(x_train, y_train, epochs=10)
-    # Predict with the best model.
-    predicted_y = reg.predict(x_test)
-    # Evaluate the best model with testing data.
-    print(reg.evaluate(x_test, y_test))   
-    
-    ''' The following code shows how to convert numpy.ndarray to tf.data.Dataset. '''
-    train_set = tf.data.Dataset.from_tensor_slices((x_train, y_train))
-    test_set = tf.data.Dataset.from_tensor_slices((x_test, y_test))
-
-    reg = ak.StructuredDataRegressor(max_trials=3, overwrite=True)
-    # Feed the tensorflow Dataset to the regressor.
-    reg.fit(train_set, epochs=10)
-    # Predict with the best model.
-    predicted_y = reg.predict(test_set)
-    # Evaluate the best model with testing data.
-    print(reg.evaluate(test_set))
-    
-    '''
-    You can also specify the column names and types for the data as follows. 
-    The column_names is optional if the training data already have the column names, 
-    e.g. pandas.DataFrame, CSV file. 
-    Any column, whose type is not specified will be inferred from the training data.
-    '''
-    # Initialize the structured data regressor.
-    reg = ak.StructuredDataRegressor(
-        column_names=["MedInc","HouseAge","AveRooms","AveBedrms","Population","AveOccup","Latitude","Longitude",],
-        column_types={"MedInc": "numerical", "Latitude": "numerical"},
-        max_trials=10,  # It tries 10 different models.
-        overwrite=True,
-        )
-    
-    return
 
 def linear_regression():
     df_data = pd.read_csv('d:/Brian/AI-Projects/Datasets/linear regression.csv')
@@ -404,10 +313,10 @@ def iniRead():
     exc_txt = "\nAn exception occurred - jsonExp"
     
     try:
-        ''' access the <user>\AppData\Local\Develoment\<appName>.ini file '''
+        # access the <user> \ AppData\Local\Develoment\<appName>.ini file
         
         ''' Find local file directories '''
-        exc_txt = "\nAn exception occurred - unable to retrieve <user>\AppData\Local\Develoment\<appName>.ini"
+        exc_txt = "\nAn exception occurred - unable to retrieve <user>\\AppData\\Local\\Develoment\\<appName>.ini"
         localDirs = get_ini_data("LOCALDIRS")
         aiwork = localDirs['aiwork']
         gitdir = localDirs['git']
@@ -630,51 +539,108 @@ def dictexp():
     
     return
 
-def gSheetToken():
+def gSheetService():
 
     try:
-        ''' Google API and file details '''
+        ''' Google API authentication '''
         exc_txt = "\nAn exception occurred - unable to retrieve Google authentication information"
         googleAuth = get_ini_data("GOOGLE")
         print("Google authentication\n\ttoken: {}\n\tcredentials: {}".format(googleAuth["token"], googleAuth["credentials"]))
-        gSheet = googleSheet()
-
+        gSheetService = googleSheet()
+        
     except Exception:
         exc_info = sys.exc_info()
         exc_str = exc_info[1].args[0]
         exc_txt = exc_txt + "\n\t" + exc_str
         sys.exit(exc_txt)
 
-    return
+    return(gSheetService)
 
 if __name__ == '__main__':
-    print("==================================================== Code experimentation starting")
+    try:
+        print("==================================================== Code experimentation starting")
+        exc_txt = "\nAn exception occurred"
     
-    if True:
-        gSheetToken()
+        localDirs = get_ini_data("LOCALDIRS")
+        aiwork = localDirs['aiwork']
+            
+        if True:
+            
+            ''' Google drive file details '''
+            exc_txt = "\nAn exception occurred - unable to access Google sheet"
+            googleAuth = get_ini_data("GOOGLE")
+            googleDriveFiles = read_config_json(aiwork + "\\" + googleAuth['fileIDs'])
+            
+            '''
+            Authenticate with Google workplace and establish a connection to Google Drive API
+            exc_txt = "\nAn exception occurred - unable to authenticate with Google"
+            gSheets = googleSheet()
+            '''
+            
+            ''' 
+            Use the connetion to Google Drive API to read sheet data
+            Find file ID of file used for development 
+            
+            sheetID = googleDriveFiles["Google IDs"]["Market Data"]["Development"]
+            print("file 1: {} - {}".format('development', googleDriveFiles["Google IDs"]["Market Data"]["Development"]))
+            print("file 2: {} - {}".format('production', googleDriveFiles["Google IDs"]["Market Data"]["Production"]))
+            cellRange = 'Stock Information!A2:C999'
+            cellValues = gSheets.readGoogleSheet(sheetID, cellRange)
+            
+            # Create list of symbols for market data request
+            mktDataSymbols = []
+            mktPuts = []
+            mktCalls = []
+            for i in range (0, len(cellValues)):
+                mktDataSymbols.append(cellValues.iat[i, 0])
+                if cellValues.iat[i, 2] == "1 - Holding":
+                    # Create list of symbols for market put option request
+                    mktPuts.append(cellValues.iat[i, 0])
+                elif cellValues.iat[i, 2] == "4 - Buy":
+                    # Create list of symbols for market call option request
+                    mktCalls.append(cellValues.iat[i, 0])
+            '''
+    
+            '''
+            Authenticate with the market data service
+            '''
+            marketData = MarketData()
+            marketData.requestMarketData(symbolList=["AAPL", "MSFT"])
+            '''
+            Use the market data service to look up
+                basic market data
+                put option market data
+                call option market data
+            '''
+            
+        else:
+            dictexp()
+            processCtrl = iniRead()                   # Experimentation / development of configuration json file
         
-    else:
-        dictexp()
-        processCtrl = iniRead()                   # Experimentation / development of configuration json file
+            ''' test daily process start '''
+            processCtrl = dailyProcess()
+            for process in processCtrl:
+                print("Process: {}, run={}".format(process, processCtrl[process]["run"].get()))
+                if processCtrl[process]["run"].get() == 1:
+                    for control in processCtrl[process]["controls"]:
+                        #for key in processCtrl[process]["controls"][control]:
+                        print("\tcontrol: {} = {}".format(
+                                        processCtrl[process]["controls"][control]["description"], \
+                                        processCtrl[process]["controls"][control]["entry"].get()))
+            ''' test daily process end '''
     
-        ''' test daily process start '''
-        processCtrl = dailyProcess()
-        for process in processCtrl:
-            print("Process: {}, run={}".format(process, processCtrl[process]["run"].get()))
-            if processCtrl[process]["run"].get() == 1:
-                for control in processCtrl[process]["controls"]:
-                    #for key in processCtrl[process]["controls"][control]:
-                    print("\tcontrol: {} = {}".format(
-                                    processCtrl[process]["controls"][control]["description"], \
-                                    processCtrl[process]["controls"][control]["entry"].get()))
-        ''' test daily process end '''
-
-        dataFiles = buildListofMarketDataFiles()
-
-        digitalSreeni_180()
-        linear_regression()
-        sine_wave_regression()
-        autoKeras()
-        pass
+            dataFiles = buildListofMarketDataFiles()
     
-    print("\n==================================================== Code experimentation ending")
+            digitalSreeni_180()
+            linear_regression()
+            sine_wave_regression()
+            # autoKeras()
+            pass
+        
+        print("\n==================================================== Code experimentation ending")
+        
+    except Exception:
+        exc_info = sys.exc_info()
+        exc_str = exc_info[1].args[0]
+        exc_txt = exc_txt + "\n\t" + exc_str
+        sys.exit(exc_txt)

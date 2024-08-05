@@ -213,7 +213,7 @@ def marketDataUpdate(processCtrl):
     
     try:
         print("performing daily daily market data process")
-        app_data = get_ini_data("TDAMERITRADE")
+        app_data = get_ini_data("SCHWAB")
         update_tda_eod_data(app_data['authentication'])
         
     except Exception:
@@ -229,7 +229,7 @@ def calculateDerivedData(processCtrl):
     
     try:
         print("performing daily daily derived data process")
-        app_data = get_ini_data("TDAMERITRADE")
+        app_data = get_ini_data("SCHWAB")
         updateMarketData(app_data['authentication'], app_data['eod_data'], app_data['market_analysis_data'])
         
     except Exception:
@@ -292,7 +292,7 @@ def marketPutOptions(processCtrl):
     try:
         print("performing daily put option process")
 
-        app_data = get_ini_data("TDAMERITRADE")
+        app_data = get_ini_data("SCHWAB")
         ''' json_config = read_config_json(app_data['config']) '''
         json_authentication = tda_get_authentication_details(app_data['authentication'])
         analysis_dir = app_data['market_analysis_data']
@@ -338,7 +338,7 @@ def marketCallOptions(processCtrl):
         jsonGoogle = json.load(localGoogleProject)
         localGoogleProject.close
         
-        app_data = get_ini_data("TDAMERITRADE")
+        app_data = get_ini_data("SCHWAB")
         json_config = read_config_json(app_data['config'])
         json_authentication = tda_get_authentication_details(app_data['authentication'])
         analysis_dir = app_data['market_analysis_data']

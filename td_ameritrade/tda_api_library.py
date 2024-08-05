@@ -16,12 +16,16 @@ import json
 import pandas as pd
 
 from configuration import get_ini_data
-from configuration import read_config_json
+#from configuration import read_config_json
 
 MIN_DURATION = 20
 MAX_DURATION = 65
 MAX_OTM_PCT = 30
 UNDERLYING_MAX = 500
+
+URL_ACCESS_TOKEN = "https://api.tdameritrade.com/v1/oauth2/token"
+URL_BASE_WATCHLIST = "https://api.tdameritrade.com/v1/accounts/"
+URL_BASE_MARKET_DATA = "https://api.schwabapi.com/marketdata/v1"
 
 def init_df_trading_strategy():
     df_trading_strategy = pd.DataFrame(columns = ["symbol", "strategy", "expiration", "days To Expiration", \
@@ -78,6 +82,7 @@ def tda_update_authentication_details(json_authentication):
     localDirs = get_ini_data("LOCALDIRS")
     aiwork = localDirs['aiwork']
 
+    print ("*****\nTDA conversion - why is file name hard coded?\n*****\n")
     json_f = open(aiwork + '\\tda_local.json', "w")
     json.dump(json_authentication, json_f, indent=0)
     json_f.close
