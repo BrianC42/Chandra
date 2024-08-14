@@ -4,13 +4,20 @@ Created on Jul 23, 2024
 @author: brian
 '''
 import sys
-from datetime import date
 import time
 import requests
 import json
+import re
+
+import datetime
+from datetime import date
+from functools import partial
+from tkinter import *
+from tkinter import ttk
 
 from configuration import get_ini_data
 from configuration import read_config_json
+from OptionChain import OptionChain
 
 class MarketData(object):
     '''
@@ -56,7 +63,174 @@ class MarketData(object):
             exc_str = exc_info[1].args[0]
             sys.exit(exc_txt + "\n\t" + exc_str)
         
+    '''    ================ OAuth flow tkInter UI development - start ===================== '''
+    def formatCurl(self, redirecturi, curlText):
+        encodedIDSecret = self.localAPIAccessDetails["EncodedClientID_Secret"]
+        reduri = redirecturi.get(1.0, END)
+        
+        print("redirect uri:", reduri)
+            
+        authCode = re.search(r'code=(.*?)&session', reduri)
+        self.localAPIAccessDetails["tokens"]["authorization"]["authorization_code"] = authCode.group(1)
+        self.localAPIAccessDetails["tokens"]["authorization"]["obtained"] = time.time()
+        self.localAPIAccessDetails["tokens"]["authorization"]["expires_in"] = 30
+        self.localAPIAccessDetails["tokens"]["authorization"]["expires"] = time.time() + 30
+        print("Authorization:", authCode)
+        
+        if authCode:
+            print('curl -X POST https://api.schwabapi.com/v1/oauth/token ^')
+            print('-H "Authorization: Basic ' + encodedIDSecret + '" ^')
+            print('-H "Content-Type: application/x-www-form-urlencoded" ^')
+            print('-d "grant_type=authorization_code&code=' + authCode.group(1) + '&redirect_uri=https://127.0.0.1"')
+            
+            curlCmd = 'curl -X POST https://api.schwabapi.com/v1/oauth/token ^\n' + \
+                      '-H "Authorization: Basic ' + encodedIDSecret + '" ^\n' + \
+                      '-H "Content-Type: application/x-www-form-urlencoded" ^\n' + \
+                      '-d "grant_type=authorization_code&code=' + authCode.group(1) + '&redirect_uri=https://127.0.0.1"\n'
+            
+            curlText.replace(1.0, END, curlCmd)
+            
+            print("Text set to:\n", curlText.get(1.0, END))
+        
+        else:
+            pass
+    
+        return
+    
+    def saveAuthorizations(self, authorizationResponse):
+        resp = authorizationResponse.get(1.0, END)
+        print("Authorization response:\n", resp)
+        
+        respJson = json.loads(resp)
+        
+        acquired = time.time()
+        self.localAPIAccessDetails["tokens"]["refresh"]["obtained"] = acquired
+        self.localAPIAccessDetails["tokens"]["access"]["obtained"] = acquired
+        # (60 * 30) reduction to minimize chances of expiration during a process
+        self.localAPIAccessDetails["tokens"]["refresh"]["expires_in"] = (7*24*60*60) - (60*30)
+        refreshExpires = acquired + self.localAPIAccessDetails["tokens"]["refresh"]["expires_in"]
+        self.localAPIAccessDetails["tokens"]["refresh"]["expires"] = refreshExpires
+        # (60 * 5) reduction to minimize chances of expiration during an access request
+        accessExpires = acquired + respJson["expires_in"] - (60*5)
+        self.localAPIAccessDetails["tokens"]["access"]["expires"] = accessExpires
+
+        self.localAPIAccessDetails["tokens"]["refresh"]["refresh_token"] =  respJson['refresh_token']
+
+        self.localAPIAccessDetails["tokens"]["access"]["expires_in"] = respJson['expires_in']
+        self.localAPIAccessDetails["tokens"]["access"]["token_type"] =  respJson['token_type']
+        self.localAPIAccessDetails["tokens"]["access"]["scope"] =  respJson['scope']
+        self.localAPIAccessDetails["tokens"]["access"]["access_token"] =  respJson['access_token']
+        self.localAPIAccessDetails["tokens"]["access"]["id_token"] =  respJson['id_token']
+        
+        print("access token\n", respJson['access_token'])
+        print("expires in: ", respJson["expires_in"])
+        print("token scope: ", respJson["scope"])
+        print("token type: ", respJson["token_type"])
+        print("refresh token:\n", respJson["refresh_token"])
+        print("id token\n", respJson['id_token'])
+        print("acquired: ", acquired)
+        print("refresh expires", refreshExpires)
+        print("access expires", accessExpires)
+        
+        self.saveSecureLocalConfiguration()
+
+        return
+    
+    def authorizationInterface(self, ):
+        try:
+            exc_txt = "Exception occurred displaying the authorization code UI"
+            ROW_OAUTH_INSTRUCTION = 1
+            ROW_OAUTH_URI = 2
+            ROW_PASTE_INSTRUCTION = 3
+            ROW_OAUTH_REDIRECTION = 4
+            ROW_FORMAT_BUTTON = 5
+            ROW_PASTE_CURL_CMD = 6
+            ROW_CURL_TEXT = 7
+            TBD1 = 8
+            ROW_AUTHORIZATION_RESPONSE = 10
+            ROW_PASTE_RESPONSE_LABEL = 9
+            ROW_SAVE_AUTHORIZATION_RESPONSE = 11
+    
+            OAuthService = 'https://api.schwabapi.com/v1/oauth/authorize'
+            clientID = '?client_id=' + self.localAPIAccessDetails["clientID"]
+            redirectUri = '&redirect_uri=' + 'https://127.0.0.1'
+            encodedIDSecret = "EncodedClientID_Secret"
+            
+            OAuthFlowService = OAuthService + clientID + redirectUri
+    
+            # Create the main window
+            uiRoot = Tk()
+            uiRoot.title("Authorization OAuth Flow Data")
+            uiRoot.columnconfigure(0, weight=1)
+            uiRoot.rowconfigure(0, weight=1)
+    
+            mainframe = ttk.Frame(uiRoot, padding="3 3 12 12")
+            mainframe.grid(column=0, row=0, sticky=(N, W, E, S))
+    
+            uri = StringVar()
+            redirectUri = StringVar()
+            
+            oauthURI = Text(mainframe, width=100, height=4)
+            oauthURI.insert(1.0, OAuthFlowService)
+            oauthURI.grid(column=1, row=ROW_OAUTH_URI, sticky=(W, E))
+            
+            Inst1 = "Preparation:\n\tOpen a web browser page\n\tOpen the Windows cmd shell"
+            Inst2 = "\nStep 1: Paste the following uri into the browser search bar to initiate the OAuth flow"
+            Inst3 = "\nStep 2: When the authenticating server redirects the browser paste the search bar uri to the redirect box"
+            Inst4 = "\nStep 3: Click the Format Post button"
+            Inst5 = "\nStep 4: WITHIN 30 SECONDS paste the curl cmd lines into the Windows cmd shell"
+            Inst6 = "\nStep 5: Paste the response from the authentication server into the Authentication box"
+            Inst7 = "\nStep 6: Click the Save Authorization button"
+            instructions = Inst1 + Inst2 +  Inst3 +  Inst4 +  Inst5 +  Inst6 +  Inst7
+            
+            step1Inst = "Paste redirect uri here"
+            step4Inst = "paste the curl command below into a cmd window WITHIN 30 SECONDS"
+            step5Inst = "Paste the response from the authentication server below"
+            
+            ttk.Label(mainframe, text=instructions).grid(column=1, row=ROW_OAUTH_INSTRUCTION, sticky=W)
+            ttk.Label(mainframe, text=step1Inst).grid(column=1, row=ROW_PASTE_INSTRUCTION, sticky=W)
+            ttk.Label(mainframe, text=step4Inst).grid(column=1, row=ROW_PASTE_CURL_CMD, sticky=W)
+            ttk.Label(mainframe, text=step5Inst).grid(column=1, row=ROW_PASTE_RESPONSE_LABEL, sticky=W)
+            
+            # multi-line text box to hold the formatted curl cmd
+            curlTxt = Text(mainframe, width=100, height=6)
+            curlTxt.grid(column=1, row=ROW_CURL_TEXT, sticky=(W, E))
+            
+            # multi-line text box and button to receive the redirection uri
+            uri_entry = Text(mainframe, width=100, height=4)
+            uri_entry.grid(column=1, row=ROW_OAUTH_REDIRECTION, sticky=(W, E))
+            # button to format the redirection uri into an OAuth post for the authentication server
+            ttk.Button(mainframe, text="Format post", command=partial(self.formatCurl, uri_entry, curlTxt)). \
+                        grid(column=1, row=ROW_FORMAT_BUTTON, sticky=W)
+            
+            # multi-line text box to paste the authorization server response into
+            authorizationResponse = Text(mainframe, width=100, height=4)
+            authorizationResponse.grid(column=1, row=ROW_AUTHORIZATION_RESPONSE, sticky=(W, E))
+            # button to save the authorization response for future processing
+            ttk.Button(mainframe, text="Save Authorization", command=partial(self.saveAuthorizations, authorizationResponse)). \
+                        grid(column=1, row=ROW_SAVE_AUTHORIZATION_RESPONSE, sticky=W)
+    
+            for child in mainframe.winfo_children(): 
+                child.grid_configure(padx=5, pady=5)
+            
+            uri_entry.focus()
+            #uiRoot.bind("<Return>", formatCurl)
+        
+            # Start the GUI event loop
+            uiRoot.mainloop()
+    
+        except Exception:
+            exc_info = sys.exc_info()
+            exc_str = exc_info[1].args[0]
+            exc_txt = exc_txt + "\n\t" + exc_str
+            sys.exit(exc_txt)
+    
+        return
+    '''    ================ OAuth flow tkInter UI development - end ===================== '''
+
+    
     def refreshAccessToken(self):
+        exc_txt = "refreshAccessToken exception"
         try:
             print("refreshAccessToken")
             
@@ -66,122 +240,66 @@ class MarketData(object):
                            "Authorization" : "Basic " + self.localAPIAccessDetails["EncodedClientID_Secret"]}
             
             code = "..."
-            postData = {'grant_type' : "authorization_code", \
-                        'code' :  code,\
-                        'redirect_uri' : self.localAPIAccessDetails["RedirectURI"]}
+            postData = {'grant_type' : "refresh_token", \
+                        'refresh_token' :  self.localAPIAccessDetails["tokens"]["refresh"]["refresh_token"]}
             
-            print("POST: {}\nheaders={}\ndata={}".format(url, postHeaders, postData))
+            #print("POST: {}\nheaders={}\ndata={}".format(url, postHeaders, postData))
             response = requests.post(url, headers=postHeaders, data=postData)
 
             if response.status_code == 200:
-                rJSON = response.json()
-            '''
-            curl -X POST https://api.schwabapi.com/v1/oauth/token ^
-            -H "Authorization: Basic {Base64 clientID:clientSecret}" ^
-            -H "Content-Type: application/x-www-form-urlencoded" ^
-            -d "grant_type=refresh_token&refresh_token={refresh_token}"
-            
-            {
-            "expires_in":1800,
-            "token_type":"Bearer",
-            "scope":"api",
-            "refresh_token":"...",
-            "access_token":"...",
-            "id_token":"..."
-            }
-            '''
-            return True
-    
-        except :
-            print("\n\t***** refreshAccessToken exception *****\n")
-            return False        
+                respJson = response.json()
+                
+                acquired = time.time()
+                self.localAPIAccessDetails["tokens"]["access"]["obtained"] = acquired
+                # (60 * 5) reduction to minimize chances of expiration during an access request
+                accessExpires = acquired + respJson["expires_in"] - (60*5)
+                self.localAPIAccessDetails["tokens"]["access"]["expires"] = accessExpires
         
-    def requestRefreshAccessTokens(self):
-        try:
-            print("requestRefreshAccessTokens")
-            
-            accessToken = self.localAPIAccessDetails['tokens']['access']['access_token']
-            accessTokenExpires =  self.localAPIAccessDetails['tokens']['access']['expires']
-            if time.time() > accessTokenExpires:
-            
-                url = self.localAPIAccessDetails["APIs"]["Authorization"]["URL"]
+                self.localAPIAccessDetails["tokens"]["refresh"]["refresh_token"] =  respJson['refresh_token']
+        
+                self.localAPIAccessDetails["tokens"]["access"]["expires_in"] = respJson['expires_in']
+                self.localAPIAccessDetails["tokens"]["access"]["token_type"] =  respJson['token_type']
+                self.localAPIAccessDetails["tokens"]["access"]["scope"] =  respJson['scope']
+                self.localAPIAccessDetails["tokens"]["access"]["access_token"] =  respJson['access_token']
+                self.localAPIAccessDetails["tokens"]["access"]["id_token"] =  respJson['id_token']
                 
-                postHeaders = {"Content-Type" : "application/x-www-form-urlencoded", "Authorization" : "Basic " + self.localAPIAccessDetails["EncodedClientID_Secret"]}
+                '''
+                print("access token\n", respJson['access_token'])
+                print("expires in: ", respJson["expires_in"])
+                print("token scope: ", respJson["scope"])
+                print("token type: ", respJson["token_type"])
+                print("refresh token:\n", respJson["refresh_token"])
+                print("id token\n", respJson['id_token'])
+                print("acquired: ", acquired)
+                print("access expires", accessExpires)
+                '''
                 
-                postData = {'grant_type' : "refresh_token", \
-                           'refresh_token' : self.localAPIAccessDetails["tokens"]["refresh"]["refresh_token"]}
-                
-                print("POST: {}\nheaders={}\ndata={}".format(url, postHeaders, postData))
-                response = requests.post(url, headers=postHeaders, data=postData)
-    
-                if response.status_code == 200:
-                    rJSON = response.json()
-                    
-                    self.localAPIAccessDetails["tokens"]["refresh"]["refresh_token"] =  rJSON['refresh_token']
-
-                    self.localAPIAccessDetails["tokens"]["access"]["obtained"] = time.time()
-                    self.localAPIAccessDetails["tokens"]["access"]["expires"] = rJSON['expires_in'] + time.time()
-                    self.localAPIAccessDetails["tokens"]["access"]["expires_in"] = rJSON['expires_in']
-                    self.localAPIAccessDetails["tokens"]["access"]["token_type"] =  rJSON['token_type']
-                    self.localAPIAccessDetails["tokens"]["access"]["scope"] =  rJSON['scope']
-                    self.localAPIAccessDetails["tokens"]["access"]["access_token"] =  rJSON['access_token']
-                    self.localAPIAccessDetails["tokens"]["access"]["id_token"] =  rJSON['id_token']
-                    
-                    self.saveSecureLocalConfiguration()
+                self.saveSecureLocalConfiguration()
+            else:
+                if response.status_code == 400:
+                    exc_txt = "Generic client error"
                 else:
-                    raise NameError('\n\taccess token refresh failed')
+                    exc_txt = "Error code = {}\n".format(response.status_code)
             return True
     
-        except :
-            print("\n\t***** requestRefreshAccessTokens exception *****\n")
-            return False        
-        
+        except Exception:
+            exc_info = sys.exc_info()
+            exc_str = exc_info[1].args[0]
+            exc_txt = exc_txt + "\n\t" + exc_str
+            sys.exit(exc_txt)
+                
     def manageMarketDataServiceTokens(self):
         try:
             print("manageMarketDataServiceTokens")
-            self.requestRefreshAccessTokens()
             
-            accessToken = self.localAPIAccessDetails['tokens']['access']['access_token']
-            accessTokenExpires =  self.localAPIAccessDetails['tokens']['access']['expires']
-            if time.time() > accessTokenExpires:
-                
-                
-                authorizationURL = self.localAPIAccessDetails['APIs']['Authorization']['URL']
-                refreshToken = self.localAPIAccessDetails['tokens']['refresh']['refresh_token']
-                refreshTokenExpires =  self.localAPIAccessDetails['tokens']['refresh']['expires']
-                clientID = self.localAPIAccessDetails['clientID']
-                redirecturi = self.localAPIAccessDetails['RedirectURI']
-                params = {'grant_type' : 'refresh_token', \
-                          'refresh_token' : refreshToken, \
-                          'access_type' : '', \
-                          'code' : '', \
-                          'client_id' : clientID, \
-                          'redirect_uri' : redirecturi}
-                
-                return True
-
-                response = requests.post(authorizationURL, data=params)
-                if response.ok:
-                    Authorization_details = json.loads(response.text)
-                    self.localAPIAccessDetails["currentToken"] = Authorization_details["access_token"]
-                    self.localAPIAccessDetails["scope"] = Authorization_details["scope"]
-                    self.localAPIAccessDetails["tokenObtained"] = time.time()
-                    self.localAPIAccessDetails["expiresIn"] = Authorization_details["expires_in"]
-                    self.localAPIAccessDetails["token_type"] = Authorization_details["token_type"]
-                    #tda_update_authentication_details(self.localAPIAccessDetails)
-                    
-                    print ("*****\nWriting loacl Schwab configuration json file\n*****\n")
-                    json_f = open(self.localAPIAccessFile, "w")
-                    json.dump(self.localAPIAccessDetails, json_f, indent=1)
-                    json_f.close
-                else:
-                    self.localAPIAccessDetails["currentToken"] = ""
-                    self.localAPIAccessDetails["scope"] = ""
-                    self.localAPIAccessDetails["tokenObtained"] = 0.0
-                    self.localAPIAccessDetails["expiresIn"] = 0.0
-                    self.localAPIAccessDetails["token_type"] = ""
-                
-                    raise NameError('\n\tAuthorization request response not OK\n\tresponse code={}, reason {}, {}'.format(response.status_code, response.reason, response.text))
+            refreshTokenExpires = self.localAPIAccessDetails['tokens']['refresh']['expires']
+            if time.time() > refreshTokenExpires:
+                self.authorizationInterface()
+            else:
+                accessTokenExpires = self.localAPIAccessDetails['tokens']['access']['expires']
+                if time.time() > accessTokenExpires:
+                    self.refreshAccessToken()
+            
             return True
     
         except :
@@ -192,6 +310,10 @@ class MarketData(object):
         try:
             print("manageThrottling")
             if apiID == "market data":
+                pass
+            elif apiID == "call option":
+                pass
+            elif apiID == "put option":
                 pass
             else:
                 raise Exception
@@ -205,7 +327,7 @@ class MarketData(object):
         
     def saveSecureLocalConfiguration(self):
         try:
-            print ("*****\nWriting local Schwab configuration json file\n*****\n")
+            #print ("*****\nWriting local Schwab configuration json file\n*****\n")
             with open(self.localAPIAccessFile, 'w', encoding='utf-8') as json_f:
                 json.dump(self.localAPIAccessDetails, json_f, ensure_ascii=False, indent=4)
             json_f.close
@@ -215,133 +337,186 @@ class MarketData(object):
         except :
             print("\n\t***** Unable to save the updated authentication details for the market data service api *****\n")
             return False
+        
+    def analyzeMarketData(self, apiJson):
+        exc_txt = "analyzeMarketData exception"
+        try:
+            responseSymbol = apiJson['symbol']
+            responseEmpty = apiJson['empty']
+            if not responseEmpty:
+                for candle in apiJson['candles']:
+                    open = candle["open"]
+                    close = candle["close"]
+                    low = candle["low"]
+                    high = candle["high"]
+                    volume = candle["volume"]
+                    datetime = float(candle["datetime"]/1000)
+                    print("Market data: symbol: {}, date/time: {}, open: {}, close: {}, volume: {}". \
+                            format(apiJson["symbol"], datetime, open, close, volume))
 
-    def requestMarketData(self, symbolList=""):
+            return 
+        
+        except ValueError:
+            exc_info = sys.exc_info()
+            exc_str = exc_info[1].args[0]
+            exc_txt = exc_txt + "\n\t" + exc_str
+            sys.exit(exc_txt)
+
+    def requestMarketData(self, symbol="", periodType="", period="", frequencyType="", frequency=""):
+        exc_txt = "An exception occurred requesting market data"
         try:
             print("requestMarketData")
             
-            if self.manageThrottling("market data"):
-                self.manageMarketDataServiceTokens()
-                
-                urlSymbol = "AAPL"
-                urlPeriodType = "month"
-                urlPeriod = "1"
-                urlFrequencyType = "daily"
-                urlFrequency = "1"
-                        
-                accessToken = self.localAPIAccessDetails["tokens"]["access"]["access_token"]
-                hdr2 = "Bearer " + accessToken
-                getHeaders = {"accept" : "application/json", "Authorization" : hdr2}
-                
-                url = "https://api.schwabapi.com/marketdata/v1/pricehistory"
-                payload = {'symbol' : urlSymbol, \
-                           'periodType' : urlPeriodType, \
-                           'period' : urlPeriod, \
-                           'frequencyType' : urlFrequencyType, \
-                           'frequency' : urlFrequency}
-                
-                print("GET: {}\nheaders={}\nparams={}".format(url, getHeaders, payload))
-                response = requests.get(url, headers=getHeaders, params=payload)
-
-                if response.status_code == 200:
-                    '''
-                    successful request. Data returned.
-                    '''
-                    rJSON = response.json()
-                    responseSymbol = response.text['symbol']
-                    responseEmpty = response.text['empty']
-                    response.candeles = response.text['candles']
-                    pass
-                else:
-                    if response.status_code == 400:
-                        descText = "Generic client error"
-                    elif response.status_code == 401:
-                        descText = "Unauthorized"
-                    elif response.status_code == 404:
-                        descText = "Not found"
-                    elif response.status_code == 500:
-                        descText = "Internal server error"
-                    print("Market data request failed - code: {}, {}".format(response.status_code, descText))
-                    raise Exception
-
-            '''
-            {
-            "candles": [
-                {
-                  "open": 207.72,
-                  "high": 212.7,
-                  "low": 206.59,
-                  "close": 208.14,
-                  "volume": 80727006,
-                  "datetime": 1719205200000
-                },
-                {
-                .
-                .
-                .
-                }
-              ],
-              "symbol": "AAPL",
-              "empty": false
-            }
+            self.manageThrottling("market data")
+            self.manageMarketDataServiceTokens()
             
-            {
-            "errors": [
-                {
-                  "id": "6808262e-52bb-4421-9d31-6c0e762e7dd5",
-                  "status": "400",
-                  "title": "Bad Request",
-                  "detail": "Missing header",
-                  "source": {
-                    "header": "Authorization"
-                  }
-                },
-                {
-                  "id": "0be22ae7-efdf-44d9-99f4-f138049d76ca",
-                  "status": "400",
-                  "title": "Bad Request",
-                  "detail": "Search combination should have min of 1.",
-                  "source": {
-                    "pointer": [
-                      "/data/attributes/symbols",
-                      "/data/attributes/cusips",
-                      "/data/attributes/ssids"
-                    ]
-                  }
-                },
-                {
-                  "id": "28485414-290f-42e2-992b-58ea3e3203b1",
-                  "status": "400",
-                  "title": "Bad Request",
-                  "detail": "valid fields should be any of all,fundamental,reference,extended,quote,regular or empty value",
-                  "source": {
-                    "parameter": "fields"
-                  }
-                }
-              ]
-            }
-            '''
-            return True
-    
-        except :
-            print("\n\t***** requestMarketData exception *****\n")
-            return False
+            accessToken = self.localAPIAccessDetails["tokens"]["access"]["access_token"]
+            hdr2 = "Bearer " + accessToken
+            getHeaders = {"accept" : "application/json", "Authorization" : hdr2}
+            
+            url = "https://api.schwabapi.com/marketdata/v1/pricehistory"
+            payload = {'symbol' : symbol, \
+                       'periodType' : periodType, \
+                       'period' : period, \
+                       'frequencyType' : frequencyType, \
+                       'frequency' : frequency}
+            
+            #print("GET: {}\nheaders={}\nparams={}".format(url, getHeaders, payload))
+            response = requests.get(url, headers=getHeaders, params=payload)
 
-    def requestMarketCalls(self):
+            if response.status_code == 200:
+                '''  -----------  successful request. Data returned.  --------------  '''
+                self.analyzeMarketData(response.json())
+            else:
+                if response.status_code == 400:
+                    exc_txt = "Generic client error"
+                    '''
+                    {
+                    "errors": [
+                        {
+                          "id": "6808262e-52bb-4421-9d31-6c0e762e7dd5",
+                          "status": "400",
+                          "title": "Bad Request",
+                          "detail": "Missing header",
+                          "detail": "Search combination should have min of 1.",
+                          "detail": "valid fields should be any of all,fundamental,reference,extended,quote,regular or empty value",
+                          "source": {
+                            "header": "Authorization"
+                          }
+                        },
+                    '''
+                elif response.status_code == 401:
+                    exc_txt = "Unauthorized"
+                elif response.status_code == 404:
+                    exc_txt = "Not found"
+                elif response.status_code == 500:
+                    exc_txt = "Internal server error"
+                else:
+                    exc_txt = "Unrecognized error"
+                print("Market data request failed - code: {}, {}".format(response.status_code, exc_txt))
+                raise Exception
+
+            return "schwab", True
+    
+        except ValueError:
+            exc_info = sys.exc_info()
+            exc_str = exc_info[1].args[0]
+            exc_txt = exc_txt + "\n\t" + exc_str
+            sys.exit(exc_txt)
+
+    def requestOptionChain(self, type="Both", symbol="", strikeCount=0, range="OTM", daysToExpiration=0):
+        exc_txt = "An exception occurred requesting option chain"
         try:
-            print("requestMarketCalls")
-            return True
-    
-        except :
-            print("\n\t***** TBD *****\n")
-            return False
+            print("requestOptionChain")
+            
+            if type == "Call":
+                contractType = "CALL"
+            elif type == "Put":
+                contractType = "PUT"
+            elif type == "Both":
+                contractType = "ALL"
+            else:
+                raise Exception                
+            
+            # From date(pattern: yyyy-MM-dd)
+            # To date (pattern: yyyy-MM-dd)
+            # OptionChain strategy. Default is SINGLE. ANALYTICAL allows the use of 
+            # volatility, underlyingPrice, interestRate, and daysToExpiration params to calculate theoretical values.
+            now = time.time()
+            dtNow = datetime.datetime.fromtimestamp(now)
+            strNow = dtNow.strftime("%Y-%m-%d")
+            duration = daysToExpiration * (60*60*24)
+            optionExpires = now + duration
+            dtExp = datetime.datetime.fromtimestamp(optionExpires)
+            strExp = dtExp.strftime("%Y-%m-%d")
+            print("Options expiring between {} and {}".format(strNow, strExp))
+            
+            if type == "Call":
+                self.manageThrottling("call option")
+            elif type == "Put":
+                self.manageThrottling("put option")
+                
+            self.manageMarketDataServiceTokens()
+            
+            accessToken = self.localAPIAccessDetails["tokens"]["access"]["access_token"]
+            hdr2 = "Bearer " + accessToken
+            getHeaders = {"accept" : "application/json", "Authorization" : hdr2}
+            
+            url = "https://api.schwabapi.com/marketdata/v1/chains"
+            payload = {'symbol' : symbol, \
+                       'contractType' : contractType, \
+                       'strikeCount' : strikeCount, \
+                       'range' : range, \
+                       'fromDate' : strNow, \
+                       'toDate' : strExp
+                       }
+            
+            #print("GET: {}\nheaders={}\nparams={}".format(url, getHeaders, payload))
+            response = requests.get(url, headers=getHeaders, params=payload)
 
-    def requestMarketPuts(self):
-        try:
-            print("requestMarketPuts")
-            return True
-    
-        except :
-            print("\n\t***** TBD *****\n")
-            return False
+            if response.status_code == 200:
+                '''  -----------  successful request. Data returned.  --------------  '''
+                optionChain = response.json()
+                optionList = []
+                for exp_date, options in optionChain['putExpDateMap'].items():
+                    for strike_price, options_data in options.items():
+                        for option in options_data:
+                            opt = OptionChain(symbol, exp_date, strike_price, option)
+                            optionList.append(opt)
+            else:
+                if response.status_code == 400:
+                    exc_txt = "Generic client error"
+                    '''
+                    {
+                    "errors": [
+                        {
+                          "id": "6808262e-52bb-4421-9d31-6c0e762e7dd5",
+                          "status": "400",
+                          "title": "Bad Request",
+                          "detail": "Missing header",
+                          "detail": "Search combination should have min of 1.",
+                          "detail": "valid fields should be any of all,fundamental,reference,extended,quote,regular or empty value",
+                          "source": {
+                            "header": "Authorization"
+                          }
+                        },
+                    '''
+                elif response.status_code == 401:
+                    exc_txt = "Unauthorized"
+                elif response.status_code == 404:
+                    exc_txt = "Not found"
+                elif response.status_code == 500:
+                    exc_txt = "Internal server error"
+                else:
+                    exc_txt = "Unrecognized error"
+                print("Option request failed - code: {}, {}".format(response.status_code, exc_txt))
+                raise Exception
 
+            return "schwab", optionList
+    
+        except ValueError:
+            exc_info = sys.exc_info()
+            exc_str = exc_info[1].args[0]
+            exc_txt = exc_txt + "\n\t" + exc_str
+            sys.exit(exc_txt)
+        

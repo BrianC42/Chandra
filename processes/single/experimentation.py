@@ -18,10 +18,13 @@ dataset: https://finance.yahoo.com/quote/GE/history/
 Also try S&P: https://finance.yahoo.com/quote/%5EGSPC/history?p=%5EGSPC
 '''
 from tensorflow.python.training import input
+import tkinter
+import requests_oauthlib
+from oauthlib import oauth2
+from oauthlib.oauth2 import WebApplicationClient
 
 ''' Google workspace requirements start '''
 import os.path
-import datetime as dt
 import json
 import pandas as pd
 import re
@@ -33,6 +36,7 @@ from MarketData import MarketData
 from configuration import get_ini_data
 from configuration import read_config_json
 from Scalers import chandraScaler
+from OptionChain import OptionChain
 
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
@@ -43,16 +47,22 @@ from googleapiclient.errors import HttpError
 
 import sys
 import glob
+
+import time
 import datetime
 from datetime import date
 from datetime import timedelta
 
+
+from functools import partial
 '''
 from tkinter import *
+import tkinter as tk
 from tkinter import ttk
 from tkinter.ttk import Combobox
 '''
-import tkinter as tk
+from tkinter import *
+from tkinter import ttk
 
 import numpy as np
 import pandas as pd
@@ -388,7 +398,7 @@ def dailyProcess():
         print("appConfig: {}".format(appConfig))
         
         ''' =============== build user interface based on configuration json file =========== '''
-        ui=tk.Tk()
+        ui=Tk()
         ui.title('Morning Process Control')
         ''' either of the following will force the window size as specified '''
         #root.geometry("1000x600")
@@ -396,20 +406,20 @@ def dailyProcess():
         #ui.geometry("1000x800+10+10")
 
         ''' ================== create window frames for top level placement ============ '''
-        frmSelection = tk.Frame(ui, relief=tk.GROOVE, borderwidth=5)
-        frmSelection.pack(fill=tk.BOTH)
+        frmSelection = Frame(ui, relief=GROOVE, borderwidth=5)
+        frmSelection.pack(fill=BOTH)
         ''' frames within frames '''
-        frmProcess = tk.Frame(frmSelection, relief=tk.SUNKEN, borderwidth=5)
-        frmProcess.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        frmModel = tk.Frame(frmSelection, relief=tk.RAISED, borderwidth=5)
-        frmModel.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)        
+        frmProcess = Frame(frmSelection, relief=SUNKEN, borderwidth=5)
+        frmProcess.pack(side=LEFT, fill=BOTH, expand=True)
+        frmModel = Frame(frmSelection, relief=RAISED, borderwidth=5)
+        frmModel.pack(side=RIGHT, fill=BOTH, expand=True)        
 
-        frmButtons = tk.Frame(ui, relief=tk.RIDGE, borderwidth=5)
-        frmButtons.pack(fill=tk.BOTH)                
+        frmButtons = Frame(ui, relief=RIDGE, borderwidth=5)
+        frmButtons.pack(fill=BOTH)                
         
         exc_txt = "\nAn exception occurred selecting processes to run and setting parameters"
         ''' traditional processes '''
-        lblProcessTitle = tk.Label(frmProcess, text="Traditional processes", height=2)
+        lblProcessTitle = Label(frmProcess, text="Traditional processes", height=2)
         lblProcessTitle.pack()
         frmTp=[]
         varTp=[]
@@ -421,11 +431,11 @@ def dailyProcess():
             if not process["model"]:
                 print("Process name: {}".format(process["name"]))
                 
-                frmTp.append(tk.Frame(frmProcess))
+                frmTp.append(Frame(frmProcess))
                 frmTp[len(frmTp)-1].pack()
                 
-                varTp.append(tk.IntVar())
-                btnTp.append(tk.Checkbutton(frmTp[len(varTp)-1], \
+                varTp.append(IntVar())
+                btnTp.append(Checkbutton(frmTp[len(varTp)-1], \
                                             text=process["name"], \
                                             variable=varTp[len(varTp)-1]))
                 btnTp[len(btnTp)-1].pack()
@@ -440,13 +450,13 @@ def dailyProcess():
                     for control in process["controls"]:
                         for key in control.keys():
                             print("\tcontrol: {}, value:{}".format(key, control[key]))
-                            frmTpCtrl.append(tk.Frame(frmTp[len(frmTp)-1]))
+                            frmTpCtrl.append(Frame(frmTp[len(frmTp)-1]))
                             frmTpCtrl[len(frmTpCtrl)-1].pack()
 
-                            lblTpControl.append(tk.Label(frmTpCtrl[len(frmTpCtrl)-1], text=key))
-                            lblTpControl[len(lblTpControl)-1].pack(side=tk.LEFT)
+                            lblTpControl.append(Label(frmTpCtrl[len(frmTpCtrl)-1], text=key))
+                            lblTpControl[len(lblTpControl)-1].pack(side=LEFT)
 
-                            entTpControl.append(tk.Entry(frmTpCtrl[len(frmTpCtrl)-1], \
+                            entTpControl.append(Entry(frmTpCtrl[len(frmTpCtrl)-1], \
                                                          fg="black", bg="white", width=50))
                             entTpControl[len(entTpControl)-1].pack()
                             entTpControl[len(entTpControl)-1].insert(0, control[key])
@@ -459,7 +469,7 @@ def dailyProcess():
                     processCtrl[process["name"]]["controls"]=dControl
 
         ''' machine learning models '''
-        lblModels = tk.Label(frmModel, text="Trained models", height=2)
+        lblModels = Label(frmModel, text="Trained models", height=2)
         lblModels.pack()
         frmMl=[]
         varMl=[]
@@ -471,11 +481,11 @@ def dailyProcess():
             if process["model"]:
                 print("model name: {}".format(process["name"]))
 
-                frmMl.append(tk.Frame(frmModel))
+                frmMl.append(Frame(frmModel))
                 frmMl[len(frmMl)-1].pack()
                 
-                varMl.append(tk.IntVar())
-                btnMl.append(tk.Checkbutton(frmMl[len(frmMl)-1], \
+                varMl.append(IntVar())
+                btnMl.append(Checkbutton(frmMl[len(frmMl)-1], \
                                             text=process["name"], \
                                             variable=varMl[len(varMl)-1]))
                 btnMl[len(btnMl)-1].pack()
@@ -491,13 +501,13 @@ def dailyProcess():
                     for control in process["controls"]:
                         for key in control.keys():
                             print("\tcontrol: {}, value:{}".format(key, control[key]))
-                            frmMlControl.append(tk.Frame(frmMl[len(frmMl)-1]))
+                            frmMlControl.append(Frame(frmMl[len(frmMl)-1]))
                             frmMlControl[len(frmMlControl)-1].pack()
 
-                            lblMlControl.append(tk.Label(frmMlControl[len(frmMlControl)-1], text=key))
-                            lblMlControl[len(lblMlControl)-1].pack(side=tk.LEFT)
+                            lblMlControl.append(Label(frmMlControl[len(frmMlControl)-1], text=key))
+                            lblMlControl[len(lblMlControl)-1].pack(side=LEFT)
 
-                            entMlControl.append(tk.Entry(frmMlControl[len(frmMlControl)-1], \
+                            entMlControl.append(Entry(frmMlControl[len(frmMlControl)-1], \
                                                          fg="black", bg="white", width=50))
                             entMlControl[len(entMlControl)-1].pack()
                             entMlControl[len(entMlControl)-1].insert(0, control[key])
@@ -515,9 +525,9 @@ def dailyProcess():
             ui.quit()
             
         ''' =================== widgets in bottom frame =================== '''
-        #lblBottom = tk.Label(frmButtons, text="bottom frame", width=50, height=2)
+        #lblBottom = Label(frmButtons, text="bottom frame", width=50, height=2)
         #lblBottom.pack()
-        btnRun=tk.Button(frmButtons, command=go_button, text="Perform selected processes", fg='blue', height=3)
+        btnRun=Button(frmButtons, command=go_button, text="Perform selected processes", fg='blue', height=3)
         btnRun.pack()
         
         ''' =================== Interact with user =================== '''
@@ -556,30 +566,322 @@ def gSheetService():
 
     return(gSheetService)
 
+def show_data():
+    #authorizationCode = input_field.get()
+    authorizationCode = True
+    if authorizationCode:
+        encodedIDSecret = "..."
+        postTxt = 'curl -X POST https://api.schwabapi.com/v1/oauth/token ^\n' + \
+                        '-H "Authorization: Basic ' + encodedIDSecret + '" ^\n' + \
+                        '-H "Content-Type: application/x-www-form-urlencoded" ^\n' + \
+                        '-d "grant_type=authorization_code&code=' + authorizationCode + '&redirect_uri=https://127.0.0.1"\n'
+
+        #result_label.config(text=f"Entered data: {postTxt}")
+    else:
+        pass
+        #result_label.config(text="No data entered")
+
+'''    ================ OAuth flow tkInter UI development - start ===================== '''
+def formatCurl(redirecturi, curlText):
+    encodedIDSecret = "xxxEncodedClientID_Secretxxx"
+    reduri = redirecturi.get(1.0, tkinter.END)
+    
+    print("redirect uri:", reduri)
+        
+    authCode = re.search(r'code=(.*?)&session', reduri)
+    print("Authorization:", authCode)
+    
+    if authCode:
+        print('curl -X POST https://api.schwabapi.com/v1/oauth/token ^')
+        print('-H "Authorization: Basic ' + encodedIDSecret + '" ^')
+        print('-H "Content-Type: application/x-www-form-urlencoded" ^')
+        print('-d "grant_type=authorization_code&code=' + authCode.group(1) + '&redirect_uri=https://127.0.0.1"')
+        
+        curlCmd = 'curl -X POST https://api.schwabapi.com/v1/oauth/token ^\n' + \
+                  '-H "Authorization: Basic ' + encodedIDSecret + '" ^\n' + \
+                  '-H "Content-Type: application/x-www-form-urlencoded" ^\n' + \
+                  '-d "grant_type=authorization_code&code=' + authCode.group(1) + '&redirect_uri=https://127.0.0.1"\n'
+        
+        curlText.replace(1.0, tkinter.END, curlCmd)
+        
+        print("Text set to:\n", curlText.get(1.0, tkinter.END))
+    
+    else:
+        pass
+
+    return
+
+def saveAuthorizations(authorizationResponse):
+    resp = authorizationResponse.get(1.0, tkinter.END)
+    print("Authorization response:\n", resp)
+    
+    respJson = json.loads(resp)
+    exp = respJson["expires_in"]
+    tokenType = respJson["token_type"]
+    scope = respJson["scope"]
+    refreshToken = respJson["refresh_token"]
+    accessToken = respJson["access_token"]
+    idToken = respJson["id_token"]
+    
+    acquired = time.time()
+    # (60 * 30) reduction to minimize chances of expiration during a process
+    refreshExpires = acquired + (7*24*60*60) - (60*30)
+    # (60 * 5) reduction to minimize chances of expiration during an access request
+    accessExpires = acquired + exp - (60*5)
+    
+    print("access token\n", accessToken)
+    print("expires in: ", exp)
+    print("token scope: ", scope)
+    print("token type: ", tokenType)
+    print("refresh token:\n", refreshToken)
+    print("id token\n", idToken)
+    print("acquired: ", acquired)
+    print("refresh expires", refreshExpires)
+    print("access expires", accessExpires)
+    
+    return
+
+def authorizationInterface():
+    try:
+        exc_txt = "Exception occurred displaying the authorization code UI"
+        ROW_OAUTH_INSTRUCTION = 1
+        ROW_OAUTH_URI = 2
+        ROW_PASTE_INSTRUCTION = 3
+        ROW_OAUTH_REDIRECTION = 4
+        ROW_FORMAT_BUTTON = 5
+        ROW_PASTE_CURL_CMD = 6
+        ROW_CURL_TEXT = 7
+        TBD1 = 8
+        ROW_AUTHORIZATION_RESPONSE = 10
+        ROW_PASTE_RESPONSE_LABEL = 9
+        ROW_SAVE_AUTHORIZATION_RESPONSE = 11
+
+        OAuthService = 'https://api.schwabapi.com/v1/oauth/authorize'
+        clientID = '?client_id=' + 'xxx-----------------------clientID---------------------xxx'
+        redirectUri = '&redirect_uri=' + 'https://127.0.0.1'
+        encodedIDSecret = "EncodedClientID_Secret"
+        
+        OAuthFlowService = OAuthService + clientID + redirectUri
+
+        # Create the main window
+        uiRoot = Tk()
+        uiRoot.title("Authorization OAuth Flow Data")
+        uiRoot.columnconfigure(0, weight=1)
+        uiRoot.rowconfigure(0, weight=1)
+
+        mainframe = ttk.Frame(uiRoot, padding="3 3 12 12")
+        mainframe.grid(column=0, row=0, sticky=(N, W, E, S))
+
+        uri = StringVar()
+        redirectUri = StringVar()
+        
+        oauthURI = Text(mainframe, width=100, height=4)
+        oauthURI.insert(1.0, OAuthFlowService)
+        oauthURI.grid(column=1, row=ROW_OAUTH_URI, sticky=(W, E))
+        
+        Inst1 = "Preparation:\n\tOpen a web browser page\n\tOpen the Windows cmd shell"
+        Inst2 = "\nStep 1: Paste the following uri into the browser search bar to initiate the OAuth flow"
+        Inst3 = "\nStep 2: When the authenticating server redirects the browser paste the search bar uri to the redirect box"
+        Inst4 = "\nStep 3: Click the Format Post button"
+        Inst5 = "\nStep 4: WITHIN 30 SECONDS paste the curl cmd lines into the Windows cmd shell"
+        Inst6 = "\nStep 5: Paste the response from the authentication server into the Authentication box"
+        Inst7 = "\nStep 6: Click the Save Authorization button"
+        instructions = Inst1 + Inst2 +  Inst3 +  Inst4 +  Inst5 +  Inst6 +  Inst7
+        
+        step1Inst = "Paste redirect uri here"
+        step4Inst = "paste the curl command below into a cmd window WITHIN 30 SECONDS"
+        step5Inst = "Paste the response from the authentication server below"
+        
+        ttk.Label(mainframe, text=instructions).grid(column=1, row=ROW_OAUTH_INSTRUCTION, sticky=W)
+        ttk.Label(mainframe, text=step1Inst).grid(column=1, row=ROW_PASTE_INSTRUCTION, sticky=W)
+        ttk.Label(mainframe, text=step4Inst).grid(column=1, row=ROW_PASTE_CURL_CMD, sticky=W)
+        ttk.Label(mainframe, text=step5Inst).grid(column=1, row=ROW_PASTE_RESPONSE_LABEL, sticky=W)
+        
+        # multi-line text box to hold the formatted curl cmd
+        curlTxt = Text(mainframe, width=100, height=6)
+        curlTxt.grid(column=1, row=ROW_CURL_TEXT, sticky=(W, E))
+        
+        # multi-line text box and button to receive the redirection uri
+        uri_entry = Text(mainframe, width=100, height=4)
+        uri_entry.grid(column=1, row=ROW_OAUTH_REDIRECTION, sticky=(W, E))
+        # button to format the redirection uri into an OAuth post for the authentication server
+        ttk.Button(mainframe, text="Format post", command=partial(formatCurl, uri_entry, curlTxt)). \
+                    grid(column=1, row=ROW_FORMAT_BUTTON, sticky=W)
+        
+        # multi-line text box to paste the authorization server response into
+        authorizationResponse = Text(mainframe, width=100, height=4)
+        authorizationResponse.grid(column=1, row=ROW_AUTHORIZATION_RESPONSE, sticky=(W, E))
+        # button to save the authorization response for future processing
+        ttk.Button(mainframe, text="Save Authorization", command=partial(saveAuthorizations, authorizationResponse)). \
+                    grid(column=1, row=ROW_SAVE_AUTHORIZATION_RESPONSE, sticky=W)
+
+        for child in mainframe.winfo_children(): 
+            child.grid_configure(padx=5, pady=5)
+        
+        uri_entry.focus()
+        #uiRoot.bind("<Return>", formatCurl)
+    
+        # Start the GUI event loop
+        uiRoot.mainloop()
+
+
+    except Exception:
+        exc_info = sys.exc_info()
+        exc_str = exc_info[1].args[0]
+        exc_txt = exc_txt + "\n\t" + exc_str
+        sys.exit(exc_txt)
+
+    return
+'''    ================ OAuth flow tkInter UI development - end ===================== '''
+
+'''    ================ tkInter experiments - start ===================== '''
+def formatPost(feet, meters):
+    try:
+        value = float(feet.get())
+        meters.set(int(0.3048 * value * 10000.0 + 0.5)/10000.0)
+    except ValueError:
+        pass
+    
+def callSample(sampleOption):
+    exc_txt = "callSample exception"
+    try:
+        jsonTxt = sampleOption.get(1.0, END)
+        print(jsonTxt)
+        optionJson = json.loads(jsonTxt)
+        
+        print("symbol: ", optionJson["symbol"])
+        putMap = optionJson["putExpDateMap"]
+        for putDate in putMap:
+            print(putDate)
+            
+        for exp_date, options in optionJson['putExpDateMap'].items():
+            for strike_price, options_data in options.items():
+                for option in options_data:
+                    bid = option['bid']            
+                    print("expiration", exp_date)
+                    print("strike", strike_price)
+                    print("bid=", bid)
+        
+        return 
+    
+    except ValueError:
+        exc_info = sys.exc_info()
+        exc_str = exc_info[1].args[0]
+        exc_txt = exc_txt + "\n\t" + exc_str
+        sys.exit(exc_txt)
+
+def tkExp():
+    root = Tk()
+    root.title("options analysis")
+    
+    mainframe = ttk.Frame(root, padding="3 3 12 12")
+    mainframe.grid(column=0, row=0, sticky=(N, W, E, S))
+    root.columnconfigure(0, weight=1)
+    root.rowconfigure(0, weight=1)
+
+    ''' entry and display value widgets '''    
+    feet = StringVar()
+    meters = StringVar()
+
+    ''' single line input widgets '''
+    feet_entry = ttk.Entry(mainframe, width=7, textvariable=feet)
+    feet_entry.grid(column=1, row=1, sticky=(W, E))
+    
+    ''' multi-line input widgets '''
+    text1 = Text(mainframe, width=100, height=10)
+    text1.grid(column=1, row=2, sticky=(W, E))
+    
+    ''' button widgets '''
+    #ttk.Button(mainframe, text="Calculate", command=formatPost).grid(column=3, row=3, sticky=W)
+    ttk.Button(mainframe, text="Calculate", command=partial(formatPost, feet, meters)).grid(column=1, row=3, sticky=W)
+    ttk.Button(mainframe, text="analyze", command=partial(callSample, text1)).grid(column=1, row=3, sticky=W)
+    
+    ''' single line output / display widgets '''
+    ttk.Label(mainframe, textvariable=meters).grid(column=1, row=4, sticky=(W, E))
+    ttk.Label(mainframe, text="fixed text 1").grid(column=1, row=5, sticky=W)
+    ttk.Label(mainframe, text="fixed text 2").grid(column=1, row=6, sticky=E)
+    ttk.Label(mainframe, text="fixed text 3").grid(column=1, row=7, sticky=W)
+    
+    ''' presentation control '''
+    for child in mainframe.winfo_children(): 
+        child.grid_configure(padx=5, pady=5)
+    
+    feet_entry.focus()
+    root.bind("<Return>", formatPost)
+    
+    root.mainloop()
+    return 
+'''    ================ tkInter experiments - end ===================== '''
+    
 if __name__ == '__main__':
     try:
-        print("==================================================== Code experimentation starting")
+        print("======================= Code experimentation starting =============================")
         exc_txt = "\nAn exception occurred"
     
-        localDirs = get_ini_data("LOCALDIRS")
-        aiwork = localDirs['aiwork']
-            
         if True:
+            localDirs = get_ini_data("LOCALDIRS")
+            aiwork = localDirs['aiwork']
             
+            ''' ================= TDA / Schwab date / time exp ================ '''
+            aa1 = 962946000000.0 # TDA date / time from legacy csv file
+            aa2 = 1699855200000.0
+            t1 = 1720501200.0 # Schwab date / time from authorization flow
+            t2 = 1723179600.0
+            t3 = time.time()
+            
+            straa1 = time.gmtime(aa1 / 1000)
+            straa2 = time.gmtime(aa2 / 1000)
+            strt1 = time.gmtime(t1)
+            strt2 = time.gmtime(t2)
+            strt3 = time.gmtime(t3)
+            
+            print(time.asctime(straa1))
+            print(time.asctime(straa2))
+            print(time.asctime(strt1))
+            print(time.asctime(strt2))
+            print(time.asctime(strt3))
+            ''' ======================================================= '''
+            '''  ==================== Authenticate with the market data service - start ======================  '''
+            marketData = MarketData()
+            '''
+            Use the market data service to look up
+                basic market data
+                put option market data
+                call option market data
+            marketData.requestMarketData(symbol="AAPL", periodType="month", period="1", frequencyType="daily", frequency="1")
+            marketData.requestMarketPuts(symbol="AAPL", strikeCount=5, range="OTM", daysToExpiration=60)
+            marketData.requestMarketCalls(symbol="AAPL", strikeCount=5, range="OTM", daysToExpiration=60)
+            '''
+            
+            source, optionList = marketData.requestOptionChain(type="Put", symbol="AAPL", strikeCount=5, range="OTM", daysToExpiration=60)
+            for option in optionList:
+                print("{} option on {}, expires {}, strike price {}".format(option.type, option.UnderlyingSymbol, \
+                                                                            option.expirationDate, option.strikePrice ))
+            source, optionList = marketData.requestOptionChain(type="Call", symbol="AAPL", strikeCount=5, range="OTM", daysToExpiration=60)
+            source, optionList = marketData.requestOptionChain(type="Both", symbol="AAPL", strikeCount=5, range="OTM", daysToExpiration=60)
+            
+            '''  ==================== Authenticate with the market data service - end ======================  '''
+            
+        else:
+            ''' ================= authorization UI exp ================ '''
+            tkExp()
+            authorizationInterface()
+                        
+            ''' ======================================================= '''
+
             ''' Google drive file details '''
             exc_txt = "\nAn exception occurred - unable to access Google sheet"
             googleAuth = get_ini_data("GOOGLE")
             googleDriveFiles = read_config_json(aiwork + "\\" + googleAuth['fileIDs'])
             
-            '''
-            Authenticate with Google workplace and establish a connection to Google Drive API
+            ''' ================ Authenticate with Google workplace and establish a connection to Google Drive API ============== '''
             exc_txt = "\nAn exception occurred - unable to authenticate with Google"
             gSheets = googleSheet()
-            '''
             
             ''' 
             Use the connetion to Google Drive API to read sheet data
             Find file ID of file used for development 
+            '''
             
             sheetID = googleDriveFiles["Google IDs"]["Market Data"]["Development"]
             print("file 1: {} - {}".format('development', googleDriveFiles["Google IDs"]["Market Data"]["Development"]))
@@ -599,21 +901,29 @@ if __name__ == '__main__':
                 elif cellValues.iat[i, 2] == "4 - Buy":
                     # Create list of symbols for market call option request
                     mktCalls.append(cellValues.iat[i, 0])
-            '''
     
-            '''
-            Authenticate with the market data service
-            '''
+            '''  ==================== Authenticate with the market data service - start ======================  '''
             marketData = MarketData()
-            marketData.requestMarketData(symbolList=["AAPL", "MSFT"])
             '''
             Use the market data service to look up
                 basic market data
                 put option market data
                 call option market data
+            marketData.requestMarketData(symbol="AAPL", periodType="month", period="1", frequencyType="daily", frequency="1")
+            marketData.requestMarketPuts(symbol="AAPL", strikeCount=5, range="OTM", daysToExpiration=60)
+            marketData.requestMarketCalls(symbol="AAPL", strikeCount=5, range="OTM", daysToExpiration=60)
             '''
             
-        else:
+            source, optionList = marketData.requestOptionChain(type="Put", symbol="AAPL", strikeCount=5, range="OTM", daysToExpiration=60)
+            source, optionList = marketData.requestOptionChain(type="Call", symbol="AAPL", strikeCount=5, range="OTM", daysToExpiration=60)
+            source, optionList = marketData.requestOptionChain(type="Both", symbol="AAPL", strikeCount=5, range="OTM", daysToExpiration=60)
+            
+            for optionDetails in optionList:
+                opt = OptionChain("AAPL", "2024-08-16:5", "212.5", optionDetails)
+                print("Option chain for {} expires {} strike price {}".format(opt.UnderlyingSymbol, opt.expirationDate, opt.strikePrice ))
+            
+            '''  ==================== Authenticate with the market data service - end ======================  '''
+
             dictexp()
             processCtrl = iniRead()                   # Experimentation / development of configuration json file
         
@@ -637,7 +947,7 @@ if __name__ == '__main__':
             # autoKeras()
             pass
         
-        print("\n==================================================== Code experimentation ending")
+        print("\n======================== Code experimentation ending ============================")
         
     except Exception:
         exc_info = sys.exc_info()
