@@ -449,7 +449,7 @@ class MarketData(object):
             optionExpires = now + duration
             dtExp = datetime.datetime.fromtimestamp(optionExpires)
             strExp = dtExp.strftime("%Y-%m-%d")
-            print("Options expiring between {} and {}".format(strNow, strExp))
+            print("{} options expiring between {} and {}".format(contractType, strNow, strExp))
             
             if type == "Call":
                 self.manageThrottling("call option")
@@ -471,18 +471,14 @@ class MarketData(object):
                        'toDate' : strExp
                        }
             
-            #print("GET: {}\nheaders={}\nparams={}".format(url, getHeaders, payload))
+            print("GET: {}\nheaders={}\nparams={}".format(url, getHeaders, payload))
             response = requests.get(url, headers=getHeaders, params=payload)
 
             if response.status_code == 200:
                 '''  -----------  successful request. Data returned.  --------------  '''
-                optionChain = response.json()
-                optionList = []
-                for exp_date, options in optionChain['putExpDateMap'].items():
-                    for strike_price, options_data in options.items():
-                        for option in options_data:
-                            opt = OptionChain(symbol, exp_date, strike_price, option)
-                            optionList.append(opt)
+                
+                options = OptionChain("schwab", response)
+                
             else:
                 if response.status_code == 400:
                     exc_txt = "Generic client error"
@@ -512,7 +508,7 @@ class MarketData(object):
                 print("Option request failed - code: {}, {}".format(response.status_code, exc_txt))
                 raise Exception
 
-            return "schwab", optionList
+            return options
     
         except ValueError:
             exc_info = sys.exc_info()

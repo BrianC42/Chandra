@@ -822,6 +822,30 @@ if __name__ == '__main__':
             localDirs = get_ini_data("LOCALDIRS")
             aiwork = localDirs['aiwork']
             
+            '''  ==================== Authenticate with the market data service - start ======================  '''
+            marketData = MarketData()
+            '''
+            Use the market data service to look up
+                basic market data
+                put option market data
+                call option market data
+            '''
+            marketData.requestMarketData(symbol="AAPL", periodType="month", period="1", frequencyType="daily", frequency="1")
+            
+            for optType in ["Put", "Call", "Both"]:
+                options = marketData.requestOptionChain(type=optType, symbol="AAPL", strikeCount=5, range="OTM", daysToExpiration=60)
+                for option in options.optionList:
+                    print("{} option on {}, expires {}, strike price {} desc {} ask {}".format( \
+                          option["optionDetails"]["putCall"], \
+                          option["symbol"], \
+                          option["expirationDate"], \
+                          option["strikePrice"], \
+                          option["optionDetails"]["description"], \
+                          option["optionDetails"]["ask"]))
+            
+            '''  ==================== Authenticate with the market data service - end ======================  '''
+            
+        else:
             ''' ================= TDA / Schwab date / time exp ================ '''
             aa1 = 962946000000.0 # TDA date / time from legacy csv file
             aa2 = 1699855200000.0
@@ -841,28 +865,6 @@ if __name__ == '__main__':
             print(time.asctime(strt2))
             print(time.asctime(strt3))
             ''' ======================================================= '''
-            '''  ==================== Authenticate with the market data service - start ======================  '''
-            marketData = MarketData()
-            '''
-            Use the market data service to look up
-                basic market data
-                put option market data
-                call option market data
-            marketData.requestMarketData(symbol="AAPL", periodType="month", period="1", frequencyType="daily", frequency="1")
-            marketData.requestMarketPuts(symbol="AAPL", strikeCount=5, range="OTM", daysToExpiration=60)
-            marketData.requestMarketCalls(symbol="AAPL", strikeCount=5, range="OTM", daysToExpiration=60)
-            '''
-            
-            source, optionList = marketData.requestOptionChain(type="Put", symbol="AAPL", strikeCount=5, range="OTM", daysToExpiration=60)
-            for option in optionList:
-                print("{} option on {}, expires {}, strike price {}".format(option.type, option.UnderlyingSymbol, \
-                                                                            option.expirationDate, option.strikePrice ))
-            source, optionList = marketData.requestOptionChain(type="Call", symbol="AAPL", strikeCount=5, range="OTM", daysToExpiration=60)
-            source, optionList = marketData.requestOptionChain(type="Both", symbol="AAPL", strikeCount=5, range="OTM", daysToExpiration=60)
-            
-            '''  ==================== Authenticate with the market data service - end ======================  '''
-            
-        else:
             ''' ================= authorization UI exp ================ '''
             tkExp()
             authorizationInterface()
