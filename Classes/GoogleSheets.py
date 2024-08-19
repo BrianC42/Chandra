@@ -31,75 +31,22 @@ from datetime import date
 import numpy as np
 import pandas as pd
 
+from configuration import get_ini_data
+#from configuration import read_config_json
+
 '''    https://github.com/googleapis/google-api-python-client/blob/main/docs/oauth-installed.md '''
-from google_auth_oauthlib.flow import Flow
-'''
-        dir(Flow)
-        ['__class__', '__delattr__', '__dict__', '__dir__', '__doc__', '__eq__', '__format__', 
-        '__ge__', '__getattribute__', '__getstate__', '__gt__', '__hash__', '__init__', 
-        '__init_subclass__', '__le__', '__lt__', '__module__', '__ne__', '__new__', '__reduce__', 
-        '__reduce_ex__', '__repr__', '__setattr__', '__sizeof__', '__str__', '__subclasshook__', 
-        '__weakref__', 
-        'authorization_url', 'authorized_session', 'credentials', 'fetch_token', 
-        'from_client_config', 'from_client_secrets_file', 'redirect_uri']
-'''
+from google.auth.transport.requests import Request
+import requests
+
+#from google_auth_oauthlib.flow import Flow
 from google_auth_oauthlib.flow import InstalledAppFlow
-'''
-        dir(InstalledAppFlow)
-        ['_DEFAULT_AUTH_CODE_MESSAGE', '_DEFAULT_AUTH_PROMPT_MESSAGE', '_DEFAULT_WEB_SUCCESS_MESSAGE', 
-        '__class__', '__delattr__', '__dict__', '__dir__', '__doc__', '__eq__', '__format__', '__ge__', 
-        '__getattribute__', '__getstate__', '__gt__', '__hash__', '__init__', '__init_subclass__', 
-        '__le__', '__lt__', '__module__', '__ne__', '__new__', '__reduce__', '__reduce_ex__', '__repr__', 
-        '__setattr__', '__sizeof__', '__str__', '__subclasshook__', '__weakref__', 
-        'authorization_url', 'authorized_session', 'credentials', 'fetch_token', 'from_client_config', 
-        'from_client_secrets_file', 'redirect_uri', 'run_local_server']
-'''
 
 from google.oauth2.credentials import Credentials
-'''
-    from google.oauth2.credentials import Credentials
-    dir(Credentials)
-    ['__abstractmethods__', '__class__', '__delattr__', '__dict__', 
-    '__dir__', '__doc__', '__eq__', '__format__', '__ge__', '__getattribute__', 
-    '__getstate__', '__gt__', '__hash__', '__init__', '__init_subclass__', 
-    '__le__', '__lt__', '__module__', '__ne__', '__new__', '__reduce__', 
-    '__reduce_ex__', '__repr__', '__setattr__', '__setstate__', '__sizeof__', 
-    '__str__', '__subclasshook__', '__weakref__', '_abc_impl', '_blocking_refresh', 
-    '_metric_header_for_usage', '_non_blocking_refresh', 
-    'account', 'apply', 'before_request', 'client_id', 'client_secret', 
-    'default_scopes', 'expired', 'from_authorized_user_file', 
-    'from_authorized_user_info', 'granted_scopes', 'has_scopes', 
-    'id_token', 'quota_project_id', 'rapt_token', 'refresh', 
-    'refresh_handler', 'refresh_token', 'requires_scopes', 'scopes', 
-    'to_json', 'token_state', 'token_uri', 'universe_domain', 'valid', 
-    'with_account', 'with_non_blocking_refresh', 'with_quota_project', 
-    'with_quota_project_from_environment', 'with_token_uri', 
-    'with_universe_domain']
-'''
-    
-from google.oauth2.credentials import UserAccessTokenCredentials
-'''
-     dir(UserAccessTokenCredentials)
-    ['__abstractmethods__', '__class__', '__delattr__', '__dict__', '__dir__', 
-    '__doc__', '__eq__', '__format__', '__ge__', '__getattribute__', 
-    '__getstate__', '__gt__', '__hash__', '__init__', '__init_subclass__', 
-    '__le__', '__lt__', '__module__', '__ne__', '__new__', '__reduce__', 
-    '__reduce_ex__', '__repr__', '__setattr__', '__sizeof__', '__str__', 
-    '__subclasshook__', '__weakref__', '_abc_impl', '_blocking_refresh', 
-    '_metric_header_for_usage', '_non_blocking_refresh', 
-    'apply', 'before_request', 'expired', 'quota_project_id', 'refresh', 
-    'token_state', 'universe_domain', 'valid', 'with_account', 
-    'with_non_blocking_refresh', 'with_quota_project', 
-    'with_quota_project_from_environment']
-'''
+#from google.oauth2.credentials import UserAccessTokenCredentials
 
 from googleapiclient.discovery import build
-from googleapiclient.errors import HttpError
+#from googleapiclient.errors import HttpError
 
-from google.auth.transport.requests import Request
-
-from configuration import get_ini_data
-from configuration import read_config_json
 
 class googleSheet():
     '''
@@ -358,12 +305,16 @@ class googleSheet():
                 
             # If there are no (valid) credentials available, let the user log in.
             if not self.creds or not self.creds.valid:
+                print("WIP - unable to get code to refresh access token to work\n\tthrows exception")
+                '''
                 if self.creds and self.creds.expired and self.creds.refresh_token:
                     self.creds.refresh(Request())
-                    print("Google project token received or refreshed")
+                    print("Google project access token refreshed")
                 else:
-                    flow = InstalledAppFlow.from_client_secrets_file(self.credentialsPath, self.SCOPE_RW)
-                    self.creds = flow.run_local_server(port=0)
+                '''
+                flow = InstalledAppFlow.from_client_secrets_file(self.credentialsPath, self.SCOPE_RW)
+                self.creds = flow.run_local_server(port=0)
+                print("Google project - new access token received")
                 # Save the credentials for the next run
                 with open(self.GoogleTokenPath, 'w') as self.token:
                     self.token.write(self.creds.to_json())

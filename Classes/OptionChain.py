@@ -3,19 +3,20 @@ Created on Aug 12, 2024
 
 @author: brian
 '''
-import sys
-import time
-import datetime
-from tensorflow.python.saved_model.revived_types import get_setter
+import json
 
 class OptionChain(object):
     '''      classdocs       '''
     
     ''' accessible data '''
-    dataServiceProvider = ""
-    dataServiceProviderOptionChain = ""
-    optionChainJson = ""
     
+    ''' accessible methods   '''
+    
+    def __init__(self):
+        '''
+        Constructor
+        '''
+
     '''
     optionList is a list of tuples with 4 key value pairs per list entry
         symbol
@@ -23,25 +24,15 @@ class OptionChain(object):
         strikePrice
         optionDetails
     '''
-    #optionList = []
+    @property
+    def optionList(self):
+        return self._optionList
     
-    ''' accessible methods   '''
-    
-    def __init__(self, dataSource="", providerOptionChain=""):
-        '''
-        Constructor
-        '''
-        self.optionList = []
-        
-        self.dataServiceProvider = dataSource
-        self.dataServiceProviderOptionChain = providerOptionChain
-        self.optionChainJson = providerOptionChain.json()
-        #self.UnderlyingSymbol = self.optionChainJson['symbol']
-
+    def convertToList(self):
+        optionList = []
         for chain in ['putExpDateMap', 'callExpDateMap']:
             for exp_date, options in self.optionChainJson[chain].items():
                 exp_date, daysToExp = exp_date.split(":")
-                #daysToExp = int(daysToExp)
                 for strike_price, options_data in options.items():
                     for option in options_data:
                         opt = {"symbol" : self.optionChainJson["symbol"], \
@@ -50,13 +41,27 @@ class OptionChain(object):
                                "strikePrice" : strike_price, \
                                "optionDetails" : option
                                }
-                        self.optionList.append(opt)
-
-    @property
-    def optionList(self):
-        return self._optionList
+                        optionList.append(opt)
+        return optionList
     
     @optionList.setter
     def optionList(self, optionList):
         self._optionList = optionList
+
+    @property
+    def optionChainJson(self):
+        return self._optionChainJson
+    
+    @optionChainJson.setter
+    def optionChainJson(self, optionChainJson):
+        self._optionChainJson = optionChainJson
+
+    @property
+    def marketDataReturn(self):
+        return self._marketDataReturn
+    
+    @marketDataReturn.setter
+    def marketDataReturn(self, marketDataReturn):
+        self._marketDataReturn = marketDataReturn
+        self.optionChainJson = json.loads(marketDataReturn)
 
