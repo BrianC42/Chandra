@@ -17,7 +17,6 @@ from tkinter import ttk
 
 from configuration import get_ini_data
 from configuration import read_config_json
-from OptionChain import OptionChain
 
 class financialDataServices(object):
     '''

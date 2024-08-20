@@ -122,7 +122,6 @@ class MarketData(object):
         self.marketDataReturn = response.text
         self.marketDataJson = json.loads(self.marketDataReturn)
         
-    #for mktData.candle in mktData.marketDataJson['candles']:
     def __iter__(self):
         self.index = 0
         return self

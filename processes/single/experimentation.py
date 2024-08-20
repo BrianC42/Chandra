@@ -821,8 +821,6 @@ if __name__ == '__main__':
             ''' ================ Authenticate with Google workplace and establish a connection to Google Drive API ============== '''
             exc_txt = "\nAn exception occurred - unable to authenticate with Google"
             gSheets = googleSheet()
-            dataService = financialDataServices()
-            options = OptionChain()
                         
             ''' 
             Use the connetion to Google Drive API to read sheet data
@@ -834,20 +832,6 @@ if __name__ == '__main__':
             cellRange = 'Stock Information!A2:C999'
             cellValues = gSheets.readGoogleSheet(sheetID, cellRange)
             
-            # Create list of symbols for market data request
-            mktDataSymbols = []
-            mktPuts = []
-            mktCalls = []
-            '''
-            for i in range (0, len(cellValues)):
-                mktData.symbol = cellValues.iat[i, 0]
-                mktData = MarketData(symbol, periodType="month", period="1", frequencyType="daily", frequency="1")
-                response = dataService.requestMarketData(symbol=mktData.symbol, \
-                                                         periodType="month", period="1", 
-                                                         frequencyType="daily", frequency="1")
-                
-                mktData.marketDataReturn = response.text
-            '''
             mktData = MarketData("AAPL", periodType="month", period="1", frequencyType="daily", frequency="1")
             for candle in mktData:
                 candleClose = candle.candleClose
@@ -858,9 +842,14 @@ if __name__ == '__main__':
                 dtval = candle.candleDateValue                    
                 candleDateTimeStr = candle.candleDateTimeStr
                 
-                print("Market data: symbol: {}, date/time: {} {}, open: {}, close: {}, volume: {}". \
-                      format(mktData.symbol, dtval, candleDateTimeStr, candleOpen, candleClose, candleVolume))
+                print("Market data: symbol: {}, date/time: {} {}, open: {}, close: {}, volume: {}".format( \
+                      mktData.symbol, dtval, candleDateTimeStr, candleOpen, candleClose, candleVolume) )
 
+            options = OptionChain("AAPL", optionType="Put", strikeCount=5, strikeRange="OTM", daysToExpiration=60)
+            for option in options:
+                print("Option chain for {}: type: {} expiration: {} strike: {} bid: {} ask: {}".format( \
+                        option.symbol, option.putCall, option.expirationDate, \
+                        option.strikePrice, option.bidPrice, option.askPrice))
             ''' ================= Google workspace development end ================ '''
                     
 
@@ -937,30 +926,21 @@ if __name__ == '__main__':
                 call option market data
             '''
             dataService = financialDataServices()
-            mktData = MarketData()
             options = OptionChain()
             
-            for symbol in ["AAPL", "MSFT"]:
-                mktData.symbol = symbol
-                response = dataService.requestMarketData(symbol=mktData.symbol, \
-                                                         periodType="month", period="1", 
-                                                         frequencyType="daily", frequency="1")
-                mktData.marketDataReturn = response.text
-                for candle in mktData.marketDataJson['candles']:
-                    dtval = float(candle["datetime"]/1000)
-                    #dtStr = candle["datetimeISO8601"]
-                    candleClose = float(candle["close"])
-                    candleOpen = float(candle["open"])
-                    candleHigh = float(candle["high"])
-                    candleLow= float(candle["low"])
-                    candleVolume = int(candle["volume"])
-                    
-                    dt = datetime.datetime.fromtimestamp(dtval)
-                    dateTiemStr = dt.strftime("%Y-%m-%d")
-                    
-                    print("Market data: symbol: {}, date/time: {} {}, open: {}, close: {}, volume: {}". \
-                            format(mktData.symbol, dtval, dateTiemStr, candle["open"], candle["close"], candle["volume"]))
-            
+            mktData = MarketData("AAPL", periodType="month", period="1", frequencyType="daily", frequency="1")
+            for candle in mktData:
+                candleClose = candle.candleClose
+                candleOpen = candle.candleOpen
+                candleHigh = candle.candleHigh
+                candleLow= candle.candleLow
+                candleVolume = candle.candleVolume                    
+                dtval = candle.candleDateValue                    
+                candleDateTimeStr = candle.candleDateTimeStr
+                
+                print("Market data: symbol: {}, date/time: {} {}, open: {}, close: {}, volume: {}". \
+                      format(mktData.symbol, dtval, candleDateTimeStr, candleOpen, candleClose, candleVolume))
+           
             for optType in ["Put", "Call", "Both"]:
                 response = dataService.requestOptionChain(type=optType, symbol="AAPL", strikeCount=5, range="OTM", daysToExpiration=60)
                 options.marketDataReturn = response.text
