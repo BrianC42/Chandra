@@ -822,6 +822,86 @@ if __name__ == '__main__':
             exc_txt = "\nAn exception occurred - unable to authenticate with Google"
             gSheets = googleSheet()
             dataService = financialDataServices()
+            options = OptionChain()
+                        
+            ''' 
+            Use the connetion to Google Drive API to read sheet data
+            Find file ID of file used for development 
+            '''
+            sheetID = googleDriveFiles["Google IDs"]["Market Data"]["Development"]
+            print("file 1: {} - {}".format('development', googleDriveFiles["Google IDs"]["Market Data"]["Development"]))
+            print("file 2: {} - {}".format('production', googleDriveFiles["Google IDs"]["Market Data"]["Production"]))
+            cellRange = 'Stock Information!A2:C999'
+            cellValues = gSheets.readGoogleSheet(sheetID, cellRange)
+            
+            # Create list of symbols for market data request
+            mktDataSymbols = []
+            mktPuts = []
+            mktCalls = []
+            '''
+            for i in range (0, len(cellValues)):
+                mktData.symbol = cellValues.iat[i, 0]
+                mktData = MarketData(symbol, periodType="month", period="1", frequencyType="daily", frequency="1")
+                response = dataService.requestMarketData(symbol=mktData.symbol, \
+                                                         periodType="month", period="1", 
+                                                         frequencyType="daily", frequency="1")
+                
+                mktData.marketDataReturn = response.text
+            '''
+            mktData = MarketData("AAPL", periodType="month", period="1", frequencyType="daily", frequency="1")
+            for candle in mktData:
+                candleClose = candle.candleClose
+                candleOpen = candle.candleOpen
+                candleHigh = candle.candleHigh
+                candleLow= candle.candleLow
+                candleVolume = candle.candleVolume                    
+                dtval = candle.candleDateValue                    
+                candleDateTimeStr = candle.candleDateTimeStr
+                
+                print("Market data: symbol: {}, date/time: {} {}, open: {}, close: {}, volume: {}". \
+                      format(mktData.symbol, dtval, candleDateTimeStr, candleOpen, candleClose, candleVolume))
+
+            ''' ================= Google workspace development end ================ '''
+                    
+
+            print("\n======================== Code experimentation ending ============================")
+        
+        else:
+            ''' ================= TDA / Schwab date / time exp ================ '''
+            aa1 = 962946000000.0 # TDA date / time from legacy csv file
+            aa2 = 1699855200000.0
+            t1 = 1720501200.0 # Schwab date / time from authorization flow
+            t2 = 1723179600.0
+            t3 = time.time()
+            
+            straa1 = time.gmtime(aa1 / 1000)
+            straa2 = time.gmtime(aa2 / 1000)
+            strt1 = time.gmtime(t1)
+            strt2 = time.gmtime(t2)
+            strt3 = time.gmtime(t3)
+            
+            print(time.asctime(straa1))
+            print(time.asctime(straa2))
+            print(time.asctime(strt1))
+            print(time.asctime(strt2))
+            print(time.asctime(strt3))
+            ''' ======================================================= '''
+            ''' ================= authorization UI exp ================ '''
+            tkExp()
+            authorizationInterface()
+                        
+            ''' ======================================================= '''
+
+            ''' ================= Google workspace development start ================ '''
+            ''' Google drive file details '''
+            exc_txt = "\nAn exception occurred - unable to access Google sheet"
+            googleAuth = get_ini_data("GOOGLE")
+            googleDriveFiles = read_config_json(aiwork + "\\" + googleAuth['fileIDs'])
+            
+            ''' ================ Authenticate with Google workplace and establish a connection to Google Drive API ============== '''
+            exc_txt = "\nAn exception occurred - unable to authenticate with Google"
+            gSheets = googleSheet()
+            dataService = financialDataServices()
             mktData = MarketData()
             options = OptionChain()
                         
@@ -829,7 +909,6 @@ if __name__ == '__main__':
             Use the connetion to Google Drive API to read sheet data
             Find file ID of file used for development 
             '''
-            
             sheetID = googleDriveFiles["Google IDs"]["Market Data"]["Development"]
             print("file 1: {} - {}".format('development', googleDriveFiles["Google IDs"]["Market Data"]["Development"]))
             print("file 2: {} - {}".format('production', googleDriveFiles["Google IDs"]["Market Data"]["Production"]))
@@ -841,11 +920,31 @@ if __name__ == '__main__':
             mktPuts = []
             mktCalls = []
             for i in range (0, len(cellValues)):
-                mktData.symbol = cellValues.iat[i, 0]
+                mktDataSymbols.append(cellValues.iat[i, 0])
+                if cellValues.iat[i, 2] == "1 - Holding":
+                    # Create list of symbols for market put option request
+                    mktPuts.append(cellValues.iat[i, 0])
+                elif cellValues.iat[i, 2] == "4 - Buy":
+                    # Create list of symbols for market call option request
+                    mktCalls.append(cellValues.iat[i, 0])
+            ''' ================= Google workspace development end ================ '''
+    
+            '''  ==================== Authenticate with the market data service - start ======================  '''
+            '''
+            Use the market data service to look up
+                basic market data
+                put option market data
+                call option market data
+            '''
+            dataService = financialDataServices()
+            mktData = MarketData()
+            options = OptionChain()
+            
+            for symbol in ["AAPL", "MSFT"]:
+                mktData.symbol = symbol
                 response = dataService.requestMarketData(symbol=mktData.symbol, \
                                                          periodType="month", period="1", 
                                                          frequencyType="daily", frequency="1")
-                
                 mktData.marketDataReturn = response.text
                 for candle in mktData.marketDataJson['candles']:
                     dtval = float(candle["datetime"]/1000)
@@ -861,7 +960,11 @@ if __name__ == '__main__':
                     
                     print("Market data: symbol: {}, date/time: {} {}, open: {}, close: {}, volume: {}". \
                             format(mktData.symbol, dtval, dateTiemStr, candle["open"], candle["close"], candle["volume"]))
-
+            
+            for optType in ["Put", "Call", "Both"]:
+                response = dataService.requestOptionChain(type=optType, symbol="AAPL", strikeCount=5, range="OTM", daysToExpiration=60)
+                options.marketDataReturn = response.text
+                options.optionList = options.convertToList()
                 mktDataSymbols.append(cellValues.iat[i, 0])
                 
                 response = None
@@ -930,165 +1033,6 @@ if __name__ == '__main__':
                               option["strikePrice"], \
                               option["optionDetails"]["description"], \
                               option["optionDetails"]["ask"]))
-            ''' ================= Google workspace development end ================ '''
-                    
-
-            print("\n======================== Code experimentation ending ============================")
-        
-        else:
-            ''' ================= TDA / Schwab date / time exp ================ '''
-            aa1 = 962946000000.0 # TDA date / time from legacy csv file
-            aa2 = 1699855200000.0
-            t1 = 1720501200.0 # Schwab date / time from authorization flow
-            t2 = 1723179600.0
-            t3 = time.time()
-            
-            straa1 = time.gmtime(aa1 / 1000)
-            straa2 = time.gmtime(aa2 / 1000)
-            strt1 = time.gmtime(t1)
-            strt2 = time.gmtime(t2)
-            strt3 = time.gmtime(t3)
-            
-            print(time.asctime(straa1))
-            print(time.asctime(straa2))
-            print(time.asctime(strt1))
-            print(time.asctime(strt2))
-            print(time.asctime(strt3))
-            ''' ======================================================= '''
-            ''' ================= authorization UI exp ================ '''
-            tkExp()
-            authorizationInterface()
-                        
-            ''' ======================================================= '''
-
-            ''' ================= Google workspace development start ================ '''
-            ''' Google drive file details '''
-            exc_txt = "\nAn exception occurred - unable to access Google sheet"
-            googleAuth = get_ini_data("GOOGLE")
-            googleDriveFiles = read_config_json(aiwork + "\\" + googleAuth['fileIDs'])
-            
-            ''' ================ Authenticate with Google workplace and establish a connection to Google Drive API ============== '''
-            exc_txt = "\nAn exception occurred - unable to authenticate with Google"
-            gSheets = googleSheet()
-            
-            ''' 
-            Use the connetion to Google Drive API to read sheet data
-            Find file ID of file used for development 
-            '''
-            
-            sheetID = googleDriveFiles["Google IDs"]["Market Data"]["Development"]
-            print("file 1: {} - {}".format('development', googleDriveFiles["Google IDs"]["Market Data"]["Development"]))
-            print("file 2: {} - {}".format('production', googleDriveFiles["Google IDs"]["Market Data"]["Production"]))
-            cellRange = 'Stock Information!A2:C999'
-            cellValues = gSheets.readGoogleSheet(sheetID, cellRange)
-            
-            # Create list of symbols for market data request
-            mktDataSymbols = []
-            mktPuts = []
-            mktCalls = []
-            for i in range (0, len(cellValues)):
-                mktDataSymbols.append(cellValues.iat[i, 0])
-                if cellValues.iat[i, 2] == "1 - Holding":
-                    # Create list of symbols for market put option request
-                    mktPuts.append(cellValues.iat[i, 0])
-                elif cellValues.iat[i, 2] == "4 - Buy":
-                    # Create list of symbols for market call option request
-                    mktCalls.append(cellValues.iat[i, 0])
-            ''' ================= Google workspace development end ================ '''
-    
-            '''  ==================== Authenticate with the market data service - start ======================  '''
-            '''
-            Use the market data service to look up
-                basic market data
-                put option market data
-                call option market data
-            '''
-            dataService = financialDataServices()
-            mktData = MarketData()
-            options = OptionChain()
-            
-            for symbol in ["AAPL", "MSFT"]:
-                mktData.symbol = symbol
-                response = dataService.requestMarketData(symbol=mktData.symbol, \
-                                                         periodType="month", period="1", 
-                                                         frequencyType="daily", frequency="1")
-                mktData.marketDataReturn = response.text
-                for candle in mktData.marketDataJson['candles']:
-                    dtval = float(candle["datetime"]/1000)
-                    #dtStr = candle["datetimeISO8601"]
-                    candleClose = float(candle["close"])
-                    candleOpen = float(candle["open"])
-                    candleHigh = float(candle["high"])
-                    candleLow= float(candle["low"])
-                    candleVolume = int(candle["volume"])
-                    
-                    dt = datetime.datetime.fromtimestamp(dtval)
-                    dateTiemStr = dt.strftime("%Y-%m-%d")
-                    
-                    print("Market data: symbol: {}, date/time: {} {}, open: {}, close: {}, volume: {}". \
-                            format(mktData.symbol, dtval, dateTiemStr, candle["open"], candle["close"], candle["volume"]))
-            
-            for optType in ["Put", "Call", "Both"]:
-                response = dataService.requestOptionChain(type=optType, symbol="AAPL", strikeCount=5, range="OTM", daysToExpiration=60)
-                options.marketDataReturn = response.text
-                options.optionList = options.convertToList()
-                for option in options.optionList:
-                    putCall = option["optionDetails"]["putCall"]
-                    description = option["optionDetails"]["description"]
-                    ask = option["optionDetails"]["ask"]
-                    optionSymbol = option["optionDetails"]["symbol"]
-                    bidPrice = float(option["optionDetails"]["bidPrice"])
-                    askPrice = float(option["optionDetails"]["askPrice"])
-                    lastPrice = float(option["optionDetails"]["lastPrice"])
-                    markPrice = float(option["optionDetails"]["markPrice"])
-                    bidSize = int(option["optionDetails"]["bidSize"])
-                    askSize = int(option["optionDetails"]["askSize"])
-                    lastSize = int(option["optionDetails"]["lastSize"])
-                    highPrice = float(option["optionDetails"]["highPrice"])
-                    lowPrice = float(option["optionDetails"]["lowPrice"])
-                    openPrice = float(option["optionDetails"]["openPrice"])
-                    closePrice = float(option["optionDetails"]["closePrice"])
-                    totalVolume = int(option["optionDetails"]["totalVolume"])
-                    tradeDate = int(option["optionDetails"]["tradeDate"])
-                    quoteTimeInLong = int(option["optionDetails"]["quoteTimeInLong"])
-                    tradeTimeInLong = int(option["optionDetails"]["tradeTimeInLong"])
-                    netChange = float(option["optionDetails"]["netChange"])
-                    volatility = float(option["optionDetails"]["volatility"])
-                    delta = float(option["optionDetails"]["delta"])
-                    gamma = float(option["optionDetails"]["gamma"])
-                    theta = float(option["optionDetails"]["theta"])
-                    vega = float(option["optionDetails"]["vega"])
-                    rho = float(option["optionDetails"]["rho"])
-                    timeValue = float(option["optionDetails"]["timeValue"])
-                    openInterest = float(option["optionDetails"]["openInterest"])
-                    isInTheMoney = option["optionDetails"]["isInTheMoney"]
-                    theoreticalOptionValue = float(option["optionDetails"]["theoreticalOptionValue"])
-                    theoreticalVolatility = float(option["optionDetails"]["theoreticalVolatility"])
-                    mini = option["optionDetails"]["mini"]
-                    isNonStandard = option["optionDetails"]["isNonStandard"]
-                    optonDeliverablesList = option["optionDetails"]["optonDeliverablesList"]
-                    strikePrice = float(option["optionDetails"]["strikePrice"])
-                    expirationDate = option["optionDetails"]["expirationDate"]
-                    daysToExpiration = int(option["optionDetails"]["daysToExpiration"])
-                    expirationType = option["optionDetails"]["expirationType"]
-                    lastTradingDay = float(option["optionDetails"]["lastTradingDay"])
-                    multiplier = option["optionDetails"]["multiplier"]
-                    settlementType = option["optionDetails"]["settlementType"]
-                    deliverableNote = option["optionDetails"]["deliverableNote"]
-                    isIndexOption = option["optionDetails"]["isIndexOption"]
-                    percentageChange = float(option["optionDetails"]["percentageChange"])
-                    markChange = float(option["optionDetails"]["markChange"])
-                    markPercentageChange = float(option["optionDetails"]["markPercentageChange"])
-                    isPennyPilot = option["optionDetails"]["isPennyPilot"]
-                    intrinsicValue = float(option["optionDetails"]["intrinsicValue"])
-                    optionRoot = option["optionDetails"]["optionRoot"]
-                    print("{} option on {}, expires {}, strike price {} desc {} ask {}".format( \
-                          option["optionDetails"]["putCall"], \
-                          option["symbol"], \
-                          option["expirationDate"], \
-                          option["strikePrice"], \
-                          option["optionDetails"]["description"], \
-                          option["optionDetails"]["ask"]))
             
             '''  ==================== Authenticate with the market data service - end ======================  '''
 
