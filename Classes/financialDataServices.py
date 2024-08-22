@@ -34,6 +34,11 @@ class financialDataServices(object):
             self.localDirs = get_ini_data("LOCALDIRS")
             self.aiwork = self.localDirs['aiwork']
         
+            #basicMarketDataDir = aiwork + localDirs['market_data'] + localDirs['basic_market_data']
+            #augmentedMarketDataDir = aiwork + localDirs['market_data'] + localDirs['augmented_market_data']
+            #financialInstrumentDetailsDir = aiwork + localDirs['market_data'] + localDirs['financial_instrument_details']
+            #optionChainDir = aiwork + localDirs['market_data'] + localDirs['option_chains']
+
             ''' Schwab APIs '''
             self.schwabConfig = get_ini_data("SCHWAB")
             self.localAPIAccessFile = self.aiwork + "\\" + self.schwabConfig['config']
@@ -298,6 +303,8 @@ class financialDataServices(object):
                 pass
             elif apiID == "put option":
                 pass
+            elif apiID == "financial instruments":
+                pass
             else:
                 raise Exception
             return True
@@ -321,7 +328,66 @@ class financialDataServices(object):
             print("\n\t***** Unable to save the updated authentication details for the market data service api *****\n")
             return False
 
-    def requestMarketData(self, symbol="", periodType="", period="", frequencyType="", frequency=""):
+    def requestFinancialInstrumentDetails(self, symbol=""):
+        exc_txt = "An exception occurred requesting financial instrument details"
+        try:
+            print("requestFinancialInstrumentDetails")
+            
+            self.manageThrottling("financial instruments")
+            self.manageMarketDataServiceTokens()
+            
+            accessToken = self.localAPIAccessDetails["tokens"]["access"]["access_token"]
+            hdr2 = "Bearer " + accessToken
+            getHeaders = {"accept" : "application/json", "Authorization" : hdr2}
+            
+            url = "https://api.schwabapi.com/marketdata/v1/instruments"
+            payload = {'symbol' : symbol, 'projection' : 'fundamental'}
+            
+            #print("GET: {}\nheaders={}\nparams={}".format(url, getHeaders, payload))
+            response = requests.get(url, headers=getHeaders, params=payload)
+
+            if response.status_code == 200:
+                '''  -----------  successful request. Data returned.  --------------  '''
+                pass
+            else:
+                if response.status_code == 400:
+                    exc_txt = "Generic client error"
+                    '''
+                    {
+                    "errors": [
+                        {
+                          "id": "6808262e-52bb-4421-9d31-6c0e762e7dd5",
+                          "status": "400",
+                          "title": "Bad Request",
+                          "detail": "Missing header",
+                          "detail": "Search combination should have min of 1.",
+                          "detail": "valid fields should be any of all,fundamental,reference,extended,quote,regular or empty value",
+                          "source": {
+                            "header": "Authorization"
+                          }
+                        },
+                    '''
+                elif response.status_code == 401:
+                    exc_txt = "Unauthorized"
+                elif response.status_code == 404:
+                    exc_txt = "Not found"
+                elif response.status_code == 500:
+                    exc_txt = "Internal server error"
+                else:
+                    exc_txt = "Unrecognized error"
+                print("Market data request failed - code: {}, {}".format(response.status_code, exc_txt))
+                raise Exception
+
+            return response
+    
+        except ValueError:
+            exc_info = sys.exc_info()
+            exc_str = exc_info[1].args[0]
+            exc_txt = exc_txt + "\n\t" + exc_str
+            sys.exit(exc_txt)
+
+            
+    def requestMarketData(self, symbol="", periodType="", period="", frequencyType="", frequency="", startDate=None, endDate=None):
         exc_txt = "An exception occurred requesting market data"
         try:
             print("requestMarketData")
@@ -334,11 +400,27 @@ class financialDataServices(object):
             getHeaders = {"accept" : "application/json", "Authorization" : hdr2}
             
             url = "https://api.schwabapi.com/marketdata/v1/pricehistory"
-            payload = {'symbol' : symbol, \
-                       'periodType' : periodType, \
-                       'period' : period, \
-                       'frequencyType' : frequencyType, \
-                       'frequency' : frequency}
+            if startDate == None or endDate == None:
+                payload = {'symbol' : symbol, \
+                           'periodType' : periodType, \
+                           'period' : period, \
+                           'frequencyType' : frequencyType, \
+                           'frequency' : frequency}
+            else:
+                '''
+                https://api.schwabapi.com/marketdata/v1/pricehistory?
+                symbol=AAPL&
+                periodType=month&
+                period=1&frequencyType=daily&frequency=1&
+                startDate=1699855200000&endDate=1724341256000
+                '''
+                payload = {'symbol' : symbol, \
+                           'periodType' : periodType, \
+                           'period' : period, \
+                           'frequencyType' : frequencyType, \
+                           'frequency' : frequency, \
+                           'startDate' : startDate, \
+                           'endDate' : endDate}
             
             #print("GET: {}\nheaders={}\nparams={}".format(url, getHeaders, payload))
             response = requests.get(url, headers=getHeaders, params=payload)

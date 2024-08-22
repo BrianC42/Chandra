@@ -60,6 +60,7 @@ from googleapiclient.errors import HttpError
 from GoogleSheets import googleSheet
 from MarketData import MarketData
 from OptionChain import OptionChain
+from FinancialInstrument import FinancialInstrument
 from financialDataServices import financialDataServices
 from Scalers import chandraScaler
 
@@ -832,24 +833,27 @@ if __name__ == '__main__':
             cellRange = 'Stock Information!A2:C999'
             cellValues = gSheets.readGoogleSheet(sheetID, cellRange)
             
-            mktData = MarketData("AAPL", periodType="month", period="1", frequencyType="daily", frequency="1")
-            for candle in mktData:
-                candleClose = candle.candleClose
-                candleOpen = candle.candleOpen
-                candleHigh = candle.candleHigh
-                candleLow= candle.candleLow
-                candleVolume = candle.candleVolume                    
-                dtval = candle.candleDateValue                    
-                candleDateTimeStr = candle.candleDateTimeStr
+            for symbol in ["AAPL", "OMAB"]:
+            
+                instrumentDetails = FinancialInstrument(symbol)
+                print("Symbol: {}, type: {}, description: {}".format(instrumentDetails.symbol, \
+                                                                     instrumentDetails.assetType, \
+                                                                     instrumentDetails.description))
                 
-                print("Market data: symbol: {}, date/time: {} {}, open: {}, close: {}, volume: {}".format( \
-                      mktData.symbol, dtval, candleDateTimeStr, candleOpen, candleClose, candleVolume) )
-
-            options = OptionChain("AAPL", optionType="Put", strikeCount=5, strikeRange="OTM", daysToExpiration=60)
-            for option in options:
-                print("Option chain for {}: type: {} expiration: {} strike: {} bid: {} ask: {}".format( \
-                        option.symbol, option.putCall, option.expirationDate, \
-                        option.strikePrice, option.bidPrice, option.askPrice))
+                ''' date/time: 1661144400.0 2022-08-22 '''
+                ''' date/time: 1722488400.0 2024-08-01 '''
+                ''' date/time: 1724130000.0 2024-08-20 '''
+                mktData = MarketData(symbol, periodType="month", period="2", frequencyType="daily", frequency="1")
+                for candle in mktData:
+                    print("Market data: symbol: {}, date/time: {} {}, open: {}, close: {}, volume: {}".format( \
+                          mktData.symbol, candle.candleDateValue, candle.candleDateTimeStr, \
+                          candle.candleOpen, candle.candleClose, candle.candleVolume) )
+    
+                options = OptionChain(symbol, optionType="Both", strikeCount=5, strikeRange="OTM", daysToExpiration=60)
+                for option in options:
+                    print("Option chain for {}: type: {} expiration: {} strike: {} bid: {} ask: {}".format( \
+                            option.symbol, option.putCall, option.expirationDate, \
+                            option.strikePrice, option.bidPrice, option.askPrice))
             ''' ================= Google workspace development end ================ '''
                     
 
@@ -890,9 +894,6 @@ if __name__ == '__main__':
             ''' ================ Authenticate with Google workplace and establish a connection to Google Drive API ============== '''
             exc_txt = "\nAn exception occurred - unable to authenticate with Google"
             gSheets = googleSheet()
-            dataService = financialDataServices()
-            mktData = MarketData()
-            options = OptionChain()
                         
             ''' 
             Use the connetion to Google Drive API to read sheet data
@@ -904,117 +905,18 @@ if __name__ == '__main__':
             cellRange = 'Stock Information!A2:C999'
             cellValues = gSheets.readGoogleSheet(sheetID, cellRange)
             
-            # Create list of symbols for market data request
-            mktDataSymbols = []
-            mktPuts = []
-            mktCalls = []
-            for i in range (0, len(cellValues)):
-                mktDataSymbols.append(cellValues.iat[i, 0])
-                if cellValues.iat[i, 2] == "1 - Holding":
-                    # Create list of symbols for market put option request
-                    mktPuts.append(cellValues.iat[i, 0])
-                elif cellValues.iat[i, 2] == "4 - Buy":
-                    # Create list of symbols for market call option request
-                    mktCalls.append(cellValues.iat[i, 0])
-            ''' ================= Google workspace development end ================ '''
-    
-            '''  ==================== Authenticate with the market data service - start ======================  '''
-            '''
-            Use the market data service to look up
-                basic market data
-                put option market data
-                call option market data
-            '''
-            dataService = financialDataServices()
-            options = OptionChain()
-            
             mktData = MarketData("AAPL", periodType="month", period="1", frequencyType="daily", frequency="1")
             for candle in mktData:
-                candleClose = candle.candleClose
-                candleOpen = candle.candleOpen
-                candleHigh = candle.candleHigh
-                candleLow= candle.candleLow
-                candleVolume = candle.candleVolume                    
-                dtval = candle.candleDateValue                    
-                candleDateTimeStr = candle.candleDateTimeStr
-                
-                print("Market data: symbol: {}, date/time: {} {}, open: {}, close: {}, volume: {}". \
-                      format(mktData.symbol, dtval, candleDateTimeStr, candleOpen, candleClose, candleVolume))
-           
-            for optType in ["Put", "Call", "Both"]:
-                response = dataService.requestOptionChain(type=optType, symbol="AAPL", strikeCount=5, range="OTM", daysToExpiration=60)
-                options.marketDataReturn = response.text
-                options.optionList = options.convertToList()
-                mktDataSymbols.append(cellValues.iat[i, 0])
-                
-                response = None
-                if cellValues.iat[i, 2] == "1 - Holding":
-                    response = dataService.requestOptionChain(type="Call", symbol=mktData.symbol, strikeCount=5, range="OTM", daysToExpiration=60)
-                elif cellValues.iat[i, 2] == "4 - Buy":
-                    response = dataService.requestOptionChain(type="Put", symbol=mktData.symbol, strikeCount=5, range="OTM", daysToExpiration=60)
+                print("Market data: symbol: {}, date/time: {} {}, open: {}, close: {}, volume: {}".format( \
+                      mktData.symbol, candle.candleDateValue, candle.candleDateTimeStr, \
+                      candle.candleOpen, candle.candleClose, candle.candleVolume) )
 
-                if not response == None:
-                    options.marketDataReturn = response.text
-                    options.optionList = options.convertToList()
-                    for option in options.optionList:
-                        putCall = option["optionDetails"]["putCall"]
-                        description = option["optionDetails"]["description"]
-                        ask = option["optionDetails"]["ask"]
-                        optionSymbol = option["optionDetails"]["symbol"]
-                        bidPrice = float(option["optionDetails"]["bid"])
-                        askPrice = float(option["optionDetails"]["ask"])
-                        lastPrice = float(option["optionDetails"]["last"])
-                        markPrice = float(option["optionDetails"]["mark"])
-                        bidSize = int(option["optionDetails"]["bidSize"])
-                        askSize = int(option["optionDetails"]["askSize"])
-                        lastSize = int(option["optionDetails"]["lastSize"])
-                        highPrice = float(option["optionDetails"]["highPrice"])
-                        lowPrice = float(option["optionDetails"]["lowPrice"])
-                        openPrice = float(option["optionDetails"]["openPrice"])
-                        closePrice = float(option["optionDetails"]["closePrice"])
-                        totalVolume = int(option["optionDetails"]["totalVolume"])
-                        #tradeDate = int(option["optionDetails"]["tradeDate"])
-                        quoteTimeInLong = int(option["optionDetails"]["quoteTimeInLong"])
-                        tradeTimeInLong = int(option["optionDetails"]["tradeTimeInLong"])
-                        netChange = float(option["optionDetails"]["netChange"])
-                        volatility = float(option["optionDetails"]["volatility"])
-                        delta = float(option["optionDetails"]["delta"])
-                        gamma = float(option["optionDetails"]["gamma"])
-                        theta = float(option["optionDetails"]["theta"])
-                        vega = float(option["optionDetails"]["vega"])
-                        rho = float(option["optionDetails"]["rho"])
-                        timeValue = float(option["optionDetails"]["timeValue"])
-                        openInterest = int(option["optionDetails"]["openInterest"])
-                        inTheMoney = option["optionDetails"]["inTheMoney"]
-                        theoreticalOptionValue = float(option["optionDetails"]["theoreticalOptionValue"])
-                        theoreticalVolatility = float(option["optionDetails"]["theoreticalVolatility"])
-                        mini = option["optionDetails"]["mini"]
-                        nonStandard = option["optionDetails"]["nonStandard"]
-                        optonDeliverablesList = option["optionDetails"]["optionDeliverablesList"]
-                        strikePrice = float(option["optionDetails"]["strikePrice"])
-                        expirationDate = option["optionDetails"]["expirationDate"]
-                        daysToExpiration = int(option["optionDetails"]["daysToExpiration"])
-                        expirationType = option["optionDetails"]["expirationType"]
-                        lastTradingDay = float(option["optionDetails"]["lastTradingDay"])
-                        multiplier = option["optionDetails"]["multiplier"]
-                        settlementType = option["optionDetails"]["settlementType"]
-                        deliverableNote = option["optionDetails"]["deliverableNote"]
-                        #isIndexOption = option["optionDetails"]["isIndexOption"]
-                        percentChange = float(option["optionDetails"]["percentChange"])
-                        markChange = float(option["optionDetails"]["markChange"])
-                        markPercentChange = float(option["optionDetails"]["markPercentChange"])
-                        pennyPilot = option["optionDetails"]["pennyPilot"]
-                        intrinsicValue = float(option["optionDetails"]["intrinsicValue"])
-                        optionRoot = option["optionDetails"]["optionRoot"]
-                        print("{} option on {}, expires {}, strike price {} desc {} ask {}".format( \
-                              option["optionDetails"]["putCall"], \
-                              option["symbol"], \
-                              option["expirationDate"], \
-                              option["strikePrice"], \
-                              option["optionDetails"]["description"], \
-                              option["optionDetails"]["ask"]))
-            
-            '''  ==================== Authenticate with the market data service - end ======================  '''
+            options = OptionChain("AAPL", optionType="Both", strikeCount=5, strikeRange="OTM", daysToExpiration=60)
+            for option in options:
+                print("Option chain for {}: type: {} expiration: {} strike: {} bid: {} ask: {}".format( \
+                        option.symbol, option.putCall, option.expirationDate, \
+                        option.strikePrice, option.bidPrice, option.askPrice))
+            ''' ================= Google workspace development end ================ '''
 
             dictexp()
             processCtrl = iniRead()                   # Experimentation / development of configuration json file

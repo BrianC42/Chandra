@@ -5,6 +5,8 @@ Created on Aug 12, 2024
 '''
 import json
 
+from configuration import get_ini_data
+
 from financialDataServices import financialDataServices
 
 ''' ================================= OptionDetails - start ===========================
@@ -12,8 +14,6 @@ from financialDataServices import financialDataServices
 '''
 class OptionDetails(object):
     '''
-    self.symbol, expirationDate=exp_date, daysToExpiry=daysToExp, \
-                                            strikePrice=strike_price, optionDetails=option
     classdocs
     
     '''
@@ -22,7 +22,7 @@ class OptionDetails(object):
     class data
     '''
 
-    '''         Constructor        '''
+    '''  ====== OptionDetails Constructor ====== '''
     def __init__(self, symbol, expirationDate="", daysToExpiry=0, strikePrice=0.0, optionDetails=""):
         self.symbol = symbol
         self.expirationDate = expirationDate
@@ -33,34 +33,78 @@ class OptionDetails(object):
         self.putCall = self.optionDetails["putCall"]
         self.description = self.optionDetails["description"]
         self.optionSymbol = self.optionDetails["symbol"]
+        
         self.bidPrice = float(self.optionDetails["bid"])
         self.askPrice = float(self.optionDetails["ask"])
         self.lastPrice = float(self.optionDetails["last"])
         self.markPrice = float(self.optionDetails["mark"])
+        
         self.bidSize = int(self.optionDetails["bidSize"])
         self.askSize = int(self.optionDetails["askSize"])
 
+        self.closePrice = float(optionDetails["closePrice"])
+        self.volatility = float(optionDetails["volatility"])
+        self.delta = float(optionDetails["delta"])
+        self.gamma = float(optionDetails["gamma"])
+        self.theta = float(optionDetails["theta"])
+        self.vega = float(optionDetails["vega"])
+        self.rho = float(optionDetails["rho"])
+        self.inTheMoney = optionDetails["inTheMoney"]
+
         '''
-        print("symbol: {}, expiration: {}, strike price: {}".format(symbol, expirationDate, strikePrice))
+        symbol    
+        strategy    (putCall)
+        expiration    
+        days To Expiration    
+        strike Price    
+        bid    
+        ask    
+        expiration Date    
+
+        closePrice    self.closePrice = float(option["closePrice"])
+        volatility    self.volatility = float(option["volatility"])
+        delta    self.delta = float(option["delta"])
+        gamma    self.gamma = float(option["gamma"])
+        theta    self.theta = float(option["theta"])
+        vega    self.vega = float(option["vega"])
+        rho    self.rho = float(option["rho"])
+        inTheMoney    self.inTheMoney = option["inTheMoney"]
+
+                underlying Price    
+                break even    
+                OTM Probability    
+                ADX    
+                probability of loss    
+                ROI    
+                Max Loss    
+                Preferred Outcome    
+                Preferred Result    
+                Unfavored Result        
+                
+                            Purchase $    
+                            Earnings    
+                            Dividend    
+                            Current Holding    
+                            Qty    
+                            max gain APY    
+                            Max Profit    
+                            Risk Management    
+                            Loss vs. Profit    
+                            premium    
+                            commission    
+                            Earnings Date    
+                            dividend Date    
 
         self.lastSize = int(option["lastSize"])
         self.highPrice = float(option["highPrice"])
         self.lowPrice = float(option["lowPrice"])
         self.openPrice = float(option["openPrice"])
-        self.closePrice = float(option["closePrice"])
         self.totalVolume = int(option["totalVolume"])
         self.quoteTimeInLong = int(option["quoteTimeInLong"])
         self.tradeTimeInLong = int(option["tradeTimeInLong"])
         self.netChange = float(option["netChange"])
-        self.volatility = float(option["volatility"])
-        self.delta = float(option["delta"])
-        self.gamma = float(option["gamma"])
-        self.theta = float(option["theta"])
-        self.vega = float(option["vega"])
-        self.rho = float(option["rho"])
         self.timeValue = float(option["timeValue"])
         self.openInterest = int(option["openInterest"])
-        self.inTheMoney = option["inTheMoney"]
         self.theoreticalOptionValue = float(option["theoreticalOptionValue"])
         self.theoreticalVolatility = float(option["theoreticalVolatility"])
         self.mini = option["mini"]
@@ -193,6 +237,71 @@ class OptionDetails(object):
     @askSize.setter
     def askSize(self, askSize):
         self._askSize = askSize
+
+    @property
+    def closePrice(self):
+        return self._closePrice
+    
+    @closePrice.setter
+    def closePrice(self, closePrice):
+        self._closePrice = closePrice
+
+    @property
+    def volatility(self):
+        return self._volatility
+    
+    @volatility.setter
+    def volatility(self, volatility):
+        self._volatility = volatility
+
+    @property
+    def delta(self):
+        return self._delta
+    
+    @delta.setter
+    def delta(self, delta):
+        self._delta = delta
+
+    @property
+    def gamma(self):
+        return self._gamma
+    
+    @gamma.setter
+    def gamma(self, gamma):
+        self._gamma = gamma
+
+    @property
+    def theta(self):
+        return self._theta
+    
+    @theta.setter
+    def theta(self, theta):
+        self._theta = theta
+
+    @property
+    def vega(self):
+        return self._vega
+    
+    @vega.setter
+    def vega(self, vega):
+        self._vega = vega
+
+    @property
+    def rho(self):
+        return self._rho
+    
+    @rho.setter
+    def rho(self, rho):
+        self._rho = rho
+
+    @property
+    def inTheMoney(self):
+        return self._inTheMoney
+    
+    @inTheMoney.setter
+    def inTheMoney(self, inTheMoney):
+        self._inTheMoney = inTheMoney
+
     '''        
     @property
     def xxx(self):
@@ -203,7 +312,7 @@ class OptionDetails(object):
         self._xxx = xxx
     '''
         
-'''
+''' =============================================================================
     Class to manage the option data for a single option
 ================================= OptionDetails - end =========================== '''
     
@@ -215,9 +324,14 @@ class OptionChain(object):
     ''' accessible methods   '''
     
     def __init__(self, symbol, optionType="Both", strikeCount=5, strikeRange="OTM", daysToExpiration=60):
-        '''
-        Constructor
-        '''
+        ''' ======= OptionChain Constructor ======== '''
+        localDirs = get_ini_data("LOCALDIRS")
+        aiwork = localDirs['aiwork']
+        #basicMarketDataDir = aiwork + localDirs['market_data'] + localDirs['basic_market_data']
+        #augmentedMarketDataDir = aiwork + localDirs['market_data'] + localDirs['augmented_market_data']
+        #financialInstrumentDetailsDir = aiwork + localDirs['market_data'] + localDirs['financial_instrument_details']
+        optionChainDir = aiwork + localDirs['market_data'] + localDirs['option_chains']
+            
         self.optType = optionType
         self.symbol = symbol
         self.strikeCount = strikeCount
