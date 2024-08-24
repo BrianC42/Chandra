@@ -832,6 +832,94 @@ if __name__ == '__main__':
             print("file 2: {} - {}".format('production', googleDriveFiles["Google IDs"]["Market Data"]["Production"]))
             cellRange = 'Stock Information!A2:C999'
             cellValues = gSheets.readGoogleSheet(sheetID, cellRange)
+            instrumentCells = 'TD Import Inf!A1:p999'
+            instrumentCellValues = gSheets.readGoogleSheet(sheetID, instrumentCells)
+            '''
+            instrumentCellValues.columns
+            Index(['Symbol', 'Change %', 'Last Price', 'Dividend Yield', 'Dividend',
+                   'Dividend Ex-Date', 'P/E Ratio', '52 Week High', '52 Week Low',
+                   'Volume', 'Sector', 'Next Earnings Date', 'Morningstar', 'Market Cap',
+                   'Schwab Equity Rating', 'Argus Rating']
+                   
+            Missing data elements
+                'Change %',
+                'Sector', 'Next Earnings Date', 
+                'Morningstar', 'Schwab Equity Rating', 'Argus Rating'
+            
+            MarketData elements
+                'Last Price' : close
+                'Volume'
+            
+            FinancialInstrument data elements
+                'symbol': 'AAPL' 'Symbol'
+                'high52': 237.23,  '52 Week High'
+                'low52': 164.075 '52 Week Low'
+                'dividendYield': 0.44269, 'Dividend Yield'
+                'dividendAmount': 1.0, 'Dividend'
+                'dividendDate': '2024-08-12 00:00:00.0', 'Dividend Ex-Date'
+                'peRatio': 34.49389, 'P/E Ratio'
+                'marketCap': 3434462506930.0, 'Market Cap'
+                
+                {
+                'symbol': 'AAPL', 
+                'high52': 237.23, 
+                'low52': 164.075, 
+                'dividendAmount': 1.0, 
+                'dividendYield': 0.44269, 
+                'dividendDate': '2024-08-12 00:00:00.0', 
+                'peRatio': 34.49389, 
+                'pegRatio': 112.66734, 
+                'pbRatio': 48.06189, 
+                'prRatio': 8.43929, 
+                'pcfRatio': 23.01545, 
+                'grossMarginTTM': 45.962, 
+                'grossMarginMRQ': 46.2571, 
+                'netProfitMarginTTM': 26.4406, 
+                'netProfitMarginMRQ': 25.0043, 
+                'operatingMarginTTM': 26.4406, 
+                'operatingMarginMRQ': 25.0043, 
+                'returnOnEquity': 160.5833, 
+                'returnOnAssets': 22.6119, 
+                'returnOnInvestment': 50.98106, 
+                'quickRatio': 0.79752, 
+                'currentRatio': 0.95298, 
+                'interestCoverage': 0.0, 
+                'totalDebtToCapital': 51.3034, 
+                'ltDebtToEquity': 151.8618, 
+                'totalDebtToEquity': 129.2138, 
+                'epsTTM': 6.56667, 
+                'epsChangePercentTTM': 10.3155, 
+                'epsChangeYear': 0.0, 
+                'epsChange': 0.0, 
+                'revChangeYear': -2.8005, 
+                'revChangeTTM': 0.4349, 
+                'revChangeIn': 0.0, 
+                'sharesOutstanding': 15204137000.0, 
+                'marketCapFloat': 0.0, 
+                'marketCap': 3434462506930.0, 
+                'bookValuePerShare': 4.38227, 
+                'shortIntToFloat': 0.0, 
+                'shortIntDayToCover': 0.0, 
+                'divGrowthRate3Year': 0.0, 
+                'dividendPayAmount': 0.25, 
+                'dividendPayDate': '2024-08-15 00:00:00.0', 
+                'beta': 1.24364, 
+                'vol1DayAvg': 0.0, 
+                'vol10DayAvg': 0.0, 
+                'vol3MonthAvg': 0.0, 
+                'avg10DaysVolume': 47812576, 
+                'avg1DayVolume': 60229630, 
+                'avg3MonthVolume': 64569166, 
+                'declarationDate': '2024-08-01 00:00:00.0', 
+                'dividendFreq': 4, 
+                'eps': 6.13, 
+                'dtnVolume': 40687813, 
+                'nextDividendPayDate': '2024-11-15 00:00:00.0', 
+                'nextDividendDate': '2024-11-12 00:00:00.0', 
+                'fundLeverageFactor': 0.0
+                }, 
+
+            '''
             
             for symbol in ["AAPL", "OMAB"]:
             

@@ -14,15 +14,10 @@ from configuration import get_ini_data
 
 from financialDataServices import financialDataServices
 
+''' ============ Individual market data candle class - start ============= '''
 class MarketDataCandle(object):
-    '''
-    classdocs
-    
-    '''
-    
-    '''
-    class data
-    '''
+    '''     classdocs      '''
+    '''     class data     '''
 
     '''         Constructor        '''
     def __init__(self, candle):
@@ -101,17 +96,13 @@ class MarketDataCandle(object):
     def candleDateTimeStr(self, candleDateTimeStr):
         self._candleDateTimeStr = candleDateTimeStr
 
-    ''' ============ candle storage and access - end ============= '''
+''' ============ candle storage and access - end ============= '''
+''' ============ Individual market data candle class - end ============= '''
 
 class MarketData(object):
-    '''
-    classdocs
+    '''     classdocs      '''
     
-    '''
-    
-    '''
-    class data
-    '''
+    '''     class data     '''
 
     '''         Constructor        '''
     def __init__(self, symbol, periodType="", period="", frequencyType="", frequency=""):
@@ -137,11 +128,17 @@ class MarketData(object):
         return self
 
     def __next__(self):
-        if self.index >= len(self.marketDataJson["candles"]):
+        if self.index >= len(self.df_marketData):
             raise StopIteration
 
         else:
-            self.candle = self.marketDataJson["candles"][self.index]
+            candleDict = {'datetime' : self.df_marketData.iloc[self.index]['DateTime'], \
+                          'open' : self.df_marketData.iloc[self.index]['Open'], \
+                          'high' : self.df_marketData.iloc[self.index]['High'], \
+                          'low' : self.df_marketData.iloc[self.index]['Low'], \
+                          'close' : self.df_marketData.iloc[self.index]['Close'], \
+                          'volume' : self.df_marketData.iloc[self.index]['Volume']}
+            self.candle = candleDict
             self.index += 1
             return self.candle
    
@@ -181,12 +178,37 @@ class MarketData(object):
                                                          periodType=MAX_HISTORY_TYPE, period=MAX_HISTORY_PERIOD, 
                                                          frequencyType=self.frequencyType, frequency=self.frequency, \
                                                          startDate=None, endDate=None)
+                df_eod = pd.DataFrame(columns=['DateTime', 'Open', 'High', 'Low', 'Close', 'Volume'])
                 
             self.marketDataReturn = response.text
             self.marketDataJson = json.loads(self.marketDataReturn)
         
-            print("WIP *****************\n\tCode to save market data file needed here\n")
-        
+            df_new = pd.DataFrame(columns=['DateTime', 'Open', 'High', 'Low', 'Close', 'Volume'])
+            for ndx in range(len(self.marketDataJson["candles"])):
+                self.candle = self.marketDataJson["candles"][ndx]
+                
+                # Create a new row to append
+                new_row = {'DateTime' : self.candle.candleDateValue * 1000, \
+                           'Open' : self.candle.candleOpen, \
+                           'High' : self.candle.candleHigh, \
+                           'Low' : self.candle.candleLow, \
+                           'Close' : self.candle.candleClose, \
+                           'Volume' : self.candle.candleVolume}
+                
+                df_new.loc[len(df_new)] = new_row                
+                
+            if len(df_eod) == 0:
+                self.df_marketData = df_new
+            else:
+                print("WIP *****************\n\tCode to return existing and new data combined for processing\n")
+                '''
+                self.marketDataReturn = response.text
+                self.marketDataJson = json.loads(self.marketDataReturn)
+                '''
+                self.df_marketData = pd.concat([df_eod, df_new])
+            
+            # Archive market data
+            self.df_marketData.to_csv(eod_file, index=False)
             return
             
         except Exception:
@@ -254,6 +276,14 @@ class MarketData(object):
     @candle.setter
     def candle(self, candle):
         self._candle = MarketDataCandle(candle)
+
+    @property
+    def df_marketData(self):
+        return self._df_marketData
+    
+    @df_marketData.setter
+    def df_marketData(self, df_marketData):
+        self._df_marketData = df_marketData
 
     @property
     def marketDataJson(self):
