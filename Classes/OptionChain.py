@@ -3,6 +3,7 @@ Created on Aug 12, 2024
 
 @author: brian
 '''
+import sys
 import json
 
 from configuration import get_ini_data
@@ -325,27 +326,35 @@ class OptionChain(object):
     
     def __init__(self, symbol, optionType="Both", strikeCount=5, strikeRange="OTM", daysToExpiration=60):
         ''' ======= OptionChain Constructor ======== '''
-        localDirs = get_ini_data("LOCALDIRS")
-        aiwork = localDirs['aiwork']
-        #basicMarketDataDir = aiwork + localDirs['market_data'] + localDirs['basic_market_data']
-        #augmentedMarketDataDir = aiwork + localDirs['market_data'] + localDirs['augmented_market_data']
-        #financialInstrumentDetailsDir = aiwork + localDirs['market_data'] + localDirs['financial_instrument_details']
-        optionChainDir = aiwork + localDirs['market_data'] + localDirs['option_chains']
+        exc_txt = "An exception occurred creating an OptionChain object for {}".format(symbol)
+        try:
+            localDirs = get_ini_data("LOCALDIRS")
+            aiwork = localDirs['aiwork']
+            #basicMarketDataDir = aiwork + localDirs['market_data'] + localDirs['basic_market_data']
+            #augmentedMarketDataDir = aiwork + localDirs['market_data'] + localDirs['augmented_market_data']
+            #financialInstrumentDetailsDir = aiwork + localDirs['market_data'] + localDirs['financial_instrument_details']
+            optionChainDir = aiwork + localDirs['market_data'] + localDirs['option_chains']
+                
+            self.optType = optionType
+            self.symbol = symbol
+            self.strikeCount = strikeCount
+            self.strikeRange = strikeRange
+            self.daysToExpiration = daysToExpiration
             
-        self.optType = optionType
-        self.symbol = symbol
-        self.strikeCount = strikeCount
-        self.strikeRange = strikeRange
-        self.daysToExpiration = daysToExpiration
-        
-        self.financialDataServicesObj = financialDataServices()
-        response = self.financialDataServicesObj.requestOptionChain(type=optionType, symbol=symbol, \
-                                                                    strikeCount=strikeCount, range=strikeRange, \
-                                                                    daysToExpiration=daysToExpiration)
-
-        if response.status_code == 200:
-            self.optionChainData = response.text
-            self.optionChainJson = json.loads(self.optionChainData)
+            self.financialDataServicesObj = financialDataServices()
+            response = self.financialDataServicesObj.requestOptionChain(type=optionType, symbol=symbol, \
+                                                                        strikeCount=strikeCount, range=strikeRange, \
+                                                                        daysToExpiration=daysToExpiration)
+    
+            if response.status_code == 200:
+                self.optionChainData = response.text
+                self.optionChainJson = json.loads(self.optionChainData)
+                
+        except ValueError:
+            exc_info = sys.exc_info()
+            exc_str = exc_info[1].args[0]
+            exc_txt = exc_txt + "\n\t" + exc_str
+            sys.exit(exc_txt)
 
     ''' ===== iterator over the options in the option chain ===== '''
     def __iter__(self):

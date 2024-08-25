@@ -106,22 +106,31 @@ class MarketData(object):
 
     '''         Constructor        '''
     def __init__(self, symbol, periodType="", period="", frequencyType="", frequency=""):
-        self.symbol = symbol
-        self.periodType = periodType
-        self.period = period
-        self.frequencyType = frequencyType
-        self.frequency = frequency
-        self.financialDataServicesObj = financialDataServices()
-        '''
-        response = self.financialDataServicesObj.requestMarketData(symbol=symbol, \
-                                                 periodType=periodType, period=period, 
-                                                 frequencyType=frequencyType, frequency=frequency)
         
-        self.marketDataReturn = response.text
-        self.marketDataJson = json.loads(self.marketDataReturn)
-        '''
-        
-        self.archiveMarketData()
+        exc_txt = "An exception occurred creating a MarketData object for {}".format(symbol)
+        try:
+            self.symbol = symbol
+            self.periodType = periodType
+            self.period = period
+            self.frequencyType = frequencyType
+            self.frequency = frequency
+            self.financialDataServicesObj = financialDataServices()
+            '''
+            response = self.financialDataServicesObj.requestMarketData(symbol=symbol, \
+                                                     periodType=periodType, period=period, 
+                                                     frequencyType=frequencyType, frequency=frequency)
+            
+            self.marketDataReturn = response.text
+            self.marketDataJson = json.loads(self.marketDataReturn)
+            '''
+            
+            self.archiveMarketData()
+    
+        except ValueError:
+            exc_info = sys.exc_info()
+            exc_str = exc_info[1].args[0]
+            exc_txt = exc_txt + "\n\t" + exc_str
+            sys.exit(exc_txt)
         
     def __iter__(self):
         self.index = 0
@@ -144,7 +153,7 @@ class MarketData(object):
    
     ''' ============ maintain a local archive of equity instruments market data history - start ============= '''
     def archiveMarketData(self):
-        print("Archiving market data for {}".format(self.symbol))
+        #print("Archiving market data for {}".format(self.symbol))
         exc_txt = "\nAn exception occurred - unable to archive market data"
         try:
             localDirs = get_ini_data("LOCALDIRS")
@@ -161,7 +170,7 @@ class MarketData(object):
             '''
             eod_file = basicMarketDataDir + '\\' + self.symbol + '.csv'
             if os.path.isfile(eod_file):
-                print("Basic market data file for {} exists, {}".format(self.symbol, eod_file))
+                #print("Basic market data file for {} exists, {}".format(self.symbol, eod_file))
                 df_eod = pd.read_csv(eod_file)
                 df_eod = df_eod.drop_duplicates(subset='DateTime')
                 last_row_datetime = int(df_eod.iloc[-1]['DateTime'])
@@ -173,7 +182,7 @@ class MarketData(object):
             else:
                 MAX_HISTORY_PERIOD = 20
                 MAX_HISTORY_TYPE = 'year'
-                print("Basic market data file for {} does not exists".format(self.symbol))
+                #print("Basic market data file for {} does not exists".format(self.symbol))
                 response = self.financialDataServicesObj.requestMarketData(symbol=self.symbol, \
                                                          periodType=MAX_HISTORY_TYPE, period=MAX_HISTORY_PERIOD, 
                                                          frequencyType=self.frequencyType, frequency=self.frequency, \
@@ -200,14 +209,10 @@ class MarketData(object):
             if len(df_eod) == 0:
                 self.df_marketData = df_new
             else:
-                print("WIP *****************\n\tCode to return existing and new data combined for processing\n")
-                '''
-                self.marketDataReturn = response.text
-                self.marketDataJson = json.loads(self.marketDataReturn)
-                '''
                 self.df_marketData = pd.concat([df_eod, df_new])
             
             # Archive market data
+            self.df_marketData = self.df_marketData.drop_duplicates(subset='DateTime')
             self.df_marketData.to_csv(eod_file, index=False)
             return
             

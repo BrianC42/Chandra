@@ -30,7 +30,7 @@ class financialDataServices(object):
         '''
         exc_txt = "Unable to create MarketData object"
         try:
-            print("MarketData constructor")
+            #print("MarketData constructor")
             self.localDirs = get_ini_data("LOCALDIRS")
             self.aiwork = self.localDirs['aiwork']
         
@@ -220,7 +220,7 @@ class financialDataServices(object):
     def refreshAccessToken(self):
         exc_txt = "refreshAccessToken exception"
         try:
-            print("refreshAccessToken")
+            #print("refreshAccessToken")
             
             url = self.localAPIAccessDetails["APIs"]["Authorization"]["URL"]
             
@@ -278,7 +278,7 @@ class financialDataServices(object):
                 
     def manageMarketDataServiceTokens(self):
         try:
-            print("manageMarketDataServiceTokens")
+            #print("manageMarketDataServiceTokens")
             
             refreshTokenExpires = self.localAPIAccessDetails['tokens']['refresh']['expires']
             if time.time() > refreshTokenExpires:
@@ -296,7 +296,7 @@ class financialDataServices(object):
         
     def manageThrottling(self, apiID=""):
         try:
-            print("manageThrottling")
+            #print("manageThrottling")
             if apiID == "market data":
                 pass
             elif apiID == "call option":
@@ -331,7 +331,7 @@ class financialDataServices(object):
     def requestFinancialInstrumentDetails(self, symbol=""):
         exc_txt = "An exception occurred requesting financial instrument details"
         try:
-            print("requestFinancialInstrumentDetails")
+            #print("requestFinancialInstrumentDetails")
             
             self.manageThrottling("financial instruments")
             self.manageMarketDataServiceTokens()
@@ -380,7 +380,7 @@ class financialDataServices(object):
 
             return response
     
-        except ValueError:
+        except Exception:
             exc_info = sys.exc_info()
             exc_str = exc_info[1].args[0]
             exc_txt = exc_txt + "\n\t" + exc_str
@@ -390,7 +390,7 @@ class financialDataServices(object):
     def requestMarketData(self, symbol="", periodType="", period="", frequencyType="", frequency="", startDate=None, endDate=None):
         exc_txt = "An exception occurred requesting market data"
         try:
-            print("requestMarketData")
+            #print("requestMarketData")
             
             self.manageThrottling("market data")
             self.manageMarketDataServiceTokens()
@@ -468,7 +468,7 @@ class financialDataServices(object):
     def requestOptionChain(self, type="Both", symbol="", strikeCount=0, range="OTM", daysToExpiration=0):
         exc_txt = "An exception occurred requesting option chain"
         try:
-            print("requestOptionChain")
+            #print("requestOptionChain")
             
             if type == "Call":
                 contractType = "CALL"
@@ -490,7 +490,7 @@ class financialDataServices(object):
             optionExpires = now + duration
             dtExp = datetime.datetime.fromtimestamp(optionExpires)
             strExp = dtExp.strftime("%Y-%m-%d")
-            print("{} options expiring between {} and {}".format(contractType, strNow, strExp))
+            #print("{} options expiring between {} and {}".format(contractType, strNow, strExp))
             
             if type == "Call":
                 self.manageThrottling("call option")
@@ -512,7 +512,7 @@ class financialDataServices(object):
                        'toDate' : strExp
                        }
             
-            print("GET: {}\nheaders={}\nparams={}".format(url, getHeaders, payload))
+            #print("GET: {}\nheaders={}\nparams={}".format(url, getHeaders, payload))
             response = requests.get(url, headers=getHeaders, params=payload)
 
             if response.status_code == 200:

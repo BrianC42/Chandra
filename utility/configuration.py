@@ -30,7 +30,7 @@ def get_ini_data(csection, file=""):
 
 
 def read_config_json(json_file):
-    print ("reading configuration details from ", json_file)
+    #print ("reading configuration details from ", json_file)
     
     json_f = open(json_file, "rb")
     json_config = json.load(json_f)

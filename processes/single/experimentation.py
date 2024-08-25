@@ -830,10 +830,13 @@ if __name__ == '__main__':
             sheetID = googleDriveFiles["Google IDs"]["Market Data"]["Development"]
             print("file 1: {} - {}".format('development', googleDriveFiles["Google IDs"]["Market Data"]["Development"]))
             print("file 2: {} - {}".format('production', googleDriveFiles["Google IDs"]["Market Data"]["Production"]))
-            cellRange = 'Stock Information!A2:C999'
-            cellValues = gSheets.readGoogleSheet(sheetID, cellRange)
             instrumentCells = 'TD Import Inf!A1:p999'
             instrumentCellValues = gSheets.readGoogleSheet(sheetID, instrumentCells)
+            symbols = instrumentCellValues['Symbol'].astype(str).str.split(',', n=1).str[0]
+            
+            cellRange = 'Stock Information!A2:C999'
+            cellValues = gSheets.readGoogleSheet(sheetID, cellRange)
+
             '''
             instrumentCellValues.columns
             Index(['Symbol', 'Change %', 'Last Price', 'Dividend Yield', 'Dividend',
@@ -921,7 +924,9 @@ if __name__ == '__main__':
 
             '''
             
-            for symbol in ["AAPL", "OMAB"]:
+            for symbol in ["ADBE","AAPL"]:
+            #for symbol in symbols:
+                exc_txt = "\nAn exception occurred - with symbol: {}".format(symbol)
             
                 instrumentDetails = FinancialInstrument(symbol)
                 print("Symbol: {}, type: {}, description: {}".format(instrumentDetails.symbol, \
@@ -932,16 +937,26 @@ if __name__ == '__main__':
                 ''' date/time: 1722488400.0 2024-08-01 '''
                 ''' date/time: 1724130000.0 2024-08-20 '''
                 mktData = MarketData(symbol, periodType="month", period="2", frequencyType="daily", frequency="1")
+                '''
                 for candle in mktData:
                     print("Market data: symbol: {}, date/time: {} {}, open: {}, close: {}, volume: {}".format( \
                           mktData.symbol, candle.candleDateValue, candle.candleDateTimeStr, \
                           candle.candleOpen, candle.candleClose, candle.candleVolume) )
-    
-                options = OptionChain(symbol, optionType="Both", strikeCount=5, strikeRange="OTM", daysToExpiration=60)
+                '''
+                actionCategory = cellValues[cellValues['Symbol']==symbol]['Action Category']
+                if actionCategory.iloc[0] == "1 - Holding":
+                    print("Call options for {}".format(symbol))
+                    options = OptionChain(symbol, optionType="Call", strikeCount=5, strikeRange="OTM", daysToExpiration=60)
+                elif actionCategory.iloc[0] == "4 - Buy":
+                    print("Put options for {}".format(symbol))
+                    options = OptionChain(symbol, optionType="Put", strikeCount=5, strikeRange="OTM", daysToExpiration=60)
+                
+                '''
                 for option in options:
                     print("Option chain for {}: type: {} expiration: {} strike: {} bid: {} ask: {}".format( \
                             option.symbol, option.putCall, option.expirationDate, \
                             option.strikePrice, option.bidPrice, option.askPrice))
+                '''
             ''' ================= Google workspace development end ================ '''
                     
 
