@@ -5,6 +5,7 @@ Created on Aug 12, 2024
 '''
 import sys
 import json
+import pandas as pd
 
 from configuration import get_ini_data
 
@@ -24,33 +25,50 @@ class OptionDetails(object):
     '''
 
     '''  ====== OptionDetails Constructor ====== '''
-    def __init__(self, symbol, expirationDate="", daysToExpiry=0, strikePrice=0.0, optionDetails=""):
-        self.symbol = symbol
-        self.expirationDate = expirationDate
-        self.daysToExpiry = daysToExpiry
-        self.strikePrice = strikePrice
-        self.optionDetails = optionDetails
-        
-        self.putCall = self.optionDetails["putCall"]
-        self.description = self.optionDetails["description"]
-        self.optionSymbol = self.optionDetails["symbol"]
-        
-        self.bidPrice = float(self.optionDetails["bid"])
-        self.askPrice = float(self.optionDetails["ask"])
-        self.lastPrice = float(self.optionDetails["last"])
-        self.markPrice = float(self.optionDetails["mark"])
-        
-        self.bidSize = int(self.optionDetails["bidSize"])
-        self.askSize = int(self.optionDetails["askSize"])
+    def __init__(self, symbol, strategy="", expirationDate="", daysToExpiry=0, strikePrice=0.0, optionDetails=""):
+        try:
+            exc_txt = "Unable to construct option object"
+            
+            self.symbol = symbol
+            
+            if strategy == "putExpDateMap":
+                self.strategy = "put"
+            elif strategy == "callExpDateMap":
+                self.strategy = "call"
+            else:
+                raise ValueError
+            
+            self.expirationDate = expirationDate
+            self.daysToExpiry = daysToExpiry
+            self.strikePrice = strikePrice
+            self.optionDetails = optionDetails
+            
+            self.putCall = self.optionDetails["putCall"]
+            self.description = self.optionDetails["description"]
+            self.optionSymbol = self.optionDetails["symbol"]
+            
+            self.bidPrice = float(self.optionDetails["bid"])
+            self.askPrice = float(self.optionDetails["ask"])
+            self.lastPrice = float(self.optionDetails["last"])
+            self.markPrice = float(self.optionDetails["mark"])
+            
+            self.bidSize = int(self.optionDetails["bidSize"])
+            self.askSize = int(self.optionDetails["askSize"])
+    
+            self.closePrice = float(optionDetails["closePrice"])
+            self.volatility = float(optionDetails["volatility"])
+            self.delta = float(optionDetails["delta"])
+            self.gamma = float(optionDetails["gamma"])
+            self.theta = float(optionDetails["theta"])
+            self.vega = float(optionDetails["vega"])
+            self.rho = float(optionDetails["rho"])
+            self.inTheMoney = optionDetails["inTheMoney"]
 
-        self.closePrice = float(optionDetails["closePrice"])
-        self.volatility = float(optionDetails["volatility"])
-        self.delta = float(optionDetails["delta"])
-        self.gamma = float(optionDetails["gamma"])
-        self.theta = float(optionDetails["theta"])
-        self.vega = float(optionDetails["vega"])
-        self.rho = float(optionDetails["rho"])
-        self.inTheMoney = optionDetails["inTheMoney"]
+        except (ValueError, Exception):
+            exc_info = sys.exc_info()
+            exc_str = exc_info[1].args[0]
+            exc_txt = exc_txt + "\n\t" + exc_str
+            sys.exit(exc_txt)
 
         '''
         symbol    
@@ -70,6 +88,7 @@ class OptionDetails(object):
         vega    self.vega = float(option["vega"])
         rho    self.rho = float(option["rho"])
         inTheMoney    self.inTheMoney = option["inTheMoney"]
+
 
                 underlying Price    
                 break even    
@@ -126,6 +145,13 @@ class OptionDetails(object):
         self.intrinsicValue = float(option["intrinsicValue"])
         self.optionRoot = option["optionRoot"]
         '''
+    ''' Option formatting methods
+        xxx - return as json
+        xxx - return as dict
+        xxx - return as pandas dataframe row
+    '''
+        
+    ''' Option constructor data field access functions '''
     @property
     def optionDetails(self):
         return self._optionDetails
@@ -324,8 +350,8 @@ class OptionChain(object):
     
     ''' accessible methods   '''
     
+    ''' ======= OptionChain Constructor ======== '''
     def __init__(self, symbol, optionType="Both", strikeCount=5, strikeRange="OTM", daysToExpiration=60):
-        ''' ======= OptionChain Constructor ======== '''
         exc_txt = "An exception occurred creating an OptionChain object for {}".format(symbol)
         try:
             localDirs = get_ini_data("LOCALDIRS")
@@ -350,7 +376,51 @@ class OptionChain(object):
                 self.optionChainData = response.text
                 self.optionChainJson = json.loads(self.optionChainData)
                 
-        except ValueError:
+                self.df_OptionChain = pd.DataFrame(index=['symbol', 'strategy', 'expirationDate'], \
+                                                   columns=['days To Expiration', 'strike Price', 'bid', 'ask', 'closePrice', \
+                                                            "volatility", "delta", "gamma", "theta", "vega", "rho", \
+                                                            "inTheMoney", "lastSize", "highPrice", "lowPrice", "openPrice", \
+                                                            "totalVolume", "quoteTimeInLong", "tradeTimeInLong", "netChange", \
+                                                            "timeValue", "openInterest", "theoreticalOptionValue", "theoreticalVolatility", \
+                                                            "mini", "nonStandard", "optionDeliverablesList", "strikePrice", \
+                                                            "expirationDate", "daysToExpiration", "expirationType", "lastTradingDay", \
+                                                            "multiplier", "settlementType", "deliverableNote", "percentChange", \
+                                                            "markChange", "markPercentChange", "pennyPilot", "intrinsicValue", \
+                                                            "optionRoot"])
+                '''
+                '''
+
+                for chain in ['putExpDateMap', 'callExpDateMap']:
+                    for exp_date, options in self.optionChainJson[chain].items():
+                        exp_date, daysToExp = exp_date.split(":")
+                        for strike_price, options_data in options.items():
+                            for opt in options_data:
+                                option = OptionDetails(self.symbol, strategy=chain, expirationDate=exp_date, daysToExpiry=daysToExp, \
+                                                    strikePrice=strike_price, optionDetails=opt)
+                                
+                                # Create a new row to append
+                                new_row = {'symbol' : option.symbol, \
+                                           'strategy' : option.strategy, \
+                                           'expirationDate' : option.expirationDate, \
+                                           'days To Expiration' : option.daysToExpiry, \
+                                           'strike Price' : option.strikePrice, \
+                                           'bid' : option.bidPrice}
+                
+                                new_row = {'symbol' : "AAPL", \
+                                           'strategy' : "buy", \
+                                           'expirationDate' : "10/30/2024", \
+                                           'days To Expiration' : "20", \
+                                           'strike Price' : "15.25", \
+                                           'bid' : "15.20"}
+                                self.df_OptionChain.loc[len(self.df_OptionChain)] = new_row                
+ 
+
+                return self.df_OptionChain
+            else:
+                exc_txt = 'Unable to obtain option chain for {}. Error code = {}'.format(self.symbol, response.status_code)
+                raise Exception
+                
+        except (ValueError, Exception):
             exc_info = sys.exc_info()
             exc_str = exc_info[1].args[0]
             exc_txt = exc_txt + "\n\t" + exc_str
@@ -363,11 +433,32 @@ class OptionChain(object):
                 exp_date, daysToExp = exp_date.split(":")
                 for strike_price, options_data in options.items():
                     for opt in options_data:
-                        option = OptionDetails(self.symbol, expirationDate=exp_date, daysToExpiry=daysToExp, \
+                        option = OptionDetails(self.symbol, strategy=chain, expirationDate=exp_date, daysToExpiry=daysToExp, \
                                             strikePrice=strike_price, optionDetails=opt)
                         yield option
 
-    ''' ============ data service provider and option chain controls - start ============= '''
+    ''' ============ iterator over the options in the option chain - end ============= '''
+
+    '''
+    optionCount
+    iloc
+    dataframeOptionsChain
+    filterChain
+    '''
+    ''' ===== xxx - start ===== '''
+    def xxx(self):
+        try:
+            exc_txt = "An xxx exception occurred {}".format(self.symbol)
+            
+            return
+    
+        except ValueError:
+            exc_info = sys.exc_info()
+            exc_str = exc_info[1].args[0]
+            exc_txt = exc_txt + "\n\t" + exc_str
+            sys.exit(exc_txt)
+    ''' ===== xxx - end ===== '''
+
     @property
     def symbol(self):
         return self._symbol
@@ -433,6 +524,14 @@ class OptionChain(object):
     @optionChainJson.setter
     def optionChainJson(self, optionChainJson):
         self._optionChainJson = optionChainJson
+
+    @property
+    def df_OptionChain(self):
+        return self._df_OptionChain
+    
+    @df_OptionChain.setter
+    def df_OptionChain(self, df_OptionChain):
+        self._df_OptionChain = df_OptionChain
 
     @property
     def optionChainData(self):

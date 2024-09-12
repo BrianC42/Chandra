@@ -98,38 +98,40 @@ class MarketDataCandle(object):
 
 ''' ============ candle storage and access - end ============= '''
 ''' ============ Individual market data candle class - end ============= '''
-
 class MarketData(object):
     '''     classdocs      '''
     
     '''     class data     '''
+    ARCHIVE_PERIOD_TYPE = "month"
+    ARCHIVE_FREQUENCY_TYPE = "daily"
+    ARCHIVE_FREQUENCY = "1"
+    MAX_HISTORY_PERIOD = "2"
+    MAX_HISTORY_TYPE = 'year'
 
     '''         Constructor        '''
-    def __init__(self, symbol, periodType="", period="", frequencyType="", frequency=""):
+    def __init__(self, symbol, useArchive=True, \
+                 periodType=ARCHIVE_PERIOD_TYPE, period=MAX_HISTORY_PERIOD, \
+                 frequencyType=ARCHIVE_FREQUENCY_TYPE, frequency=ARCHIVE_FREQUENCY):
         
         exc_txt = "An exception occurred creating a MarketData object for {}".format(symbol)
         try:
+
             self.symbol = symbol
+            self.useArchive = useArchive
             self.periodType = periodType
             self.period = period
             self.frequencyType = frequencyType
             self.frequency = frequency
+            
             self.financialDataServicesObj = financialDataServices()
-            '''
-            response = self.financialDataServicesObj.requestMarketData(symbol=symbol, \
-                                                     periodType=periodType, period=period, 
-                                                     frequencyType=frequencyType, frequency=frequency)
             
-            self.marketDataReturn = response.text
-            self.marketDataJson = json.loads(self.marketDataReturn)
-            '''
-            
-            self.archiveMarketData()
+            if self.useArchive:
+                self.maintainMarketDataArchive()
+            else:
+                self.validateRequestParams()
+                self.requestMarketData()
     
         except ValueError:
-            exc_info = sys.exc_info()
-            exc_str = exc_info[1].args[0]
-            exc_txt = exc_txt + "\n\t" + exc_str
             sys.exit(exc_txt)
         
     def __iter__(self):
@@ -151,23 +153,17 @@ class MarketData(object):
             self.index += 1
             return self.candle
    
-    ''' ============ maintain a local archive of equity instruments market data history - start ============= '''
-    def archiveMarketData(self):
+    ''' ============ retrieve market data and maintain a local archive of equity instruments market data history - start ============= '''
+    def maintainMarketDataArchive(self):
         #print("Archiving market data for {}".format(self.symbol))
-        exc_txt = "\nAn exception occurred - unable to archive market data"
+        exc_txt = "\nAn exception occurred - unable to maintain market data archive"
         try:
             localDirs = get_ini_data("LOCALDIRS")
             aiwork = localDirs['aiwork']
             
             basicMarketDataDir = aiwork + localDirs['market_data'] + localDirs['basic_market_data']
             augmentedMarketDataDir = aiwork + localDirs['market_data'] + localDirs['augmented_market_data']
-            #financialInstrumentDetailsDir = aiwork + localDirs['market_data'] + localDirs['financial_instrument_details']
-            #optionChainDir = aiwork + localDirs['market_data'] + localDirs['option_chains']
 
-            '''
-            DateTime,Open,High,Low,Close,Volume
-            962946000000.0,43.0625,44.0625,43.0625,43.75,4256800.0
-            '''
             eod_file = basicMarketDataDir + '\\' + self.symbol + '.csv'
             if os.path.isfile(eod_file):
                 #print("Basic market data file for {} exists, {}".format(self.symbol, eod_file))
@@ -175,24 +171,24 @@ class MarketData(object):
                 df_eod = df_eod.drop_duplicates(subset='DateTime')
                 last_row_datetime = int(df_eod.iloc[-1]['DateTime'])
                 now = int(time.time() * 1000)
+                # candles requested based on start and end dates
                 response = self.financialDataServicesObj.requestMarketData(symbol=self.symbol, \
                                                          periodType=self.periodType, period=self.period, 
-                                                         frequencyType=self.frequencyType, frequency=self.frequency, \
+                                                         frequencyType=self.ARCHIVE_FREQUENCY_TYPE, frequency=self.ARCHIVE_FREQUENCY, \
                                                          startDate=last_row_datetime, endDate=now)
             else:
-                MAX_HISTORY_PERIOD = 20
-                MAX_HISTORY_TYPE = 'year'
                 #print("Basic market data file for {} does not exists".format(self.symbol))
                 response = self.financialDataServicesObj.requestMarketData(symbol=self.symbol, \
-                                                         periodType=MAX_HISTORY_TYPE, period=MAX_HISTORY_PERIOD, 
-                                                         frequencyType=self.frequencyType, frequency=self.frequency, \
+                                                         periodType=self.MAX_HISTORY_TYPE, period=self.MAX_HISTORY_PERIOD, 
+                                                         frequencyType=self.ARCHIVE_FREQUENCY_TYPE, frequency=self.ARCHIVE_FREQUENCY, \
                                                          startDate=None, endDate=None)
                 df_eod = pd.DataFrame(columns=['DateTime', 'Open', 'High', 'Low', 'Close', 'Volume'])
                 
             self.marketDataReturn = response.text
             self.marketDataJson = json.loads(self.marketDataReturn)
         
-            df_new = pd.DataFrame(columns=['DateTime', 'Open', 'High', 'Low', 'Close', 'Volume'])
+            colNames = ['DateTime', 'Open', 'High', 'Low', 'Close', 'Volume']
+            df_new = pd.DataFrame(columns=colNames)
             for ndx in range(len(self.marketDataJson["candles"])):
                 self.candle = self.marketDataJson["candles"][ndx]
                 
@@ -212,7 +208,10 @@ class MarketData(object):
                 self.df_marketData = pd.concat([df_eod, df_new])
             
             # Archive market data
-            self.df_marketData = self.df_marketData.drop_duplicates(subset='DateTime')
+            tmp = self.df_marketData[colNames]
+            tmp = tmp.drop_duplicates(subset='DateTime')
+            tmp = tmp.reset_index()
+            self.df_marketData = tmp
             self.df_marketData.to_csv(eod_file, index=False)
             return
             
@@ -220,7 +219,109 @@ class MarketData(object):
             exc_info = sys.exc_info()
             exc_str = exc_info[1].args[0]
             sys.exit(exc_txt + "\n\t" + exc_str)
-    ''' ============ maintain a local archive of equity instruments market data history - end ============= '''
+    ''' ============ retrieve market data and maintain a local archive of equity instruments market data history - end ============= '''
+   
+    ''' ============ request market data as indicated by creation params and do not include archived data - start ============= '''
+    def requestMarketData(self):
+        exc_txt = "\nAn exception occurred - unable to request market data"
+        try:
+            '''
+            Full flexibility of period, type, frequency type and frequency
+            '''
+            response = self.financialDataServicesObj.requestMarketData(symbol=self.symbol, \
+                                                     periodType=self.periodType, period=self.period, 
+                                                     frequencyType=self.frequencyType, frequency=self.frequency)
+            self.marketDataReturn = response.text
+            self.marketDataJson = json.loads(self.marketDataReturn)
+            df_new = pd.DataFrame(columns=['DateTime', 'Open', 'High', 'Low', 'Close', 'Volume'])
+            for ndx in range(len(self.marketDataJson["candles"])):
+                self.candle = self.marketDataJson["candles"][ndx]
+                
+                # Create a new row to append
+                new_row = {'DateTime' : self.candle.candleDateValue * 1000, \
+                           'Open' : self.candle.candleOpen, \
+                           'High' : self.candle.candleHigh, \
+                           'Low' : self.candle.candleLow, \
+                           'Close' : self.candle.candleClose, \
+                           'Volume' : self.candle.candleVolume}
+                
+                df_new.loc[len(df_new)] = new_row
+                self.df_marketData = df_new
+            return self.df_marketData
+            
+        except ValueError:
+            sys.exit(exc_txt)
+    ''' ============ request market data as indicated by creation params and do not include archived data - end ============= '''
+
+    ''' ============ validate creation parameters are supported by data service - start ============= '''
+    def validateRequestParams(self):
+        exc_txt = "WIP ***************\n\tneed code to check MarketData constructor parameter values\n\tinvalid market data request parameter"
+        try:
+            if self.periodType == 'month':
+                if self.period == "2":
+                    if self.frequencyType == "daily":
+                        if self.frequency == "1":
+                            pass
+                        else:
+                            exc_txt = exc_txt + " - frequency"
+                            raise ValueError                    
+                    else:
+                        exc_txt = exc_txt + " - frequency type"
+                        raise ValueError                    
+                else:
+                    exc_txt = exc_txt + " - period"
+                    raise ValueError                    
+            else:
+                exc_txt = exc_txt + " - period type"
+                raise ValueError
+            return
+            
+        except ValueError:
+            sys.exit(exc_txt)
+    ''' ============ return a specific single candle - end ============= '''
+   
+    ''' ============ return a specific single candle - start ============= '''
+    def iloc(self, ndx):
+        print("Returning candle #{}".format(ndx))
+        exc_txt = "\nAn exception occurred - unable to access requested candle"
+        try:
+            if ndx > len(self.df_marketData):
+                raise ValueError
+            else:
+                candleDict = {'datetime' : self.df_marketData.iloc[ndx]['DateTime'], \
+                              'open' : self.df_marketData.iloc[ndx]['Open'], \
+                              'high' : self.df_marketData.iloc[ndx]['High'], \
+                              'low' : self.df_marketData.iloc[ndx]['Low'], \
+                              'close' : self.df_marketData.iloc[ndx]['Close'], \
+                              'volume' : self.df_marketData.iloc[ndx]['Volume']}
+            self.candle = candleDict
+            return self.candle
+            
+        except ValueError:
+            sys.exit(exc_txt)
+    ''' ============ return a specific single candle - end ============= '''
+   
+    ''' ============ return the candles as a pandas data frame - start ============= '''
+    def dataFrameCandles(self):
+        #print("Returning candle count")
+        exc_txt = "\nAn exception occurred - unable to return candles as a dataframe"
+        try:
+            return self.df_marketData
+            
+        except ValueError:
+            sys.exit(exc_txt)
+    ''' ============ return the candles as a pandas data frame - end ============= '''
+
+    ''' ============ return the number of candles in the archived data - start ============= '''
+    def candleCount(self):
+        #print("Returning candle count")
+        exc_txt = "\nAn exception occurred - unable to determine candle count"
+        try:
+            return len(self.df_marketData)
+            
+        except ValueError:
+            sys.exit(exc_txt)
+    ''' ============ return the number of candles in the archived data - end ============= '''
 
     ''' ============ data service provider and market data controls - start ============= '''
     @property

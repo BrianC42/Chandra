@@ -804,6 +804,56 @@ def tkExp():
     return 
 '''    ================ tkInter experiments - end ===================== '''
     
+'''    ================ develop market data retrieval and archival - start ===================== '''
+def develop_market_data():
+            
+    for symbol in ["C","AAPL"]:
+    #for symbol in symbols:
+        exc_txt = "\nAn exception occurred - with symbol: {}".format(symbol)
+    
+        instrumentDetails = FinancialInstrument(symbol)
+        print("Symbol: {}, type: {}, description: {}".format(instrumentDetails.symbol, \
+                                                             instrumentDetails.assetType, \
+                                                             instrumentDetails.description))
+        
+        mktData = MarketData(symbol, useArchive=False, periodType="month", period="2", frequencyType="daily", frequency="1")
+        print("\t{} candles returned, candles archived {}".format(len(mktData.marketDataJson["candles"]), mktData.candleCount()))
+        for ndx in [0, mktData.candleCount() - 1]:
+            candle = mktData.iloc(ndx)
+            print("Market data: symbol: {}, date/time: {} {}\n\topen: {}, close: {}, , high: {}, low: {}, volume: {}".format( \
+                    mktData.symbol, candle.candleDateValue, candle.candleDateTimeStr, \
+                    candle.candleOpen, candle.candleClose, \
+                    candle.candleHigh, candle.candleLow, \
+                    candle.candleVolume) )
+        df_candles = mktData.dataFrameCandles()
+        print("Market data head\n{}".format(df_candles.head()))
+        print("Market data tail\n{}".format(df_candles.tail()))
+        ''' date/time: 1661144400.0 2022-08-22 '''
+        ''' date/time: 1722488400.0 2024-08-01 '''
+        ''' date/time: 1724130000.0 2024-08-20 '''
+        mktData = MarketData(symbol, useArchive=True)
+        print("\t{} candles returned, candles archived {}".format(len(mktData.marketDataJson["candles"]), mktData.candleCount()))
+        for ndx in [0, mktData.candleCount() - 1]:
+            candle = mktData.iloc(ndx)
+            print("Market data: symbol: {}, date/time: {} {}\n\topen: {}, close: {}, , high: {}, low: {}, volume: {}".format( \
+                    mktData.symbol, candle.candleDateValue, candle.candleDateTimeStr, \
+                    candle.candleOpen, candle.candleClose, \
+                    candle.candleHigh, candle.candleLow, \
+                    candle.candleVolume) )
+        df_candles = mktData.dataFrameCandles()
+        print("Market data head\n{}".format(df_candles.head()))
+        print("Market data tail\n{}".format(df_candles.tail()))
+        
+        '''
+        for candle in mktData:
+            print("Market data: symbol: {}, date/time: {} {}, open: {}, close: {}, volume: {}".format( \
+                  mktData.symbol, candle.candleDateValue, candle.candleDateTimeStr, \
+                  candle.candleOpen, candle.candleClose, candle.candleVolume) )
+        '''
+                
+    return
+'''    ================ develop market data retrieval and archival - end ===================== '''
+    
 if __name__ == '__main__':
     try:
         print("======================= Code experimentation starting =============================")
@@ -923,43 +973,26 @@ if __name__ == '__main__':
                 }, 
 
             '''
+            develop_market_data()
+            '''
+            actionCategory = cellValues[cellValues['Symbol']==symbol]['Action Category']
+            if actionCategory.iloc[0] == "1 - Holding":
+                print("Call options for {}".format(symbol))
+                options = OptionChain(symbol, optionType="Call", strikeCount=5, strikeRange="OTM", daysToExpiration=60)
+            elif actionCategory.iloc[0] == "4 - Buy":
+                print("Put options for {}".format(symbol))
+                options = OptionChain(symbol, optionType="Put", strikeCount=5, strikeRange="OTM", daysToExpiration=60)
+            print("\tOption details".format("TBD"))
+            '''
             
-            for symbol in ["ADBE","AAPL"]:
-            #for symbol in symbols:
-                exc_txt = "\nAn exception occurred - with symbol: {}".format(symbol)
-            
-                instrumentDetails = FinancialInstrument(symbol)
-                print("Symbol: {}, type: {}, description: {}".format(instrumentDetails.symbol, \
-                                                                     instrumentDetails.assetType, \
-                                                                     instrumentDetails.description))
-                
-                ''' date/time: 1661144400.0 2022-08-22 '''
-                ''' date/time: 1722488400.0 2024-08-01 '''
-                ''' date/time: 1724130000.0 2024-08-20 '''
-                mktData = MarketData(symbol, periodType="month", period="2", frequencyType="daily", frequency="1")
-                '''
-                for candle in mktData:
-                    print("Market data: symbol: {}, date/time: {} {}, open: {}, close: {}, volume: {}".format( \
-                          mktData.symbol, candle.candleDateValue, candle.candleDateTimeStr, \
-                          candle.candleOpen, candle.candleClose, candle.candleVolume) )
-                '''
-                actionCategory = cellValues[cellValues['Symbol']==symbol]['Action Category']
-                if actionCategory.iloc[0] == "1 - Holding":
-                    print("Call options for {}".format(symbol))
-                    options = OptionChain(symbol, optionType="Call", strikeCount=5, strikeRange="OTM", daysToExpiration=60)
-                elif actionCategory.iloc[0] == "4 - Buy":
-                    print("Put options for {}".format(symbol))
-                    options = OptionChain(symbol, optionType="Put", strikeCount=5, strikeRange="OTM", daysToExpiration=60)
-                
-                '''
-                for option in options:
-                    print("Option chain for {}: type: {} expiration: {} strike: {} bid: {} ask: {}".format( \
-                            option.symbol, option.putCall, option.expirationDate, \
-                            option.strikePrice, option.bidPrice, option.askPrice))
-                '''
+            '''
+            for option in options:
+                print("Option chain for {}: type: {} expiration: {} strike: {} bid: {} ask: {}".format( \
+                        option.symbol, option.putCall, option.expirationDate, \
+                        option.strikePrice, option.bidPrice, option.askPrice))
+            '''
             ''' ================= Google workspace development end ================ '''
                     
-
             print("\n======================== Code experimentation ending ============================")
         
         else:
