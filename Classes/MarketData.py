@@ -205,13 +205,12 @@ class MarketData(object):
             if len(df_eod) == 0:
                 self.df_marketData = df_new
             else:
-                self.df_marketData = pd.concat([df_eod, df_new])
+                self.df_marketData = pd.concat([df_eod, df_new], ignore_index=True)
             
             # Archive market data
-            tmp = self.df_marketData[colNames]
-            tmp = tmp.drop_duplicates(subset='DateTime')
-            tmp = tmp.reset_index()
-            self.df_marketData = tmp
+            if 'index' in self.df_marketData:
+                self.df_marketData = self.df_marketData.drop('index', axis=1)
+            self.df_marketData = self.df_marketData.drop_duplicates(subset='DateTime')
             self.df_marketData.to_csv(eod_file, index=False)
             return
             
