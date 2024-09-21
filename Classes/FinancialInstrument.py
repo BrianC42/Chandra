@@ -6,6 +6,7 @@ Created on Aug 20, 2024
 import sys
 import json
 import datetime
+import re
 
 from configuration import get_ini_data
 
@@ -13,68 +14,7 @@ from financialDataServices import financialDataServices
 
 class FinancialInstrument(object):
     '''
-    classdocs
-    '''
-
-    def __init__(self, symbol):
-        '''
-        Constructor
-        '''
-        exc_txt = "An exception occurred creating a financial instrument object for {}".format(symbol)
-        try:
-            localDirs = get_ini_data("LOCALDIRS")
-            aiwork = localDirs['aiwork']
-            #basicMarketDataDir = aiwork + localDirs['market_data'] + localDirs['basic_market_data']
-            #augmentedMarketDataDir = aiwork + localDirs['market_data'] + localDirs['augmented_market_data']
-            financialInstrumentDetailsDir = aiwork + localDirs['market_data'] + localDirs['financial_instrument_details']
-            #optionChainDir = aiwork + localDirs['market_data'] + localDirs['option_chains']
-    
-            self.financialDataServicesObj = financialDataServices()
-            response = self.financialDataServicesObj.requestFinancialInstrumentDetails(symbol=symbol)
-            
-            self.financialInstrumentDetails = response.text
-            self.financialInstrumentDetailsJson = json.loads(self.financialInstrumentDetails)
-            
-            #for exp_date, options in self.financialInstrumentDetailsJson[chain].items():
-                
-            instruments = self.financialInstrumentDetailsJson['instruments'][0]
-            fundamentals = instruments['fundamental']
-    
-            self.symbol = symbol
-            self.symbol = instruments['symbol']
-            self.symbol = fundamentals['symbol']
-            
-            self.description = instruments['description'] 
-            self.exchange = instruments['exchange']
-            self.assetType = instruments['assetType']
-            
-            self.high52 = fundamentals['high52']
-            self.marketCap = float(fundamentals['marketCap']) 
-            self.dividendPayAmount = float(fundamentals['dividendPayAmount'])
-            self.eps = float(fundamentals['eps']) 
-            self.dtnVolume = int(fundamentals['dtnVolume'])
-    
-            if 'cusip' in instruments:
-                self.cusip = instruments['cusip']
-            else:
-                self.cusip = ""
-             
-            if 'dividendPayDate' in fundamentals:
-                self.dividendPayDate = fundamentals['dividendPayDate']
-            else:
-                self.dividendPayDate = ""
-    
-            if 'nextDividendPayDate' in fundamentals:
-                self.nextDividendPayDate = fundamentals['nextDividendPayDate']
-            else:
-                self.nextDividendPayDate = ""
-    
-            if 'nextDividendDate' in fundamentals:
-                self.nextDividendDate = fundamentals['nextDividendDate']
-            else:
-                self.nextDividendDate = ""
-    
-            '''
+    Support Schwab API financial instrument details json response
             {'instruments': [
                 {'fundamental': 
                     {'symbol': 'AAPL', 
@@ -142,13 +82,105 @@ class FinancialInstrument(object):
                 }
                 ]
             }
-            '''
-        
+    '''
+
+    def __init__(self, symbol):
+        '''
+        Constructor
+        '''
+        exc_txt = "An exception occurred creating a financial instrument object for {}".format(symbol)
+        try:
+            localDirs = get_ini_data("LOCALDIRS")
+            aiwork = localDirs['aiwork']
+            #basicMarketDataDir = aiwork + localDirs['market_data'] + localDirs['basic_market_data']
+            #augmentedMarketDataDir = aiwork + localDirs['market_data'] + localDirs['augmented_market_data']
+            financialInstrumentDetailsDir = aiwork + localDirs['market_data'] + localDirs['financial_instrument_details']
+            #optionChainDir = aiwork + localDirs['market_data'] + localDirs['option_chains']
+    
+            self.financialDataServicesObj = financialDataServices()
+            response = self.financialDataServicesObj.requestFinancialInstrumentDetails(symbol=symbol)
+            
+            self.financialInstrumentDetails = response.text
+            self.financialInstrumentDetailsJson = json.loads(self.financialInstrumentDetails)
+            
+            #for exp_date, options in self.financialInstrumentDetailsJson[chain].items():
+                
+            instruments = self.financialInstrumentDetailsJson['instruments'][0]
+            fundamentals = instruments['fundamental']
+            
+            #print("Fundamentals: {}".format(fundamentals))
+    
+            self.symbol = symbol
+            self.symbol = instruments['symbol']
+            self.symbol = fundamentals['symbol']
+            
+            self.description = instruments['description'] 
+            self.exchange = instruments['exchange']
+            self.assetType = instruments['assetType']
+            
+            self.high52 = fundamentals['high52']
+            self.marketCap = float(fundamentals['marketCap']) 
+            self.eps = float(fundamentals['eps']) 
+            self.dtnVolume = int(fundamentals['dtnVolume'])
+    
+            if 'cusip' in instruments:
+                self.cusip = instruments['cusip']
+            else:
+                self.cusip = ""
+                
+            if 'dividendPayAmount' in fundamentals:
+                self.dividendPayAmount = float(fundamentals['dividendPayAmount'])
+            else:
+                self.dividendPayAmount = 0.0
+    
+            if 'dividendPayDate' in fundamentals:
+                self.dividendPayDate, time = self.split_date_time(fundamentals['dividendPayDate'])
+            else:
+                self.dividendPayDate = ""
+    
+            if 'nextDividendPayDate' in fundamentals:
+                self.nextDividendPayDate, time = self.split_date_time(fundamentals['nextDividendPayDate'])
+            else:
+                self.nextDividendPayDate = ""
+    
+            if 'nextDividendDate' in fundamentals:
+                self.nextDividendDate, time = self.split_date_time(fundamentals['nextDividendDate'])
+            else:
+                self.nextDividendDate = ""
+           
         except Exception:
             exc_info = sys.exc_info()
             exc_str = exc_info[1].args[0]
             exc_txt = exc_txt + "\n\t" + exc_str
             sys.exit(exc_txt)
+            
+    ''' ============ split date time string into date and time strings - start ============= '''
+    def split_date_time(self, text):
+        try:
+            '''
+            Splits a text string containing date and time formatted "yyyy-mm-dd hh:mm:ss.s" into a date string and a time string.
+            
+            Args:
+            text: The text string to split.
+            
+            Returns:
+            A tuple containing the date string and the time string.
+            '''
+        
+            # Use regular expression to match the date and time pattern
+            match = re.match(r"(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}.\d)", text)
+            
+            if match:
+                date_str = match.group(1)
+                time_str = match.group(2)
+                return date_str, time_str
+            else:
+                raise ValueError("Invalid date and time format")
+    
+        except ValueError as e:
+            error_message = e.args[0]
+            print(error_message)  # Output: Invalid date and time format    
+    ''' ============ split date time string into date and time strings - end ============= '''            
             
     ''' ============ data service provider and market data controls - start ============= '''
     @property
@@ -334,21 +366,6 @@ class FinancialInstrument(object):
     def nextDividendDate(self, nextDividendDate):
         self._nextDividendDate = nextDividendDate
     '''
-                'low52': 164.075, 
-                'dividendAmount': 1.0, 
-                'dividendYield': 0.44269, 
-                'dividendDate': '2024-08-12 00:00:00.0', 
-                'peRatio': 34.49389, 
-                'sharesOutstanding': 15204137000.0, 
-                
-                'marketCap': 3434462506930.0, 
-                'dividendPayAmount': 0.25, 
-                'dividendPayDate': '2024-08-15 00:00:00.0', 
-                'eps': 6.13, 
-                'dtnVolume': 40687813, 
-                'nextDividendPayDate': '2024-11-15 00:00:00.0', 
-                'nextDividendDate': '2024-11-12 00:00:00.0', 
-                
                 'pegRatio': 112.66734, 
                 'pbRatio': 48.06189, 
                 'prRatio': 8.43929, 

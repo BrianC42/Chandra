@@ -57,6 +57,7 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 ''' Google workspace requirements end '''
 
+from Workbooks import investments, optionTrades
 from GoogleSheets import googleSheet
 from MarketData import MarketData
 from OptionChain import OptionChain
@@ -803,7 +804,53 @@ def tkExp():
     root.mainloop()
     return 
 '''    ================ tkInter experiments - end ===================== '''
+
+def multiDimensionalDFExp():
+    print("Multi-dimensional dataframe experiments")
     
+    indexLabels = ['symbol', 'strategy', 'expirationDate']
+    '''
+    columnLabels=['days To Expiration', 'strike Price', 'bid', 'ask', 'closePrice', \
+                    "volatility", "delta", "gamma", "theta", "vega", "rho", \
+                    "inTheMoney", "lastSize", "highPrice", "lowPrice", "openPrice", \
+                    "totalVolume", "quoteTimeInLong", "tradeTimeInLong", "netChange", \
+                    "timeValue", "openInterest", "theoreticalOptionValue", "theoreticalVolatility", \
+                    "mini", "nonStandard", "optionDeliverablesList", "strikePrice", \
+                    "expirationDate", "daysToExpiration", "expirationType", "lastTradingDay", \
+                    "multiplier", "settlementType", "deliverableNote", "percentChange", \
+                    "markChange", "markPercentChange", "pennyPilot", "intrinsicValue", \
+                    "optionRoot"]
+    '''
+    columnLabels=['days To Expiration', 'strike Price', 'bid']
+    symbols = ['AAPL', 'AAPL', 'AAPL', 'C', 'C', 'C']
+    strategies = ['put', 'put', 'put', 'call', 'call', 'call']
+    expDates = ['2024-09-20', '2024-09-27', '2024-10-04', '2024-09-20', '2024-09-27', '2024-10-04']
+    
+    index = pd.MultiIndex.from_arrays([symbols, strategies, expDates], names=indexLabels)
+    
+    df_OptionChain = pd.DataFrame(np.random.randn(6,len(columnLabels)), columns=columnLabels, index=index)
+    
+    print("Option Chain: length: {}\n{}".format(len(df_OptionChain), df_OptionChain))
+    print("Filter selection - symbol:\n{}".format(df_OptionChain.loc['AAPL']))
+    print("Filter selection - symbol-strategy:\n{}".format(df_OptionChain.loc[("AAPL","put")]))
+    print("Filter selection - symbol-strategy-date:\n{}".format(df_OptionChain.loc[("AAPL","put","2024-09-27")]))
+    
+    print("Discovery of key values, row #3\n{}\n{}\n{}".format(df_OptionChain.iloc[3], df_OptionChain.iloc[3].name, df_OptionChain.iloc[3].name[1]))
+    
+    for symbol in ["IBM", "GOOGL", "NVDA"]:
+        for strategy in ["call", "put"]:
+            for expDate in ["2024-09-30", "2024-10-04", "2024-10-11", "2024-10-30"]:
+                daysToExp = "5"
+                strike = "100"
+                bid = "1.25"
+                df_OptionChain.loc[symbol, strategy, expDate] = [daysToExp, strike, bid]
+
+    print("Option Chain: length: {}\n{}".format(len(df_OptionChain), df_OptionChain))
+    print("Option GOOGL-call-2024-10-11 strike: {}, bid: {}".format(df_OptionChain.loc[("GOOGL","call","2024-10-11"),"strike Price"], \
+                                                                    df_OptionChain.loc[("GOOGL","call","2024-10-11"),"bid"]))
+    
+    return 
+
 '''    ================ develop market data retrieval and archival - start ===================== '''
 def develop_market_data():
             
@@ -854,143 +901,126 @@ def develop_market_data():
     return
 '''    ================ develop market data retrieval and archival - end ===================== '''
     
+    
+'''    ================ develop Financial Instrument details retrieval - start ===================== '''
+def develop_FIDetails():
+            
+    FIDetails = FinancialInstrument("AAPL")
+    print("FI details for {}: Description: {}, Type: {},\n\tDividend pay amount {}, next dividend date {}".format(FIDetails.symbol, FIDetails.description, \
+                                                                                                FIDetails.assetType, \
+                                                                                                FIDetails.dividendPayAmount, \
+                                                                                                FIDetails.nextDividendDate))
+                
+    return
+'''    ================ develop Financial Instrument details retrieval - end ===================== '''
+    
+    
+'''    ================ develop option chain class - start ===================== '''
+def develop_optionChain_class(cells=None):
+            
+    for symbol in ["C","AAPL","XXII"]:
+        actionCategory = cellValues[cellValues['Symbol']==symbol]['Action Category']
+        if actionCategory.iloc[0] == "1 - Holding":
+            print("Call options for {}".format(symbol))
+            options = OptionChain(symbol=symbol, strategy="Call", strikeCount=5, strikeRange="OTM", daysToExpiration=60)
+            print("Option details: symbol - {}, strategy - {}, strike range - {}".format(options.symbol, \
+                                                                                         options.strategy, \
+                                                                                         options.strikeRange))
+        elif actionCategory.iloc[0] == "4 - Buy":
+            print("Put options for {}".format(symbol))
+            options = OptionChain(symbol=symbol, strategy="Put", strikeCount=5, strikeRange="OTM", daysToExpiration=60)
+            print("Option details: symbol - {}, strategy - {}, strike range - {}".format(options.symbol, \
+                                                                                         options.strategy, \
+                                                                                         options.strikeRange))
+        else:
+            print("Only requesting details for current holdings and potential buys - {}".format(symbol))
+        
+        '''
+        for option in options:
+            print("Option chain for {}: type: {} expiration: {} strike: {} bid: {} ask: {}".format( \
+                    option.symbol, option.putCall, option.expirationDate, \
+                    option.strikePrice, option.bidPrice, option.askPrice))
+        '''
+                
+    return
+'''    ================ develop option chain class -  - end ===================== '''
+    
+    
+'''    ================ develop Google sheet data - start ===================== '''
+def develop_GoogleSheet_read():
+            
+    ''' Google drive file details '''
+    localDirs = get_ini_data("LOCALDIRS")
+    aiwork = localDirs['aiwork']
+    
+    exc_txt = "\nAn exception occurred - unable to access Google sheet"
+    googleAuth = get_ini_data("GOOGLE")
+    googleDriveFiles = read_config_json(aiwork + "\\" + googleAuth['fileIDs'])
+    
+    ''' ================ Authenticate with Google workplace and establish a connection to Google Drive API ============== '''
+    exc_txt = "\nAn exception occurred - unable to authenticate with Google"
+    gSheets = googleSheet()
+                
+    ''' 
+    Use the connetion to Google Drive API to read sheet data
+    Find file ID of file used for development 
+    '''
+    sheetID = googleDriveFiles["Google IDs"]["Market Data"]["Development"]
+    print("file 1: {} - {}".format('development', googleDriveFiles["Google IDs"]["Market Data"]["Development"]))
+    print("file 2: {} - {}".format('production', googleDriveFiles["Google IDs"]["Market Data"]["Production"]))
+    instrumentCells = 'TD Import Inf!A1:p999'
+    instrumentCellValues = gSheets.readGoogleSheet(sheetID, instrumentCells)
+    symbols = instrumentCellValues['Symbol'].astype(str).str.split(',', n=1).str[0]
+    
+    cellRange = 'Stock Information!A2:C999'
+    cellValues = gSheets.readGoogleSheet(sheetID, cellRange)
+                
+    return gSheets, cellValues
+'''    ================ develop Financial Instrument details retrieval - end ===================== '''
+    
+    
+'''    ================ develop Google sheet update - start ===================== '''
+def develop_GoogleSheet_class():
+    print("develop_GoogleSheet_class")
+    
+    try:
+        exc_txt = "exception developing google sheet access and maintenance"
+
+        investmentSheet = investments()
+        #investmentSheet.markToMarket()
+        investmentSheet.updateYahooFinanceData()
+        
+        optionChains = optionTrades()
+        optionChains.scanOptionChains()
+        optionChains.filterOptionsChains(filterList=[{"dataElement":"theoreticalOptionValue", "condition":"GT", "threshold":"0.5"}, \
+                                                     {"dataElement":"volatility", "condition":"LT", "threshold":"0.4"}])
+        
+        #gSheets, cellValues = develop_GoogleSheet_read()
+        #develop_GoogleSheet_update(googleSession = gSheets)
+        
+        return
+    
+    except ValueError:
+        exc_info = sys.exc_info()
+        exc_str = exc_info[1].args[0]
+        exc_txt = exc_txt + "\n\t" + exc_str
+        sys.exit(exc_txt)
+ 
+    return
+'''    ================ develop Google sheet update - end ===================== '''
+    
 if __name__ == '__main__':
     try:
         print("======================= Code experimentation starting =============================")
         exc_txt = "\nAn exception occurred"
     
         if True:
-            localDirs = get_ini_data("LOCALDIRS")
-            aiwork = localDirs['aiwork']
             
+            #multiDimensionalDFExp()
             ''' ================= Google workspace development start ================ '''
-            ''' Google drive file details '''
-            exc_txt = "\nAn exception occurred - unable to access Google sheet"
-            googleAuth = get_ini_data("GOOGLE")
-            googleDriveFiles = read_config_json(aiwork + "\\" + googleAuth['fileIDs'])
-            
-            ''' ================ Authenticate with Google workplace and establish a connection to Google Drive API ============== '''
-            exc_txt = "\nAn exception occurred - unable to authenticate with Google"
-            gSheets = googleSheet()
-                        
-            ''' 
-            Use the connetion to Google Drive API to read sheet data
-            Find file ID of file used for development 
-            '''
-            sheetID = googleDriveFiles["Google IDs"]["Market Data"]["Development"]
-            print("file 1: {} - {}".format('development', googleDriveFiles["Google IDs"]["Market Data"]["Development"]))
-            print("file 2: {} - {}".format('production', googleDriveFiles["Google IDs"]["Market Data"]["Production"]))
-            instrumentCells = 'TD Import Inf!A1:p999'
-            instrumentCellValues = gSheets.readGoogleSheet(sheetID, instrumentCells)
-            symbols = instrumentCellValues['Symbol'].astype(str).str.split(',', n=1).str[0]
-            
-            cellRange = 'Stock Information!A2:C999'
-            cellValues = gSheets.readGoogleSheet(sheetID, cellRange)
-
-            '''
-            instrumentCellValues.columns
-            Index(['Symbol', 'Change %', 'Last Price', 'Dividend Yield', 'Dividend',
-                   'Dividend Ex-Date', 'P/E Ratio', '52 Week High', '52 Week Low',
-                   'Volume', 'Sector', 'Next Earnings Date', 'Morningstar', 'Market Cap',
-                   'Schwab Equity Rating', 'Argus Rating']
-                   
-            Missing data elements
-                'Change %',
-                'Sector', 'Next Earnings Date', 
-                'Morningstar', 'Schwab Equity Rating', 'Argus Rating'
-            
-            MarketData elements
-                'Last Price' : close
-                'Volume'
-            
-            FinancialInstrument data elements
-                'symbol': 'AAPL' 'Symbol'
-                'high52': 237.23,  '52 Week High'
-                'low52': 164.075 '52 Week Low'
-                'dividendYield': 0.44269, 'Dividend Yield'
-                'dividendAmount': 1.0, 'Dividend'
-                'dividendDate': '2024-08-12 00:00:00.0', 'Dividend Ex-Date'
-                'peRatio': 34.49389, 'P/E Ratio'
-                'marketCap': 3434462506930.0, 'Market Cap'
-                
-                {
-                'symbol': 'AAPL', 
-                'high52': 237.23, 
-                'low52': 164.075, 
-                'dividendAmount': 1.0, 
-                'dividendYield': 0.44269, 
-                'dividendDate': '2024-08-12 00:00:00.0', 
-                'peRatio': 34.49389, 
-                'pegRatio': 112.66734, 
-                'pbRatio': 48.06189, 
-                'prRatio': 8.43929, 
-                'pcfRatio': 23.01545, 
-                'grossMarginTTM': 45.962, 
-                'grossMarginMRQ': 46.2571, 
-                'netProfitMarginTTM': 26.4406, 
-                'netProfitMarginMRQ': 25.0043, 
-                'operatingMarginTTM': 26.4406, 
-                'operatingMarginMRQ': 25.0043, 
-                'returnOnEquity': 160.5833, 
-                'returnOnAssets': 22.6119, 
-                'returnOnInvestment': 50.98106, 
-                'quickRatio': 0.79752, 
-                'currentRatio': 0.95298, 
-                'interestCoverage': 0.0, 
-                'totalDebtToCapital': 51.3034, 
-                'ltDebtToEquity': 151.8618, 
-                'totalDebtToEquity': 129.2138, 
-                'epsTTM': 6.56667, 
-                'epsChangePercentTTM': 10.3155, 
-                'epsChangeYear': 0.0, 
-                'epsChange': 0.0, 
-                'revChangeYear': -2.8005, 
-                'revChangeTTM': 0.4349, 
-                'revChangeIn': 0.0, 
-                'sharesOutstanding': 15204137000.0, 
-                'marketCapFloat': 0.0, 
-                'marketCap': 3434462506930.0, 
-                'bookValuePerShare': 4.38227, 
-                'shortIntToFloat': 0.0, 
-                'shortIntDayToCover': 0.0, 
-                'divGrowthRate3Year': 0.0, 
-                'dividendPayAmount': 0.25, 
-                'dividendPayDate': '2024-08-15 00:00:00.0', 
-                'beta': 1.24364, 
-                'vol1DayAvg': 0.0, 
-                'vol10DayAvg': 0.0, 
-                'vol3MonthAvg': 0.0, 
-                'avg10DaysVolume': 47812576, 
-                'avg1DayVolume': 60229630, 
-                'avg3MonthVolume': 64569166, 
-                'declarationDate': '2024-08-01 00:00:00.0', 
-                'dividendFreq': 4, 
-                'eps': 6.13, 
-                'dtnVolume': 40687813, 
-                'nextDividendPayDate': '2024-11-15 00:00:00.0', 
-                'nextDividendDate': '2024-11-12 00:00:00.0', 
-                'fundLeverageFactor': 0.0
-                }, 
-
-            '''
-            develop_market_data()
-            '''
-            actionCategory = cellValues[cellValues['Symbol']==symbol]['Action Category']
-            if actionCategory.iloc[0] == "1 - Holding":
-                print("Call options for {}".format(symbol))
-                options = OptionChain(symbol, optionType="Call", strikeCount=5, strikeRange="OTM", daysToExpiration=60)
-            elif actionCategory.iloc[0] == "4 - Buy":
-                print("Put options for {}".format(symbol))
-                options = OptionChain(symbol, optionType="Put", strikeCount=5, strikeRange="OTM", daysToExpiration=60)
-            print("\tOption details".format("TBD"))
-            '''
-            
-            '''
-            for option in options:
-                print("Option chain for {}: type: {} expiration: {} strike: {} bid: {} ask: {}".format( \
-                        option.symbol, option.putCall, option.expirationDate, \
-                        option.strikePrice, option.bidPrice, option.askPrice))
-            '''
+            develop_GoogleSheet_class()
+            #develop_market_data()
+            #develop_FIDetails()
             ''' ================= Google workspace development end ================ '''
                     
             print("\n======================== Code experimentation ending ============================")
@@ -1023,6 +1053,9 @@ if __name__ == '__main__':
 
             ''' ================= Google workspace development start ================ '''
             ''' Google drive file details '''
+            localDirs = get_ini_data("LOCALDIRS")
+            aiwork = localDirs['aiwork']
+            
             exc_txt = "\nAn exception occurred - unable to access Google sheet"
             googleAuth = get_ini_data("GOOGLE")
             googleDriveFiles = read_config_json(aiwork + "\\" + googleAuth['fileIDs'])

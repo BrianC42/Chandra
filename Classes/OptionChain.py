@@ -351,7 +351,7 @@ class OptionChain(object):
     ''' accessible methods   '''
     
     ''' ======= OptionChain Constructor ======== '''
-    def __init__(self, symbol, optionType="Both", strikeCount=5, strikeRange="OTM", daysToExpiration=60):
+    def __init__(self, symbol="", strategy="Both", strikeCount=5, strikeRange="OTM", daysToExpiration=60):
         exc_txt = "An exception occurred creating an OptionChain object for {}".format(symbol)
         try:
             localDirs = get_ini_data("LOCALDIRS")
@@ -361,14 +361,14 @@ class OptionChain(object):
             #financialInstrumentDetailsDir = aiwork + localDirs['market_data'] + localDirs['financial_instrument_details']
             optionChainDir = aiwork + localDirs['market_data'] + localDirs['option_chains']
                 
-            self.optType = optionType
             self.symbol = symbol
+            self.strategy = strategy
             self.strikeCount = strikeCount
             self.strikeRange = strikeRange
             self.daysToExpiration = daysToExpiration
             
             self.financialDataServicesObj = financialDataServices()
-            response = self.financialDataServicesObj.requestOptionChain(type=optionType, symbol=symbol, \
+            response = self.financialDataServicesObj.requestOptionChain(type=strategy, symbol=symbol, \
                                                                         strikeCount=strikeCount, range=strikeRange, \
                                                                         daysToExpiration=daysToExpiration)
     
@@ -406,16 +406,10 @@ class OptionChain(object):
                                            'strike Price' : option.strikePrice, \
                                            'bid' : option.bidPrice}
                 
-                                new_row = {'symbol' : "AAPL", \
-                                           'strategy' : "buy", \
-                                           'expirationDate' : "10/30/2024", \
-                                           'days To Expiration' : "20", \
-                                           'strike Price' : "15.25", \
-                                           'bid' : "15.20"}
                                 self.df_OptionChain.loc[len(self.df_OptionChain)] = new_row                
  
 
-                return self.df_OptionChain
+                return
             else:
                 exc_txt = 'Unable to obtain option chain for {}. Error code = {}'.format(self.symbol, response.status_code)
                 raise Exception
@@ -468,12 +462,12 @@ class OptionChain(object):
         self._symbol = symbol
         
     @property
-    def optionType(self):
-        return self._optionType
+    def strategy(self):
+        return self._strategy
     
-    @optionType.setter
-    def optionType(self, optionType):
-        self._optionType = optionType
+    @strategy.setter
+    def strategy(self, strategy):
+        self._strategy = strategy
 
     @property
     def strikeCount(self):
