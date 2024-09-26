@@ -281,7 +281,7 @@ class MarketData(object):
    
     ''' ============ return a specific single candle - start ============= '''
     def iloc(self, ndx):
-        print("Returning candle #{}".format(ndx))
+        #print("Returning candle #{}".format(ndx))
         exc_txt = "\nAn exception occurred - unable to access requested candle"
         try:
             if ndx > len(self.df_marketData):

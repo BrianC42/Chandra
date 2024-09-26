@@ -118,7 +118,8 @@ class FinancialInstrument(object):
             self.exchange = instruments['exchange']
             self.assetType = instruments['assetType']
             
-            self.high52 = fundamentals['high52']
+            self.high52 = float(fundamentals['high52'])
+            self.low52 = float(fundamentals['low52'])
             self.marketCap = float(fundamentals['marketCap']) 
             self.eps = float(fundamentals['eps']) 
             self.dtnVolume = int(fundamentals['dtnVolume'])
@@ -128,10 +129,25 @@ class FinancialInstrument(object):
             else:
                 self.cusip = ""
                 
+            if 'peRatio' in fundamentals:
+                self.peRatio = float(fundamentals['peRatio'])
+            else:
+                self.peRatio = 0.0
+
+            if 'dividendAmount' in fundamentals:
+                self.dividendAmount = float(fundamentals['dividendAmount'])
+            else:
+                self.dividendAmount = 0.0
+
             if 'dividendPayAmount' in fundamentals:
                 self.dividendPayAmount = float(fundamentals['dividendPayAmount'])
             else:
                 self.dividendPayAmount = 0.0
+
+            if 'dividendYield' in fundamentals:
+                self.dividendYield = float(fundamentals['dividendYield'])
+            else:
+                self.dividendYield = 0.0
     
             if 'dividendPayDate' in fundamentals:
                 self.dividendPayDate, time = self.split_date_time(fundamentals['dividendPayDate'])

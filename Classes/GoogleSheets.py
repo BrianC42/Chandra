@@ -18,7 +18,8 @@ Created on Aug 6, 2023
         https://googleapis.github.io/google-api-python-client/docs/dyn/sheets_v4.spreadsheets.html
 
         from google.auth.transport.requests import Request
-            
+        
+        https://github.com/googleapis/google-api-python-client/blob/main/docs/start.md
             
 '''
 import sys
@@ -228,12 +229,12 @@ class googleSheet():
                 else:
                     dfVals = pd.DataFrame(values[1:], columns=values[0])
         
+            return dfVals
+    
         except Exception:
             #exc_info = sys.exc_info()
             #exc_str = exc_info[1].args[0]
             sys.exit(exc_txt)
-    
-        return dfVals
     
     def updateGoogleSheet(self, spreadsheetID, writeRange, updateData):
         ''' update Google sheet data '''
@@ -254,12 +255,12 @@ class googleSheet():
             print("\tupdatedCells: {}".format(result.get('updatedCells')))
             '''
             
+            return result.get('updatedCells')
+    
         except Exception:
             exc_info = sys.exc_info()
             exc_str = exc_info[1].args[0]
             sys.exit(exc_txt + "\n\t" + exc_str)
-    
-        return result.get('updatedCells')
     
     def addGoogleSheet(self, spreadsheetID, sheetTitle):
         ''' update Google workbook - add sheet '''
@@ -272,13 +273,42 @@ class googleSheet():
             result = self.googleSheet.batchUpdate(spreadsheetId=spreadsheetID, body=requestBody).execute()
             self.batchRequests.clear()
             
+            return
+
         except Exception:
             exc_info = sys.exc_info()
             exc_str = exc_info[1].args[0]
             sys.exit(exc_txt + "\n\t" + exc_str)
     
-        return
+    def clearGoogleSheet(self, spreadsheetID, tabName, clearedRange):
+        ''' create a new Google workbook '''
+        exc_txt = "\nAn exception occurred attempting to clear a sheet"
+        #print("SheetID: {}, tab: {}, range: {}".format(spreadsheetID, tabName, clearedRange))
+        try:
+            #https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.values/clear
+            result = self.googleSheet.values().clear(spreadsheetId=spreadsheetID, range=tabName + "!" + clearedRange).execute()
+            return
 
+        except Exception:
+            print(exc_txt)
+            exc_info = sys.exc_info()
+            for ndx in range (len(exc_info)):
+                print(exc_info[ndx])
+            sys.exit()
+    
+    def createGoogleWorkbook(self):
+        ''' create a new Google workbook '''
+        exc_txt = "\nAn exception occurred attempting to create a new workbook"
+        try:
+            print("createGoogleWorkbook is WIP")
+            
+            return
+
+        except Exception:
+            exc_info = sys.exc_info()
+            exc_str = exc_info[1].args[0]
+            sys.exit(exc_txt + "\n\t" + exc_str)
+    
     def openGoogleSheetService(self):
         '''
         Use local file credentials and tokens to authenticate with Google and establish a service to access sheets
@@ -325,11 +355,9 @@ class googleSheet():
             self.sheetService = build('sheets', 'v4', credentials=self.creds)
             self.googleSheet = self.sheetService.spreadsheets()
     
+            return self.googleSheet
+
         except Exception:
             exc_info = sys.exc_info()
             exc_str = exc_info[1].args[0]
             sys.exit(exc_txt + "\n\t" + exc_str)
-    
-        return self.googleSheet
-
-            

@@ -987,9 +987,10 @@ def develop_GoogleSheet_class():
         exc_txt = "exception developing google sheet access and maintenance"
 
         investmentSheet = investments()
-        #investmentSheet.markToMarket()
+        investmentSheet.markToMarket()
         investmentSheet.updateYahooFinanceData()
         
+        '''
         optionChains = optionTrades()
         optionChains.scanOptionChains()
         optionChains.filterOptionsChains(filterList=[{"dataElement":"theoreticalOptionValue", "condition":"GT", "threshold":"0.5"}, \
@@ -997,6 +998,7 @@ def develop_GoogleSheet_class():
         
         #gSheets, cellValues = develop_GoogleSheet_read()
         #develop_GoogleSheet_update(googleSession = gSheets)
+        '''
         
         return
     

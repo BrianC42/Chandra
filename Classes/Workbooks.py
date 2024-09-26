@@ -5,6 +5,8 @@ Created on Sep 17, 2024
 '''
 import sys
 
+import pandas as pd
+
 ''' Google workspace requirements start '''
 '''
 from google.auth.transport.requests import Request
@@ -191,28 +193,73 @@ class investments(workbooks):
         
         try:
             exc_txt = "\nAn exception occurred - unable to authenticate with Google"
-            ''' 
-            Use the connetion to Google Drive API to read sheet data
-            Find file ID of file used for development 
             '''
+            Steps:
+            1. Clear the contents of the 'TD Import Inf' tab
+            2. create the list of financial symbols by reading the 'Stock Information' tab
+            3. create an empty dataframe
+            4. for each symbol request the basic financial instrument and the latest market data from the data service provider
+            5. load the dataframe information 
+            6. format the dataframe data as required by Google workspace update format requirements
+            7. update the workbook's 'TD Import Inf' tab
+            '''
+            
+            ''' Step 1 - Clear the contents of the 'TD Import Inf' tab '''
+            self.gSheets.clearGoogleSheet(self.sheetID, 'TD Import Inf', 'A1:Z999')
+            
+            ''' Step 2 - create the list of financial symbols '''
             cellRange = 'Stock Information!A2:AE999'
             symbolInformation = self.gSheets.readGoogleSheet(self.sheetID, cellRange)
+            print("Stock Information:\n{}".format(symbolInformation))
             
-            print("Starting symbol information:\n{}".format(symbolInformation))
+            ''' Step 3 - create a dataframe '''
+            indexLabel = "Symbol"
+            columnLabels = ["Symbol", "Change %", "Last Price", "Dividend Yield", "Dividend", "Dividend Ex-Date", "P/E Ratio", \
+                            "52 Week High", "52 Week Low", "Volume", "Sector", "Next Earnings Date", "Morningstar", "Market Cap", \
+                            "Schwab Equity Rating", "Argus Rating"]
+                        
+            self.df_marktomarket = pd.DataFrame(columns=columnLabels)
+            self.df_marktomarket.set_index(indexLabel, drop=True, inplace=True)
             
-            for rowNdx in range(len(symbolInformation)):
+            ''' Step 4 - request the basic financial instrument and the latest market data '''
+            #for rowNdx in range(len(symbolInformation)):
+            for rowNdx in range(15):
                 symbol = symbolInformation.loc[rowNdx, 'Symbol']
                 exc_txt = "\nAn exception occurred - with symbol: {}".format(symbol)
             
                 instrumentDetails = FinancialInstrument(symbol)
-                mktData = MarketData(symbol, useArchive=False, periodType="month", period="1", frequencyType="daily", frequency="1")
-                '''
-                print("Symbol: {}, type: {}, description: {}".format(instrumentDetails.symbol, \
-                                                                     instrumentDetails.assetType, \
-                                                                     instrumentDetails.description))
-                print("\t{} candles returned count {}".format(mktData.candleCount()))
-                '''
+                mktData = MarketData(symbol, useArchive=False, periodType="month", period="2", frequencyType="daily", frequency="1")
+                candle = mktData.iloc(mktData.candleCount()-1)
                 
+                ''' step 5. load the dataframe information '''
+                new_row = {'symbol' : symbol, \
+                           'Change %' : "TBD", \
+                           'Last Price' : candle.candleClose, \
+                           'Dividend Yield' : instrumentDetails.dividendYield, \
+                           'Dividend' : instrumentDetails.dividendAmount, \
+                           'Dividend Ex-Date' : "TBD", \
+                           "P/E Ratio" : instrumentDetails.peRatio, \
+                            "52 Week High" : instrumentDetails.high52, \
+                            "52 Week Low" : instrumentDetails.low52, \
+                            "Volume" : candle.candleVolume, \
+                            "Sector" : "TBD", \
+                            "Next Earnings Date" : "TBD", \
+                            "Morningstar" : "TBD", \
+                            "Market Cap" : instrumentDetails.marketCap, \
+                            "Schwab Equity Rating" : "TBD", \
+                            "Argus Rating" : "TBD"
+                           }
+
+                self.df_marktomarket.loc[symbol] = new_row
+            print("Mark to market dataframe\n{}".format(self.df_marktomarket))
+            
+            
+            ''' Step 6 - prepare the dataframe information as required by Google workspace update format requirements '''
+            print("WIP - format as required by google update")
+            
+            ''' Step 7 - update the workbook's 'TD Import Inf' tab '''
+            print("WIP - update the workbook")
+            
             return 
     
         except ValueError:
@@ -223,6 +270,7 @@ class investments(workbooks):
 
     def holdings(self):
         try:
+            ''' Return a list of asset symbols categorized as current financial holdings '''
             print("holdings is WIP =====================================")
             symbolList = []
             exc_txt = "Exception occurred returning holdings list"
@@ -247,6 +295,7 @@ class investments(workbooks):
         
     def potentialBuys(self):
         try:
+            ''' Return a list of asset symbols categorized as financial assets flagged as potential buys '''
             print("potentialBuys is WIP =====================================")
             symbolList = []
             exc_txt = "Exception occurred returning list of potential buys"
