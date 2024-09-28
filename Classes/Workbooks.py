@@ -65,11 +65,12 @@ class workbooks(object):
                         
             return
         
-        except ValueError:
+        except :
+            print(exc_txt)
             exc_info = sys.exc_info()
-            exc_str = exc_info[1].args[0]
-            exc_txt = exc_txt + "\n\t" + exc_str
-            sys.exit(exc_txt)
+            if len(exc_info) > 1:
+                print(exc_info[1].args[0])
+            sys.exit()
         
 
 class investments(workbooks):
@@ -177,7 +178,7 @@ class investments(workbooks):
         Use the connetion to Google Drive API to read sheet data
         Find file ID of file used for development 
         '''
-        self.sheetID = googleDriveFiles["Google IDs"]["Market Data"]["Development"]
+        self.sheetID = googleDriveFiles["Google IDs"]["Market Data"]["Production"]
         print("file 1: {} - {}".format('development', googleDriveFiles["Google IDs"]["Market Data"]["Development"]))
         print("file 2: {} - {}".format('production', googleDriveFiles["Google IDs"]["Market Data"]["Production"]))
         
@@ -192,81 +193,84 @@ class investments(workbooks):
         print("mark to market is WIP ====================================")
         
         try:
-            exc_txt = "\nAn exception occurred - unable to authenticate with Google"
             '''
             Steps:
             1. Clear the contents of the 'TD Import Inf' tab
             2. create the list of financial symbols by reading the 'Stock Information' tab
             3. create an empty dataframe
             4. for each symbol request the basic financial instrument and the latest market data from the data service provider
-            5. load the dataframe information 
-            6. format the dataframe data as required by Google workspace update format requirements
+            5. load the dataframe information
+            6. Prepare data for Google sheet update
             7. update the workbook's 'TD Import Inf' tab
             '''
+            mtomTab = 'FI Inf MtoM'
+            mtomCells = 'A1:K999'
+            mtomCols = 'A1:K1'
+            mtomData = 'A2:K999'
             
-            ''' Step 1 - Clear the contents of the 'TD Import Inf' tab '''
-            self.gSheets.clearGoogleSheet(self.sheetID, 'TD Import Inf', 'A1:Z999')
+            ''' Step 1 - Clear the contents of the 'FI Inf MtoM' tab '''
+            exc_txt = "\nAn exception occurred - unable to clear cells"
+            self.gSheets.clearGoogleSheet(self.sheetID, mtomTab, mtomCells)
             
             ''' Step 2 - create the list of financial symbols '''
+            exc_txt = "\nAn exception occurred - unable to look up symbols required"
             cellRange = 'Stock Information!A2:AE999'
             symbolInformation = self.gSheets.readGoogleSheet(self.sheetID, cellRange)
             print("Stock Information:\n{}".format(symbolInformation))
             
             ''' Step 3 - create a dataframe '''
             indexLabel = "Symbol"
-            columnLabels = ["Symbol", "Change %", "Last Price", "Dividend Yield", "Dividend", "Dividend Ex-Date", "P/E Ratio", \
-                            "52 Week High", "52 Week Low", "Volume", "Sector", "Next Earnings Date", "Morningstar", "Market Cap", \
-                            "Schwab Equity Rating", "Argus Rating"]
+            columnLabels = ["Symbol", "Last Price", "Dividend Yield", "Dividend", "Dividend Ex-Date", "P/E Ratio", \
+                            "52 Week High", "52 Week Low", "Volume", "Shares Outstanding", "Market Cap" ]
                         
             self.df_marktomarket = pd.DataFrame(columns=columnLabels)
             self.df_marktomarket.set_index(indexLabel, drop=True, inplace=True)
             
             ''' Step 4 - request the basic financial instrument and the latest market data '''
-            #for rowNdx in range(len(symbolInformation)):
-            for rowNdx in range(15):
+            exc_txt = "\nAn exception occurred - unable to obtain market information on symbols"
+            for rowNdx in range(len(symbolInformation)):
+            #for rowNdx in range(15):
                 symbol = symbolInformation.loc[rowNdx, 'Symbol']
                 exc_txt = "\nAn exception occurred - with symbol: {}".format(symbol)
             
                 instrumentDetails = FinancialInstrument(symbol)
-                mktData = MarketData(symbol, useArchive=False, periodType="month", period="2", frequencyType="daily", frequency="1")
+                mktData = MarketData(symbol, useArchive=False, periodType="month", period="1", frequencyType="daily", frequency="1")
                 candle = mktData.iloc(mktData.candleCount()-1)
                 
                 ''' step 5. load the dataframe information '''
                 new_row = {'symbol' : symbol, \
-                           'Change %' : "TBD", \
                            'Last Price' : candle.candleClose, \
                            'Dividend Yield' : instrumentDetails.dividendYield, \
                            'Dividend' : instrumentDetails.dividendAmount, \
-                           'Dividend Ex-Date' : "TBD", \
+                           'Dividend Ex-Date' : instrumentDetails.nextDividendDate, \
                            "P/E Ratio" : instrumentDetails.peRatio, \
-                            "52 Week High" : instrumentDetails.high52, \
-                            "52 Week Low" : instrumentDetails.low52, \
-                            "Volume" : candle.candleVolume, \
-                            "Sector" : "TBD", \
-                            "Next Earnings Date" : "TBD", \
-                            "Morningstar" : "TBD", \
-                            "Market Cap" : instrumentDetails.marketCap, \
-                            "Schwab Equity Rating" : "TBD", \
-                            "Argus Rating" : "TBD"
+                           "52 Week High" : instrumentDetails.high52, \
+                           "52 Week Low" : instrumentDetails.low52, \
+                           "Volume" : candle.candleVolume, \
+                           "Shares Outstanding" : instrumentDetails.sharesOutstanding, \
+                           "Market Cap" : instrumentDetails.marketCap
                            }
 
                 self.df_marktomarket.loc[symbol] = new_row
-            print("Mark to market dataframe\n{}".format(self.df_marktomarket))
+            #print("Mark to market dataframe\n{}".format(self.df_marktomarket))
             
+            ''' step 6 - prepare data for Google sheet update '''
+            df_update = self.df_marktomarket
+            df_update.reset_index(inplace=True)
             
-            ''' Step 6 - prepare the dataframe information as required by Google workspace update format requirements '''
-            print("WIP - format as required by google update")
-            
-            ''' Step 7 - update the workbook's 'TD Import Inf' tab '''
-            print("WIP - update the workbook")
+            ''' Step 7 - update the workbook's mark to market tab '''
+            exc_txt = "\nAn exception occurred - unable to update Google sheet"
+            self.gSheets.updateGoogleSheet(self.sheetID, mtomTab + '!' + mtomCols, df_update.columns)
+            self.gSheets.updateGoogleSheet(self.sheetID, mtomTab + '!' + mtomData, df_update)
             
             return 
     
-        except ValueError:
+        except :
+            print(exc_txt)
             exc_info = sys.exc_info()
-            exc_str = exc_info[1].args[0]
-            exc_txt = exc_txt + "\n\t" + exc_str
-            sys.exit(exc_txt)
+            if len(exc_info) > 1:
+                print(exc_info[1].args[0])
+            sys.exit()
 
     def holdings(self):
         try:
@@ -287,11 +291,12 @@ class investments(workbooks):
                     
             return symbolList
     
-        except ValueError:
+        except :
+            print(exc_txt)
             exc_info = sys.exc_info()
-            exc_str = exc_info[1].args[0]
-            exc_txt = exc_txt + "\n\t" + exc_str
-            sys.exit(exc_txt)
+            if len(exc_info) > 1:
+                print(exc_info[1].args[0])
+            sys.exit()
         
     def potentialBuys(self):
         try:
@@ -312,12 +317,12 @@ class investments(workbooks):
             
             return symbolList
     
-        except ValueError:
+        except :
+            print(exc_txt)
             exc_info = sys.exc_info()
-            exc_str = exc_info[1].args[0]
-            exc_txt = exc_txt + "\n\t" + exc_str
-            sys.exit(exc_txt)
-        
+            if len(exc_info) > 1:
+                print(exc_info[1].args[0])
+            sys.exit()
 
     def updateYahooFinanceData(self):
         print("To update Yahoo finance data, use the script in the workbook")

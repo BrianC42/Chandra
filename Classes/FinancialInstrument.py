@@ -88,26 +88,21 @@ class FinancialInstrument(object):
         '''
         Constructor
         '''
-        exc_txt = "An exception occurred creating a financial instrument object for {}".format(symbol)
         try:
             localDirs = get_ini_data("LOCALDIRS")
             aiwork = localDirs['aiwork']
-            #basicMarketDataDir = aiwork + localDirs['market_data'] + localDirs['basic_market_data']
-            #augmentedMarketDataDir = aiwork + localDirs['market_data'] + localDirs['augmented_market_data']
             financialInstrumentDetailsDir = aiwork + localDirs['market_data'] + localDirs['financial_instrument_details']
-            #optionChainDir = aiwork + localDirs['market_data'] + localDirs['option_chains']
     
+            exc_txt = "An exception occurred requesting financial instrument details for {}".format(symbol)
             self.financialDataServicesObj = financialDataServices()
             response = self.financialDataServicesObj.requestFinancialInstrumentDetails(symbol=symbol)
             
             self.financialInstrumentDetails = response.text
             self.financialInstrumentDetailsJson = json.loads(self.financialInstrumentDetails)
             
-            #for exp_date, options in self.financialInstrumentDetailsJson[chain].items():
-                
+            exc_txt = "An exception occurred unpacking financial instrument details for {}".format(symbol)
             instruments = self.financialInstrumentDetailsJson['instruments'][0]
             fundamentals = instruments['fundamental']
-            
             #print("Fundamentals: {}".format(fundamentals))
     
             self.symbol = symbol
@@ -145,10 +140,15 @@ class FinancialInstrument(object):
                 self.dividendPayAmount = 0.0
 
             if 'dividendYield' in fundamentals:
-                self.dividendYield = float(fundamentals['dividendYield'])
+                self.dividendYield = float(fundamentals['dividendYield']) / 100
             else:
                 self.dividendYield = 0.0
     
+            if 'sharesOutstanding' in fundamentals:
+                self.sharesOutstanding = float(fundamentals['sharesOutstanding'])
+            else:
+                self.sharesOutstanding = ""
+           
             if 'dividendPayDate' in fundamentals:
                 self.dividendPayDate, time = self.split_date_time(fundamentals['dividendPayDate'])
             else:
@@ -165,10 +165,11 @@ class FinancialInstrument(object):
                 self.nextDividendDate = ""
            
         except Exception:
+            print(exc_txt)
             exc_info = sys.exc_info()
-            exc_str = exc_info[1].args[0]
-            exc_txt = exc_txt + "\n\t" + exc_str
-            sys.exit(exc_txt)
+            if len(exc_info) > 1:
+                print(exc_info[1].args[0])
+            sys.exit()
             
     ''' ============ split date time string into date and time strings - start ============= '''
     def split_date_time(self, text):

@@ -257,7 +257,8 @@ class MarketData(object):
         exc_txt = "WIP ***************\n\tneed code to check MarketData constructor parameter values\n\tinvalid market data request parameter"
         try:
             if self.periodType == 'month':
-                if self.period == "2":
+                validPeriods = ["1","2","3","6"]
+                if self.period in validPeriods:
                     if self.frequencyType == "daily":
                         if self.frequency == "1":
                             pass
@@ -269,7 +270,22 @@ class MarketData(object):
                         raise ValueError                    
                 else:
                     exc_txt = exc_txt + " - period"
-                    raise ValueError                    
+                    raise ValueError
+            elif self.periodType == 'day':
+                validPeriods = ["1","2","3","4","5","10"]
+                if self.period in validPeriods:
+                    if self.frequencyType == "daily":
+                        if self.frequency == "1":
+                            pass
+                        else:
+                            exc_txt = exc_txt + " - frequency"
+                            raise ValueError                    
+                    else:
+                        exc_txt = exc_txt + " - frequency type"
+                        raise ValueError                    
+                else:
+                    exc_txt = exc_txt + " - period"
+                    raise ValueError
             else:
                 exc_txt = exc_txt + " - period type"
                 raise ValueError

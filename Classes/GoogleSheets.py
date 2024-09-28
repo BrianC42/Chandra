@@ -240,6 +240,8 @@ class googleSheet():
         ''' update Google sheet data '''
         exc_txt = "\nAn exception occurred - unable to write data to Google sheet"
         try:
+            self.openGoogleSheetService()
+
             cellValues = updateData.values.tolist()
             if len(updateData.shape) == 1:
                 requestBody = {'values': [cellValues]}
