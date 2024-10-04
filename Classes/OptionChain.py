@@ -46,23 +46,22 @@ class OptionDetails(object):
             self.putCall = self.optionDetails["putCall"]
             self.description = self.optionDetails["description"]
             self.optionSymbol = self.optionDetails["symbol"]
-            
-            self.bidPrice = float(self.optionDetails["bid"])
-            self.askPrice = float(self.optionDetails["ask"])
-            self.lastPrice = float(self.optionDetails["last"])
-            self.markPrice = float(self.optionDetails["mark"])
+            self.inTheMoney = self.optionDetails["inTheMoney"]
             
             self.bidSize = int(self.optionDetails["bidSize"])
             self.askSize = int(self.optionDetails["askSize"])
     
-            self.closePrice = float(optionDetails["closePrice"])
-            self.volatility = float(optionDetails["volatility"])
-            self.delta = float(optionDetails["delta"])
-            self.gamma = float(optionDetails["gamma"])
-            self.theta = float(optionDetails["theta"])
-            self.vega = float(optionDetails["vega"])
-            self.rho = float(optionDetails["rho"])
-            self.inTheMoney = optionDetails["inTheMoney"]
+            self.bidPrice = float(self.optionDetails["bid"])
+            self.askPrice = float(self.optionDetails["ask"])
+            self.lastPrice = float(self.optionDetails["last"])
+            self.markPrice = float(self.optionDetails["mark"])
+            self.closePrice = float(self.optionDetails["closePrice"])
+            self.volatility = float(self.optionDetails["volatility"])
+            self.delta = float(self.optionDetails["delta"])
+            self.gamma = float(self.optionDetails["gamma"])
+            self.theta = float(self.optionDetails["theta"])
+            self.vega = float(self.optionDetails["vega"])
+            self.rho = float(self.optionDetails["rho"])
 
         except (ValueError, Exception):
             exc_info = sys.exc_info()
@@ -376,20 +375,7 @@ class OptionChain(object):
                 self.optionChainData = response.text
                 self.optionChainJson = json.loads(self.optionChainData)
                 
-                self.df_OptionChain = pd.DataFrame(index=['symbol', 'strategy', 'expirationDate'], \
-                                                   columns=['days To Expiration', 'strike Price', 'bid', 'ask', 'closePrice', \
-                                                            "volatility", "delta", "gamma", "theta", "vega", "rho", \
-                                                            "inTheMoney", "lastSize", "highPrice", "lowPrice", "openPrice", \
-                                                            "totalVolume", "quoteTimeInLong", "tradeTimeInLong", "netChange", \
-                                                            "timeValue", "openInterest", "theoreticalOptionValue", "theoreticalVolatility", \
-                                                            "mini", "nonStandard", "optionDeliverablesList", "strikePrice", \
-                                                            "expirationDate", "daysToExpiration", "expirationType", "lastTradingDay", \
-                                                            "multiplier", "settlementType", "deliverableNote", "percentChange", \
-                                                            "markChange", "markPercentChange", "pennyPilot", "intrinsicValue", \
-                                                            "optionRoot"])
-                '''
-                '''
-
+                optionChainRows = []
                 for chain in ['putExpDateMap', 'callExpDateMap']:
                     for exp_date, options in self.optionChainJson[chain].items():
                         exp_date, daysToExp = exp_date.split(":")
@@ -402,13 +388,63 @@ class OptionChain(object):
                                 new_row = {'symbol' : option.symbol, \
                                            'strategy' : option.strategy, \
                                            'expirationDate' : option.expirationDate, \
-                                           'days To Expiration' : option.daysToExpiry, \
                                            'strike Price' : option.strikePrice, \
-                                           'bid' : option.bidPrice}
-                
-                                self.df_OptionChain.loc[len(self.df_OptionChain)] = new_row                
- 
-
+                                           'days To Expiration' : option.daysToExpiry, \
+                                           'bid' : option.bidPrice, \
+                                           'ask' : option.askPrice, \
+                                           'closePrice' : option.closePrice, \
+                                           'volatility' : option.volatility, \
+                                           "delta" : option.delta, \
+                                           "gamma" : option.gamma, \
+                                           "theta" : option.theta, \
+                                           "vega" : option.vega, \
+                                           "rho" : option.rho, \
+                                           "inTheMoney" : option.inTheMoney
+                                           }
+                                '''
+                                "lastSize" : option. \
+                                "highPrice" : option. \
+                                "lowPrice" : option. \
+                                "openPrice" : option. \
+                                "totalVolume" : option. \
+                                "quoteTimeInLong" : option. \
+                                "tradeTimeInLong" : option. \
+                                "netChange" : option. \
+                                "timeValue" : option. \
+                                "openInterest" : option. \
+                                "theoreticalOptionValue" : option. \
+                                "theoreticalVolatility" : option. \
+                                "mini" : option. \
+                                "nonStandard" : option. \
+                                "optionDeliverablesList" : option. \
+                                "expirationType" : option. \
+                                "lastTradingDay" : option. \
+                                "multiplier" : option. \
+                                "settlementType" : option. \
+                                "deliverableNote" : option. \
+                                "percentChange" : option. \
+                                "markChange" : option. \
+                                "markPercentChange" : option. \
+                                "pennyPilot" : option. \
+                                "intrinsicValue" : option. \
+                                "optionRoot" : option.
+                                '''
+                                optionChainRows.append(new_row)
+                '''
+                self.df_OptionChain = pd.DataFrame(index=['symbol', 'strategy', 'expirationDate', 'strike Price'], \
+                                                   columns=['days To Expiration', 'bid', 'ask', 'closePrice', \
+                                                            "volatility", "delta", "gamma", "theta", "vega", "rho", \
+                                                            "inTheMoney", "lastSize", "highPrice", "lowPrice", "openPrice", \
+                                                            "totalVolume", "quoteTimeInLong", "tradeTimeInLong", "netChange", \
+                                                            "timeValue", "openInterest", "theoreticalOptionValue", "theoreticalVolatility", \
+                                                            "mini", "nonStandard", "optionDeliverablesList", "strikePrice", \
+                                                            "expirationDate", "daysToExpiration", "expirationType", "lastTradingDay", \
+                                                            "multiplier", "settlementType", "deliverableNote", "percentChange", \
+                                                            "markChange", "markPercentChange", "pennyPilot", "intrinsicValue", \
+                                                            "optionRoot"])
+                '''
+                self.df_OptionChain = pd.DataFrame(optionChainRows)                
+                self.df_OptionChain.set_index(['symbol', 'strategy', 'expirationDate', 'strike Price'], inplace=True)
                 return
             else:
                 exc_txt = 'Unable to obtain option chain for {}. Error code = {}'.format(self.symbol, response.status_code)
@@ -453,6 +489,7 @@ class OptionChain(object):
             sys.exit(exc_txt)
     ''' ===== xxx - end ===== '''
 
+    ''' ============ data service provider and option chain controls - start ============= '''
     @property
     def symbol(self):
         return self._symbol

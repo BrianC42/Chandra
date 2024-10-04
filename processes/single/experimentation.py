@@ -986,19 +986,34 @@ def develop_GoogleSheet_class():
     try:
         exc_txt = "exception developing google sheet access and maintenance"
 
+        '''
         investmentSheet = investments()
         investmentSheet.markToMarket()
         investmentSheet.updateYahooFinanceData()
+        '''
         
+        ''' filtering rules
+        // (formula sets Qty to 0) hide rows where Holdings/Optioned = TRUE
+        // hide rows where Qty = 0
+        // hide rows where max gain APY < 15%
+        // hide rows (A-Z) where ITM is TRUE
+        // hide rows where max profit <$500
+        // hide rows where Concern = Dividend or Earnings
+        // sort rows by strategy/symbol/expiration/max gain APY
+        // highlighted where risk management > $50,000
+        
+        Qty = if(B170="Cash Secured Put",     round down(($E$3*100)/(E170*100)),     ROUNDDOWN(L170/100))
         '''
         optionChains = optionTrades()
-        optionChains.scanOptionChains()
-        optionChains.filterOptionsChains(filterList=[{"dataElement":"theoreticalOptionValue", "condition":"GT", "threshold":"0.5"}, \
-                                                     {"dataElement":"volatility", "condition":"LT", "threshold":"0.4"}])
-        
-        #gSheets, cellValues = develop_GoogleSheet_read()
-        #develop_GoogleSheet_update(googleSession = gSheets)
-        '''
+        optionChains.findPotentialOptionTrades(strikeCount=5, strikeRange="OTM", daysToExpiration=60, \
+                                               filterList=[{"dataElement":"delta", "condition":"GT", "threshold":"0.8"}, \
+                                                           {"dataElement":"max cover", "condition":"LT", "threshold":"30000.0"}, \
+                                                           {"dataElement":"min gain APY", "condition":"GT", "threshold":"30.0"}, \
+                                                           {"dataElement":"min gain $", "condition":"GT", "threshold":"0.0"}, \
+                                                           {"dataElement":"dividend date", "condition":"LT", "threshold":"exp date"}, \
+                                                           {"dataElement":"earnings date", "condition":"LT", "threshold":"exp date"}, \
+                                                           {"dataElement":"option quantity", "condition":"GT", "threshold":"0.0"} \
+                                                           ])
         
         return
     

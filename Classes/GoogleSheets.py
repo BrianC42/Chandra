@@ -48,6 +48,88 @@ from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 #from googleapiclient.errors import HttpError
 
+'''
+object (SpreadsheetProperties)
+object (Sheet)
+object (NamedRange)
+object (DeveloperMetadata)
+object (DataSource)
+object (DataSourceRefreshSchedule)
+'''
+class SpreadsheetProperties():
+    def __init__(self):
+        self.title = ""
+        self.locale = ""
+        self.autoRecalc = ""
+        self.timeZone = ""
+        self.cellFormat = ""
+        self.iterativeCalculationSettings = ""
+        self.spreadsheetTheme = ""
+        self.importFunctionsAllowed = False
+        self.jsonStr = ""
+        return
+    
+    def __str__(self):
+        '''
+        {
+          "title": string,
+          "locale": string,
+          "autoRecalc": enum (RecalculationInterval),
+          "timeZone": string,
+          "defaultFormat": {
+            object (CellFormat)
+          },
+          "iterativeCalculationSettings": {
+            object (IterativeCalculationSettings)
+          },
+          "spreadsheetTheme": {
+            object (SpreadsheetTheme)
+          },
+          "importFunctionsExternalUrlAccessAllowed": boolean
+        }
+        '''
+        self.jsonStr = "{"
+        self.jsonStr = self.jsonStr + '"title":' + self.title + ','
+        self.jsonStr = self.jsonStr + '"locale":' + self.locale + ','
+        self.jsonStr = self.jsonStr + 'autoRecalc": enum (' + self.autoRecalc + '),'
+        self.jsonStr = self.jsonStr + '"timeZone":' + self.timeZone + ','
+        self.jsonStr = self.jsonStr + '"defaultFormat": {object (' + self.cellFormat + ')},'
+        self.jsonStr = self.jsonStr + '"iterativeCalculationSettings": {object (' + self.iterativeCalculationSettings + ')},'
+        self.jsonStr = self.jsonStr + '"spreadsheetTheme": {object (' + self.spreadsheetTheme + ')},'
+        self.jsonStr = self.jsonStr + '"importFunctionsExternalUrlAccessAllowed":{}'.format(self.importFunctionsAllowed)
+        self.jsonStr = self.jsonStr + "}"
+        
+        return self.jsonStr
+
+class Sheet():
+    def __init__(self):
+        '''
+        '''
+        return
+
+class NamedRange():
+    def __init__(self):
+        '''
+        '''
+        return
+
+class DeveloperMetadata():
+    def __init__(self):
+        '''
+        '''
+        return
+
+class DataSource():
+    def __init__(self):
+        '''
+        '''
+        return
+
+class DataSourceRefreshSchedule():
+    def __init__(self):
+        '''
+        '''
+        return
 
 class googleSheet():
     '''
@@ -300,9 +382,14 @@ class googleSheet():
     
     def createGoogleWorkbook(self):
         ''' create a new Google workbook '''
+        print("createGoogleWorkbook is WIP - new workbook is created in the home Drive folder")
         exc_txt = "\nAn exception occurred attempting to create a new workbook"
         try:
-            print("createGoogleWorkbook is WIP")
+            t = SpreadsheetProperties()
+            print(t)
+            
+            requestBody = {}
+            result = self.googleSheet.create(body=requestBody).execute()
             
             return
 
