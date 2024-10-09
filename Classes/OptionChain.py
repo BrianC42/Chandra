@@ -392,14 +392,14 @@ class OptionChain(object):
                                            'days To Expiration' : option.daysToExpiry, \
                                            'bid' : option.bidPrice, \
                                            'ask' : option.askPrice, \
-                                           'closePrice' : option.closePrice, \
+                                           'close Price' : option.closePrice, \
                                            'volatility' : option.volatility, \
                                            "delta" : option.delta, \
                                            "gamma" : option.gamma, \
                                            "theta" : option.theta, \
                                            "vega" : option.vega, \
                                            "rho" : option.rho, \
-                                           "inTheMoney" : option.inTheMoney
+                                           "in The Money" : option.inTheMoney
                                            }
                                 '''
                                 "lastSize" : option. \

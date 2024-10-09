@@ -340,16 +340,133 @@ class googleSheet():
             '''
             
             return result.get('updatedCells')
-    
+        
         except Exception:
+            print(exc_txt)
             exc_info = sys.exc_info()
-            exc_str = exc_info[1].args[0]
-            sys.exit(exc_txt + "\n\t" + exc_str)
+            if len(exc_info) > 1:
+                print(exc_info[1].args[1])
+            sys.exit()
     
+    def readSheetMetadata(self, spreadsheetID):
+        ''' read metadata for Google sheet '''
+        '''
+        {
+        'spreadsheetId': 'xxx', 
+        'properties': {
+            'title': 'Options Trading', 
+            'locale': 'en_US', 
+            'autoRecalc': 'ON_CHANGE', 
+            'timeZone': 'America/New_York', 
+            'defaultFormat': {
+                'backgroundColor': {'red': 1, 'green': 1, 'blue': 1}, 
+                'padding': {'top': 2, 'right': 3, 'bottom': 2, 'left': 3}, 
+                'verticalAlignment': 'BOTTOM', 
+                'wrapStrategy': 'OVERFLOW_CELL', 
+                'textFormat': {
+                    'foregroundColor': {}, 
+                    'fontFamily': 'arial,sans,sans-serif', 
+                    'fontSize': 10, 
+                    'bold': False, 
+                    'italic': False, 
+                    'strikethrough': False, 
+                    'underline': False, 
+                    'foregroundColorStyle': {
+                        'rgbColor': {}
+                        }
+                    }, 
+                'backgroundColorStyle': {
+                    'rgbColor': {'red': 1, 'green': 1, 'blue': 1}
+                    }
+                }, 
+            'spreadsheetTheme': {
+                'primaryFontFamily': 'Arial', 
+                'themeColors': [
+                    {'colorType': 'TEXT', 'color': {'rgbColor': {}}}, 
+                    {'colorType': 'BACKGROUND', 'color': {'rgbColor': {'red': 1, 'green': 1, 'blue': 1}}}, 
+                    {'colorType': 'ACCENT1', 'color': {'rgbColor': {'red': 0.25882354, 'green': 0.52156866, 'blue': 0.95686275}}}, 
+                    {'colorType': 'ACCENT2', 'color': {'rgbColor': {'red': 0.91764706, 'green': 0.2627451, 'blue': 0.20784314}}}, 
+                    {'colorType': 'ACCENT3', 'color': {'rgbColor': {'red': 0.9843137, 'green': 0.7372549, 'blue': 0.015686275}}}, 
+                    {'colorType': 'ACCENT4', 'color': {'rgbColor': {'red': 0.20392157, 'green': 0.65882355, 'blue': 0.3254902}}}, 
+                    {'colorType': 'ACCENT5', 'color': {'rgbColor': {'red': 1, 'green': 0.42745098, 'blue': 0.003921569}}}, 
+                    {'colorType': 'ACCENT6', 'color': {'rgbColor': {'red': 0.27450982, 'green': 0.7411765, 'blue': 0.7764706}}}, 
+                    {'colorType': 'LINK', 'color': {'rgbColor': {'red': 0.06666667, 'green': 0.33333334, 'blue': 0.8}}}
+                ]
+                }
+            }, 
+        'sheets': [
+            {'properties': {
+                'sheetId': 1118594284, 
+                'title': 'For Review', 
+                'index': 0, 
+                'sheetType': 'GRID', 
+                'gridProperties': {
+                    'rowCount': 4541, 
+                    'columnCount': 41, 
+                    'frozenRowCount': 7
+                    }
+                }, 
+                'conditionalFormats': [
+                    {'ranges': [
+                        {
+                        'sheetId': 1118594284, 
+                        'startRowIndex': 0, 
+                        'endRowIndex': 4, 
+                        'startColumnIndex': 6, 
+                        'endColumnIndex': 7
+                        }, {'sheetId': 1118594284, 'startRowIndex': 4, 'endRowIndex': 5, 'startColumnIndex': 8, 'endColumnIndex': 9}, {'sheetId': 1118594284, 'startRowIndex': 5, 'endRowIndex': 7, 'startColumnIndex': 6, 'endColumnIndex': 7}, {'sheetId': 1118594284, 'startRowIndex': 7, 'endRowIndex': 4541, 'startColumnIndex': 5, 'endColumnIndex': 6}], 'booleanRule': {'condition': {'type': 'NUMBER_GREATER', 'values': [{'userEnteredValue': '250'}]}, 'format': {'backgroundColor': {'red': 1, 'green': 0.6}, 'backgroundColorStyle': {'rgbColor': {'red': 1, 'green': 0.6}}}}}, {'ranges': [{'sheetId': 1118594284, 'startRowIndex': 7, 'endRowIndex': 4541, 'startColumnIndex': 11, 'endColumnIndex': 12}], 'booleanRule': {'condition': {'type': 'NUMBER_GREATER_THAN_EQ', 'values': [{'userEnteredValue': '25'}]}, 'format': {'backgroundColor': {'green': 1}, 'backgroundColorStyle': {'rgbColor': {'green': 1}}}}}]}, {'properties': {'sheetId': 1364636417, 'title': '01-03', 'index': 1, 'sheetType': 'GRID', 'gridProperties': {'rowCount': 969, 'columnCount': 53}}, 'merges': [{'sheetId': 1364636417, 'startRowIndex': 0, 'endRowIndex': 1, 'startColumnIndex': 0, 'endColumnIndex': 39}, {'sheetId': 1364636417, 'startRowIndex': 5, 'endRowIndex': 6, 'startColumnIndex': 0, 'endColumnIndex': 39}, {'sheetId': 1364636417, 'startRowIndex': 8, 'endRowIndex': 9, 'startColumnIndex': 0, 'endColumnIndex': 39}, {'sheetId': 1364636417, 'startRowIndex': 14, 'endRowIndex': 15, 'startColumnIndex': 0, 'endColumnIndex': 39}, {'sheetId': 1364636417, 'startRowIndex': 17, 'endRowIndex': 18, 'startColumnIndex': 0, 'endColumnIndex': 39}], 'conditionalFormats': [{'ranges': [{'sheetId': 1364636417, 'startRowIndex': 1, 'endRowIndex': 5, 'startColumnIndex': 6, 'endColumnIndex': 7}, {'sheetId': 1364636417, 'startRowIndex': 2, 'endRowIndex': 5, 'startColumnIndex': 5, 'endColumnIndex': 6}, {'sheetId': 1364636417, 'startRowIndex': 6, 'endRowIndex': 8, 'startColumnIndex': 6, 'endColumnIndex': 7}, {'sheetId': 1364636417, 'startRowIndex': 9, 'endRowIndex': 14, 'startColumnIndex': 6, 'endColumnIndex': 7}, {'sheetId': 1364636417, 'startRowIndex': 10, 'endRowIndex': 14, 'startColumnIndex': 5, 'endColumnIndex': 6}, {'sheetId': 1364636417, 'startRowIndex': 15, 'endRowIndex': 17, 'startColumnIndex': 6, 'endColumnIndex': 7}, {'sheetId': 1364636417, 'startRowIndex': 16, 'endRowIndex': 17, 'startColumnIndex': 5, 'endColumnIndex': 6}, {'sheetId': 1364636417, 'startRowIndex': 18, 'endRowIndex': 19, 'startColumnIndex': 6, 'endColumnIndex': 7}, {'sheetId': 1364636417, 'startRowIndex': 20, 'endRowIndex': 21, 'startColumnIndex': 5, 'endColumnIndex': 6}], 'booleanRule': {'condition': {'type': 'NUMBER_GREATER', 'values': [{'userEnteredValue': '250'}]}, 'format': {'backgroundColor': {'red': 1, 'green': 0.6}, 'backgroundColorStyle': {'rgbColor': {'red': 1, 'green': 0.6}}}}}, {'ranges': [{'sheetId': 1364636417, 'startRowIndex': 2, 'endRowIndex': 5, 'startColumnIndex': 12, 'endColumnIndex': 13}, {'sheetId': 1364636417, 'startRowIndex': 10, 'endRowIndex': 14, 'startColumnIndex': 12, 'endColumnIndex': 13}, {'sheetId': 1364636417, 'startRowIndex': 12, 'endRowIndex': 14, 'startColumnIndex': 11, 'endColumnIndex': 12}, {'sheetId': 1364636417, 'startRowIndex': 16, 'endRowIndex': 17, 'startColumnIndex': 12, 'endColumnIndex': 13}, {'sheetId': 1364636417, 'startRowIndex': 20, 'endRowIndex': 21, 'startColumnIndex': 11, 'endColumnIndex': 12}], 'booleanRule': {'condition': {'type': 'NUMBER_GREATER_THAN_EQ', 'values': [{'userEnteredValue': '25'}]}, 'format': {'backgroundColor': {'green': 1}, 'backgroundColorStyle': {'rgbColor': {'green': 1}}}}}]}, {'properties': {'sheetId': 52376853, 'title': '20241006 210200', 'index': 2, 'sheetType': 'GRID', 'gridProperties': {'rowCount': 1000, 'columnCount': 26}}}, {'properties': {'sheetId': 1094591553, 'title': '20241007 074657', 'index': 3, 'sheetType': 'GRID', 'gridProperties': {'rowCount': 1000, 'columnCount': 26}}}, {'properties': {'sheetId': 1104673250, 'title': '20241007 075633', 'index': 4, 'sheetType': 'GRID', 'gridProperties': {'rowCount': 1000, 'columnCount': 26}}}, {'properties': {'sheetId': 301106324, 'title': '20241007 080157', 'index': 5, 'sheetType': 'GRID', 'gridProperties': {'rowCount': 1000, 'columnCount': 26}}}, {'properties': {'sheetId': 1985521564, 'title': '20241007 080459', 'index': 6, 'sheetType': 'GRID', 'gridProperties': {'rowCount': 1000, 'columnCount': 26}}}, 
+            {'properties': {
+                'sheetId': 1739849692, 
+                'title': '20241007 080637', 
+                'index': 7, 
+                'sheetType': 'GRID', 
+                'gridProperties': {
+                    'rowCount': 1000, 
+                    'columnCount': 26
+                    }
+                }
+            }], 
+        'spreadsheetUrl': 'https://docs.google.com/spreadsheets/d/17UzJLEI9ThNY4_Ulg3szPYRV3ArmcGERt_nijhZpRT0/edit'
+        }
+        '''
+        exc_txt = "\nAn exception occurred attempting access the workbook metadata"
+        try:
+            self.sheets_metadata = self.googleSheet.get(spreadsheetId=spreadsheetID).execute()
+
+        except Exception:
+            print(exc_txt)
+            exc_info = sys.exc_info()
+            if len(exc_info) > 1:
+                print(exc_info[1].args[1])
+            sys.exit()
+    
+    def deleteGoogleSheetTab(self, spreadsheetID, sheetTitle):
+        ''' delete a tab from a Google workbook '''
+        exc_txt = "\nAn exception occurred attempting to delete tab {}".format(sheetTitle)
+        try:
+            self.readSheetMetadata(spreadsheetID)
+            for sheet in self.sheets_metadata['sheets']:
+                if sheet['properties']['title'] == sheetTitle:
+                    deleteSheetRequest = {"sheetId" : sheet['properties']['sheetId']}
+                    self.batchRequests.append({"deleteSheet" : deleteSheetRequest})
+                    requestBody = {"requests" : self.batchRequests}
+                    #print("\nbatchUpdate requestBody:\n\t{}".format(requestBody))
+                    result = self.googleSheet.batchUpdate(spreadsheetId=spreadsheetID, body=requestBody).execute()
+                    self.batchRequests.clear()
+                    break
+
+        except Exception:
+            print(exc_txt)
+            exc_info = sys.exc_info()
+            if len(exc_info) > 1:
+                print(exc_info[1].args[1])
+            sys.exit()
+            
     def addGoogleSheet(self, spreadsheetID, sheetTitle):
         ''' update Google workbook - add sheet '''
-        exc_txt = "\nAn exception occurred attempting to add a new sheet"
+        exc_txt = "\nAn exception occurred attempting to add a new sheet {}".format(sheetTitle)
         try:
+            self.deleteGoogleSheetTab(spreadsheetID, sheetTitle)            
             addSheetRequest = {"properties" : {"title": sheetTitle}}
             self.batchRequests.append({"addSheet" : addSheetRequest})
             requestBody = {"requests" : self.batchRequests}
@@ -360,9 +477,11 @@ class googleSheet():
             return
 
         except Exception:
+            print(exc_txt)
             exc_info = sys.exc_info()
-            exc_str = exc_info[1].args[0]
-            sys.exit(exc_txt + "\n\t" + exc_str)
+            if len(exc_info) > 1:
+                print(exc_info[1].args[1])
+            sys.exit()
     
     def clearGoogleSheet(self, spreadsheetID, tabName, clearedRange):
         ''' create a new Google workbook '''
