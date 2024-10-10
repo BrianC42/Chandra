@@ -490,7 +490,6 @@ class optionTrades(workbooks):
             sys.exit()
 
     def outputPotentalTrades(self):
-        print("outputPotentalTrades is WIP")
         try:
             ''' Output the potential option trades to Google sheet '''
             exc_txt = "Exception occurred writing the list of potential option trades"
@@ -509,16 +508,17 @@ class optionTrades(workbooks):
             # select and reorder the columns
             outputColumns = ['Symbol', 'Strategy', 'Symbol Price', \
                             'Expiration Date', 'days To Expiration', 'Strike Price', \
+                            'Max Profit', 'Max Gain APY', \
                             'bid', 'ask', 'close Price', \
                             'Option Qty', 'OTM Probability', \
-                            'Premium', 'Commission', 'Max Profit', 'Max Gain APY']
+                            'Premium', 'Commission']
             googleTab = self.filteredOptions[outputColumns]
-            self.gSheets.updateGoogleSheet(self.optionsSheetID, sheetName + "!A1:Z99", googleTab.columns)
-            self.gSheets.updateGoogleSheet(self.optionsSheetID, sheetName + "!A2:Z99", googleTab)
+            self.gSheets.updateGoogleSheet(self.optionsSheetID, sheetName + "!A1:Z999", googleTab.columns)
+            self.gSheets.updateGoogleSheet(self.optionsSheetID, sheetName + "!A2:Z999", googleTab)
             
             '''
-            self.gSheets.updateGoogleSheet(self.optionsSheetID, sheetName + "!A1:Z99", self.filteredOptions.columns)
-            self.gSheets.updateGoogleSheet(self.optionsSheetID, sheetName + "!A2:Z99", self.filteredOptions)
+            self.gSheets.updateGoogleSheet(self.optionsSheetID, sheetName + "!A1:Z999", self.filteredOptions.columns)
+            self.gSheets.updateGoogleSheet(self.optionsSheetID, sheetName + "!A2:Z999", self.filteredOptions)
             '''
             
             return
@@ -536,7 +536,8 @@ class optionTrades(workbooks):
         self.potentialCallSymbols = self.investmentSheet.potentialCalls()
         for ndx in range(len(self.potentialCallSymbols)):
             symbol = self.potentialCallSymbols[ndx]
-            options = OptionChain(symbol=symbol, strategy="Call", strikeCount=5, strikeRange="OTM", daysToExpiration=60)
+            options = OptionChain(symbol=symbol, strategy="Call", \
+                                  strikeCount=self.strikeCount, strikeRange=self.strikeRange, daysToExpiration=self.daysToExpiration)
             print("Call option details: symbol - {}, strategy - {}".format(options.symbol, options.strategy))
             #self.potentialOptions.append(options)
             chainList.append(options)
@@ -544,7 +545,8 @@ class optionTrades(workbooks):
         self.potentialPutSymbols = self.investmentSheet.potentialPuts()
         for ndx in range(len(self.potentialPutSymbols)):
             symbol = self.potentialPutSymbols[ndx]
-            options = OptionChain(symbol=symbol, strategy="Put", strikeCount=5, strikeRange="OTM", daysToExpiration=60)
+            options = OptionChain(symbol=symbol, strategy="Put", \
+                                  strikeCount=self.strikeCount, strikeRange=self.strikeRange, daysToExpiration=self.daysToExpiration)
             print("Put option details: symbol - {}, strategy - {}".format(options.symbol, options.strategy))
             #self.potentialOptions.append(options)
             chainList.append(options)
@@ -606,13 +608,12 @@ class optionTrades(workbooks):
         return
     
     def filterMinGainAPY(self, threshold):
-        print("filterMinGainAPY is WIP")
         remainingOptions = []
 
         for ndx in range (len(self.filteredOptions)):
             optKey = self.filteredOptions.iloc[ndx].name
             optDetails = self.filteredOptions.iloc[ndx]
-            filterFieldVal = int(optDetails["days To Expiration"])
+            filterFieldVal = float(optDetails["Max Gain APY"])
                 
             if filterFieldVal <= threshold:
                 #print("Eliminating {} - {}".format(optKey, filterFieldVal) )
@@ -623,6 +624,75 @@ class optionTrades(workbooks):
                     
         self.filteredOptions = pd.DataFrame(remainingOptions)
         
+        return
+    
+    def filterMinGain(self, threshold):
+        remainingOptions = []
+
+        for ndx in range (len(self.filteredOptions)):
+            optKey = self.filteredOptions.iloc[ndx].name
+            optDetails = self.filteredOptions.iloc[ndx]
+            filterFieldVal = float(optDetails["Max Profit"])
+                
+            if filterFieldVal <= threshold:
+                #print("Eliminating {} - {}".format(optKey, filterFieldVal) )
+                pass
+            else:
+                #print("Retaining {} - days to expiration {}".format(optKey, filterFieldVal) )
+                remainingOptions.append(self.filteredOptions.iloc[ndx])
+                    
+        self.filteredOptions = pd.DataFrame(remainingOptions)
+        
+        return
+    
+    def filterDividendDate(self, threshold):
+        remainingOptions = []
+
+        for ndx in range (len(self.filteredOptions)):
+            optKey = self.filteredOptions.iloc[ndx].name
+            symbol = optKey[0]
+            expDate = optKey[2]
+            #optDetails = self.filteredOptions.iloc[ndx]
+
+            exDividendDate = self.investmentSheet.stockInformationTab.xs(symbol, level='Symbol').iloc[0]['Ex Div']
+            if len(exDividendDate) > 0:
+                thresholdExDividend = dt.datetime.strptime(exDividendDate, '%m/%d/%Y').date()
+                expirationDate = dt.date.fromisoformat(expDate)
+            
+                if thresholdExDividend <= expirationDate:
+                    #print("Eliminating {} - {}".format(optKey, filterFieldVal) )
+                    pass
+                else:
+                    #print("Retaining {} - days to expiration {}".format(optKey, filterFieldVal) )
+                    remainingOptions.append(self.filteredOptions.iloc[ndx])
+            else:
+                #print("Retaining {} - days to expiration {}".format(optKey, filterFieldVal) )
+                remainingOptions.append(self.filteredOptions.iloc[ndx])
+                    
+        self.filteredOptions = pd.DataFrame(remainingOptions)
+        
+        return
+    
+    def filterLimitPrice(self, threshold):
+        remainingOptions = []
+
+        for ndx in range (len(self.filteredOptions)):
+            optKey = self.filteredOptions.iloc[ndx].name
+            symbol = optKey[0]
+            strategy = optKey[1]
+            strikePrice = float(optKey[3])
+    
+            limitPrice = self.investmentSheet.stockInformationTab.xs(symbol, level='Symbol').iloc[0]['Limit Price']
+            limitPrice = float(limitPrice.replace('$', ''))
+            if strategy == 'put':
+                if strikePrice < limitPrice:
+                    remainingOptions.append(self.filteredOptions.iloc[ndx])
+            else:
+                if strikePrice > limitPrice:
+                    remainingOptions.append(self.filteredOptions.iloc[ndx])
+                               
+        self.filteredOptions = pd.DataFrame(remainingOptions)
+
         return
     
     def filterPotentialOptionTrades(self):
@@ -658,28 +728,33 @@ class optionTrades(workbooks):
         
             elif  self.filterList[fltndx]["dataElement"] == "min gain $":
                 if self.filterList[fltndx]["condition"] == "GT":
-                    print("min gain $ filtering is WIP")
+                    self.filterMinGain(float(self.filterList[fltndx]["threshold"]))
                 else:
                     print("min gain $ filtering is only supported with the condition GT")
         
             elif  self.filterList[fltndx]["dataElement"] == "dividend date":
-                if self.filterList[fltndx]["condition"] == "LT":
-                    print("dividend date filtering is WIP")
+                if self.filterList[fltndx]["condition"] == "GT":
+                    self.filterDividendDate(self.filterList[fltndx]["threshold"])
                 else:
-                    print("dividend date filtering is only supported with the condition LT")
+                    print("dividend date filtering is only supported with the condition expiration date earlier than dividend date")
         
             elif  self.filterList[fltndx]["dataElement"] == "earnings date":
                 if self.filterList[fltndx]["condition"] == "LT":
                     print("earnings date filtering is WIP")
                 else:
                     print("earnings date filtering is only supported with the condition LT")
+                    
+            elif  self.filterList[fltndx]["dataElement"] == "limit price":
+                self.filterLimitPrice(self.filterList[fltndx]["threshold"])
         
-            print("Options after filtering {}\n{}".format(self.filterList[fltndx], self.filteredOptions))
+            else:
+                print("filter control -{}- is not supported".format(self.filterList[fltndx]["dataElement"]))
+        
+        #print("Options after filtering {}\n{}".format(self.filterList[fltndx], self.filteredOptions))
 
         return
     
     def calculateOptionSpecificTradeDetails(self):
-        print("calculate option specific trade details is WIP =======================")
         self.potentialOptions['Premium'] = ''
         self.potentialOptions['Max Gain APY'] = ''
         self.potentialOptions['Max Profit'] = ''
@@ -731,8 +806,6 @@ class optionTrades(workbooks):
         return 
     
     def calculateSymbolRelatedTradeDetails(self):
-        print("calculate symbol related trade details is WIP =======================")
-        
         self.investmentSheet = investments()
         #self.accountsTabDetails = self.investmentSheet.readAccountTab()
 
