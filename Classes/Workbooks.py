@@ -172,8 +172,6 @@ class investments(workbooks):
         return
 
     def markToMarket(self):
-        print("mark to market is WIP ====================================")
-        
         try:
             '''
             Steps:
@@ -309,7 +307,6 @@ class investments(workbooks):
     def holdings(self):
         try:
             ''' Return a list of asset symbols categorized as current financial holdings '''
-            print("holdings is WIP ===================================== - check holding > 0")
             symbolList = []
             exc_txt = "Exception occurred returning holdings list"
             
@@ -333,7 +330,6 @@ class investments(workbooks):
     def potentialBuys(self):
         try:
             ''' Return a list of asset symbols categorized as financial assets flagged as potential buys '''
-            print("potentialBuys is WIP =====================================")
             symbolList = []
             exc_txt = "Exception occurred returning list of potential buys"
             
@@ -696,7 +692,6 @@ class optionTrades(workbooks):
         return
     
     def filterPotentialOptionTrades(self):
-        print("filterPotentialOptionTrades is WIP =======================")
         self.filteredOptions = self.potentialOptions
         
         for fltndx in range(len(self.filterList)):
@@ -739,10 +734,10 @@ class optionTrades(workbooks):
                     print("dividend date filtering is only supported with the condition expiration date earlier than dividend date")
         
             elif  self.filterList[fltndx]["dataElement"] == "earnings date":
-                if self.filterList[fltndx]["condition"] == "LT":
-                    print("earnings date filtering is WIP")
+                if self.filterList[fltndx]["condition"] == "GT":
+                    print("earnings date filtering is not currently supported")
                 else:
-                    print("earnings date filtering is only supported with the condition LT")
+                    print("earnings date filtering is only supported with the condition GT")
                     
             elif  self.filterList[fltndx]["dataElement"] == "limit price":
                 self.filterLimitPrice(self.filterList[fltndx]["threshold"])
@@ -795,7 +790,14 @@ class optionTrades(workbooks):
                 valueAtExpiration = riskManagement + maxProfit
             else:
                 riskManagement="Current holding"
-                riskManagementAmount = self.symbolDetails.loc[symbol, "holdingValue"]
+                symbolInformation = self.investmentSheet.stockInformationTab.xs(symbol, level='Symbol')
+                price = symbolInformation.iloc[0]['Price']
+                #price = self.investmentSheet.stockInformationTab.xs(symbol, level='Symbol').iloc[0]['Price']
+                price = (price.replace('$', ''))
+                price = (price.replace(',', ''))
+                price = float(price)
+                #riskManagementAmount = self.symbolDetails.loc[symbol, "holdingValue"]
+                riskManagementAmount = price * (self.symbolDetails.loc[symbol, "maxTradeQty"] * 100)
                 currentValue = riskManagementAmount
                 valueAtExpiration = riskManagementAmount + maxProfit
                 
@@ -815,10 +817,6 @@ class optionTrades(workbooks):
         potentialBuys = self.investmentSheet.potentialBuys()
         
         accountDetails = []
-        print("Calculating maximum trade quantity")
-        print("Calculating Maximum gain APY")
-        print("Determining next dividend date")
-        print("Determining next earnings date")
         for symbol in symbols:
             symbolInformation = self.investmentSheet.stockInformationTab.xs(symbol, level='Symbol')
             price = symbolInformation.iloc[0]['Price']

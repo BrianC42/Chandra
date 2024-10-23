@@ -22,6 +22,7 @@ from configuration import get_ini_data
 from configuration import read_config_json
 
 from Workbooks import investments, optionTrades
+from DailyProcessUI import DailyProcessUI
 
 '''
 from GoogleSheets import googleSheet
@@ -262,6 +263,7 @@ def markToMarket(processCtrl):
         print("Update investments worksheet with current market data")
         investmentSheet = investments()
         investmentSheet.markToMarket()
+        print("mark to market complete")
     
     except Exception:
         exc_info = sys.exc_info()
@@ -323,7 +325,7 @@ def userInterfaceControls():
         exc_txt = "\nAn exception occurred - unable to access process configuration file"
         config_data = get_ini_data("DAILY_PROCESS")
         appConfig = read_config_json(gitdir + config_data['config'])
-        print("appConfig file {}\n{}".format(config_data['config'], appConfig))
+        #print("appConfig file {}\n{}".format(config_data['config'], appConfig))
         
         ''' =============== build user interface based on configuration json file =========== '''
         ui=tk.Tk()
@@ -457,17 +459,19 @@ def userInterfaceControls():
         ''' =================== Interact with user =================== '''
         ui.mainloop()
   
+        return processCtrl
+
     except Exception:
         exc_info = sys.exc_info()
         exc_str = exc_info[1].args[0]
         exc_txt = exc_txt + "\n\t" + exc_str
         sys.exit(exc_txt)
 
-    return processCtrl
-
 if __name__ == '__main__':
     print ("Perform daily operational processes\n")
+    UI = DailyProcessUI()
     
+    '''
     putSheetName = ""
     callSheetName = ""
     processCtrl = userInterfaceControls()
@@ -493,7 +497,6 @@ if __name__ == '__main__':
             elif process == MARK_TO_MARKET:
                 markToMarket(processCtrl[process]["controls"])
                 
-            '''
             elif process == SECURED_PUTS:
                 putSheetName = marketPutOptions(processCtrl[process]["controls"])
                 if len(putSheetName) > 0:
@@ -502,6 +505,6 @@ if __name__ == '__main__':
                 callSheetName = marketCallOptions(processCtrl[process]["controls"])
                 if len(callSheetName) > 0:
                     eliminateLowReturnOptions(processCtrl[process]["controls"], callTab=callSheetName)
-            '''
+    '''
                 
     print ("\nAll requested processes have completed")

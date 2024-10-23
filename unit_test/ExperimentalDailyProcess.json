@@ -1,0 +1,101 @@
+{
+"configuration parameters required to control" : "DailyProcess",
+"required fields - comment" : [
+	{
+	"name" : "descriptive name to display to user",
+	"groupColumn" : 1,
+	"groupRow" : 2,
+	"model" : false,
+	"Description" : "currently unused",
+	"run" : "default run or not for user to accept or change"
+	}
+],
+"WindowTitle" : "EXPERIMENTAL - Process Selection and Execution - EXPERIMENTAL",
+"groupColumns" : ["Daily Processes", "ML Data Prep", "Model Training", "Run Trained Models"],
+"groupRows" : 2,
+"available processes" : "===========================================",
+"processes" : [
+	{
+	"name" : "Tracking",
+	"groupColumn" : 1,
+	"groupRow" : 1,
+	"model" : false,
+	"Description" : "Mark to market",
+	"run" : false
+	},
+	{
+	"name" : "Options",
+	"groupColumn" : 1,
+	"groupRow" : 2,
+	"model" : false,
+	"Description" : "Download and filter options",
+	"run" : false,
+	"controls" : [
+		{"delta" : {"test" : "GT", "threshold" : 0.6}},
+		{"max cover" : {"test" : "GT", "threshold" : 30000.0}},
+		{"min gain APY" : {"test" : "GT", "threshold" : 0.08}},
+		{"min gain $" : {"test" : "GT", "threshold" : 100.0}},
+	    {"dividend date" : {"test" : "GT", "threshold" : "expiration date"}},
+    	{"earnings date" : {"test" : "LT", "threshold" : "expiration date"}},
+    	{"limit price" : {"test" : "better than", "threshold" : "strike price"}}
+		]
+	},
+	{
+	"name" : "Market data",
+	"groupColumn" : 2,
+	"groupRow" : 1,
+	"model" : false,
+	"Description" : "Update historical market data",
+	"run" : false
+	},
+	{
+	"name" : "Calculated data",
+	"groupColumn" : 2,
+	"groupRow" : 1,
+	"model" : false,
+	"Description" : "Calculate enriched market data elements",
+	"run" : false
+	},
+	{
+	"name" : "Bollinger Bands",
+	"groupColumn" :4,
+	"groupRow" : 1,
+	"model" : true,
+	"Description" : "Bollinger Bands prediction",
+	"run" : false,
+	"controls" : [
+		{"file" : "rnn\\lstm\\bb\\BB_test001 20230717 073218"},
+		{"scaler" : "rnn\\lstm\\bb\\BB_test001 20230717 073218 scaler.pkl"},
+		{"featureFile" : "tda\\market_analysis_data\\*.csv"},
+		{"features" : "BB_Upper,BB_Lower,EMA20,Open,High,Low,Close"},
+		{"gsheet" : "experimental"},
+    	{"header range" : "ML Signals!A1:Z1"},
+    	{"data range" : "ML Signals!A2:Z"},
+		{"timeSteps": 5},
+		{"Outputs" : "10% in 10 Days Probability"},
+		{"threshold" : 0.585}
+		]
+	},
+	{
+	"name" : "MACD Trend",
+	"groupColumn" : 4,
+	"groupRow" : 2,
+	"model" : true,
+	"Description" : "MACD/moving average classification",
+	"run" : false,
+	"controls" : [
+		{"file" : "rnn\\lstm\\MACDTrendLineCross\\MACD_TrendCross_Best 20230717 070452"},
+		{"scaler" : "rnn\\lstm\\MACDTrendLineCross\\MACD_TrendCross_Best 20230717 070452 scaler.pkl"},
+		{"Outputs" : "Negative Cross,Neutral,Positive Cross"},
+		{"featureFile" : "tda\\market_analysis_data\\*.csv"},
+		{"features" : "MACD,MACD_Signal"},
+		{"gsheet" : "experimental"},
+    	{"header range" : "MACD Cross!A1:Z1"},
+    	{"data range" : "MACD Cross!A2:Z"},
+		{"timeSteps": 5},
+		{"Outputs" : "Negative Cross, Neutral, Positive Cross"},
+		{"threshold" : "0.9,1.0,0.9"}
+		]
+	}
+]
+}

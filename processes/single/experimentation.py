@@ -43,6 +43,7 @@ from sklearn.datasets import fetch_california_housing
 import tensorflow as tf
 import keras
 from tensorflow.python.training import input
+import tkinter as tk
 import tkinter
 from tkinter import *
 from tkinter import ttk
@@ -57,6 +58,7 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 ''' Google workspace requirements end '''
 
+from DailyProcessUI import DailyProcessUI
 from Workbooks import investments, optionTrades
 from GoogleSheets import googleSheet
 from MarketData import MarketData
@@ -362,176 +364,143 @@ def iniRead():
 
     return
 
+def dailyProcessUIdoit():
+    print("do it button pressed")
+    return
+
+def processOnOff():
+    print("processOnOff state changed")
+    return
+    
 def dailyProcess():
     ''' display a user interface to solicit run time selections '''
-    processCtrl=dict()
-    dictBtnRun=dict()
-    
     try:
         ''' Find local file directories '''
         exc_txt = "\nAn exception occurred - unable to identify localization details"
         localDirs = get_ini_data("LOCALDIRS")
-        aiwork = localDirs['aiwork']
         gitdir = localDirs['git']
+        aiwork = localDirs['aiwork']
         models = localDirs['trainedmodels']
-        print("Local computer directories - localDirs: {}\n\taiwork: {}\n\tgitdir: {}\n\ttrained models: {}".format(localDirs, aiwork, gitdir, models))
     
-        ''' Google API and file details '''
-        exc_txt = "\nAn exception occurred - unable to retrieve Google authentication information"
-        googleAuth = get_ini_data("GOOGLE")
-        print("Google authentication\n\ttoken: {}\n\tcredentials: {}".format(googleAuth["token"], googleAuth["credentials"]))
-        print("file 1: {} - {}".format('experimental', googleAuth["experimental"]))
-        print("file 2: {} - {}".format('daily_options', googleAuth["daily_options"]))
-        
         ''' read application specific configuration file '''
         exc_txt = "\nAn exception occurred - unable to access process configuration file"
         config_data = get_ini_data("DAILY_PROCESS")
         appConfig = read_config_json(gitdir + config_data['config'])
-        print("appConfig: {}".format(appConfig))
         
+        ''' ============== experimentation json config file ============== '''
+        appConfig = read_config_json(gitdir +  '\\chandra\\unit_test\\ExperimentalDailyProcess.json')
+        ''' ============================================================== '''
+        #print("appConfig file {}\n{}".format(config_data['config'], appConfig))
+        
+        exc_txt = "\nAn exception occurred building the user interface"
         ''' =============== build user interface based on configuration json file =========== '''
-        ui=Tk()
-        ui.title('Morning Process Control')
-        ''' either of the following will force the window size as specified '''
-        #root.geometry("1000x600")
-        #root.minsize(1000, 600)
-        #ui.geometry("1000x800+10+10")
+        root=Tk()
+        root.title(appConfig['WindowTitle'])
+        colCount = len(appConfig['groupColumns'])
+        rowCount = appConfig['groupRows']
+        doitButtonRow = rowCount + 1
 
         ''' ================== create window frames for top level placement ============ '''
-        frmSelection = Frame(ui, relief=GROOVE, borderwidth=5)
-        frmSelection.pack(fill=BOTH)
+        mainframe = ttk.Frame(root)
+        mainframe.grid(column=0, row=0, sticky=(N, W, E, S))
+        root.columnconfigure(0, weight=1)
+        root.rowconfigure(0, weight=1)
+        
         ''' frames within frames '''
-        frmProcess = Frame(frmSelection, relief=SUNKEN, borderwidth=5)
-        frmProcess.pack(side=LEFT, fill=BOTH, expand=True)
-        frmModel = Frame(frmSelection, relief=RAISED, borderwidth=5)
-        frmModel.pack(side=RIGHT, fill=BOTH, expand=True)        
-
-        frmButtons = Frame(ui, relief=RIDGE, borderwidth=5)
-        frmButtons.pack(fill=BOTH)                
+        framesList = []
+        for rowNdx in range(rowCount):
+            framesRow = []
+            for colNdx in range(colCount):
+                processFrame = ttk.Frame(mainframe)
+                processFrame.grid(column=colNdx, row=rowNdx)
+                framesRow.append(processFrame)
+            framesList.append(framesRow)
         
-        exc_txt = "\nAn exception occurred selecting processes to run and setting parameters"
-        ''' traditional processes '''
-        lblProcessTitle = Label(frmProcess, text="Traditional processes", height=2)
-        lblProcessTitle.pack()
-        frmTp=[]
-        varTp=[]
-        btnTp=[]
-        frmTpCtrl=[]
-        entTpControl=[]
-        lblTpControl=[]
-        for process in appConfig["processes"]:
-            if not process["model"]:
-                print("Process name: {}".format(process["name"]))
-                
-                frmTp.append(Frame(frmProcess))
-                frmTp[len(frmTp)-1].pack()
-                
-                varTp.append(IntVar())
-                btnTp.append(Checkbutton(frmTp[len(varTp)-1], \
-                                            text=process["name"], \
-                                            variable=varTp[len(varTp)-1]))
-                btnTp[len(btnTp)-1].pack()
-                
-                ''' store controls for later processing '''
-                processCtrl[process["name"]]={"frame":frmTp[len(frmTp)-1], \
-                                              "btnRun":btnTp[len(btnTp)-1], \
-                                              "run":varTp[len(varTp)-1], \
-                                              "controls":""}
-                dControl=dict("")
-                if "controls" in process:
-                    for control in process["controls"]:
-                        for key in control.keys():
-                            print("\tcontrol: {}, value:{}".format(key, control[key]))
-                            frmTpCtrl.append(Frame(frmTp[len(frmTp)-1]))
-                            frmTpCtrl[len(frmTpCtrl)-1].pack()
-
-                            lblTpControl.append(Label(frmTpCtrl[len(frmTpCtrl)-1], text=key))
-                            lblTpControl[len(lblTpControl)-1].pack(side=LEFT)
-
-                            entTpControl.append(Entry(frmTpCtrl[len(frmTpCtrl)-1], \
-                                                         fg="black", bg="white", width=50))
-                            entTpControl[len(entTpControl)-1].pack()
-                            entTpControl[len(entTpControl)-1].insert(0, control[key])
-                            
-                            dictC = {"frame":frmTpCtrl[len(frmTpCtrl)-1], \
-                                     "label":lblTpControl[len(lblTpControl)-1], \
-                                     "description":key, \
-                                     "entry":entTpControl[len(entTpControl)-1]}
-                            dControl[key]=dictC
-                    processCtrl[process["name"]]["controls"]=dControl
-
-        ''' machine learning models '''
-        lblModels = Label(frmModel, text="Trained models", height=2)
-        lblModels.pack()
-        frmMl=[]
-        varMl=[]
-        btnMl=[]
-        frmMlControl=[]
-        entMlControl=[]
-        lblMlControl=[]
-        for process in appConfig["processes"]:
-            if process["model"]:
-                print("model name: {}".format(process["name"]))
-
-                frmMl.append(Frame(frmModel))
-                frmMl[len(frmMl)-1].pack()
-                
-                varMl.append(IntVar())
-                btnMl.append(Checkbutton(frmMl[len(frmMl)-1], \
-                                            text=process["name"], \
-                                            variable=varMl[len(varMl)-1]))
-                btnMl[len(btnMl)-1].pack()
-
-                ''' store controls for later processing '''
-                processCtrl[process["name"]]={"frame":frmMl[len(frmMl)-1], \
-                                              "btnRun":btnMl[len(btnMl)-1], \
-                                              "run":varMl[len(varMl)-1], \
-                                              "controls":""}
-
-                dControl=dict("")
-                if "controls" in process:
-                    for control in process["controls"]:
-                        for key in control.keys():
-                            print("\tcontrol: {}, value:{}".format(key, control[key]))
-                            frmMlControl.append(Frame(frmMl[len(frmMl)-1]))
-                            frmMlControl[len(frmMlControl)-1].pack()
-
-                            lblMlControl.append(Label(frmMlControl[len(frmMlControl)-1], text=key))
-                            lblMlControl[len(lblMlControl)-1].pack(side=LEFT)
-
-                            entMlControl.append(Entry(frmMlControl[len(frmMlControl)-1], \
-                                                         fg="black", bg="white", width=50))
-                            entMlControl[len(entMlControl)-1].pack()
-                            entMlControl[len(entMlControl)-1].insert(0, control[key])
+        doitButton = ttk.Button(mainframe, text="Perform selected processes", command=dailyProcessUIdoit)
+        doitButton.grid(column=0, row=doitButtonRow, columnspan=colCount, rowspan=1)
         
-                            dictC = {"frame":frmMlControl[len(frmMlControl)-1], \
-                                     "label":lblMlControl[len(lblMlControl)-1], \
-                                     "description":key, \
-                                     "entry":entMlControl[len(entMlControl)-1]}
-                            dControl[key]=dictC
-                    processCtrl[process["name"]]["controls"]=dControl
-
-        ''' ============================= process button press ============================= '''        
-        def go_button():
-            print("Choices made")
-            ui.quit()
+        ''' Save data to control processes in a dict  '''
+        processCtrlDict = dict()     # return value to control execution of selected processes
+        
+        ''' Build UI for each process in the configuration json '''
+        for process in appConfig["processes"]:
+            processDict = dict()
             
-        ''' =================== widgets in bottom frame =================== '''
-        #lblBottom = Label(frmButtons, text="bottom frame", width=50, height=2)
-        #lblBottom.pack()
-        btnRun=Button(frmButtons, command=go_button, text="Perform selected processes", fg='blue', height=3)
-        btnRun.pack()
-        
+            processDict["frame"] = 1
+            processDict["checkValue"] = 2
+            
+            exc_txt = "\nAn exception occurred building the user interface"
+            processRow = int(process["groupRow"])
+            processCol = int(process["groupColumn"])
+            processName = process["name"]
+            exc_txt = "\nAn exception occurred building the user interface - {}".format(processName)
+            
+            ''' Process name label '''
+            processDict["frame"] = framesList[processRow - 1][processCol - 1]
+            ttk.Label(processDict["frame"], text=processName).grid(column=0, row=0, sticky=(W))
+            
+            ''' Process run check box '''
+            processDict["checkValue"] = StringVar()
+            ttk.Checkbutton(processDict["frame"], text='Execute Process', \
+                            command=processOnOff, variable=processDict["checkValue"], \
+                            onvalue='run', offvalue='pass').grid(column=1, row=0, sticky=(W))
+            
+            CONTROLCOL = 0
+            DEFAULTCOL = 1
+            controlRow = 1
+            
+            ''' Build UI for each configurable  for the process in the configuration json '''
+            if "controls" in process:
+                processCtrlDict[processName] = {"controls" : ""}
+                for control in process["controls"]:
+                    processCtrParametersDetails = dict()
+                    
+                    ''' extract control parameter name and default value '''
+                    for parameterName, defaultText in control.items():
+                        pass
+                    
+                    ''' set control parameter default value '''
+                    exc_txt = "\nAn exception occurred building the user interface - {}, parameter {}, default {}".format(processName, parameterName, defaultText)
+                    processCtrParametersDetails[parameterName] = defaultText
+                    
+                    ''' descriptive label widget '''
+                    tmpLabel = ttk.Label(processDict["frame"], text=parameterName)
+                    tmpLabel.grid(column=CONTROLCOL, row=controlRow, sticky=(W))
+                    
+                    ''' data entry widget '''
+                    processCtrParametersDetails["parameterValue"] = StringVar()
+                    processCtrParametersDetails["parameterValueWidget"] = ttk.Entry(processDict["frame"], \
+                                                                                    textvariable=processCtrParametersDetails["parameterValue"], \
+                                                                                    width=80)
+                    processCtrParametersDetails["parameterValueWidget"].grid(column=DEFAULTCOL, row=controlRow, sticky=(E))
+                    
+                    ''' set data entry widget to default value '''
+                    processCtrParametersDetails["parameterValueWidget"].delete(0,'end')
+                    processCtrParametersDetails["parameterValueWidget"].insert(0, processCtrParametersDetails[parameterName])
+                    
+                    ''' add control dict to process dict '''
+                    processCtrlDict[processName]["controls"] = {parameterName : processCtrParametersDetails}
+                    #processCtrlDict[processName]["controls"] = processCtrParametersDetails
+                    print("Description {}, defaults to {}, input {}".format(parameterName, processCtrParametersDetails[parameterName], \
+                                                                            processCtrParametersDetails["parameterValue"].get()))
+                    controlRow = controlRow + 1
+
+            ''' create new process control entry '''
+            processCtrlDict[processName] = processDict
+            
         ''' =================== Interact with user =================== '''
-        ui.mainloop()
-  
+        for child in mainframe.winfo_children(): 
+            child.grid_configure(padx=5, pady=5)
+        
+        root.mainloop()
+        print("Process controls\n{}".format(processCtrlDict))
+        return processCtrlDict
+
     except Exception:
         exc_info = sys.exc_info()
         exc_str = exc_info[1].args[0]
         exc_txt = exc_txt + "\n\t" + exc_str
         sys.exit(exc_txt)
-
-    return processCtrl
 
 def dictexp():
     d1 = {"file":"a", "scaler":"b"}
@@ -539,6 +508,52 @@ def dictexp():
     d3 = {"outputs":"10%","features":["f1", "F2"]}
     dsum={"procA":d1, "procB":d2, "procC":d3}
     
+    print("dsum={}".format(dsum))
+    print("procC[feature][0]: {}".format(dsum['procC']['features'][0]))
+    
+    processCtrlDict = dict()
+    
+    processDict = dict()
+    processDict["frame"] = 1
+    processDict["checkValue"] = 2
+    
+    processName = "Frame-1"
+    processCtrlDict[processName] = processDict
+
+    processDict = dict()
+    processDict["frame"] = 3
+    processDict["checkValue"] = 4
+    
+    processName = "Frame-2"
+    processCtrlDict[processName] = processDict
+    
+    processCtrlDict[processName]["controls"] = {}
+    
+    controlName = "Parm-1"
+    controlDefault = "default-1"
+    controlValue = 10
+    controlDetails = {"default" : controlDefault, "value" : controlValue}
+    processCtrlDict[processName]["controls"][controlName] = controlDetails
+    
+    controlName = "Parm-2"
+    controlDefault = "default-2"
+    controlValue = 11
+    controlDetails = {"default" : controlDefault, "value" : controlValue}
+    processCtrlDict[processName]["controls"][controlName] = controlDetails
+
+    print("\nprocessCtrlDict\n{}\n".format(processCtrlDict))
+    
+    for proc in processCtrlDict:
+        print("Process; {}\n{}".format(proc, processCtrlDict[proc]))
+        for ctrl in processCtrlDict[proc]:
+            print("Process: {} control {} = {}".format(proc, ctrl, processCtrlDict[proc][ctrl]))
+        if "controls" in processCtrlDict[proc]:
+            print("\tControl: {}, details {}".format(ctrl, processCtrlDict[proc]["controls"]))
+            for param in processCtrlDict[proc]["controls"]:
+                print("\t\tParam: {}, {}, default: {}, value:{}".format(param, \
+                                                                        processCtrlDict[proc]["controls"][param], \
+                                                                        processCtrlDict[proc]["controls"][param]["default"], \
+                                                                        processCtrlDict[proc]["controls"][param]["value"]))
     return
 
 def gSheetService():
@@ -1032,17 +1047,18 @@ if __name__ == '__main__':
         exc_txt = "\nAn exception occurred"
     
         if True:
-            
+            ''' develop daily process user interface '''
+            UI = DailyProcessUI()
+                    
+        else:
+            #dictexp()
             #multiDimensionalDFExp()
             ''' ================= Google workspace development start ================ '''
-            develop_GoogleSheet_class()
+            #develop_GoogleSheet_class()
             #develop_market_data()
             #develop_FIDetails()
             ''' ================= Google workspace development end ================ '''
-                    
-            print("\n======================== Code experimentation ending ============================")
-        
-        else:
+
             ''' ================= TDA / Schwab date / time exp ================ '''
             aa1 = 962946000000.0 # TDA date / time from legacy csv file
             aa2 = 1699855200000.0
@@ -1125,7 +1141,7 @@ if __name__ == '__main__':
             linear_regression()
             sine_wave_regression()
             # autoKeras()
-            pass
+        print("\n======================== Code experimentation ending ============================")
         
     except Exception:
         exc_info = sys.exc_info()

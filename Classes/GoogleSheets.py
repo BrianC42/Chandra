@@ -543,7 +543,7 @@ class googleSheet():
                 
             # If there are no (valid) credentials available, let the user log in.
             if not self.creds or not self.creds.valid:
-                print("WIP - unable to get code to refresh access token to work\n\tthrows exception")
+                #print("WIP - unable to get code to refresh access token to work\n\tthrows exception")
                 '''
                 if self.creds and self.creds.expired and self.creds.refresh_token:
                     self.creds.refresh(Request())
