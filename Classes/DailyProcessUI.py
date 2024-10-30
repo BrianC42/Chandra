@@ -7,8 +7,10 @@ Object class to build and process the user interface for the daily process
 
 Uses the json file ExperimentalDailyProcess to build the UI widgets
 '''
+import os
 import sys
 import json
+import re
 
 '''
 import tkinter as tk
@@ -21,6 +23,7 @@ from configuration import get_ini_data
 from configuration import read_config_json
 
 from Workbooks import investments, optionTrades
+from MarketData import MarketData, BasicMarketDataArchive, EnrichedMarketDataArchive
 
 class processParameter(object):
     '''
@@ -124,21 +127,17 @@ class DailyProcessControl(object):
     '''
     classdocs
     '''
+    implementedProcesses = ["Investment Tracking", "Options", "Enriched data archive", "Market data archive", "Bollinger Bands", "MACD Trend"]
+    plannedProcesses = ["MultiModelNetwork", "Train OnBalanceVolume", "Train BollingerBand", "Train MACDTrend"]
 
     def processOnOff(self):
         if self.executeProcessFlag.get() == "run":
-            if self.processName == "Tracking":
+            if self.processName in self.implementedProcesses:
                 pass
-            elif self.processName == "Options":
-                pass
-            elif self.processName == "Market data":
+            elif self.processName in self.plannedProcesses:
                 print("{} is not yet implemented".format(self.processName))
-            elif self.processName == "Calculated data":
-                print("{} is not yet implemented".format(self.processName))
-            elif self.processName == "Bollinger Bands":
-                print("{} is not yet implemented".format(self.processName))
-            elif self.processName == "MACD Trend":
-                print("{} is not yet implemented".format(self.processName))
+            else:
+                print("{} is not recognized".format(self.processName))
         return
         
     def __init__(self, processControlSpecification, framesGrid):
@@ -235,7 +234,6 @@ class DailyProcessUI(object):
         '''
         Constructor
         '''
-
         try:
             ''' Find local file directories '''
             exc_txt = "\nAn exception occurred - unable to identify localization details"
@@ -273,7 +271,235 @@ class DailyProcessUI(object):
             exc_str = exc_info[1].args[0]
             exc_txt = exc_txt + "\n\t" + exc_str
             sys.exit(exc_txt)
+    
+    def saveMachineLearningSignal(self, controls, signals):
+        exc_txt = "\nAn exception occurred - saving machine learning signal"
+    
+        try:
+            for param in controls.processParameterList:
+                paramValue = param.parameterValue.get()
+                print("control parameter - {} set to {}".format(param.parameterName, paramValue))
+                
+                if param.parameterName == "gsheet":
+                    gsheet = paramValue
+                    
+                if param.parameterName == "header range":
+                    headerRange = paramValue
+                    
+                if param.parameterName == "data range":
+                    dataRange = paramValue
+                    
+            ''' Google API and file details
+            exc_txt = "\nAn exception occurred - unable to retrieve Google authentication information"
+            googleLocal = get_ini_data("GOOGLE")
+    
+            run time control parameters from json and UI
+            text 
+            
+            gSheetName = processCtrl['gsheet']['entry'].get()
+            gSheetID = googleLocal[gSheetName]
+            headerRange = processCtrl['header range']['entry'].get()
+            dataRange = processCtrl['data range']['entry'].get()
+            
+            numerical controls with multiple values 
+            read sheet current cells - do not overwrite these 
+            
+            gSheet = googleSheet()
+            result = gSheet.googleSheet.values().get(spreadsheetId=gSheetID, range=dataRange).execute()
+            values = result.get('values', [])
+    
+            for signal in signals:
+                outputStr = signal['outputs']
+                predictionStr = str(signal['prediction'][0])
+                newSignal = [signal['name'], signal['symbol'], outputStr, dt.datetime.now().strftime("%m/%d/%y"), predictionStr]
+                values.append(newSignal)
+            
+            requestBody = {'values': values}
+            result = gSheet.googleSheet.values().update(spreadsheetId=gSheetID, range=dataRange, \
+                                           valueInputOption="USER_ENTERED", body=requestBody).execute()
+            '''
+            return
+    
+        except Exception:
+            print(exc_txt)
+            exc_info = sys.exc_info()
+            if len(exc_info) > 1:
+                print(exc_info[1].args[0])
+            sys.exit()
+
+    def trainKerasModel(self, script):
+        exc_txt = "\nAn exception occurred - training model based on script {}".format(script)
+        try:
+            print("WIP =============\ntrainKerasModel is not yet implemented. Script {}".format(script))
+            return
+    
+        except Exception:
+            print(exc_txt)
+            exc_info = sys.exc_info()
+            if len(exc_info) > 1:
+                print(exc_info[1].args[0])
+            sys.exit()
+
+    def useTrainedRNNCategorizationModel(self, controls):
+        try:
+            exc_txt = "\nAn exception occurred - executing trained RNN categorization model"
+            print("Use trained model for process {}".format(controls.processName))
+            for param in controls.processParameterList:
+                paramValue = param.parameterValue.get()
+                print("control parameter - {} set to {}".format(param.parameterName, paramValue))
+                
+                if param.parameterName == "file":
+                    modelFile = paramValue
+                    
+                if param.parameterName == "scaler":
+                    scalerFile = paramValue
+                
+                if param.parameterName == "Outputs":
+                    outputs = paramValue
+                    
+                if param.parameterName == "timeSteps":
+                    timeSteps = paramValue
+                    
+                if param.parameterName == "threshold":
+                    threshold = paramValue
+                    
+                if param.parameterName == "features":
+                    features = paramValue
+                    features = re.split(',', features)
+                    
+                if param.parameterName == "featureFile":
+                    inputFileSpec = paramValue
+                    inputFileSpec = re.split(',', inputFileSpec)
+                    
+                name = controls.processDescription
+            '''
+            modelFile = processCtrl['file']['entry'].get()
+            scalerFile =  processCtrl['scaler']['entry'].get()
+            outputs =  re.split(',', processCtrl['Outputs']['entry'].get())
+            
+            numerical 
+            timeSteps = int(processCtrl['timeSteps']['entry'].get())
+            
+            controls with multiple values 
+            thresholdStrs = re.split(',', processCtrl['threshold']['entry'].get())
+            threshold = []
+            for ndx in range (len(thresholdStrs)):       
+                threshold.append(float(thresholdStrs[ndx]))
+            features = re.split(',', processCtrl['features']['entry'].get())
+            inputFileSpec =  re.split(',', processCtrl['featureFile']['entry'].get())
+            
+            signals = rnnCategorization(name, modelFile, inputFileSpec, features, \
+                                     scalerFile, timeSteps, outputs, signalThreshold=threshold)
+            if len(signals) > 0:
+                saveMACDCross(processCtrl, signals)
+            '''
+            return
+    
+        except Exception:
+            exc_info = sys.exc_info()
+            exc_str = exc_info[1].args[0]
+            exc_txt = exc_txt + "\n\t" + exc_str
+            sys.exit(exc_txt)
+    
+    def useTrainedRNNPredictionModel(self, controls):
+        try:
+            exc_txt = "\nAn exception occurred - executing trained RNN prediction model"
+            print("Use trained model for process {}".format(controls.processName))
+            
+            for param in controls.processParameterList:
+                paramValue = param.parameterValue.get()
+                print("control parameter - {} set to {}".format(param.parameterName, paramValue))
+                
+                if param.parameterName == "file":
+                    modelFile = paramValue
+                    
+                if param.parameterName == "scaler":
+                    scalerFile = paramValue
+                
+                if param.parameterName == "Outputs":
+                    outputs = paramValue
+                    
+                if param.parameterName == "timeSteps":
+                    timeSteps = paramValue
+                    
+                if param.parameterName == "threshold":
+                    threshold = paramValue
+                    
+                if param.parameterName == "features":
+                    features = paramValue
+                    features = re.split(',', features)
+                    
+                if param.parameterName == "featureFile":
+                    inputFileSpec = paramValue
+                    inputFileSpec = re.split(',', inputFileSpec)
+                    
+                name = controls.processDescription
+                '''
+                modelFile = processCtrl['file']['entry'].get()
+                scalerFile =  processCtrl['scaler']['entry'].get()
+                outputs =  processCtrl['Outputs']['entry'].get()
         
+                numerical 
+                timeSteps = int(processCtrl['timeSteps']['entry'].get())
+                threshold =  float(processCtrl['threshold']['entry'].get())
+                
+                controls with multiple values 
+                features = re.split(',', processCtrl['features']['entry'].get())
+                inputFileSpec =  re.split(',', processCtrl['featureFile']['entry'].get())
+                '''
+            '''
+            signals = rnnPrediction(name, modelFile, inputFileSpec, features, \
+                                     scalerFile, timeSteps, outputs, signalThreshold=threshold)
+            if len(signals) > 0:
+                saveMachineLearningSignal(controls, signals)
+            '''
+            return
+    
+        except Exception:
+            exc_info = sys.exc_info()
+            exc_str = exc_info[1].args[0]
+            exc_txt = exc_txt + "\n\t" + exc_str
+            sys.exit(exc_txt)
+    
+    def marketDataArchive(self):
+        exc_txt = "\nAn exception occurred - daily market data process"
+        try:
+            print("updating market data")
+            investmentSheet = investments()
+            symbolList = investmentSheet.stockInformationSymbols()
+            #symbolList = ["AAPL", "C", "INTC"]
+            for symbol in symbolList:
+                exc_txt = "\nAn exception occurred - daily market data process - symbol: {}".format(symbol)
+                marketData = BasicMarketDataArchive(symbol)
+                marketData.updateLocalArchive()
+            return 
+    
+        except Exception:
+            exc_info = sys.exc_info()
+            exc_str = exc_info[1].args[0]
+            exc_txt = exc_txt + "\n\t" + exc_str
+            sys.exit(exc_txt)
+            
+    def enrichMarketDataArchive(self):
+        exc_txt = "\nAn exception occurred - calculating derived data"
+        
+        try:
+            print("calculating derived market data")
+            investmentSheet = investments()
+            symbolList = investmentSheet.stockInformationSymbols()
+            symbolList = ["AAPL", "C", "INTC"]
+            for symbol in symbolList:
+                exc_txt = "\nAn exception occurred - calculating derived data - symbol: {}".format(symbol)
+                enrichedMarketData = EnrichedMarketDataArchive(symbol)
+                enrichedMarketData.updateLocalArchive()
+            return 
+
+        except Exception:
+            exc_info = sys.exc_info()
+            exc_str = exc_info[1].args[0]
+            exc_txt = exc_txt + "\n\t" + exc_str
+            sys.exit(exc_txt)
+            
     def markToMarket(self):
         exc_txt = "\nAn exception occurred - mark to market process"
         try:
@@ -296,7 +522,7 @@ class DailyProcessUI(object):
             ''' set list of supported filters '''
             print("WIP ============\n\tSupported filter list should be provided by the class")
             filterNames = ["delta", "max cover", "min gain APY", "min gain $", "dividend date", "earnings date", "option quantity", "limit price"]
-            for param in controls:
+            for param in controls.processParameterList:
                 if param.parameterName in filterNames:
                     print("param: {}, default: {} changed to {}". \
                           format(param.parameterName, param.defaultValue, param.parameterValue.get()))
@@ -325,24 +551,37 @@ class DailyProcessUI(object):
     def dailyProcessUIdoit(self):
         #print("do it button pressed")
         for proc in self.processControlList:
-            if proc.executeProcessFlag.get():
+            if proc.executeProcessFlag.get() == "run":
                 print("execute process {} - {}".format(proc.processName, proc.processDescription))
                 
+                '''
                 for param in proc.processParameterList:
                     print("param: {}, default: {} changed to {}". \
                           format(param.parameterName, param.defaultValue, param.parameterValue.get()))
-                if proc.processName == "Tracking":
+                '''
+                
+                if proc.processName == "Investment Tracking":
                     self.markToMarket()
                 elif proc.processName == "Options":
-                    self.optionTradeProcess(proc.processParameterList)
+                    self.optionTradeProcess(proc)
                 elif proc.processName == "Market data":
-                    pass
-                elif proc.processName == "Calculated data":
-                    pass
+                    self.marketDataArchive()
+                elif proc.processName == "Enriched data archive":
+                    self.enrichMarketDataArchive()
                 elif proc.processName == "Bollinger Bands":
-                    pass
+                    self.useTrainedRNNPredictionModel(proc)
                 elif proc.processName == "MACD Trend":
-                    pass
+                    self.useTrainedRNNCategorizationModel(proc)
+                elif proc.processName == "MultiModelNetwork":
+                    self.trainKerasModel(script = proc.processName)
+                elif proc.processName == "Train OnBalanceVolume":
+                    self.trainKerasModel(script = proc.processName)
+                elif proc.processName == "Train BollingerBand":
+                    self.trainKerasModel(script = proc.processName)
+                elif proc.processName == "Train MACDTrend":
+                    self.trainKerasModel(script = proc.processName)
+                else:
+                    print("{} is not recognized".format(proc.processName))
                 
                 print("Process {} - {}, complete".format(proc.processName, proc.processDescription))
         return

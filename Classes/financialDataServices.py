@@ -454,16 +454,13 @@ class financialDataServices(object):
                     exc_txt = "Internal server error"
                 else:
                     exc_txt = "Unrecognized error"
-                print("Market data request failed - code: {}, {}".format(response.status_code, exc_txt))
                 raise Exception
 
             return response
     
-        except ValueError:
-            exc_info = sys.exc_info()
-            exc_str = exc_info[1].args[0]
-            exc_txt = exc_txt + "\n\t" + exc_str
-            sys.exit(exc_txt)
+        except Exception:
+            #print("Market data request failed - code: {}, {}".format(response.status_code, exc_txt))
+            sys.exit("Market data request failed - code: {}, {}".format(response.status_code, exc_txt))
 
     def requestOptionChain(self, type="Both", symbol="", strikeCount=0, range="OTM", daysToExpiration=0):
         exc_txt = "An exception occurred requesting option chain"

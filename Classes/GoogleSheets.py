@@ -101,36 +101,28 @@ class SpreadsheetProperties():
         
         return self.jsonStr
 
+'''
 class Sheet():
     def __init__(self):
-        '''
-        '''
         return
 
 class NamedRange():
     def __init__(self):
-        '''
-        '''
         return
 
 class DeveloperMetadata():
     def __init__(self):
-        '''
-        '''
         return
 
 class DataSource():
     def __init__(self):
-        '''
-        '''
         return
 
 class DataSourceRefreshSchedule():
     def __init__(self):
-        '''
-        '''
         return
-
+'''
+    
 class googleSheet():
     '''
     classdocs

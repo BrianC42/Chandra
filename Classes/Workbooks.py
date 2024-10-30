@@ -170,6 +170,25 @@ class investments(workbooks):
         self.readStockInformationTab()
                     
         return
+    
+    def stockInformationSymbols(self):
+        try:
+            exc_txt = "\nAn exception occurred - unable to look up symbols on Stock Information tab"
+            symbolList = []
+            cellRange = 'Stock Information!A2:AF999'
+            symbolInformation = self.gSheets.readGoogleSheet(self.sheetID, cellRange)
+            print("Stock Information:\n{}".format(symbolInformation))
+            for rowNdx in range(len(symbolInformation)):
+                symbol = symbolInformation.loc[rowNdx, 'Symbol']
+                symbolList.append(symbol)        
+            return symbolList
+
+        except :
+            print(exc_txt)
+            exc_info = sys.exc_info()
+            if len(exc_info) > 1:
+                print(exc_info[1].args[0])
+            sys.exit()
 
     def markToMarket(self):
         try:
@@ -214,7 +233,7 @@ class investments(workbooks):
                 exc_txt = "\nAn exception occurred - with symbol: {}".format(symbol)
             
                 instrumentDetails = FinancialInstrument(symbol)
-                mktData = MarketData(symbol, useArchive=False, periodType="month", period="1", frequencyType="daily", frequency="1")
+                mktData = MarketData(symbol, periodType="month", period="1", frequencyType="daily", frequency="1")
                 candle = mktData.iloc(mktData.candleCount()-1)
                 
                 ''' step 5. load the dataframe information '''
@@ -313,7 +332,7 @@ class investments(workbooks):
             for rowNdx in range(len(self.stockInformationTab)):
                 actionCategory = self.stockInformationTab.iloc[rowNdx].name[0]
                 holding = True
-                if (actionCategory == "1 - Holding" or actionCategory == "2 - Call Options") and \
+                if (actionCategory == "10 - Holding" or actionCategory == "12 - Call Options") and \
                     holding:
                     symbol = self.stockInformationTab.iloc[rowNdx].name[1]
                     symbolList.append(symbol)
@@ -335,7 +354,7 @@ class investments(workbooks):
             
             for rowNdx in range(len(self.stockInformationTab)):
                 actionCategory = self.stockInformationTab.iloc[rowNdx].name[0]
-                if actionCategory == "4 - Buy" or actionCategory == "5 - Put Options":
+                if actionCategory == "45 - Buy" or actionCategory == "41 - Put Options":
                     symbol = self.stockInformationTab.iloc[rowNdx].name[1]
                     symbolList.append(symbol)
             
@@ -356,7 +375,7 @@ class investments(workbooks):
 
             for rowNdx in range(len(self.stockInformationTab)):
                 actionCategory = self.stockInformationTab.iloc[rowNdx].name[0]
-                if actionCategory == "2 - Call Options":
+                if actionCategory == "12 - Call Options":
                     symbol = self.stockInformationTab.iloc[rowNdx].name[1]
                     symbolList.append(symbol)
                     
@@ -377,7 +396,7 @@ class investments(workbooks):
             
             for rowNdx in range(len(self.stockInformationTab)):
                 actionCategory = self.stockInformationTab.iloc[rowNdx].name[0]
-                if actionCategory == "5 - Put Options":
+                if actionCategory == "41 - Put Options":
                     symbol = self.stockInformationTab.iloc[rowNdx].name[1]
                     symbolList.append(symbol)
             

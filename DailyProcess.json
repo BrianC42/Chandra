@@ -11,12 +11,12 @@
 	}
 ],
 "WindowTitle" : "Process Selection and Execution",
-"groupColumns" : ["Daily Processes", "ML Data Prep", "Model Training", "Run Trained Models"],
+"groupColumns" : ["Daily Processes", "Model Training", "Trained Models", "Model Networks"],
 "groupRows" : 2,
 "available processes" : "===========================================",
 "processes" : [
 	{
-	"name" : "Tracking",
+	"name" : "Investment Tracking",
 	"groupColumn" : 1,
 	"groupRow" : 1,
 	"model" : false,
@@ -26,39 +26,63 @@
 	{
 	"name" : "Options",
 	"groupColumn" : 1,
-	"groupRow" : 2,
+	"groupRow" : 1,
 	"model" : false,
 	"Description" : "Download and filter options",
 	"run" : false,
 	"controls" : [
-		{"delta" : {"test" : "GT", "threshold" : 0.6}},
-		{"max cover" : {"test" : "GT", "threshold" : 30000.0}},
-		{"min gain APY" : {"test" : "GT", "threshold" : 0.08}},
-		{"min gain $" : {"test" : "GT", "threshold" : 100.0}},
+		{"delta" : {"test" : "GT", "threshold" : 0.75}},
+		{"max cover" : {"test" : "GT", "threshold" : 40000.0}},
+		{"min gain APY" : {"test" : "GT", "threshold" : 0.1}},
+		{"min gain $" : {"test" : "GT", "threshold" : 300.0}},
 	    {"dividend date" : {"test" : "GT", "threshold" : "expiration date"}},
     	{"earnings date" : {"test" : "LT", "threshold" : "expiration date"}},
     	{"limit price" : {"test" : "better than", "threshold" : "strike price"}}
 		]
 	},
 	{
-	"name" : "Market data",
-	"groupColumn" : 2,
-	"groupRow" : 1,
+	"name" : "Market data archive",
+	"groupColumn" : 1,
+	"groupRow" : 2,
 	"model" : false,
 	"Description" : "Update historical market data",
 	"run" : false
 	},
 	{
-	"name" : "Calculated data",
-	"groupColumn" : 2,
-	"groupRow" : 1,
+	"name" : "Enriched data archive",
+	"groupColumn" : 1,
+	"groupRow" : 2,
 	"model" : false,
 	"Description" : "Calculate enriched market data elements",
 	"run" : false
 	},
 	{
+	"name" : "Train BollingerBand",
+	"groupColumn" : 2,
+	"groupRow" : 2,
+	"model" : true,
+	"Description" : "Train Bollinger Band regression predictor",
+	"run" : false
+	},
+	{
+	"name" : "Train MACDTrend",
+	"groupColumn" : 2,
+	"groupRow" : 2,
+	"model" : true,
+	"Description" : "Train MACD trend categorization",
+	"run" : false
+	},
+	{
+	"name" : "Train OnBalanceVolume",
+	"groupColumn" : 2,
+	"groupRow" : 1,
+	"model" : true,
+	"Description" : "On Balance Volume as regression predictor",
+	"run" : false
+	},
+	{
 	"name" : "Bollinger Bands",
-	"groupColumn" :4,
+	"groupColumn" :3,
 	"groupRow" : 1,
 	"model" : true,
 	"Description" : "Bollinger Bands prediction",
@@ -78,7 +102,7 @@
 	},
 	{
 	"name" : "MACD Trend",
-	"groupColumn" : 4,
+	"groupColumn" : 3,
 	"groupRow" : 2,
 	"model" : true,
 	"Description" : "MACD/moving average classification",
@@ -96,6 +120,14 @@
 		{"Outputs" : "Negative Cross, Neutral, Positive Cross"},
 		{"threshold" : "0.9,1.0,0.9"}
 		]
+	},
+	{
+	"name" : "MultiModelNetwork",
+	"groupColumn" : 4,
+	"groupRow" : 1,
+	"model" : false,
+	"Description" : "multi model network development",
+	"run" : false
 	}
 ]
 }
