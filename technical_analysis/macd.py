@@ -144,14 +144,15 @@ def eval_macd_positive_cross(symbol, df_data, eval_results):
 def macd(df_src=None, value_label=None):
     sys.path.append("../Utilities/")
 
+    MACD_flags = return_macd_flags()
+
     #str_prediction = prediction_interval + ' day change'
     df_src.insert(loc=0, column='MACD_Buy', value=False)
     df_src.insert(loc=0, column='MACD_Sell', value=False)
-    df_src.insert(loc=0, column='MACD_flag', value=NaN)
+    df_src.insert(loc=0, column='MACD_flag', value=MACD_flags.get('neutral'))
     df_src.insert(loc=0, column='MACD', value=NaN)
     df_src.insert(loc=0, column='MACD_Signal', value=NaN)
 
-    MACD_flags = return_macd_flags()
     idx = 1 ### EMA calculation forces 1st entries to be equal, will always show as crossover on 2nd row
     while idx < len(df_src):
         df_src.at[idx,'MACD'] = df_src.at[idx, "EMA12"] - df_src.at[idx, "EMA26"]

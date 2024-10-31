@@ -8,6 +8,7 @@ Object class to build and process the user interface for the daily process
 Uses the json file ExperimentalDailyProcess to build the UI widgets
 '''
 import os
+import multiprocessing
 import sys
 import json
 import re
@@ -479,7 +480,7 @@ class DailyProcessUI(object):
             exc_str = exc_info[1].args[0]
             exc_txt = exc_txt + "\n\t" + exc_str
             sys.exit(exc_txt)
-            
+
     def enrichMarketDataArchive(self):
         exc_txt = "\nAn exception occurred - calculating derived data"
         
@@ -487,11 +488,44 @@ class DailyProcessUI(object):
             print("calculating derived market data")
             investmentSheet = investments()
             symbolList = investmentSheet.stockInformationSymbols()
-            symbolList = ["AAPL", "C", "INTC"]
+            #symbolList = ["AAPL", "MRNA", "INTC"]
+            
+            ''' Single threaded 
             for symbol in symbolList:
                 exc_txt = "\nAn exception occurred - calculating derived data - symbol: {}".format(symbol)
                 enrichedMarketData = EnrichedMarketDataArchive(symbol)
                 enrichedMarketData.updateLocalArchive()
+            '''
+            ''' Multi-threaded '''
+            enrichedMarketData = EnrichedMarketDataArchive(symbolList)
+            '''
+            Create thread control object - Class A
+                Create child processes - Class B - process is sub-class of A (for different child threads)
+                    Initialize child process subclass of B
+                    Receive instruction - pipe receive
+                    Process as instructed
+                    Return completion indication - pipe send
+                    
+            Class A - base on coordinate_child_processes
+                create child threads
+                maintain thread activity
+                send control data to child
+                receive child process result
+                clean up child thread
+            subclass A1 - create subclass B1
+                create specific enhanced market data process
+                build control parameters
+                process child process result
+            
+            Class B - base on tda_derivative_data_child
+                receive control parameters
+                send processing result
+            subclass B1 - 
+                perform function specific initialization
+                perform function specific processing 
+            '''
+            pass
+        
             return 
 
         except Exception:

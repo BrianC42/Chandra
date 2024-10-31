@@ -4,12 +4,15 @@ Created on Jul 23, 2024
 @author: brian
 '''
 import os
+import multiprocessing
 import sys
 import json
 import datetime as dt
 from datetime import date
 import datetime
 import time
+import numpy as np
+from numpy import NaN
 import pandas as pd
 
 from configuration import get_ini_data
@@ -20,6 +23,15 @@ from moving_average import simple_moving_average
 from moving_average import exponential_moving_average
 from tda_api_library import format_tda_datetime
 
+from macd import macd
+from on_balance_volume import on_balance_volume
+from bollinger_bands import bollinger_bands
+from accumulation_distribution import accumulation_distribution
+from aroon_indicator import aroon_indicator
+from average_directional_index import average_directional_index
+from stochastic_oscillator import stochastic_oscillator
+from relative_strength import relative_strength
+
 ARCHIVE_PERIOD_TYPE = "month"
 ARCHIVE_FREQUENCY_TYPE = "daily"
 ARCHIVE_FREQUENCY = "1"
@@ -28,36 +40,6 @@ MAX_HISTORY_TYPE = 'year'
 BASIC_ARCHIVE_DIR = "basic"
 ENHANCED_ARCHIVE_DIR = "enhanced"
 
-class classA(object):
-
-    def __init__(self):
-        print("classA init")
-        return
-    
-    def A1(self):
-        print("A1.")
-        return
-
-class classAA(classA):
-    def __init__(self):
-        print("classAA init calls classA.init()")
-        super().__init__()                    
-        return
-    
-    def AA1(self):
-        print("AA1 calls classA.A1()")
-        super().A1()
-        return
-
-class classAB(classA):
-    def __init__(self):
-        print("classAB init")
-        return
-    
-    def AB1(self):
-        print("AB1")
-        return
-    
 ''' base class for market data - start '''
 class basicMarketData(object):
     '''     classdocs      '''
@@ -443,37 +425,6 @@ class BasicMarketDataArchive(basicMarketData):
             exc_txt = exc_txt + "\n\t" + exc_str
             sys.exit(exc_txt)
     
-            '''
-            localDirs = get_ini_data("LOCALDIRS")
-            aiwork = localDirs['aiwork']
-            
-            basicMarketDataDir = aiwork + localDirs['market_data'] + localDirs['basic_market_data']
-            augmentedMarketDataDir = aiwork + localDirs['market_data'] + localDirs['augmented_market_data']
-
-            self.eod_file = basicMarketDataDir + '\\' + self.symbol + '.csv'
-            if os.path.isfile(self.eod_file):
-                #print("Basic market data file for {} exists, {}".format(self.symbol, eod_file))
-                self.df_eod = pd.read_csv(self.eod_file)
-                self.df_eod = self.df_eod.drop_duplicates(subset='DateTime')
-                last_row_datetime = int(self.df_eod.iloc[-1]['DateTime'])
-                now = int(time.time() * 1000)
-                # candles requested based on start and end dates
-                self.response = self.financialDataServicesObj.requestMarketData.requestMarketData(symbol=self.symbol, \
-                                                                                             periodType=self.periodType, period=self.period, 
-                                                                                             frequencyType=self.frequencyType, frequency=self.frequency, \
-                                                                                             startDate=last_row_datetime, endDate=now)
-            else:
-                #print("Basic market data file for {} does not exists".format(self.symbol))
-                self.response = self.financialDataServicesObj.requestMarketData.requestMarketData(symbol=self.symbol, \
-                                                                                             periodType=self.MAX_HISTORY_TYPE, period=self.MAX_HISTORY_PERIOD, 
-                                                                                             frequencyType=self.frequencyType, frequency=self.frequency, \
-                                                                                             startDate=None, endDate=None)
-                self.df_eod = pd.DataFrame(columns=['DateTime', 'Open', 'High', 'Low', 'Close', 'Volume'])
-                
-            self.marketDataReturn = self.response.text
-            self.marketDataJson = json.loads(self.marketDataReturn)
-            self.updateArchiveFile(self.response, self.df_eod, self.eod_file)
-            ''' 
     ''' ============  update archive file - start ============= '''
     def updateArchiveFile(self):
         exc_txt = "\nAn exception occurred - unable to update market data archive file"
@@ -494,13 +445,20 @@ class EnrichedMarketDataArchive(basicMarketData):
     '''     class data     '''
 
     '''         Constructor        '''
-    def __init__(self, symbol):
-        exc_txt = "An exception occurred creating a basicMarketData object for {}".format(symbol)
+    def __init__(self, symbolList):
+        exc_txt = "An exception occurred creating the EnrichedMarketDataArchive object"
         try:
             #print("EnrichedMarketDataArchive init {}".format(symbol))
+            self.symbolList = symbolList
+            self.basicArchiveFolder = super().locateArchive(BASIC_ARCHIVE_DIR)
+            self.enrichedArchiveFolder = super().locateArchive(ENHANCED_ARCHIVE_DIR)
+            '''
             self.symbol = symbol
-            self.financialDataServicesObj = financialDataServices()
-            self.archiveFolder = super().locateArchive(ENHANCED_ARCHIVE_DIR)
+            self.df_basicMarketData = pd.read_csv(self.basicArchiveFolder + '\\' + self.symbol + '.csv')
+            df_marketData = self.df_basicMarketData
+            '''
+            self.updateLocalArchive()
+
             return
 
         except Exception:
@@ -514,38 +472,9 @@ class EnrichedMarketDataArchive(basicMarketData):
         #print("Archiving market data for {}".format(self.symbol))
         exc_txt = "\nAn exception occurred - unable to maintain market data archive"
         try:
-            print("WIP\t============\n\tEnrichedMarketDataArchive.updateLocalArchive() is under development")
-            '''
-            localDirs = get_ini_data("LOCALDIRS")
-            aiwork = localDirs['aiwork']
-            
-            basicMarketDataDir = aiwork + localDirs['market_data'] + localDirs['basic_market_data']
-            augmentedMarketDataDir = aiwork + localDirs['market_data'] + localDirs['augmented_market_data']
-
-            self.eod_file = basicMarketDataDir + '\\' + self.symbol + '.csv'
-            if os.path.isfile(self.eod_file):
-                #print("Basic market data file for {} exists, {}".format(self.symbol, eod_file))
-                self.df_eod = pd.read_csv(self.eod_file)
-                self.df_eod = self.df_eod.drop_duplicates(subset='DateTime')
-                last_row_datetime = int(self.df_eod.iloc[-1]['DateTime'])
-                now = int(time.time() * 1000)
-                # candles requested based on start and end dates
-                self.response = self.financialDataServicesObj.requestMarketData(symbol=self.symbol, \
-                                                                                             periodType=self.periodType, period=self.period, 
-                                                                                             frequencyType=self.frequencyType, frequency=self.frequency, \
-                                                                                             startDate=last_row_datetime, endDate=now)
-            else:
-                #print("Basic market data file for {} does not exists".format(self.symbol))
-                self.response = self.financialDataServicesObj.requestMarketData(symbol=self.symbol, \
-                                                                                             periodType=self.MAX_HISTORY_TYPE, period=self.MAX_HISTORY_PERIOD, 
-                                                                                             frequencyType=self.frequencyType, frequency=self.frequency, \
-                                                                                             startDate=None, endDate=None)
-                self.df_eod = pd.DataFrame(columns=['DateTime', 'Open', 'High', 'Low', 'Close', 'Volume'])
-                
-            self.marketDataReturn = self.response.text
-            self.marketDataJson = json.loads(self.marketDataReturn)
-            super().updateArchiveFile(self.response, self.df_eod, self.eod_file)
-            '''
+            with multiprocessing.Pool(processes=os.cpu_count()) as pool:
+                results = pool.map(self.localArchiveWorker, self.symbolList)
+                #print("worker result - {}".format(results))
             return
             
         except Exception:
@@ -553,97 +482,121 @@ class EnrichedMarketDataArchive(basicMarketData):
             exc_str = exc_info[1].args[0]
             sys.exit(exc_txt + "\n\t" + exc_str)
     ''' ============ retrieve market data and maintain a local archive of equity instruments market data history - end ============= '''
-   
-    def add_derived_data(self, df_data):
-        df_data.insert(loc=0, column='1 day change', value=NaN)
-        df_data.insert(loc=0, column='5 day change', value=NaN)
-        df_data.insert(loc=0, column='10 day change', value=NaN)
-        df_data.insert(loc=0, column='10 day max', value=NaN)
-        df_data.insert(loc=0, column='10 day min', value=NaN)
-        df_data.insert(loc=0, column='20 day change', value=NaN)
-        df_data.insert(loc=0, column='20 day max', value=NaN)
-        df_data.insert(loc=0, column='20 day min', value=NaN)
-        df_data.insert(loc=0, column='40 day change', value=NaN)
-        df_data.insert(loc=0, column='40 day max', value=NaN)
-        df_data.insert(loc=0, column='40 day min', value=NaN)
-        df_data.insert(loc=0, column='date', value="")
-        #df_data.insert(loc=0, column='month', value="")
-        df_data.insert(loc=0, column='day', value="")
-        #df_data.insert(loc=0, column='weekday', value="")
-        df_data.insert(loc=0, column='10day5pct', value=False)
-        df_data.insert(loc=0, column='10day10pct', value=False)
-        df_data.insert(loc=0, column='10day25pct', value=False)
-        df_data.insert(loc=0, column='10day50pct', value=False)
-        df_data.insert(loc=0, column='10day100pct', value=False)
+
+    def localArchiveWorker(self, symbol):
+        #print("local archive worker thread starting - symbol {}\n\tbasic {}\n\tenriched {}".format(symbol, self.basicArchiveFolder, self.enrichedArchiveFolder))
+        df_basicMarketData = pd.read_csv(self.basicArchiveFolder + '\\' + symbol + '.csv')
+        df_marketData = df_basicMarketData
         
-        df_data.insert(loc=0, column='EMA12', value=NaN)
-        df_data.insert(loc=0, column='EMA20', value=NaN)
-        df_data.insert(loc=0, column='EMA26', value=NaN)
-        df_data.insert(loc=0, column='SMA20', value=NaN)
+        self.calculateEnrichedHistory(df_marketData)
+        
+        df_marketData.to_csv(self.enrichedArchiveFolder + '\\' + symbol + '.csv', index=False)
+        print("enriched {}, {} data points".format(symbol, len(df_marketData)))
+        return symbol
+    
+    def add_derived_data(self, df_marketData):
+        df_marketData.insert(loc=0, column='1 day change', value=NaN)
+        df_marketData.insert(loc=0, column='5 day change', value=NaN)
+        df_marketData.insert(loc=0, column='10 day change', value=NaN)
+        df_marketData.insert(loc=0, column='10 day max', value=NaN)
+        df_marketData.insert(loc=0, column='10 day min', value=NaN)
+        df_marketData.insert(loc=0, column='20 day change', value=NaN)
+        df_marketData.insert(loc=0, column='20 day max', value=NaN)
+        df_marketData.insert(loc=0, column='20 day min', value=NaN)
+        df_marketData.insert(loc=0, column='40 day change', value=NaN)
+        df_marketData.insert(loc=0, column='40 day max', value=NaN)
+        df_marketData.insert(loc=0, column='40 day min', value=NaN)
+        df_marketData.insert(loc=0, column='date', value="")
+        #df_marketData.insert(loc=0, column='month', value="")
+        df_marketData.insert(loc=0, column='day', value="")
+        #df_marketData.insert(loc=0, column='weekday', value="")
+        df_marketData.insert(loc=0, column='10day5pct', value=False)
+        df_marketData.insert(loc=0, column='10day10pct', value=False)
+        df_marketData.insert(loc=0, column='10day25pct', value=False)
+        df_marketData.insert(loc=0, column='10day50pct', value=False)
+        df_marketData.insert(loc=0, column='10day100pct', value=False)
+        
+        df_marketData.insert(loc=0, column='EMA12', value=NaN)
+        df_marketData.insert(loc=0, column='EMA20', value=NaN)
+        df_marketData.insert(loc=0, column='EMA26', value=NaN)
+        df_marketData.insert(loc=0, column='SMA20', value=NaN)
     
         idx = 0
-        while idx < len(df_data):
-            df_data.at[idx, 'date'] = format_tda_datetime( df_data.at[idx, 'DateTime'] )
+        while idx < len(df_marketData):
+            df_marketData.at[idx, 'date'] = format_tda_datetime( df_marketData.at[idx, 'DateTime'] )
             idx += 1
-        #print(df_data)
-        df_data = df_data.drop_duplicates(subset=['date'], keep='last', inplace=False)
-        #print(df_data)
-        #df_data = df_data.reset_index()
-        df_data = df_data.set_index(i for i in range(0, df_data.shape[0]))
-        #print(df_data)
-        df_data = exponential_moving_average(df_data[:], value_label="Close", interval=12, EMA_data_label='EMA12')
-        df_data = exponential_moving_average(df_data[:], value_label="Close", interval=20, EMA_data_label='EMA20')
-        df_data = exponential_moving_average(df_data[:], value_label="Close", interval=26, EMA_data_label='EMA26')
-        df_data = simple_moving_average(df_data[:], value_label="Close", avg_interval=20, SMA_data_label='SMA20')
+        #print(df_marketData)
+        df_marketData = df_marketData.drop_duplicates(subset=['date'], keep='last', inplace=False)
+        #print(df_marketData)
+        #df_marketData = df_marketData.reset_index()
+        df_marketData = df_marketData.set_index(i for i in range(0, df_marketData.shape[0]))
+        #print(df_marketData)
+        df_marketData = exponential_moving_average(df_marketData[:], value_label="Close", interval=12, EMA_data_label='EMA12')
+        df_marketData = exponential_moving_average(df_marketData[:], value_label="Close", interval=20, EMA_data_label='EMA20')
+        df_marketData = exponential_moving_average(df_marketData[:], value_label="Close", interval=26, EMA_data_label='EMA26')
+        df_marketData = simple_moving_average(df_marketData[:], value_label="Close", avg_interval=20, SMA_data_label='SMA20')
         
         idx = 0
-        while idx < len(df_data):
+        while idx < len(df_marketData):
             '''
-            df_data.at[idx, 'month'] = date.month(df_data.at[idx, 'date'])
-            df_data.at[idx, 'weekday'] = date.weekday(df_data.at[idx, 'date'])
+            df_marketData.at[idx, 'month'] = date.month(df_marketData.at[idx, 'date'])
+            df_marketData.at[idx, 'weekday'] = date.weekday(df_marketData.at[idx, 'date'])
             '''
-            df_data.at[idx, "day"] = date.fromtimestamp(df_data.at[idx, "DateTime"]/1000).timetuple().tm_yday
-            closing_price = df_data.at[idx, "Close"]
+            df_marketData.at[idx, "day"] = date.fromtimestamp(df_marketData.at[idx, "DateTime"]/1000).timetuple().tm_yday
+            closing_price = df_marketData.at[idx, "Close"]
             try:
                 if not closing_price == 0:
-                    if idx < len(df_data) - 1:
-                        df_data.loc[idx, '1 day change'] = (df_data.loc[idx + int(1), "Close"] - closing_price) / closing_price                    
-                    if idx < len(df_data) - 5:
-                        df_data.loc[idx, '5 day change'] = (df_data.loc[idx + int(5), "Close"] - closing_price) / closing_price
-                    if idx < len(df_data) - 10:
-                        df_data.loc[idx, '10 day change'] = (df_data.loc[idx + int(10), "Close"] - closing_price) / closing_price
-                        df_data.loc[idx, '10 day max'] = df_data.iloc[idx:idx+10].get('High').max()
-                        df_data.loc[idx, '10 day min'] = df_data.iloc[idx:idx+10].get('Low').min()                
-                        if df_data.loc[idx, '10 day max'] > df_data.loc[idx, 'Close'] * 1.1:
-                            df_data.loc[idx, '10day10pct'] = True
-                            if df_data.loc[idx, '10 day max'] > df_data.loc[idx, 'Close'] * 1.25:
-                                df_data.loc[idx, '10day25pct'] = True
-                                if df_data.loc[idx, '10 day max'] > df_data.loc[idx, 'Close'] * 1.50:
-                                    df_data.loc[idx, '10day50pct'] = True
-                                    if df_data.loc[idx, '10 day max'] > df_data.loc[idx, 'Close'] * 2:
-                                        df_data.loc[idx, '10day100pct'] = True
-                    if idx < len(df_data) - 14:
-                        df_data.loc[idx, '14 day max'] = df_data.iloc[idx:idx+14].get('High').max()
-                        df_data.loc[idx, '14 day min'] = df_data.iloc[idx:idx+14].get('Low').min()
-                    if idx < len(df_data) - 20:
-                        df_data.loc[idx, '20 day change'] = (df_data.loc[idx + 20, "Close"] - closing_price) / closing_price
-                        df_data.loc[idx, '20 day max'] = df_data.iloc[idx:idx + 20].get('High').max()
-                        df_data.loc[idx, '20 day min'] = df_data.iloc[idx:idx + 20].get('Low').min()
-                    if idx < len(df_data) - 40:
-                        df_data.loc[idx, '40 day change'] = (df_data.loc[idx + 40, "Close"] - closing_price) / closing_price
-                        df_data.loc[idx, '40 day max'] = df_data.iloc[idx:idx + 40].get('High').max()
-                        df_data.loc[idx, '40 day min'] = df_data.iloc[idx:idx + 40].get('Low').min()
+                    if idx < len(df_marketData) - 1:
+                        df_marketData.loc[idx, '1 day change'] = (df_marketData.loc[idx + int(1), "Close"] - closing_price) / closing_price                    
+                    if idx < len(df_marketData) - 5:
+                        df_marketData.loc[idx, '5 day change'] = (df_marketData.loc[idx + int(5), "Close"] - closing_price) / closing_price
+                    if idx < len(df_marketData) - 10:
+                        df_marketData.loc[idx, '10 day change'] = (df_marketData.loc[idx + int(10), "Close"] - closing_price) / closing_price
+                        df_marketData.loc[idx, '10 day max'] = df_marketData.iloc[idx:idx+10].get('High').max()
+                        df_marketData.loc[idx, '10 day min'] = df_marketData.iloc[idx:idx+10].get('Low').min()                
+                        if df_marketData.loc[idx, '10 day max'] > df_marketData.loc[idx, 'Close'] * 1.1:
+                            df_marketData.loc[idx, '10day10pct'] = True
+                            if df_marketData.loc[idx, '10 day max'] > df_marketData.loc[idx, 'Close'] * 1.25:
+                                df_marketData.loc[idx, '10day25pct'] = True
+                                if df_marketData.loc[idx, '10 day max'] > df_marketData.loc[idx, 'Close'] * 1.50:
+                                    df_marketData.loc[idx, '10day50pct'] = True
+                                    if df_marketData.loc[idx, '10 day max'] > df_marketData.loc[idx, 'Close'] * 2:
+                                        df_marketData.loc[idx, '10day100pct'] = True
+                    if idx < len(df_marketData) - 14:
+                        df_marketData.loc[idx, '14 day max'] = df_marketData.iloc[idx:idx+14].get('High').max()
+                        df_marketData.loc[idx, '14 day min'] = df_marketData.iloc[idx:idx+14].get('Low').min()
+                    if idx < len(df_marketData) - 20:
+                        df_marketData.loc[idx, '20 day change'] = (df_marketData.loc[idx + 20, "Close"] - closing_price) / closing_price
+                        df_marketData.loc[idx, '20 day max'] = df_marketData.iloc[idx:idx + 20].get('High').max()
+                        df_marketData.loc[idx, '20 day min'] = df_marketData.iloc[idx:idx + 20].get('Low').min()
+                    if idx < len(df_marketData) - 40:
+                        df_marketData.loc[idx, '40 day change'] = (df_marketData.loc[idx + 40, "Close"] - closing_price) / closing_price
+                        df_marketData.loc[idx, '40 day max'] = df_marketData.iloc[idx:idx + 40].get('High').max()
+                        df_marketData.loc[idx, '40 day min'] = df_marketData.iloc[idx:idx + 40].get('Low').min()
                 pass
             except:
                 print("error")
             
             idx += 1
     
-        return df_data
+        return df_marketData
 
-    def calculateEnrichedHistory(self):
+    def calculateEnrichedHistory(self, df_marketData):
         try:
-            exc_txt = "An exception occurred in calculateEnrichedHistory {}".format(self.symbol)
+            exc_txt = "An exception occurred in calculateEnrichedHistory"
+            #print("EOD data for %s\n%s" % (filename, df_marketData))
+            #df_marketData = add_trending_data(df_marketData)
+            #df_marketData = add_change_data(df_marketData)
+            df_marketData = self.add_derived_data(df_marketData)
+            df_marketData = macd(df_marketData[:], value_label="Close")
+            df_marketData = on_balance_volume(df_marketData[:], value_label='Close', volume_lable='Volume')
+            df_marketData = bollinger_bands(df_marketData[:], value_label="EMA20", ema_interval=20)
+            df_marketData = accumulation_distribution(df_marketData)
+            df_marketData = aroon_indicator(df_marketData)
+            df_marketData = average_directional_index(df_marketData)
+            df_marketData = stochastic_oscillator(df_marketData)
+            df_marketData = relative_strength(df_marketData, value_label="Close", relative_to='d:\\brian\\AI-Projects\\tda\\market_data\\$spx.x.csv')
+            
             return
         
         except Exception:
