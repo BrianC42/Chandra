@@ -1,18 +1,21 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <?eclipse-pydev version="1.0"?><pydev_project>
-                    
+                        
+    
     
     
     
     
     <pydev_property name="org.python.pydev.PYTHON_PROJECT_INTERPRETER">Default</pydev_property>
-                    
+                        
+    
     
     
     
     
     <pydev_property name="org.python.pydev.PYTHON_PROJECT_VERSION">python interpreter</pydev_property>
-                    
+                        
+    
     
     
     
@@ -26,12 +29,13 @@
         <path>/${PROJECT_DIR_NAME}/unit_test</path>
         <path>/${PROJECT_DIR_NAME}/processes/single</path>
         <path>/${PROJECT_DIR_NAME}/processes/multiprocess</path>
-        <path>/${PROJECT_DIR_NAME}/td_ameritrade</path>
         <path>/${PROJECT_DIR_NAME}/Classes</path>
+        <path>/${PROJECT_DIR_NAME}/deprecated files/td_ameritrade</path>
     </pydev_pathproperty>
-                    
+                        
     
     
+
 
 
 
