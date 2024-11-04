@@ -36,9 +36,9 @@
 	"requiredFields" : {"processType" : "dataLoad", "inputFlows" : [], "outputFlow" : "MACDTrendCross"},
 	"conditionalFields" : {
 		"dataLoadCtrl" : {
-			"comment file spec" : "tda\\market_analysis_data\\[a-z]*.csv",
+			"comment file spec" : "market_data\\augmented\\[a-z]*.csv",
 			"inputFile" : [
-				"tda\\market_analysis_data\\[a-z]*.csv"
+				"market_data\\augmented\\[a-z]*.csv"
 			]
 		}
 	}
@@ -72,8 +72,7 @@
 	},
 	{
 	"processNodeName" : "MACDTrendCross",
-	"requiredFields" : {"processType" : "Tensorflow", "inputFlows" : ["MACDTrendCrossPrepared"], "outputFlow" : ""
-	},
+	"requiredFields" : {"processType" : "Tensorflow", "inputFlows" : ["MACDTrendCrossPrepared"], "outputFlow" : ""},
 	"conditionalFields" : {
 		"categorizationRegression" : "categorization",
 		"dataPrecision" : "float32", "balanceClasses" : true, "combineSampleCount" : 4,

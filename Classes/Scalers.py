@@ -17,11 +17,11 @@ class chandraScaler():
     dfNormalizedFeatures = pd.DataFrame()
 
     minNegMin = 0.0
-    minNeg = dict()
+    minNeg = pd.Series()
     negRatio = dict()
 
     maxPosMax = 0.0
-    maxPos = dict()
+    maxPos = pd.Series()
     posRatio = dict()    
     
     supportedScalers = {NORMALIZE_RELATIVE_TIME_SERIES : 0}
@@ -61,9 +61,9 @@ class chandraScaler():
             for sample in range (0, self.dfFeatures.shape[0]):
                 val = self.dfFeatures.iat[sample, feature]
                 if val < 0.0:
-                    nVal = (val / abs(self.minNeg[feature])) * self.negRatio[self.dfFeatures.columns[feature]]
+                    nVal = (val / abs(self.minNeg.iat[feature])) * self.negRatio[self.dfFeatures.columns[feature]]
                 elif val > 0.0:
-                    nVal = (val / self.maxPos[feature]) * self.posRatio[self.dfFeatures.columns[feature]]
+                    nVal = (val / self.maxPos.iat[feature]) * self.posRatio[self.dfFeatures.columns[feature]]
                 else:
                     nVal = val
                 self.npNormalizedFeatures[sample, feature] = nVal

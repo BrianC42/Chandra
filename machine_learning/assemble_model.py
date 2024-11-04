@@ -217,7 +217,10 @@ def assemble_layers(d2r):
         nx_loss = iterTraining[JSON_LOSS]
         nx_metrics = iterTraining[JSON_METRICS]
         nx_optimizer = iterTraining[JSON_OPTIMIZER]
-        nx_loss_weights = iterTraining[JSON_LOSS_WTS]
+        if len(iterTraining[JSON_LOSS_WTS]) > 1:
+            nx_loss_weights = iterTraining[JSON_LOSS_WTS]
+        else:
+            nx_loss_weights = iterTraining[JSON_LOSS_WTS][0]
         
         if nx_optimizer['name'] == 'adam':
             # learning_rate=0.001

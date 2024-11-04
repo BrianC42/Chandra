@@ -73,7 +73,7 @@ def trainModel(d2r):
             d2r.model = d2r.model.export_model()
         d2r.model.save(modelFileName + '.keras')
         '''
-        D:\Apps\Python\Python312\Lib\site-packages\keras\src\layers\rnn\rnn.py:204: 
+        D:\\Apps\\Python\\Python312\\Lib\\site-packages\\keras\\src\\layers\\rnn\\rnn.py:204: 
         UserWarning: Do not pass an `input_shape`/`input_dim` argument to a layer. 
         When using Sequential models, prefer using an `Input(shape)` object as the first layer in the model instead.
         '''

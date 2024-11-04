@@ -23,6 +23,13 @@ from tkinter import ttk
 from configuration import get_ini_data
 from configuration import read_config_json
 
+from TrainingDataAndResults import Data2Results as d2r
+
+from configuration import read_processing_network_json
+from configuration_graph import build_configuration_graph
+
+from executeProcessingNodes import executeProcessingNodes
+
 from Workbooks import investments, optionTrades
 from MarketData import MarketData, BasicMarketDataArchive, EnrichedMarketDataArchive
 
@@ -128,8 +135,8 @@ class DailyProcessControl(object):
     '''
     classdocs
     '''
-    implementedProcesses = ["Investment Tracking", "Options", "Enriched data archive", "Market data archive", "Bollinger Bands", "MACD Trend"]
-    plannedProcesses = ["MultiModelNetwork", "Train OnBalanceVolume", "Train BollingerBand", "Train MACDTrend"]
+    implementedProcesses = ["Investment Tracking", "Options", "Enriched data archive", "Market data archive", "Networks", "ExperimentaL Network"]
+    plannedProcesses = ["MultiModelNetwork"]
 
     def processOnOff(self):
         if self.executeProcessFlag.get() == "run":
@@ -328,10 +335,38 @@ class DailyProcessUI(object):
                 print(exc_info[1].args[0])
             sys.exit()
 
-    def trainKerasModel(self, script):
-        exc_txt = "\nAn exception occurred - training model based on script {}".format(script)
+    def trainKerasModel(self, controls):
+        exc_txt = "\nAn exception occurred - training model based on script {}".format(controls.processName)
         try:
-            print("WIP =============\ntrainKerasModel is not yet implemented. Script {}".format(script))
+            print("WIP =============\ntrainKerasModel is not yet implemented. Script {}".format(controls.processName))
+            
+            for param in controls.processParameterList:
+                paramValue = param.parameterValue.get()
+                print("control parameter - {} set to {}".format(param.parameterName, paramValue))
+                
+                if param.parameterName == "run":
+                    run = paramValue
+                    print("running network: {}".format(run))
+                    
+            localdirs = get_ini_data("LOCALDIRS")
+            gitdir = localdirs['git']
+            aiwork = localdirs['aiwork']
+            config_data = get_ini_data("CHANDRA")
+            json_config = read_config_json(gitdir + config_data['config'])
+
+            d2ra = d2r()
+        
+            configurationDir = gitdir + json_config['processNetDir']
+            d2ra.configurationFileDir = configurationDir
+        
+            configurationFile = run + ".json"
+            #configurationFile = json_config['processNetConfiguration']
+            processing_json = read_processing_network_json(configurationDir + configurationFile)
+            d2ra.configurationFile = processing_json
+            
+            build_configuration_graph(d2ra, processing_json)
+            executeProcessingNodes(d2ra)
+            
             return
     
         except Exception:
@@ -488,42 +523,7 @@ class DailyProcessUI(object):
             print("calculating derived market data")
             investmentSheet = investments()
             symbolList = investmentSheet.stockInformationSymbols()
-            #symbolList = ["AAPL", "MRNA", "INTC"]
-            
-            ''' Single threaded 
-            for symbol in symbolList:
-                exc_txt = "\nAn exception occurred - calculating derived data - symbol: {}".format(symbol)
-                enrichedMarketData = EnrichedMarketDataArchive(symbol)
-                enrichedMarketData.updateLocalArchive()
-            '''
-            ''' Multi-threaded '''
             enrichedMarketData = EnrichedMarketDataArchive(symbolList)
-            '''
-            Create thread control object - Class A
-                Create child processes - Class B - process is sub-class of A (for different child threads)
-                    Initialize child process subclass of B
-                    Receive instruction - pipe receive
-                    Process as instructed
-                    Return completion indication - pipe send
-                    
-            Class A - base on coordinate_child_processes
-                create child threads
-                maintain thread activity
-                send control data to child
-                receive child process result
-                clean up child thread
-            subclass A1 - create subclass B1
-                create specific enhanced market data process
-                build control parameters
-                process child process result
-            
-            Class B - base on tda_derivative_data_child
-                receive control parameters
-                send processing result
-            subclass B1 - 
-                perform function specific initialization
-                perform function specific processing 
-            '''
             pass
         
             return 
@@ -602,18 +602,27 @@ class DailyProcessUI(object):
                     self.marketDataArchive()
                 elif proc.processName == "Enriched data archive":
                     self.enrichMarketDataArchive()
+                elif proc.processName == "Networks":
+                    self.trainKerasModel(proc)
+                elif proc.processName == "ExperimentaL Network":
+                    self.trainKerasModel(proc)
+                    
+                    
+                elif proc.processName == "WIP Categorized":
+                    self.useTrainedRNNCategorizationModel(proc)
+                    
+                elif proc.processName == "WIP Regression":
+                    self.useTrainedRNNPredictionModel(proc)
+                    
                 elif proc.processName == "Bollinger Bands":
                     self.useTrainedRNNPredictionModel(proc)
+                    
                 elif proc.processName == "MACD Trend":
                     self.useTrainedRNNCategorizationModel(proc)
+                    
                 elif proc.processName == "MultiModelNetwork":
                     self.trainKerasModel(script = proc.processName)
-                elif proc.processName == "Train OnBalanceVolume":
-                    self.trainKerasModel(script = proc.processName)
-                elif proc.processName == "Train BollingerBand":
-                    self.trainKerasModel(script = proc.processName)
-                elif proc.processName == "Train MACDTrend":
-                    self.trainKerasModel(script = proc.processName)
+                    
                 else:
                     print("{} is not recognized".format(proc.processName))
                 

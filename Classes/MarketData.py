@@ -488,7 +488,7 @@ class EnrichedMarketDataArchive(basicMarketData):
         df_basicMarketData = pd.read_csv(self.basicArchiveFolder + '\\' + symbol + '.csv')
         df_marketData = df_basicMarketData
         
-        self.calculateEnrichedHistory(df_marketData)
+        df_marketData = self.calculateEnrichedHistory(df_marketData)
         
         df_marketData.to_csv(self.enrichedArchiveFolder + '\\' + symbol + '.csv', index=False)
         print("enriched {}, {} data points".format(symbol, len(df_marketData)))
@@ -597,7 +597,7 @@ class EnrichedMarketDataArchive(basicMarketData):
             df_marketData = stochastic_oscillator(df_marketData)
             df_marketData = relative_strength(df_marketData, value_label="Close", relative_to='d:\\brian\\AI-Projects\\tda\\market_data\\$spx.x.csv')
             
-            return
+            return df_marketData
         
         except Exception:
             exc_info = sys.exc_info()

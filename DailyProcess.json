@@ -57,28 +57,30 @@
 	"run" : false
 	},
 	{
-	"name" : "Train BollingerBand",
-	"groupColumn" : 2,
-	"groupRow" : 2,
-	"model" : true,
-	"Description" : "Train Bollinger Band regression predictor",
-	"run" : false
-	},
-	{
-	"name" : "Train MACDTrend",
-	"groupColumn" : 2,
-	"groupRow" : 2,
-	"model" : true,
-	"Description" : "Train MACD trend categorization",
-	"run" : false
-	},
-	{
-	"name" : "Train OnBalanceVolume",
+	"name" : "ExperimentaL Network",
 	"groupColumn" : 2,
 	"groupRow" : 1,
+	"model" : false,
+	"Description" : "Train a network and generate a model",
+	"run" : false,
+	"controls" : [
+		{"run" : "wip"},
+		{"available" : "OnBalanceVolume"},
+		{"available" : "wip"}
+		]	
+	},
+	{
+	"name" : "Networks",
+	"groupColumn" : 2,
+	"groupRow" : 2,
 	"model" : true,
-	"Description" : "On Balance Volume as regression predictor",
-	"run" : false
+	"Description" : "Retrain a stable network",
+	"run" : false,
+	"controls" : [
+		{"run" : "MACDTrend"},
+		{"available" : "MACDTrend"},
+		{"available" : "BollingerBands"}
+		]	
 	},
 	{
 	"name" : "Bollinger Bands",

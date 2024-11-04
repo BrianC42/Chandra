@@ -19,6 +19,8 @@ import sys
 import re
 import datetime as dt
 
+import pandas as pd
+
 from configuration import get_ini_data
 from DailyProcessUI import DailyProcessUI
 from GoogleSheets import googleSheet
@@ -194,6 +196,11 @@ def mlMACDTrendCross(name, processCtrl):
 
 if __name__ == '__main__':
     print ("Perform daily operational processes\n")
+    
+    #Set print parameters for Pandas dataframes 
+    pd.set_option('display.width', 200)
+    pd.set_option('display.max_columns', 20)
+    
     UI = DailyProcessUI()
                     
     print ("\nAll requested processes have completed")

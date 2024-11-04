@@ -5,10 +5,9 @@
 "dataFlows" : [
 	{
 	"flowName" : "LoadedData",
-	"requiredFields" : {
-		"flowFrom" : "LoadData", "flowTo" : "PrepData", "flowDataFile" : "internal_flows\\BBLoadedData.csv"
-		},
+	"requiredFields" : {"flowFrom" : "LoadData", "flowTo" : "PrepData"},
 	"conditionalFields" : {
+		"flowDataFile" : "internal_flows\\BBLoadedData.csv",
 		"TensorflowData" : {
 			"features" : ["BB_Upper", "BB_Lower", "EMA20", "Open", "High", "Low", "Close"],
 			"targets" : ["10day10pct"],
@@ -18,10 +17,9 @@
 	},
 	{
 	"flowName" : "PreparedData",
-	"requiredFields" : {
-		"flowFrom" : "PrepData", "flowTo" : "BollingerBands", "flowDataFile" : "internal_flows\\BBPrepared.csv"
-		},
+	"requiredFields" : {"flowFrom" : "PrepData", "flowTo" : "BollingerBands"},
 	"conditionalFields" : {
+		"flowDataFile" : "internal_flows\\BBPrepared.csv",
 		"TensorflowData" : {
 			"features" : ["BB_Upper", "BB_Lower", "EMA20", "Open", "High", "Low", "Close"],
 			"targets" : ["10day10pct"],
@@ -39,9 +37,9 @@
 	"requiredFields" : {"processType" : "dataLoad", "inputFlows" : [], "outputFlow" : "LoadedData"},
 	"conditionalFields" : {
 		"dataLoadCtrl" : {
-			"comment file spec" : "tda\\market_analysis_data\\[a-z]*.csv",
+			"comment file spec" : "market_data\\augmented\\[a-z]*.csv",
 			"inputFile" : [
-				"tda\\market_analysis_data\\[a-z]*.csv"
+				"market_data\\augmented\\[a-z]*.csv"
 			]
 		}
 	}

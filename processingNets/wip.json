@@ -9,7 +9,7 @@
 	"requiredFields" : {"processType" : "dataLoad",	"inputFlows" : [],	"outputFlow" : "LoadedData"},
 	"conditionalFields" : {
 		"dataLoadCtrl" : {
-			"inputFile" : ["tda\\market_analysis_data\\c*.csv"]
+			"inputFile" : ["market_data\\augmented\\c*.csv"]
 		}
 	}
 	},
