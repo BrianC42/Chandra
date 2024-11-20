@@ -19,6 +19,9 @@ import sys
 import re
 import datetime as dt
 
+import tensorflow as tf
+import keras
+
 import pandas as pd
 
 from configuration import get_ini_data
@@ -195,7 +198,11 @@ def mlMACDTrendCross(name, processCtrl):
     return 
 
 if __name__ == '__main__':
-    print ("Perform daily operational processes\n")
+    print("The version of python is {}".format(sys.version))
+    print("The version of tensorflow installed is {}".format(tf.__version__))
+    print("\tThere are {} GPUs available to tensorflow: {}".format(len(tf.config.list_physical_devices('GPU')), tf.config.list_physical_devices('GPU')))
+    print("The version of keras installed is {}".format(keras.__version__))
+    print("\nDisplaying the process control panel\n")
     
     #Set print parameters for Pandas dataframes 
     pd.set_option('display.width', 200)

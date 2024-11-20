@@ -81,9 +81,9 @@
 			{
 			"iteration description" : "categorical_crossentropy / [Accuracy, Precision, Recall] / sigmoid (unbalanced)",
 			"iteration parameters" : {
-				"iteration ID" : "MACD_TrendCross_Best",
+				"iteration ID" : "MACDTrend",
 				"training iteration description" : "Recurrent model categorizing MACD flag (-1, 0 1) of trend line crossing",
-				"modelFileDir" : "models\\rnn\\lstm\\MACDTrendLineCross\\",
+				"modelFileDir" : "models\\MACDTrend\\",
 				"tensorboard" : {"log file dir" : "logs\\tensorboard\\categorization\\lstm\\MACDTrendLineCross\\"},
 				"forecastInterval" : 0,
 				"modelLayers" : [

@@ -176,7 +176,7 @@ class investments(workbooks):
             exc_txt = "\nAn exception occurred - unable to look up symbols on Stock Information tab"
             symbolList = []
             cellRange = 'Stock Information!A2:AF999'
-            symbolInformation = self.gSheets.readGoogleSheet(self.sheetID, cellRange)
+            symbolInformation = self.gSheets.readGoogleSheet(self.sheetID, cellRange, headerRows=1)
             print("Stock Information:\n{}".format(symbolInformation))
             for rowNdx in range(len(symbolInformation)):
                 symbol = symbolInformation.loc[rowNdx, 'Symbol']
@@ -214,7 +214,7 @@ class investments(workbooks):
             ''' Step 2 - create the list of financial symbols '''
             exc_txt = "\nAn exception occurred - unable to look up symbols required"
             cellRange = 'Stock Information!A2:AF999'
-            symbolInformation = self.gSheets.readGoogleSheet(self.sheetID, cellRange)
+            symbolInformation = self.gSheets.readGoogleSheet(self.sheetID, cellRange, headerRows=1)
             print("Stock Information:\n{}".format(symbolInformation))
             
             ''' Step 3 - create a dataframe '''
@@ -274,8 +274,8 @@ class investments(workbooks):
     def readAccountTab(self):
         try:
             exc_txt = "Exception occurred reading accounts tab"
-            cellRange = 'Accounts!A2:AU174'
-            accountsTab = self.gSheets.readGoogleSheet(self.sheetID, cellRange)
+            cellRange = 'Accounts!A2:AU175'
+            accountsTab = self.gSheets.readGoogleSheet(self.sheetID, cellRange, headerRows=1)
         
             self.accountsTab = pd.DataFrame(accountsTab)                
             self.accountsTab.set_index(['Account', 'Asset'], inplace=True)
@@ -293,7 +293,7 @@ class investments(workbooks):
         try:
             exc_txt = "Exception occurred returning the Stock Information tab"
             cellRange = 'Stock Information!A2:AF999'
-            symbolInformation = self.gSheets.readGoogleSheet(self.sheetID, cellRange)
+            symbolInformation = self.gSheets.readGoogleSheet(self.sheetID, cellRange, headerRows=1)
 
             self.stockInformationTab = pd.DataFrame(symbolInformation)                
             self.stockInformationTab.set_index(['Action Category', 'Symbol'], inplace=True)
@@ -1027,3 +1027,130 @@ class optionTrades(workbooks):
     @filterList.setter
     def filterList(self, filterList):
         self._filterList = filterList
+
+
+class mlEvaluations(workbooks):
+    '''
+    classdocs
+    '''
+
+    def __init__(self):
+        '''
+        Constructor
+        '''
+        ''' Google drive file details '''
+        localDirs = get_ini_data("LOCALDIRS")
+        aiwork = localDirs['aiwork']
+        
+        exc_txt = "\nAn exception occurred - unable to access Google sheet"
+        googleAuth = get_ini_data("GOOGLE")
+        self.googleDriveFiles = read_config_json(aiwork + "\\" + googleAuth['fileIDs'])
+
+        print("file 1: {} - {}".format('development', self.googleDriveFiles["Google IDs"]["ML Model Predictions"]["Development"]))
+        print("file 2: {} - {}".format('production', self.googleDriveFiles["Google IDs"]["ML Model Predictions"]["Production"]))
+        '''
+        '''
+        
+        ''' ================ Authenticate with Google workplace and establish a connection to Google Drive API ============== '''
+        super().__init__()
+        
+        self.SIGNALINDEX = ['SignalID', 'Symbol', 'Date']
+
+        return
+    
+    def archiveSignals(self, signals, outputs):
+        exc_txt = "\nAn exception occurred - unable to archive signals to Google sheet"
+        try:
+            print("archiving {} signals".format(len(signals)))
+            now = dt.datetime.now()
+            evaluationDate = dt.date.today()
+            signalsDate = '{:0>2d}/{:0>2d}/{:4d}'.format(now.month, now.day, now.year)
+            
+            print("signals assessed on {}".format(signalsDate))
+            for signal in signals:
+                print("signal: {}".format(signal))
+            
+            if self.sheetID == 'Development':
+                self.sheetID = self.googleDriveFiles["Google IDs"]["ML Model Predictions"]["Development"]
+            else:
+                self.sheetID = self.googleDriveFiles["Google IDs"]["ML Model Predictions"]["Production"]
+
+            ''' load previous signal archive '''
+            self.signalsCols = self.gSheets.readGoogleSheet(self.sheetID, self.headerRange, headerRows=1)
+            self.signalsRows = self.gSheets.readGoogleSheet(self.sheetID, self.dataRange, headerRows=0)
+            self.signalsRows.columns = self.signalsCols.columns
+            
+            headers = ["model", "symbol", "date"]
+            headers.extend(outputs)
+            self.signalsCols = headers
+            
+            print("Column headers:\n{}".format(self.signalsCols))
+            print("Existing data rows:\n{}".format(self.signalsRows))
+            print("WIP ===============\n\tadd a parameter to readGoogleSheet to indicate whether a header row is included or not")
+            
+            for signal in signals:
+                newRow = []
+                newRow.append(signal["name"])
+                newRow.append(signal['symbol'])
+                newRow.append(signalsDate)
+
+                for prediction in signal["prediction"]:
+                    newRow.append(prediction)
+
+                self.signalsRows.loc[len(self.signalsRows)] = newRow
+                
+            ''' save updated archive '''
+            self.signalsCols = pd.DataFrame(self.signalsCols)
+            self.gSheets.updateGoogleSheet(self.sheetID, self.headerRange, self.signalsCols[0])
+            self.gSheets.updateGoogleSheet(self.sheetID, self.dataRange, self.signalsRows)
+            
+            return
+    
+        except :
+            print(exc_txt)
+            exc_info = sys.exc_info()
+            if len(exc_info) > 1:
+                print(exc_info[1].args[0])
+            sys.exit()
+
+    @property
+    def processName(self):
+        return self._processName
+    
+    @processName.setter
+    def processName(self, processName):
+        self._processName = processName
+
+
+    @property
+    def sheetID(self):
+        return self._sheetID
+    
+    @sheetID.setter
+    def sheetID(self, sheetID):
+        self._sheetID = sheetID
+
+    @property
+    def headerRange(self):
+        return self._headerRange
+    
+    @headerRange.setter
+    def headerRange(self, headerRange):
+        self._headerRange = headerRange
+
+    @property
+    def dataRange(self):
+        return self._dataRange
+    
+    @dataRange.setter
+    def dataRange(self, dataRange):
+        self._dataRange = dataRange
+
+    @property
+    def features(self):
+        return self._features
+    
+    @features.setter
+    def features(self, features):
+        self._features = features
+

@@ -29,8 +29,9 @@ from configuration import read_processing_network_json
 from configuration_graph import build_configuration_graph
 
 from executeProcessingNodes import executeProcessingNodes
+from pretrainedModels import rnnCategorization, rnnPrediction
 
-from Workbooks import investments, optionTrades
+from Workbooks import investments, optionTrades, mlEvaluations
 from MarketData import MarketData, BasicMarketDataArchive, EnrichedMarketDataArchive
 
 class processParameter(object):
@@ -135,7 +136,9 @@ class DailyProcessControl(object):
     '''
     classdocs
     '''
-    implementedProcesses = ["Investment Tracking", "Options", "Enriched data archive", "Market data archive", "Networks", "ExperimentaL Network"]
+    implementedProcesses = ["Investment Tracking", "Options", "Enriched data archive", "Market data archive", \
+                            "MACD Trend", "Bollinger Bands", \
+                            "Networks", "ExperimentaL Network"]
     plannedProcesses = ["MultiModelNetwork"]
 
     def processOnOff(self):
@@ -281,8 +284,10 @@ class DailyProcessUI(object):
             sys.exit(exc_txt)
     
     def saveMachineLearningSignal(self, controls, signals):
-        exc_txt = "\nAn exception occurred - saving machine learning signal"
-    
+        exc_txt = "\nAn exception occurred - saving machine learning signals"
+        signalWorkbook = mlEvaluations()
+        signalWorkbook.processName = controls.processName
+        
         try:
             for param in controls.processParameterList:
                 paramValue = param.parameterValue.get()
@@ -290,42 +295,22 @@ class DailyProcessUI(object):
                 
                 if param.parameterName == "gsheet":
                     gsheet = paramValue
+                    signalWorkbook.sheetID = gsheet
                     
                 if param.parameterName == "header range":
-                    headerRange = paramValue
+                    signalWorkbook.headerRange = paramValue
                     
                 if param.parameterName == "data range":
-                    dataRange = paramValue
+                    signalWorkbook.dataRange = paramValue
                     
-            ''' Google API and file details
-            exc_txt = "\nAn exception occurred - unable to retrieve Google authentication information"
-            googleLocal = get_ini_data("GOOGLE")
-    
-            run time control parameters from json and UI
-            text 
-            
-            gSheetName = processCtrl['gsheet']['entry'].get()
-            gSheetID = googleLocal[gSheetName]
-            headerRange = processCtrl['header range']['entry'].get()
-            dataRange = processCtrl['data range']['entry'].get()
-            
-            numerical controls with multiple values 
-            read sheet current cells - do not overwrite these 
-            
-            gSheet = googleSheet()
-            result = gSheet.googleSheet.values().get(spreadsheetId=gSheetID, range=dataRange).execute()
-            values = result.get('values', [])
-    
-            for signal in signals:
-                outputStr = signal['outputs']
-                predictionStr = str(signal['prediction'][0])
-                newSignal = [signal['name'], signal['symbol'], outputStr, dt.datetime.now().strftime("%m/%d/%y"), predictionStr]
-                values.append(newSignal)
-            
-            requestBody = {'values': values}
-            result = gSheet.googleSheet.values().update(spreadsheetId=gSheetID, range=dataRange, \
-                                           valueInputOption="USER_ENTERED", body=requestBody).execute()
-            '''
+                if param.parameterName == "Outputs":
+                    outputs = outputs = re.split(',',paramValue)
+                    
+                if param.parameterName == "features":
+                    features = paramValue
+                    signalWorkbook.features = re.split(',', features)
+                    
+            signalWorkbook.archiveSignals(signals, outputs)
             return
     
         except Exception:
@@ -391,13 +376,16 @@ class DailyProcessUI(object):
                     scalerFile = paramValue
                 
                 if param.parameterName == "Outputs":
-                    outputs = paramValue
+                    outputs = re.split(',',paramValue)
                     
                 if param.parameterName == "timeSteps":
-                    timeSteps = paramValue
+                    timeSteps = int(paramValue)
                     
                 if param.parameterName == "threshold":
-                    threshold = paramValue
+                    thresholdStrs = re.split(',',paramValue)
+                    threshold = []
+                    for ndx in range (len(thresholdStrs)):       
+                        threshold.append(float(thresholdStrs[ndx]))
                     
                 if param.parameterName == "features":
                     features = paramValue
@@ -408,27 +396,12 @@ class DailyProcessUI(object):
                     inputFileSpec = re.split(',', inputFileSpec)
                     
                 name = controls.processDescription
-            '''
-            modelFile = processCtrl['file']['entry'].get()
-            scalerFile =  processCtrl['scaler']['entry'].get()
-            outputs =  re.split(',', processCtrl['Outputs']['entry'].get())
-            
-            numerical 
-            timeSteps = int(processCtrl['timeSteps']['entry'].get())
-            
-            controls with multiple values 
-            thresholdStrs = re.split(',', processCtrl['threshold']['entry'].get())
-            threshold = []
-            for ndx in range (len(thresholdStrs)):       
-                threshold.append(float(thresholdStrs[ndx]))
-            features = re.split(',', processCtrl['features']['entry'].get())
-            inputFileSpec =  re.split(',', processCtrl['featureFile']['entry'].get())
             
             signals = rnnCategorization(name, modelFile, inputFileSpec, features, \
                                      scalerFile, timeSteps, outputs, signalThreshold=threshold)
             if len(signals) > 0:
-                saveMACDCross(processCtrl, signals)
-            '''
+                print("{} signals returned".format(len(signals)))
+                self.saveMachineLearningSignal(controls, signals)
             return
     
         except Exception:
@@ -456,10 +429,10 @@ class DailyProcessUI(object):
                     outputs = paramValue
                     
                 if param.parameterName == "timeSteps":
-                    timeSteps = paramValue
+                    timeSteps = int(paramValue)
                     
                 if param.parameterName == "threshold":
-                    threshold = paramValue
+                    threshold = float(paramValue)
                     
                 if param.parameterName == "features":
                     features = paramValue
@@ -470,25 +443,11 @@ class DailyProcessUI(object):
                     inputFileSpec = re.split(',', inputFileSpec)
                     
                 name = controls.processDescription
-                '''
-                modelFile = processCtrl['file']['entry'].get()
-                scalerFile =  processCtrl['scaler']['entry'].get()
-                outputs =  processCtrl['Outputs']['entry'].get()
-        
-                numerical 
-                timeSteps = int(processCtrl['timeSteps']['entry'].get())
-                threshold =  float(processCtrl['threshold']['entry'].get())
-                
-                controls with multiple values 
-                features = re.split(',', processCtrl['features']['entry'].get())
-                inputFileSpec =  re.split(',', processCtrl['featureFile']['entry'].get())
-                '''
-            '''
             signals = rnnPrediction(name, modelFile, inputFileSpec, features, \
                                      scalerFile, timeSteps, outputs, signalThreshold=threshold)
             if len(signals) > 0:
-                saveMachineLearningSignal(controls, signals)
-            '''
+                self.saveMachineLearningSignal(controls, signals)
+                
             return
     
         except Exception:
@@ -603,16 +562,11 @@ class DailyProcessUI(object):
                 elif proc.processName == "Enriched data archive":
                     self.enrichMarketDataArchive()
                 elif proc.processName == "Networks":
+                    ''' ML networks that have been debugged (not necessarily optimized) '''
                     self.trainKerasModel(proc)
                 elif proc.processName == "ExperimentaL Network":
+                    ''' ML networks currently under development '''
                     self.trainKerasModel(proc)
-                    
-                    
-                elif proc.processName == "WIP Categorized":
-                    self.useTrainedRNNCategorizationModel(proc)
-                    
-                elif proc.processName == "WIP Regression":
-                    self.useTrainedRNNPredictionModel(proc)
                     
                 elif proc.processName == "Bollinger Bands":
                     self.useTrainedRNNPredictionModel(proc)

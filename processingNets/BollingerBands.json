@@ -89,8 +89,8 @@
 		{
 			"iteration description" : "binary_crossentropy / [Accuracy, Precision, Recall] / sigmoid (unbalanced)",
 			"iteration parameters" : {
-				"iteration ID" : "BB_test001",
-				"modelFileDir" : "models\\rnn\\lstm\\BB\\",
+				"iteration ID" : "BollingerBands",
+				"modelFileDir" : "models\\BollingerBands\\",
 				"tensorboard" : {"log file dir" : "logs\\tensorboard\\categorization\\lstm\\BB\\b_c\\"},
 				"forecastInterval" : 0,
 				"modelLayers" : [

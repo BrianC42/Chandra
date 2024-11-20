@@ -284,7 +284,7 @@ class googleSheet():
         except ValueError:
             return sheetDate
             
-    def readGoogleSheet(self, spreadsheetID, readRange):
+    def readGoogleSheet(self, spreadsheetID, readRange, headerRows=0):
         ''' read Google sheet data and return it as a DataFrame '''
         exc_txt = "\nAn exception occurred - unable to read Google sheet values"
         try:
@@ -298,10 +298,16 @@ class googleSheet():
             if not values:
                 print('\tNo data found.')
             else:
+                if headerRows > 0:
+                    dfVals = pd.DataFrame(values[headerRows:], columns=values[0])
+                else:
+                    dfVals = pd.DataFrame(values)
+                '''
                 if len(values) < 2:
                     dfVals = pd.DataFrame(values)
                 else:
                     dfVals = pd.DataFrame(values[1:], columns=values[0])
+                '''
         
             return dfVals
     

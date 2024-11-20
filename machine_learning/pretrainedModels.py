@@ -37,8 +37,9 @@ def rnnCategorization(name, modelFile, featureFiles, features, scalerFile, timeS
         models = localDirs['trainedmodels']
         
         ''' load trained model '''
-        trainedModel = aiwork + '\\' + models + '\\' + modelFile
-        model = keras.models.load_model(trainedModel)
+        modelPath = aiwork + '\\' + models
+        trainedModel = modelPath + '\\' + modelFile
+        model = keras.saving.load_model(trainedModel)
 
         ''' load scaler used during training '''
         if scalerFile != "":
@@ -108,8 +109,9 @@ def rnnPrediction(name, modelFile, featureFiles, features, scalerFile, timeSteps
         models = localDirs['trainedmodels']
         
         ''' load trained model '''
+        modelPath = aiwork + '\\' + models
         trainedModel = aiwork + '\\' + models + '\\' + modelFile
-        model = keras.models.load_model(trainedModel)
+        model = keras.saving.load_model(trainedModel)
 
         ''' load scaler used during training '''
         if scalerFile != "":

@@ -67,11 +67,31 @@ def trainModel(d2r):
                                     verbose=nx_verbose, \
                                     callbacks=[tensorboard_callback])
     
-        modelFileName = aiwork + '\\' + modeFileDir + iterationID + timeStamp
-        
+        '''
         if d2r.trainer == TRAINING_AUTO_KERAS:
             d2r.model = d2r.model.export_model()
         d2r.model.save(modelFileName + '.keras')
+        
+        tensorflow saved_model format
+        d2r.model.export(aiwork + '\\' + modeFileDir)
+        
+        keras
+        HDF5 format is considered legacy
+        d2r.model.save(modelFileName + '.h5')
+        keras recommends using instead the native Keras format, e.g. `
+        model.save('my_model.keras')` 
+        or 
+        `keras.saving.save_model(model, 'my_model.keras')`
+        d2r.model.save(modelFileName + '.keras')
+        '''
+        modelPath = aiwork + '\\' + modeFileDir
+        modelFileName = modelPath + iterationID + timeStamp
+        modelExtended = modelFileName + '.keras'
+        modelPlot = modelFileName + '.png'
+        
+        keras.models.save_model(d2r.model, modelExtended, overwrite=True)
+        keras.utils.plot_model(d2r.model, to_file=modelPlot, show_shapes=True)
+
         '''
         D:\\Apps\\Python\\Python312\\Lib\\site-packages\\keras\\src\\layers\\rnn\\rnn.py:204: 
         UserWarning: Do not pass an `input_shape`/`input_dim` argument to a layer. 
@@ -86,8 +106,6 @@ def trainModel(d2r):
         else:
             print("No scaler to save")
             
-        keras.utils.plot_model(d2r.model, to_file=modelFileName + '.png', show_shapes=True)
-
     except Exception:
         exc_txt = "\n*** An exception occurred training the model ***\n\t"
         err_txt = "\n*** An exception occurred training the model ***\n\t"

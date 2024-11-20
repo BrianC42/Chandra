@@ -90,16 +90,16 @@
 	"Description" : "Bollinger Bands prediction",
 	"run" : false,
 	"controls" : [
-		{"file" : "rnn\\lstm\\bb\\BB_test001 20230717 073218"},
-		{"scaler" : "rnn\\lstm\\bb\\BB_test001 20230717 073218 scaler.pkl"},
-		{"featureFile" : "tda\\market_analysis_data\\*.csv"},
+		{"file" : "BollingerBands\\BollingerBands 20241115 163140.keras"},
+		{"scaler" : "BollingerBands\\BollingerBands 20241115 163140 scaler.pkl"},
 		{"features" : "BB_Upper,BB_Lower,EMA20,Open,High,Low,Close"},
-		{"gsheet" : "experimental"},
-    	{"header range" : "ML Signals!A1:Z1"},
-    	{"data range" : "ML Signals!A2:Z"},
 		{"timeSteps": 5},
 		{"Outputs" : "10% in 10 Days Probability"},
-		{"threshold" : 0.585}
+		{"featureFile" : "market_data\\augmented\\*.csv"},
+		{"threshold" : 0.5},
+		{"gsheet" : "Development"},
+    	{"header range" : "BollingerBand!A1:Z1"},
+    	{"data range" : "BollingerBand!A2:Z"}
 		]
 	},
 	{
@@ -110,16 +110,15 @@
 	"Description" : "MACD/moving average classification",
 	"run" : false,
 	"controls" : [
-		{"file" : "rnn\\lstm\\MACDTrendLineCross\\MACD_TrendCross_Best 20230717 070452"},
-		{"scaler" : "rnn\\lstm\\MACDTrendLineCross\\MACD_TrendCross_Best 20230717 070452 scaler.pkl"},
+		{"file" : "MACDTrend\\MACDTrend 20241113 103459.keras"},
+		{"scaler" : "MACDTrend\\MACDTrend 20241113 103459 scaler.pkl"},
 		{"Outputs" : "Negative Cross,Neutral,Positive Cross"},
-		{"featureFile" : "tda\\market_analysis_data\\*.csv"},
+		{"featureFile" : "market_data\\augmented\\*.csv"},
 		{"features" : "MACD,MACD_Signal"},
-		{"gsheet" : "experimental"},
-    	{"header range" : "MACD Cross!A1:Z1"},
-    	{"data range" : "MACD Cross!A2:Z"},
+		{"gsheet" : "Development"},
+    	{"header range" : "MACDTrend!A1:Z1"},
+    	{"data range" : "MACDTrend!A2:Z"},
 		{"timeSteps": 5},
-		{"Outputs" : "Negative Cross, Neutral, Positive Cross"},
 		{"threshold" : "0.9,1.0,0.9"}
 		]
 	},
