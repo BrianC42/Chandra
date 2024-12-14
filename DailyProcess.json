@@ -1,17 +1,7 @@
 {
 "configuration parameters required to control" : "DailyProcess",
-"required fields - comment" : [
-	{
-	"name" : "descriptive name to display to user",
-	"groupColumn" : 1,
-	"groupRow" : 2,
-	"model" : false,
-	"Description" : "currently unused",
-	"run" : "default run or not for user to accept or change"
-	}
-],
 "WindowTitle" : "Process Selection and Execution",
-"groupColumns" : ["Daily Processes", "Model Training", "Trained Models", "Model Networks"],
+"groupColumns" : ["Daily Processes", "Model Training", "Trained Models"],
 "groupRows" : 2,
 "available processes" : "===========================================",
 "processes" : [
@@ -64,9 +54,10 @@
 	"Description" : "Train a network and generate a model",
 	"run" : false,
 	"controls" : [
-		{"run" : "wip"},
+		{"run" : "MultiModelNetwork"},
+		{"available" : "wip"},
 		{"available" : "OnBalanceVolume"},
-		{"available" : "wip"}
+		{"available" : "MultiModelNetwork"}
 		]	
 	},
 	{
@@ -121,14 +112,6 @@
 		{"timeSteps": 5},
 		{"threshold" : "0.9,1.0,0.9"}
 		]
-	},
-	{
-	"name" : "MultiModelNetwork",
-	"groupColumn" : 4,
-	"groupRow" : 1,
-	"model" : false,
-	"Description" : "multi model network development",
-	"run" : false
 	}
 ]
 }

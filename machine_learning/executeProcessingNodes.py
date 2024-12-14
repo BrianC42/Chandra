@@ -19,6 +19,8 @@ import configuration_constants as cc
 
 from TrainingDataAndResults import Data2Results as d2r
 
+from load_prepare_data import loadDataIntoTrainingPipeline
+from load_prepare_data import acquireTrainingData
 from load_prepare_data import collect_and_select_data
 from load_prepare_data import prepareTrainingData
 from load_prepare_data import loadTrainingData
@@ -67,8 +69,15 @@ def executeStop(nodeName, d2rP):
 
     return
 
+def executeDataAcquire(nodeName, d2rP):
+    print("\n============== WIP =============\n\tSeparating data acquisition from load into processing pipeline\n============\n")
+    acquireTrainingData(d2rP)
+
+    return
+
 def executeDataLoad(nodeName, d2rP):
-    collect_and_select_data(d2rP)
+    print("\n============== WIP =============\n\tSeparating data acquisition from load into processing pipeline\n============\n")
+    loadDataIntoTrainingPipeline(d2rP, nodeName)
 
     return
 
@@ -101,6 +110,7 @@ def executeDataCombine(nodeName, d2rP):
         aiwork = localDirs['aiwork']
         
         inputFlowFolders = []
+        inputFlowFiles = []
         for nodeConfig in d2rP.configurationFile[cc.JSON_PROCESS_NODES]:
             if nodeConfig["processNodeName"] == nodeName:
                 requiredConfiguration = nodeConfig[cc.JSON_REQUIRED]
@@ -112,20 +122,55 @@ def executeDataCombine(nodeName, d2rP):
                     conditionalConfiguration = nodeConfig[cc.JSON_CONDITIONAL]
                     if cc.JSON_SYNCHRONIZATION_FEATURE in conditionalConfiguration:
                         synchronizationFeatures = conditionalConfiguration[cc.JSON_SYNCHRONIZATION_FEATURE]
+                    '''
                     if cc.JSON_FLOW_DATA_DIR in conditionalConfiguration:
                         for dataDir in conditionalConfiguration[cc.JSON_FLOW_DATA_DIR]:
                             inputFlowFolders.append(dataDir)
-                    
+                    '''
                 break
             
         for flow in d2rP.configurationFile[cc.JSON_DATA_FLOWS]:
             if flow[cc.JSON_FLOW_NAME] in inputFlows:
-                inputFlowFolders.append(flow[cc.JSON_CONDITIONAL][cc.JSON_FLOW_DATA_DIR])
+                if cc.JSON_FLOW_DATA_DIR in flow[cc.JSON_CONDITIONAL]:
+                    inputFlowFolders.append(flow[cc.JSON_CONDITIONAL][cc.JSON_FLOW_DATA_DIR])
+                '''
+                elif cc.JSON_FLOW_DATA_FILE in flow[cc.JSON_CONDITIONAL]:
+                    inputFlowFiles.append(flow[cc.JSON_CONDITIONAL][cc.JSON_FLOW_DATA_FILE])
+                '''
             if flow[cc.JSON_FLOW_NAME] == outputFlow:
                 outputFlowDir = flow[cc.JSON_CONDITIONAL][cc.JSON_FLOW_DATA_DIR]
                 
+        '''
+        horizontal merge of all sample columns
+        all samples merged must have the same symbol and synchronizationFeatures
+        symbol must exist in all sources
+            input flow folders and 
+            pre-loaded TrainingDataAndResults object
+            
+        Process
+        create list of pre-loaded symbols
+        
+        '''
+        ''' examine d2rP for loaded data files '''
+        combinedData = dict() # horizontally merged samples
+        # use del combinedData[symbol] to remove items if missing from a source
+        
+        loadedSymbolList = [] # list of pre-loaded symbols
+        loadedData = dict()
+        for loadedFile in d2rP.dataDict:
+            subStr = loadedFile.split("\\")
+            symbol = subStr[len(subStr)-1].split(".")
+            symbol = symbol[0]
+            loadedSymbolList.append(symbol)
+            # use symbolList.remove(symbol) when symbol is missing from the inputFlowFolders
+            loadedData[symbol] = d2rP.dataDict[loadedFile]
+        print("{} symbols were loaded\n{}".format(len(loadedSymbolList), loadedSymbolList))
+        
+        ''' generate a dict of all file names present in the inputFlowFolders '''
+        inputFlowLists = [] # list of lists
         symbolData = dict()
         for combineFolder in inputFlowFolders:
+            inputFolderList = [] #list of symbols in the input flow folder
             for fileName in combineFileList:
                 fileSpec = aiwork + '\\' + combineFolder + '\\' + fileName
                 
@@ -141,27 +186,41 @@ def executeDataCombine(nodeName, d2rP):
                         subStr = file.split("\\")
                         symbol = subStr[len(subStr)-1].split(".")
                         symbol = symbol[0]
-                        symbolData[file] = symbol
+                        inputFolderList.append(symbol)
+            print("{} symbols were present in {}\n{}".format(len(inputFolderList), combineFolder, inputFolderList))
+            inputFlowLists.append(inputFolderList)
 
-        combinedData = dict()
-        for dataFile in symbolData:
-            subStr = dataFile.split("\\")
-            symbol = subStr[len(subStr)-1].split(".")
-            symbol = symbol[0]
-            dfDataIn = pd.read_csv(dataFile)
-            #print("symbol {} from file {}\n{}".format(symbol, dataFile, dfDataIn))
-            if symbol in combinedData:
-                #print("symbol {} already in combinedData".format(symbol))
-                dfDataCombine = dfDataIn.set_index(synchronizationFeatures)
-                combinedData[symbol] = pd.merge(combinedData[symbol], dfDataCombine, how='inner', on=synchronizationFeatures)
-            else:
-                dfDataIn = dfDataIn.set_index(synchronizationFeatures)
-                combinedData[symbol] = dfDataIn
-                
+        ''' create a single list of symbols common to all sources '''
+        # Convert the single list to a set
+        loadedDataSet = set(loadedSymbolList)
+        # Convert each list of names in the list_of_lists to a set
+        inputFlowsSet = [set(lst) for lst in inputFlowLists]
+        # Find the intersection of all sets
+        commonSymbolSet = loadedDataSet.intersection(*inputFlowsSet)
+        commonSymbolList = list(commonSymbolSet)
+        print("{} symbols were common to all inputs\n{}".format(len(commonSymbolList), commonSymbolList))
+    
+        for symbol in commonSymbolList:
+            # pre-loaded data
+            combinedData[symbol] = loadedData[symbol]
+            
+            # merge the input data flows
+            for folder in inputFlowFolders:
+                fileSpec = aiwork + '\\' + folder + '\\' + symbol + ".csv"
+                dfDataIn = pd.read_csv(fileSpec)
+                combinedData[symbol] = pd.merge(combinedData[symbol], dfDataIn, how='inner', on=synchronizationFeatures)
+
+        ''' create an output file containing all samples for training '''
+        df_combined = pd.DataFrame()
         for symbol in combinedData:
             print("writing {} combined data to {}".format(symbol, outputFlowDir))
             outputFile = aiwork + "\\" + outputFlowDir + "\\" + symbol + ".csv"
             combinedData[symbol].to_csv(outputFile)
+            ''' combine into a single sample file "flowDataFile" - 'vertical' merge '''
+            df_combined = pd.concat([df_combined, combinedData[symbol]], ignore_index=True)
+        outputFile = aiwork + "\\" + "internal_flows\\CombinedMMN.csv"
+        df_combined.to_csv(outputFile)
+        d2rP.data = df_combined
 
     except Exception:
         exc_info = sys.exc_info()
@@ -245,6 +304,7 @@ def executeExecuteModel(nodeName, d2rP):
                     fileListSpec = aiwork + '\\' + fileListSpec
                     fileList = glob.glob(fileListSpec)
                     for fileSpec in fileList:
+                        exc_txt = "\nAn exception occurred - node {} reading, preparing data and making predictions from\n{}".format(nodeName, fileSpec)
                         if os.path.isfile(fileSpec):
                             subStr = fileSpec.split("\\")
                             symbol = subStr[len(subStr)-1].split(".")
@@ -338,7 +398,10 @@ def executeProcessingNodes(d2rP):
             nx_read_attr = nx.get_node_attributes(d2rP.graph, cc.JSON_PROCESS_TYPE)
             print("\n====================================\n\tExecuting {} as {}\n====================================\n".format(node_i, nx_read_attr[node_i]))
        
-            if nx_read_attr[node_i] == cc.JSON_DATA_LOAD_PROCESS:
+            if nx_read_attr[node_i] == cc.JSON_DATA_ACQUIRE_PROCESS:
+                executeDataAcquire(node_i, d2rP)
+                
+            elif nx_read_attr[node_i] == cc.JSON_DATA_LOAD_PROCESS:
                 executeDataLoad(node_i, d2rP)
                 
             elif nx_read_attr[node_i] == cc.JSON_DATA_COMBINE_PROCESS:

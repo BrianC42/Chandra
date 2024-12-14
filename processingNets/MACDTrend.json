@@ -3,10 +3,17 @@
 "comment - dataflow section" : "Specification details for the flows of data between processing nodes",
 "dataFlows" : [
 	{
-	"flowName" : "MACDTrendCross",
-	"requiredFields" : {"flowFrom" : "LoadData", "flowTo" : "PrepData"},
+	"flowName" : "acquiredData",
+	"requiredFields" : {"flowFrom" : "acquireData", "flowTo" : "loadData"},
 	"conditionalFields" : {
-		"flowDataFile" : "internal_flows\\TrendLineCross.csv",
+		"flowDataDir" : "internal_flows\\MACDTrendTraining"
+		}
+	},
+	{
+	"flowName" : "loadedData",
+	"requiredFields" : {"flowFrom" : "loadData", "flowTo" : "PrepData"},
+	"conditionalFields" : {
+		"flowDataFile" : "internal_flows\\MACDTrendTraining\\TrendLineCross.csv",
 		"TensorflowData" : {
 			"features" : ["MACD", "MACD_Signal"],
 			"targets" : ["MACD_flag"],
@@ -18,7 +25,7 @@
 	"flowName" : "MACDTrendCrossPrepared",
 	"requiredFields" : {"flowFrom" : "PrepData", "flowTo" : "MACDTrendCross"},
 	"conditionalFields" : {
-		"flowDataFile" : "internal_flows\\TrendLineCrossPrepared.csv",
+		"flowDataFile" : "internal_flows\\MACDTrendTraining\\TrendLineCrossPrepared.csv",
 		"TensorflowData" : {
 			"features" : ["MACD", "MACD_Signal"],
 			"targets" : ["MACD_flag"],
@@ -29,23 +36,35 @@
 ],
 "comment - dataflow" : "definition end ----------------------------------------------",
 "comment - processing node section" : "Specification details for the processing nodes",
-"processNodeSequence" : ["LoadData", "PrepData", "MACDTrendCross"],
+"processNodeSequence" : ["acquireData", "loadData", "PrepData", "MACDTrendCross", "stop"],
 "processNodes" : [
 	{
-	"processNodeName" : "LoadData",
-	"requiredFields" : {"processType" : "dataLoad", "inputFlows" : [], "outputFlow" : "MACDTrendCross"},
+	"processNodeName" : "stop",
+	"requiredFields" : {"processType" : "stop", "inputFlows" : [""], "outputFlow" : ""},
+	"conditionalFields" : {}
+	},
+	{
+	"processNodeName" : "acquireData",
+	"requiredFields" : {"processType" : "dataAcquire", "inputFlows" : [], "outputFlow" : "acquiredData"},
 	"conditionalFields" : {
 		"dataLoadCtrl" : {
-			"comment file spec" : "market_data\\augmented\\[a-z]*.csv",
-			"inputFile" : [
-				"market_data\\augmented\\[a-z]*.csv"
-			]
+			"comment file spec" : "folder1\\folder2\\[a-z]*.csv",
+			"inputFile" : ["market_data\\augmented\\*.csv"]
+		}
+	}
+	},
+	{
+	"processNodeName" : "loadData",
+	"requiredFields" : {"processType" : "dataLoad", "inputFlows" : ["acquiredData"], "outputFlow" : "loadedData"},
+	"conditionalFields" : {
+		"dataLoadCtrl" : {
+			"inputFile" : ["*.csv"]
 		}
 	}
 	},
 	{
 	"processNodeName" : "PrepData",
-	"requiredFields" : {"processType" : "dataPrep", "inputFlows" : ["MACDTrendCross"], "outputFlow" : "MACDTrendCrossPrepared"},
+	"requiredFields" : {"processType" : "dataPrep", "inputFlows" : ["loadedData"], "outputFlow" : "MACDTrendCrossPrepared"},
 	"conditionalFields" : {
 		"dataPrepCtrl" : {
 			"ignoreBlanks" : true,
@@ -106,6 +125,20 @@
 	}
 ],
 "comment end of specification" : "------------------------------------------------------------------------------------",
+"comment development processNodes" : [
+	{
+	"processNodeName" : "LoadData",
+	"requiredFields" : {"processType" : "dataLoad", "inputFlows" : [], "outputFlow" : "MACDTrendCross"},
+	"conditionalFields" : {
+		"dataLoadCtrl" : {
+			"comment file spec" : "market_data\\augmented\\[a-z]*.csv",
+			"inputFile" : [
+				"market_data\\augmented\\[a-z]*.csv"
+			]
+		}
+	}
+	}
+],
 "comment trial training iterations" : {
 	"comment indent 1" : {
 		"comment most successful" : "MACD_Flag_adam_4",

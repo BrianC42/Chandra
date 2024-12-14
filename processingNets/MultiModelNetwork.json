@@ -16,22 +16,45 @@
 	"conditionalFields" : {"flowDataDir" : "internal_flows\\MMN_M2"}
 	},
 	{
-	"flowName" : "CombinedData",
-	"requiredFields" : {"flowFrom" : "DataCombine", "flowTo" : "LoadData"},
-	"conditionalFields" : {"flowDataDir" : "internal_flows\\MMN_M1M2"}
-	},
-	{
-	"flowName" : "LoadedData",
-	"requiredFields" : {"flowFrom" : "LoadData", "flowTo" : "DataPrepare"},
+	"flowName" : "LoadedRawData",
+	"requiredFields" : {"flowFrom" : "LoadRawData", "flowTo" : "DataCombine"},
 	"conditionalFields" : {
-		"flowDataFile" : "internal_flows\\MMN_M1M2.csv",
+		"flowDataFile" : "internal_flows\\MMN_M1M2\\LoadedData.csv",
 		"TensorflowData" : {
 			"problem features" : ["Volume", "OBV", "AccumulationDistribution"],
 			"features" : ["Open", "High", "Low", "Close", 
 							"Volume", "OBV", "AccumulationDistribution",
-							"Relative Strength", "ADX",
-							"Negative Cross", "Neutral", "Positive Cross", 
-							"BB 10 in 10"],
+							"Relative Strength", "ADX"],
+			"targets" : ["10day10pct"],
+			"timeSequence" : true, "seriesStepIDField" : ["DateTime"], "seriesDataType" : "TDADateTime", "type" : "relative_time_series"
+			}
+		}
+	},
+	{
+	"flowName" : "CombinedData",
+	"requiredFields" : {"flowFrom" : "DataCombine", "flowTo" : "LoadCombinedData"},
+	"conditionalFields" : {
+		"flowDataDir" : "internal_flows\\MMN_M1M2",
+		"flowDataFile" : "internal_flows\\CombinedMMN.csv",
+		"TensorflowData" : {
+			"features" : ["Open", "High", "Low", "Close", 
+							"Volume", "OBV", "AccumulationDistribution",
+							"Relative Strength", "ADX"],
+			"targets" : ["10day10pct"],
+			"timeSequence" : true, "seriesStepIDField" : ["DateTime"], "seriesDataType" : "TDADateTime", "type" : "relative_time_series"
+			}
+		}
+	},
+	{
+	"flowName" : "LoadedCombinedData",
+	"requiredFields" : {"flowFrom" : "LoadCombinedData", "flowTo" : "DataPrepare"},
+	"conditionalFields" : {
+		"flowDataFile" : "internal_flows\\MMN_M1M2\\LoadedCombinedData.csv",
+		"TensorflowData" : {
+			"problem features" : ["Volume", "OBV", "AccumulationDistribution"],
+			"features" : ["Open", "High", "Low", "Close", 
+							"Volume", "OBV", "AccumulationDistribution",
+							"Relative Strength", "ADX"],
 			"targets" : ["10day10pct"],
 			"timeSequence" : true, "seriesStepIDField" : ["DateTime"], "seriesDataType" : "TDADateTime", "type" : "relative_time_series"
 			}
@@ -57,7 +80,7 @@
 ],
 "comment - dataflow end " : "dataflows definition end -------------------------------------------------------------------------------",
 "comment - processNodes" : "process node definitions beginh -------------------------------------------------------------------------",
-"processNodeSequence" : ["ModelOne", "ModelTwo", "DataCombine", "LoadData", "DataPrepare", "TrainMultipleModelOutputs"],
+"processNodeSequence" : ["ModelOne", "ModelTwo", "LoadRawData", "DataCombine", "LoadCombinedData", "DataPrepare", "TrainMultipleModelOutputs"],
 "processNodes" : [
 	{
 	"processNodeName" : "ModelOne",
@@ -65,9 +88,7 @@
 	"conditionalFields" : {
 		"executeModelCtrl" : {
 			"dataLoadCtrl" : {
-				"inputFile" : [
-					"tda\\market_analysis_data\\[A-Z]*.csv"
-				]
+				"inputFile" : ["market_data\\augmented\\[A-Z]*.csv"]
 			},
 			"dataPrepCtrl" : {
 				"ignoreBlanks" : true,
@@ -81,8 +102,8 @@
 					"timeSteps": 5
 				}
 			},
-			"trainedModelFile" : "rnn\\lstm\\MACDTrendLineCross\\MACD_TrendCross_Best 20230717 070452",
-			"trained scaler" : "rnn\\lstm\\MACDTrendLineCross\\MACD_TrendCross_Best 20230717 070452 scaler.pkl",
+			"trainedModelFile" : "MACDTrend\\MACDTrend 20241113 103459.keras",
+			"trained scaler" : "MACDTrend\\MACDTrend 20241113 103459 scaler.pkl",
 			"flowDataDir" : "internal_flows\\MMN_M1",
 			"outputLabels" : ["Negative Cross", "Neutral", "Positive Cross"],
 			"outputSynchronizationFeatures" : ["DateTime"],
@@ -96,9 +117,7 @@
 	"conditionalFields" : {
 		"executeModelCtrl" : {
 			"dataLoadCtrl" : {
-				"inputFile" : [
-					"tda\\market_analysis_data\\[A-Z]*.csv"
-				]
+				"inputFile" : ["market_data\\augmented\\[A-Z]*.csv"]
 			},
 			"dataPrepCtrl" : {
 				"ignoreBlanks" : true,
@@ -112,8 +131,8 @@
 					"timeSteps": 5
 				}
 			},
-			"trainedModelFile" : "rnn\\lstm\\bb\\BB_test001 20230717 073218",
-			"trained scaler" : "rnn\\lstm\\bb\\BB_test001 20230717 073218 scaler.pkl",
+			"trainedModelFile" : "BollingerBands\\BollingerBands 20241115 163140.keras",
+			"trained scaler" : "BollingerBands\\BollingerBands 20241115 163140 scaler.pkl",
 			"flowDataDir" : "internal_flows\\MMN_M2",
 			"outputLabels" : ["BB 10 in 10"],
 			"outputSynchronizationFeatures" : ["DateTime"],
@@ -122,38 +141,44 @@
 	}
 	},
 	{
+	"processNodeName" : "LoadRawData",
+	"requiredFields" : {"processType" : "dataLoad", "inputFlows" : [], "outputFlow" : "LoadedRawData"},
+	"conditionalFields" : {
+		"dataLoadCtrl" : {
+			"comment file spec" : "internal_flows\\MMN_M1M2\\[a-z]*.csv",
+			"inputFile" : ["market_data\\augmented\\[C]*.csv"]
+		}
+	}
+	},
+	{
 	"processNodeName" : "DataCombine",
 	"requiredFields" : {"processType" : "DataCombine", 
-		"inputFlows" : ["ModelOneOutput", "ModelTwoOutput"], 
-		"combineFileList" : [
-			"[C]*.csv"
-		],
+		"inputFlows" : ["ModelOneOutput", "ModelTwoOutput", "LoadedRawData"], 
+		"combineFileList" : ["[C]*.csv"],
 		"outputFlow" : "CombinedData"
 	},
 	"conditionalFields" : {
-		"flowDataDir" : ["tda\\market_analysis_data"],
+		"flowDataDir" : ["internal_flows"],
 		"synchronizationFeatures" : ["DateTime"]
 	}
 	},
 	{
-	"processNodeName" : "LoadData",
-	"requiredFields" : {"processType" : "dataLoad", "inputFlows" : ["CombinedData"], "outputFlow" : "LoadedData"},
+	"processNodeName" : "LoadCombinedData",
+	"requiredFields" : {"processType" : "dataLoad", "inputFlows" : ["CombinedData"], "outputFlow" : "LoadedCombinedData"},
 	"conditionalFields" : {
 		"dataLoadCtrl" : {
 			"comment file spec" : "internal_flows\\MMN_M1M2\\[a-z]*.csv",
-			"inputFile" : [
-				"internal_flows\\MMN_M1M2\\[C]*.csv"
-			]
+			"inputFile" : ["market_data\\augmented\\[C]*.csv"]
 		}
 	}
 	},
 	{
 	"processNodeName" : "DataPrepare",
-	"requiredFields" : {"processType" : "dataPrep", "inputFlows" : ["LoadedData"], "outputFlow" : "PreparedData"},
+	"requiredFields" : {"processType" : "dataPrep", "inputFlows" : ["CombinedData"], "outputFlow" : "PreparedData"},
 	"conditionalFields" : {
 		"dataPrepCtrl" : {
 			"ignoreBlanks" : true,
-			"preparationSequence" : ["normalize", "oneHotEncoding"],
+			"preparationSequence" : ["normalize"],
 			"noPreparation" : {
 				"problem features" : [
 					{"feature" : "Volume"},
@@ -181,7 +206,7 @@
 			},
 			"oneHotEncoding" : {
 				"features" : [
-					{"feature" : "10day10pct", "categoryType" : "label", "comment" : "True/False"}
+					{"feature" : "", "categoryType" : "label", "comment" : "True/False"}
 				]
 			}
 		}
@@ -199,7 +224,7 @@
 			"iteration description" : "First multi model combination training",
 			"iteration parameters" : {
 				"iteration ID" : "MMN_TA_001",
-				"modelFileDir" : "models\\rnn\\lstm\\MMN",
+				"modelFileDir" : "models\\MMN",
 				"tensorboard" : {"log file dir" : "logs\\tensorboard\\categorization\\lstm\\MMTechAnalysis\\"},
 				"forecastInterval" : 0,
 				"modelLayers" : [

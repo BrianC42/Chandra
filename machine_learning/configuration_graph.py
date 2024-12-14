@@ -106,11 +106,15 @@ def add_meta_process_node (js_config, d2r) :
     # conditional elements
     js_conditional = js_config[cc.JSON_CONDITIONAL]
     
-    if nx_processType == cc.JSON_DATA_LOAD_PROCESS:
+    if nx_processType == cc.JSON_DATA_ACQUIRE_PROCESS:
         js_data_prep_ctrl = js_conditional[cc.JSON_INPUT_DATA_PREPARATION]
         add_data_source_details(js_data_prep_ctrl, d2r.graph, nx_process_name)
         
-    elif nx_processType == "DataCombine":
+    elif nx_processType == cc.JSON_DATA_LOAD_PROCESS:
+        js_data_prep_ctrl = js_conditional[cc.JSON_INPUT_DATA_PREPARATION]
+        add_data_source_details(js_data_prep_ctrl, d2r.graph, nx_process_name)
+
+    elif nx_processType == cc.JSON_DATA_COMBINE_PROCESS:
         pass
 
     elif nx_processType == cc.JSON_DATA_PREP_PROCESS:

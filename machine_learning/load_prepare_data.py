@@ -775,6 +775,7 @@ def prepareTrainingData(d2r):
                 for input_flow in nx_inputFlows[node_i]:
                     for edge_i in d2r.graph.edges():
                         if edge_i[0] == node_i:
+                            err_txt = "*** An exception occurred preparing the training data - output flow configuration ***"
                             nx_output_data_files = nx.get_edge_attributes(d2r.graph, cc.JSON_FLOW_DATA_FILE)
                             nx_output_data_file = nx_output_data_files[edge_i[0], edge_i[1], output_flow]
                             
@@ -785,6 +786,7 @@ def prepareTrainingData(d2r):
                             d2r.preparedTargets = nx_targetFields[edge_i[0], edge_i[1], output_flow]    
 
                         if edge_i[1] == node_i:
+                            err_txt = "*** An exception occurred preparing the training data - input flow configuration ***"
                             nx_input_data_files = nx.get_edge_attributes(d2r.graph, cc.JSON_FLOW_DATA_FILE)
                             nx_input_data_file = nx_input_data_files[edge_i[0], edge_i[1], input_flow]    
                             nx_seriesDataType = nx.get_edge_attributes(d2r.graph, cc.JSON_SERIES_DATA_TYPE)
@@ -812,6 +814,7 @@ def prepareTrainingData(d2r):
                     normalizeFields = []
                     categorizeFields = []
                     for prep in js_prepCtrl[cc.JSON_DATA_PREP_SEQ]:
+                        err_txt = "An exception occurred preparing the training data - {}".format(prep)
                         prepCtrl = js_prepCtrl[prep]
                         fieldPrepCtrl = []
                         for feature in prepCtrl[cc.JSON_DATA_PREP_FEATURES]:
@@ -905,6 +908,138 @@ def selectTrainingData(d2r, node_name, nx_edge):
     #df_combined.drop(targetFields, axis=1)
     return df_combined
 
+def acquireTrainingData(d2r):
+    ''' error handling '''
+    try:
+        err_txt = "*** An exception occurred acquiring the data ***"
+
+        '''
+        Find the node specification for data acquisition
+        '''
+        for node_i in d2r.graph.nodes():
+            nx_read_attr = nx.get_node_attributes(d2r.graph, cc.JSON_PROCESS_TYPE)
+            if nx_read_attr[node_i] == cc.JSON_DATA_ACQUIRE_PROCESS:
+                '''
+                Find the specification of the output flow from the node
+                '''
+                nx_data_flow = nx.get_node_attributes(d2r.graph, cc.JSON_OUTPUT_FLOW)
+                output_flow = nx_data_flow[node_i]
+                for edge_i in d2r.graph.edges():
+                    if edge_i[0] == node_i:
+                        err_txt = "*** An exception occurred acquiring the data ***"
+                        '''
+                        Find the folder specified as the output destination
+                        '''
+                        nx_outputFolder = nx.get_edge_attributes(d2r.graph, cc.JSON_FLOW_DIR)
+                        outputFolder = nx_outputFolder[edge_i[0], edge_i[1], output_flow]
+                        '''
+                        For each file identified in the acquisition node specification
+                            read acquire the data
+                            save the data to the output location
+                        '''
+                        nx_data_file = nx.get_node_attributes(d2r.graph, cc.JSON_INPUT_DATA_FILE)
+                        for dataFile in nx_data_file[node_i]:
+                            fileSpecList = glob.glob(dataFile)
+                            fileCount = len(fileSpecList)
+                            tf_progbar = keras.utils.Progbar(fileCount, width=50, verbose=1, interval=1, stateful_metrics=None, unit_name='file')
+                            count = 0
+                            for FileSpec in fileSpecList:
+                                if os.path.isfile(FileSpec):
+                                    tf_progbar.update(count)
+                                    df_data = pd.read_csv(FileSpec)
+                                    filename = os.path.basename(FileSpec)
+                                    d2r.dataDict[FileSpec] = df_data
+                                    #df_data.to_csv(outputFolder + '\\' + filename, index=False)
+                        break
+
+    except Exception:
+        exc_info = sys.exc_info()
+        exc_str = exc_info[1].args[0]
+        if isinstance(exc_str, str):
+            exc_txt = err_txt + "\n\t" + exc_str
+        elif isinstance(exc_str, tuple):
+            exc_txt = err_txt + "\n\t"
+            for s in exc_str:
+                exc_txt += " " + s
+        logging.debug(exc_txt)
+        sys.exit(exc_txt)
+        
+    return
+
+def loadDataIntoTrainingPipeline(d2r, node_name):
+    '''
+    Combines the data acquired from multiple sources in d2r into a single dataframe suitable for later
+    preparation and organization for training
+    '''
+    try:
+        err_txt = "*** An exception occurred loading the data into the training process pipeline ***"
+        print("loading data into training process pipeline")
+        '''
+        Select required data elements and discard the rest
+        '''
+        for edge_i in d2r.graph.edges():
+            if edge_i[0] == node_name:
+                nx_edge = edge_i
+                break
+        
+        nx_data_flow = nx.get_node_attributes(d2r.graph, cc.JSON_OUTPUT_FLOW)
+        output_flow = nx_data_flow[node_name]
+        nx_flowFilename = nx.get_edge_attributes(d2r.graph, cc.JSON_FLOW_DATA_FILE)
+        flowFilename = nx_flowFilename[edge_i[0], edge_i[1], output_flow]
+        
+        nx_dataFields = nx.get_edge_attributes(d2r.graph, cc.JSON_FEATURE_FIELDS)
+        d2r.rawFeatures = nx_dataFields[nx_edge[0], nx_edge[1], output_flow]
+        
+        nx_targetFields = nx.get_edge_attributes(d2r.graph, cc.JSON_TARGET_FIELDS)
+        d2r.rawTargets = nx_targetFields[nx_edge[0], nx_edge[1], output_flow]
+        
+        nx_timeSeries = nx.get_edge_attributes(d2r.graph, cc.JSON_TIME_SEQ)
+        d2r.timeSeries = nx_timeSeries[nx_edge[0], nx_edge[1], output_flow]
+        if d2r.timeSeries:
+            nx_seriesStepIDs = nx.get_edge_attributes(d2r.graph, cc.JSON_SERIES_ID)
+            d2r.dataSeriesIDFields = nx_seriesStepIDs[nx_edge[0], nx_edge[1], output_flow]
+        
+        l_filter = []
+        for fld in d2r.rawFeatures:
+            l_filter.append(fld)
+        for fld in d2r.rawTargets:
+            l_filter.append(fld)
+        if d2r.timeSeries:
+            for fld in d2r.dataSeriesIDFields:
+                l_filter.append(fld)
+
+        df_combined = pd.DataFrame()
+        print("WIP ==========\n\tconverting to rely on data pre-stored in d2r\n")
+        srcCount = len(d2r.dataDict)
+        tf_progbar = keras.utils.Progbar(srcCount, width=50, verbose=1, interval=1, stateful_metrics=None, unit_name='training data')
+        count = 0
+        for dataFile in d2r.dataDict:
+            print("loadDataIntoTrainingPipeline for {}".format(dataFile))
+            tf_progbar.update(count)
+            df_data = d2r.dataDict[dataFile]
+            df_inputs = df_data.filter(l_filter)
+            df_combined = pd.concat([df_combined, df_inputs], ignore_index=True)
+            d2r.dataDict[dataFile] = df_inputs
+            count += 1
+        print("\nData loaded into pipeline\n%s" % df_combined.describe().transpose())
+        d2r.data = df_combined
+        d2r.determineCategories()
+        d2r.archiveData(flowFilename)
+        return
+
+    except Exception:
+        ''' error handling '''
+        exc_info = sys.exc_info()
+        exc_str = exc_info[1].args[0]
+        if isinstance(exc_str, str):
+            exc_txt = err_txt + "\n\t" + exc_str
+        elif isinstance(exc_str, tuple):
+            exc_txt = err_txt + "\n\t"
+            for s in exc_str:
+                exc_txt += " " + s
+        logging.debug(exc_txt)
+        sys.exit(exc_txt)
+        
 def collect_and_select_data(d2r):
     ''' error handling '''
     try:

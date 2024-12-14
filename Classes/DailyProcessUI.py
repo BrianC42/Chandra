@@ -285,10 +285,11 @@ class DailyProcessUI(object):
     
     def saveMachineLearningSignal(self, controls, signals):
         exc_txt = "\nAn exception occurred - saving machine learning signals"
-        signalWorkbook = mlEvaluations()
-        signalWorkbook.processName = controls.processName
         
         try:
+            signalWorkbook = mlEvaluations()
+            signalWorkbook.processName = controls.processName
+            
             for param in controls.processParameterList:
                 paramValue = param.parameterValue.get()
                 print("control parameter - {} set to {}".format(param.parameterName, paramValue))
@@ -547,17 +548,11 @@ class DailyProcessUI(object):
             if proc.executeProcessFlag.get() == "run":
                 print("execute process {} - {}".format(proc.processName, proc.processDescription))
                 
-                '''
-                for param in proc.processParameterList:
-                    print("param: {}, default: {} changed to {}". \
-                          format(param.parameterName, param.defaultValue, param.parameterValue.get()))
-                '''
-                
                 if proc.processName == "Investment Tracking":
                     self.markToMarket()
                 elif proc.processName == "Options":
                     self.optionTradeProcess(proc)
-                elif proc.processName == "Market data":
+                elif proc.processName == "Market data archive":
                     self.marketDataArchive()
                 elif proc.processName == "Enriched data archive":
                     self.enrichMarketDataArchive()
@@ -575,7 +570,7 @@ class DailyProcessUI(object):
                     self.useTrainedRNNCategorizationModel(proc)
                     
                 elif proc.processName == "MultiModelNetwork":
-                    self.trainKerasModel(script = proc.processName)
+                    self.trainKerasModel(proc)
                     
                 else:
                     print("{} is not recognized".format(proc.processName))

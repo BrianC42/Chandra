@@ -147,8 +147,10 @@ JSON_DATA_PREP_FEATURE = "feature"
 '''                                                                                 Required fields '''
 JSON_INPUT_FLOWS = 'inputFlows'
 JSON_OUTPUT_FLOW = 'outputFlow'
+JSON_FLOW_DIR = 'flowDataDir'
 JSON_PROCESS_TYPE = 'processType'
 '''  Supported values - processType'''
+JSON_DATA_ACQUIRE_PROCESS = "dataAcquire"
 JSON_DATA_LOAD_PROCESS = "dataLoad"
 JSON_DATA_COMBINE_PROCESS = "DataCombine"
 JSON_DATA_PREP_PROCESS = "dataPrep"
