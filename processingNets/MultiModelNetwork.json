@@ -3,6 +3,7 @@
 "comment - description 2" : "Approach - use the following pre-trained models",
 "comment - description 3" : "1. Bollinger Band technical analysis - probability of a 10% increase in 10 days",
 "comment - description 4" : "2. MACD technical analysis - identifies MACD trend line cross negative / none / positive",
+"comment - description 5" : "3. Combine the ML model outputs with raw market data",
 "comment - dataflow begin" : "dataflows definition begin -------------------------------------------------------------------------------",
 "dataFlows" : [
 	{
@@ -14,6 +15,13 @@
 	"flowName" : "ModelTwoOutput",
 	"requiredFields" : {"flowFrom" : "ModelTwo", "flowTo" : "DataCombine"},
 	"conditionalFields" : {"flowDataDir" : "internal_flows\\MMN_M2"}
+	},
+	{
+	"flowName" : "acquiredData",
+	"requiredFields" : {"flowFrom" : "acquireData", "flowTo" : "LoadRawData"},
+	"conditionalFields" : {
+		"flowDataDir" : "internal_flows\\MMN_M1M2"
+		}
 	},
 	{
 	"flowName" : "LoadedRawData",
@@ -32,17 +40,26 @@
 	},
 	{
 	"flowName" : "CombinedData",
-	"requiredFields" : {"flowFrom" : "DataCombine", "flowTo" : "LoadCombinedData"},
+	"requiredFields" : {"flowFrom" : "DataCombine", "flowTo" : "acquireCombinedData"},
 	"conditionalFields" : {
 		"flowDataDir" : "internal_flows\\MMN_M1M2",
-		"flowDataFile" : "internal_flows\\CombinedMMN.csv",
+		"flowDataFile" : "CombinedMMN.csv",
 		"TensorflowData" : {
 			"features" : ["Open", "High", "Low", "Close", 
 							"Volume", "OBV", "AccumulationDistribution",
-							"Relative Strength", "ADX"],
+							"Relative Strength", "ADX",
+							"Negative Cross", "Neutral", "Positive Cross", 
+							"BB 10 in 10"],
 			"targets" : ["10day10pct"],
 			"timeSequence" : true, "seriesStepIDField" : ["DateTime"], "seriesDataType" : "TDADateTime", "type" : "relative_time_series"
 			}
+		}
+	},
+	{
+	"flowName" : "acquiredCombinedData",
+	"requiredFields" : {"flowFrom" : "acquireCombinedData", "flowTo" : "LoadCombinedData"},
+	"conditionalFields" : {
+		"flowDataDir" : "internal_flows\\MMN_M1M2"
 		}
 	},
 	{
@@ -54,7 +71,9 @@
 			"problem features" : ["Volume", "OBV", "AccumulationDistribution"],
 			"features" : ["Open", "High", "Low", "Close", 
 							"Volume", "OBV", "AccumulationDistribution",
-							"Relative Strength", "ADX"],
+							"Relative Strength", "ADX",
+							"Negative Cross", "Neutral", "Positive Cross", 
+							"BB 10 in 10"],
 			"targets" : ["10day10pct"],
 			"timeSequence" : true, "seriesStepIDField" : ["DateTime"], "seriesDataType" : "TDADateTime", "type" : "relative_time_series"
 			}
@@ -64,7 +83,7 @@
 	"flowName" : "PreparedData",
 	"requiredFields" : {"flowFrom" : "DataPrepare", "flowTo" : "TrainMultipleModelOutputs"},
 	"conditionalFields" : {
-		"flowDataFile" : "internal_flows\\TrainMultipleModelPrepared.csv",
+		"flowDataFile" : "internal_flows\\MMN_M1M2\\TrainMultipleModelPrepared.csv",
 		"TensorflowData" : {
 			"problem features" : ["Volume", "OBV", "AccumulationDistribution"],
 			"features" : ["Open", "High", "Low", "Close", 
@@ -80,8 +99,13 @@
 ],
 "comment - dataflow end " : "dataflows definition end -------------------------------------------------------------------------------",
 "comment - processNodes" : "process node definitions beginh -------------------------------------------------------------------------",
-"processNodeSequence" : ["ModelOne", "ModelTwo", "LoadRawData", "DataCombine", "LoadCombinedData", "DataPrepare", "TrainMultipleModelOutputs"],
+"processNodeSequence" : ["ModelOne", "ModelTwo", "acquireData", "LoadRawData", "DataCombine", "acquireCombinedData", "LoadCombinedData", "DataPrepare", "TrainMultipleModelOutputs"],
 "processNodes" : [
+	{
+	"processNodeName" : "stop",
+	"requiredFields" : {"processType" : "stop", "inputFlows" : [""], "outputFlow" : ""},
+	"conditionalFields" : {}
+	},
 	{
 	"processNodeName" : "ModelOne",
 	"requiredFields" : {"processType" : "executeModel", "inputFlows" : [], "outputFlow" : "ModelOneOutput"},
@@ -141,6 +165,16 @@
 	}
 	},
 	{
+	"processNodeName" : "acquireData",
+	"requiredFields" : {"processType" : "dataAcquire", "inputFlows" : [], "outputFlow" : "acquiredData"},
+	"conditionalFields" : {
+		"dataLoadCtrl" : {
+			"comment file spec" : "folder1\\folder2\\[a-z]*.csv",
+			"inputFile" : ["market_data\\augmented\\*.csv"]
+		}
+	}
+	},
+	{
 	"processNodeName" : "LoadRawData",
 	"requiredFields" : {"processType" : "dataLoad", "inputFlows" : [], "outputFlow" : "LoadedRawData"},
 	"conditionalFields" : {
@@ -163,18 +197,28 @@
 	}
 	},
 	{
+	"processNodeName" : "acquireCombinedData",
+	"requiredFields" : {"processType" : "dataAcquire", "inputFlows" : [], "outputFlow" : "acquiredCombinedData"},
+	"conditionalFields" : {
+		"dataLoadCtrl" : {
+			"comment file spec" : "folder1\\folder2\\[a-z]*.csv",
+			"inputFile" : ["internal_flows\\MMN_M1M2\\[C]*.csv"]
+		}
+	}
+	},
+	{
 	"processNodeName" : "LoadCombinedData",
 	"requiredFields" : {"processType" : "dataLoad", "inputFlows" : ["CombinedData"], "outputFlow" : "LoadedCombinedData"},
 	"conditionalFields" : {
 		"dataLoadCtrl" : {
 			"comment file spec" : "internal_flows\\MMN_M1M2\\[a-z]*.csv",
-			"inputFile" : ["market_data\\augmented\\[C]*.csv"]
+			"inputFile" : ["internal_flows\\MMN_M1M2\\[C]*.csv"]
 		}
 	}
 	},
 	{
 	"processNodeName" : "DataPrepare",
-	"requiredFields" : {"processType" : "dataPrep", "inputFlows" : ["CombinedData"], "outputFlow" : "PreparedData"},
+	"requiredFields" : {"processType" : "dataPrep", "inputFlows" : ["LoadedCombinedData"], "outputFlow" : "PreparedData"},
 	"conditionalFields" : {
 		"dataPrepCtrl" : {
 			"ignoreBlanks" : true,

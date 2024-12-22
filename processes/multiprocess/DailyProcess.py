@@ -3,17 +3,6 @@ Created on Jul 27, 2023
 
 @author: Brian
 '''
-'''
-import os
-import glob
-import json
-import time
-import tkinter as tk
-from configuration import read_config_json
-from Workbooks import investments, optionTrades
-from multiProcess import updateMarketData 
-import tensorflow as tf
-'''
 
 import sys
 
@@ -23,33 +12,6 @@ import keras
 import pandas as pd
 
 from DailyProcessUI import DailyProcessUI
-'''
-import re
-import datetime as dt
-from configuration import get_ini_data
-from GoogleSheets import googleSheet
-from pretrainedModels import rnnCategorization, rnnPrediction
-PROCESS_CONFIGS = "processes"
-MODEL_CONFIGS = "models"
-
-PROCESS_ID = "name"
-PROCESS_DESCRIPTION = "Description"
-RUN = "run"
-RUN_COL = 2
-MODEL_FILE = "file"
-MODEL = "model"
-OUTPUT_FIELDS = "Outputs"
-CONFIG = "json"
-
-MARKET_DATA_UPDATE = "Market data update"
-MARK_TO_MARKET = "Mark to market"
-DERIVED_MARKET_DATA = "Calculate derived market data"
-SECURED_PUTS = "Secured puts"
-COVERED_CALLS = "Covered calls"
-OPTION_TRADES = "Option trade review"
-BOLLINGER_BAND_PREDICTION = "Bollinger Band"
-MACD_TREND_CROSS = "MACD Trend"
-'''
 
 if __name__ == '__main__':
     print("The version of python is {}".format(sys.version))

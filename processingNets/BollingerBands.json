@@ -4,10 +4,17 @@
 "comment - dataflow section" : "Specification details for the flows of data between processing nodes -----------------------------",
 "dataFlows" : [
 	{
-	"flowName" : "LoadedData",
-	"requiredFields" : {"flowFrom" : "LoadData", "flowTo" : "PrepData"},
+	"flowName" : "acquiredData",
+	"requiredFields" : {"flowFrom" : "acquireData", "flowTo" : "loadData"},
 	"conditionalFields" : {
-		"flowDataFile" : "internal_flows\\BBLoadedData.csv",
+		"flowDataDir" : "internal_flows\\BBForecast"
+		}
+	},
+	{
+	"flowName" : "LoadedData",
+	"requiredFields" : {"flowFrom" : "loadData", "flowTo" : "PrepData"},
+	"conditionalFields" : {
+		"flowDataFile" : "internal_flows\\BBForecast\\BBLoadedData.csv",
 		"TensorflowData" : {
 			"features" : ["BB_Upper", "BB_Lower", "EMA20", "Open", "High", "Low", "Close"],
 			"targets" : ["10day10pct"],
@@ -30,17 +37,29 @@
 ],
 "comment - dataflow" : "dataflow definition end ----------------------------------------------------------------------------------",
 "comment - processing node section" : "Specification details for the processing nodes --------------------------------------------",
-"processNodeSequence" : ["LoadData", "PrepData", "BollingerBands"],
+"processNodeSequence" : ["acquireData", "loadData", "PrepData", "BollingerBands"],
 "processNodes" : [
 	{
-	"processNodeName" : "LoadData",
+	"processNodeName" : "stop",
+	"requiredFields" : {"processType" : "stop", "inputFlows" : [""], "outputFlow" : ""},
+	"conditionalFields" : {}
+	},
+	{
+	"processNodeName" : "acquireData",
+	"requiredFields" : {"processType" : "dataAcquire", "inputFlows" : [], "outputFlow" : "acquiredData"},
+	"conditionalFields" : {
+		"dataLoadCtrl" : {
+			"comment file spec" : "folder1\\folder2\\[a-z]*.csv",
+			"inputFile" : ["market_data\\augmented\\*.csv"]
+		}
+	}
+	},
+	{
+	"processNodeName" : "loadData",
 	"requiredFields" : {"processType" : "dataLoad", "inputFlows" : [], "outputFlow" : "LoadedData"},
 	"conditionalFields" : {
 		"dataLoadCtrl" : {
-			"comment file spec" : "market_data\\augmented\\[a-z]*.csv",
-			"inputFile" : [
-				"market_data\\augmented\\[a-z]*.csv"
-			]
+			"inputFile" : ["market_data\\augmented\\[a-z]*.csv"]
 		}
 	}
 	},

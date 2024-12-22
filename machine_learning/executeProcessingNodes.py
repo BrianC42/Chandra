@@ -71,7 +71,7 @@ def executeStop(nodeName, d2rP):
 
 def executeDataAcquire(nodeName, d2rP):
     print("\n============== WIP =============\n\tSeparating data acquisition from load into processing pipeline\n============\n")
-    acquireTrainingData(d2rP)
+    acquireTrainingData(d2rP, nodeName)
 
     return
 
@@ -213,14 +213,18 @@ def executeDataCombine(nodeName, d2rP):
         ''' create an output file containing all samples for training '''
         df_combined = pd.DataFrame()
         for symbol in combinedData:
-            print("writing {} combined data to {}".format(symbol, outputFlowDir))
+            #print("writing {} combined data to {}".format(symbol, outputFlowDir))
             outputFile = aiwork + "\\" + outputFlowDir + "\\" + symbol + ".csv"
             combinedData[symbol].to_csv(outputFile)
             ''' combine into a single sample file "flowDataFile" - 'vertical' merge '''
             df_combined = pd.concat([df_combined, combinedData[symbol]], ignore_index=True)
-        outputFile = aiwork + "\\" + "internal_flows\\CombinedMMN.csv"
+        print("WIP ==============\n\tcombined data file fixed. Needs to be configuarable")
+        outputFile = aiwork + "\\" + "internal_flows\\MMN_M1M2\\CombinedMMN.csv"
         df_combined.to_csv(outputFile)
         d2rP.data = df_combined
+        
+        ''' discard processed data '''
+        d2r.dataDict = dict()
 
     except Exception:
         exc_info = sys.exc_info()

@@ -52,7 +52,7 @@ class processParameter(object):
         self.parameterNameWidget.grid(column=0, row=rowNum, sticky=(W))
         
         self.parameterValue = StringVar()
-        self.parameterValueWidget = ttk.Entry(self.controlFrame, textvariable=self.parameterValue, width=80)
+        self.parameterValueWidget = ttk.Entry(self.controlFrame, textvariable=self.parameterValue, width=50)
         self.parameterValueWidget.grid(column=1, row=rowNum, sticky=(W))
         self.setValue(self.defaultValue)
         

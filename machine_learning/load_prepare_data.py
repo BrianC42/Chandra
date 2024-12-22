@@ -727,7 +727,10 @@ def normalizeFeature(d2r, fields, fieldPrepCtrl, normalizeType):
         d2r.data[fields] = df_normalizedFields
         
         print("WIP ================\n\tis scaling being done logically\n\tshould it be refit on every dKey?\n===========================")
+        tf_progbar = keras.utils.Progbar(len(d2r.dataDict), width=50, verbose=1, interval=10, stateful_metrics=None, unit_name='sample source')
+        count = 0
         for dKey in list(d2r.dataDict):
+            tf_progbar.update(count)
             if d2r.dataDict[dKey].shape[0] == 0:
                 print("Skipping and removing %s" % dKey)
                 del d2r.dataDict[dKey]
@@ -744,6 +747,7 @@ def normalizeFeature(d2r, fields, fieldPrepCtrl, normalizeType):
                 d2r.normDataDict[dKey][fields] = df_normalizedFields
 
                 #sanityCheckMACD(combined=d2r.normDataDict[dKey], stage="d2r.normDataDict after normalization")
+            count += 1
 
         d2r.normalized = True
     else:
@@ -908,7 +912,7 @@ def selectTrainingData(d2r, node_name, nx_edge):
     #df_combined.drop(targetFields, axis=1)
     return df_combined
 
-def acquireTrainingData(d2r):
+def acquireTrainingData(d2r, nodeName):
     ''' error handling '''
     try:
         err_txt = "*** An exception occurred acquiring the data ***"
@@ -917,8 +921,8 @@ def acquireTrainingData(d2r):
         Find the node specification for data acquisition
         '''
         for node_i in d2r.graph.nodes():
-            nx_read_attr = nx.get_node_attributes(d2r.graph, cc.JSON_PROCESS_TYPE)
-            if nx_read_attr[node_i] == cc.JSON_DATA_ACQUIRE_PROCESS:
+            #nx_read_attr = nx.get_node_attributes(d2r.graph, cc.JSON_PROCESS_TYPE)
+            if node_i == nodeName:
                 '''
                 Find the specification of the output flow from the node
                 '''
@@ -950,6 +954,7 @@ def acquireTrainingData(d2r):
                                     filename = os.path.basename(FileSpec)
                                     d2r.dataDict[FileSpec] = df_data
                                     #df_data.to_csv(outputFolder + '\\' + filename, index=False)
+                                count += 1
                         break
 
     except Exception:
@@ -1014,7 +1019,7 @@ def loadDataIntoTrainingPipeline(d2r, node_name):
         tf_progbar = keras.utils.Progbar(srcCount, width=50, verbose=1, interval=1, stateful_metrics=None, unit_name='training data')
         count = 0
         for dataFile in d2r.dataDict:
-            print("loadDataIntoTrainingPipeline for {}".format(dataFile))
+            #print("loadDataIntoTrainingPipeline for {}".format(dataFile))
             tf_progbar.update(count)
             df_data = d2r.dataDict[dataFile]
             df_inputs = df_data.filter(l_filter)
