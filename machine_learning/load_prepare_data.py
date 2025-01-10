@@ -20,7 +20,7 @@ import configuration_constants as cc
 
 from sklearn import preprocessing
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
-#from sklearn.preprocessing import  OneHotEncoder
+from sklearn.preprocessing import OneHotEncoder
 
 from Scalers import chandraScaler
 #from Scalers import NORMALIZE_RELATIVE_TIME_SERIES
@@ -391,6 +391,7 @@ def arrangeDataForTraining(d2r):
         targets = d2r.preparedTargets
         
         feature_cols, target_cols = id_columns(d2r.data, features, targets)
+        maxCol = max(feature_cols + target_cols)
         
         nx_modelIterations = nx.get_node_attributes(d2r.graph, "training iterations")[d2r.mlNode]
         iterVariables = nx_modelIterations[d2r.trainingIteration]
@@ -427,6 +428,7 @@ def arrangeDataForTraining(d2r):
             #sanityCheckMACD(combined=d2r.data)
    
             if nx_model_type == INPUT_LAYERTYPE_DENSE:
+                print("WIP ==========\n\tuse maxCol to prevent array out of bounds if not all samples contain all all targets")
                 if d2r.categorizationRegression == cc.JSON_ML_GOAL_CATEGORIZATION:
                     if nx_combine_sample_Count > 1:
                         features, labels = combineMultipleSamples(d2r, d2r.categorizationRegression, nx_combine_sample_Count, \
@@ -477,9 +479,12 @@ def arrangeDataForTraining(d2r):
                 for dkey in d2r.normDataDict:
                     err_txt = "\nError arranging data for training for " + dkey
                     npData   = np.array(d2r.normDataDict[dkey], dtype=float)
-                    features, labels = np_to_sequence(npData, feature_cols, target_cols, nx_time_steps)
-                    npX = np.row_stack((npX, features))
-                    npY = np.row_stack((npY, labels))
+                    if npData.shape[1] > maxCol:
+                        features, labels = np_to_sequence(npData, feature_cols, target_cols, nx_time_steps)
+                        npX = np.row_stack((npX, features))
+                        npY = np.row_stack((npY, labels))
+                    else:
+                        print("{} does not have examples of all targets".format(dkey))
                 err_txt = "\nError creating training, validation and testing data sets"
                 d2r.trainX = npX[ : d2r.trainLen , :]
                 d2r.trainY = npY[ : d2r.trainLen , :]
@@ -632,26 +637,39 @@ def generate1hot(d2r, fields, fieldPrepCtrl):
             ''' Prepare categorized labels '''
             categories, counts = np.unique(d2r.data[field].to_numpy(), return_counts=True)
 
-            ''' LabelBinarizer - works for 3 category value example '''
+            ''' LabelBinarizer - works for 3 category value example
             label1Hot = preprocessing.LabelBinarizer()
-            ''' OneHotEncoder (preferred) - WIP '''
-            #label1Hot = preprocessing.OneHotEncoder()
-            #categories = categories.reshape(-1, 1)
-            #raise NameError("converting to 1 hot format {}".format(field))
-                
             label1Hot.fit(categories)
             np_categorizedData = label1Hot.transform(d2r.data[field].to_numpy())
             categorizedData = pd.DataFrame(data=np_categorizedData)
+            '''
             
+            ''' OneHotEncoder (preferred) '''
+            npField = d2r.data[field].to_numpy().reshape(-1, 1)
+            encoder = preprocessing.OneHotEncoder(sparse_output=False)
+            encoder.set_output(transform="pandas")
+            encoder.fit(npField)
+            oneHotField = encoder.transform(npField)
+            oneHotField = oneHotField.reset_index(drop=True)
+            #categories = categories.reshape(-1, 1)
+            #raise NameError("converting to 1 hot format {}".format(field))
+                
         else:
             pass
         
-        ''' Remove original data (feature or label) '''
+        print("WIP ==============\n\tOneHotEncoder - field replacement is not working correctly\n===========================")
+        ''' Replace original data with 1 Hot format '''
+        print("dropping {} from\n{}".format(field, d2r.data))
         d2r.data.drop(labels=field, axis=1, inplace=True)
+        d2r.data = d2r.data.reset_index(drop=True)
+        print("adding in {} rows from\n{}\nto {} in\n{}".format(len(oneHotField), oneHotField, len(d2r.data), d2r.data))
+        d2r.data = pd.concat([d2r.data, oneHotField], axis=1)
+        print("creates {} rows\n{}".format(len(d2r.data), d2r.data))
         ndxField += 1
 
     ''' Insert 1 hot data into features or labels / targets '''
     #print("update d2r with 1 hot column names")
+    '''
     categoryNames = []
     for ndx in range(0, len(categories)):
         name = field+str(ndx)
@@ -659,6 +677,7 @@ def generate1hot(d2r, fields, fieldPrepCtrl):
         categorizedData = categorizedData.rename(columns={ndx:name})
     categorizedData.index=range(0, len(categorizedData))
     d2r.data = pd.concat([d2r.data, categorizedData], axis=1)
+    '''
 
     '''
     process d2r.normDataDict
@@ -675,23 +694,31 @@ def generate1hot(d2r, fields, fieldPrepCtrl):
                 
             elif fieldPrep[cc.JSON_1HOT_CATEGORYTYPE] == cc.JSON_1HOT_LABEL:
                 ''' Prepare categorized labels '''
-                categories, counts = np.unique(d2r.normDataDict[dKey][field].to_numpy(), return_counts=True)
+                #categories, counts = np.unique(d2r.normDataDict[dKey][field].to_numpy(), return_counts=True)
 
-                ''' LabelBinarizer - works for 3 category value example '''
+                ''' LabelBinarizer - works for 3 category value example
                 label1Hot = preprocessing.LabelBinarizer()
-                ''' OneHotEncoder (preferred) - WIP '''
-                #label1Hot = preprocessing.OneHotEncoder()
-                #categories = categories.reshape(-1, 1)
-                #raise NameError("converting to 1 hot format {}".format(field))
-                
                 label1Hot.fit(categories)
                 np_categorizedData = label1Hot.transform(d2r.normDataDict[dKey][field].to_numpy())
                 categorizedData = pd.DataFrame(data=np_categorizedData)
+                '''
+                
+                ''' OneHotEncoder (preferred) - WIP '''
+                encoder = preprocessing.OneHotEncoder(sparse_output=False)
+                encoder.set_output(transform="pandas")
+                encoder.fit(d2r.normDataDict[dKey][field].to_numpy().reshape(-1, 1))
+                oneHotField = encoder.transform(d2r.normDataDict[dKey][field].to_numpy().reshape(-1, 1))
+                
+                d2r.normDataDict[dKey].drop(labels=field, axis=1, inplace=True)
+                d2r.normDataDict[dKey] = pd.concat([d2r.normDataDict[dKey], oneHotField], axis=1)
+            
+                d2r.preparedTargets = encoder.get_feature_names_out()
             
             else:
                 pass
-        
+
             #print("update d2r with 1 hot column names")
+            '''
             categoryNames = []
             for ndx in range(0, len(categories)):
                 name = field+str(ndx)
@@ -701,8 +728,8 @@ def generate1hot(d2r, fields, fieldPrepCtrl):
             d2r.normDataDict[dKey].drop(labels=field, axis=1, inplace=True)
             categorizedData.index=d2r.normDataDict[dKey].index
             d2r.normDataDict[dKey] = pd.concat([d2r.normDataDict[dKey], categorizedData], axis=1)
-            d2r.preparedTargets = categoryNames
-
+            '''
+            
     return
 
 def normalizeFeature(d2r, fields, fieldPrepCtrl, normalizeType):
@@ -809,10 +836,13 @@ def prepareTrainingData(d2r):
                 js_prepCtrl = nx.get_node_attributes(d2r.graph, cc.JSON_DATA_PREPARATION_CTRL)[node_i]
                 if cc.JSON_IGNORE_BLANKS in js_prepCtrl:
                     if js_prepCtrl[cc.JSON_IGNORE_BLANKS]:
-                        print("Removing NaN")
+                        print("Removing NaN from {}\n{}".format(len(d2r.data), d2r.data))
                         d2r.data = d2r.data.dropna()
+                        d2r.data = d2r.data.reset_index(drop=True)
+                        print("creates {} rows\n{}".format(len(d2r.data), d2r.data))
                         for dKey in list(d2r.dataDict):
                             d2r.dataDict[dKey] = d2r.dataDict[dKey].dropna()
+                            d2r.dataDict[dKey] = d2r.dataDict[dKey].reset_index(drop=True)
        
                 if cc.JSON_DATA_PREP_SEQ in js_prepCtrl:
                     normalizeFields = []
@@ -1003,7 +1033,8 @@ def loadDataIntoTrainingPipeline(d2r, node_name):
         if d2r.timeSeries:
             nx_seriesStepIDs = nx.get_edge_attributes(d2r.graph, cc.JSON_SERIES_ID)
             d2r.dataSeriesIDFields = nx_seriesStepIDs[nx_edge[0], nx_edge[1], output_flow]
-        
+            
+        ''' build up a list of the fields in the data to load '''
         l_filter = []
         for fld in d2r.rawFeatures:
             l_filter.append(fld)
@@ -1013,20 +1044,25 @@ def loadDataIntoTrainingPipeline(d2r, node_name):
             for fld in d2r.dataSeriesIDFields:
                 l_filter.append(fld)
 
-        df_combined = pd.DataFrame()
-        print("WIP ==========\n\tconverting to rely on data pre-stored in d2r\n")
-        srcCount = len(d2r.dataDict)
-        tf_progbar = keras.utils.Progbar(srcCount, width=50, verbose=1, interval=1, stateful_metrics=None, unit_name='training data')
+        df_combined = pd.DataFrame(columns=l_filter)
+        tf_progbar = keras.utils.Progbar(len(d2r.dataDict), width=50, verbose=1, interval=50, stateful_metrics=None, unit_name='training data')
         count = 0
         for dataFile in d2r.dataDict:
             #print("loadDataIntoTrainingPipeline for {}".format(dataFile))
-            tf_progbar.update(count)
             df_data = d2r.dataDict[dataFile]
-            df_inputs = df_data.filter(l_filter)
-            df_combined = pd.concat([df_combined, df_inputs], ignore_index=True)
-            d2r.dataDict[dataFile] = df_inputs
+            df_inputs = df_data.filter(l_filter)        
+            if all(col in df_inputs.columns for col in l_filter):
+                if len(df_combined) == 0:
+                    df_combined = df_inputs
+                else:
+                    df_combined = pd.concat([df_combined, df_inputs], ignore_index=True)
+                d2r.dataDict[dataFile] = df_inputs
+            else:
+                print("Required data elements are missing in {}".format(dataFile))
+            tf_progbar.update(count)
             count += 1
-        print("\nData loaded into pipeline\n%s" % df_combined.describe().transpose())
+        #print("\nData loaded into pipeline\n%s" % df_combined.describe().transpose())
+            
         d2r.data = df_combined
         d2r.determineCategories()
         d2r.archiveData(flowFilename)

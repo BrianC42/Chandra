@@ -12,20 +12,9 @@ import networkx as nx
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 #import seaborn as sns
+import datashader as ds, colorcet as cc
 
 from tda_api_library import format_tda_datetime
-
-''' Unused definitions
-from configuration_constants import JSON_TENSORFLOW
-from configuration_constants import JSON_AUTOKERAS
-from TrainingDataAndResults import TRAINING_TENSORFLOW
-from TrainingDataAndResults import INPUT_LAYERTYPE_DENSE
-from TrainingDataAndResults import INPUT_LAYERTYPE_RNN
-from TrainingDataAndResults import INPUT_LAYERTYPE_CNN
-
-from matplotlib.pyplot import tight_layout
-from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
-'''
 
 from configuration_constants import JSON_OPTIMIZER
 from configuration_constants import JSON_LOSS
@@ -35,6 +24,7 @@ from configuration_constants import JSON_VISUALIZE_TRAINING_FIT
 from configuration_constants import JSON_VISUALIZE_TARGET_SERIES
 
 from TrainingDataAndResults import TRAINING_AUTO_KERAS
+#from pandas.tests.frame.test_validate import dataframe
 
 def confusion_matrix(actual, predicted):
     """Generates a confusion matrix based on the actual and predicted labels.
@@ -527,82 +517,39 @@ def selectDateAxisLabels(dateTimes):
     return tmark, tmarkDates
 
 def visualizeTestVsForecast(d2r, prediction):
-    '''
-    if len(d2r.trainX.shape) == 3:
-        samples = len(d2r.trainX[0, :, 0]) * 3
-    elif len(d2r.trainX.shape) == 2:
-        samples = len(d2r.trainX[0, :]) * 3
-    else:
-        ex_txt = "training data feature shape is invalid"
-        raise NameError(ex_txt)
-
-    if len(d2r.trainY.shape) == 3:
-        label = np.reshape(d2r.testY, (len(prediction),1))
-    elif len(d2r.trainY.shape) == 2:
-        label = d2r.testY.copy()
-    else:
-        ex_txt = "training data label shape is invalid"
-        raise NameError(ex_txt)
-
-
-    FORECAST = 0
-    predVals, predInverse, predCounts = np.unique(prediction, return_inverse=True, return_counts=True)
-    catVals, catInverse, catCounts = np.unique(d2r.testY, return_inverse=True, return_counts=True)    
-    '''
-    
-    fig2, axs = plt.subplots(2, 1)
-    fig2.suptitle(d2r.mlNode, fontsize=14, fontweight='bold')    
-    axis1 = axs[0]
-    axis2 = axs[1]
-    
-    axis1.set_title("Data series vs. Predictions")
-    axis1.set_xlabel("feature value")
-    axis1.set_ylabel("label Value")
-    
-    #axis1.plot(range(0, len(d2r.trainY)), d2r.trainY[ : ], label='Train series')
-    #axis1.plot(range(0, len(d2r.validateY)), d2r.validateY[ : ], label='Validate series')
-    axis1.plot(range(0, len(d2r.testY)), d2r.testY[ : ], label='Test series')
-    axis1.plot(range(0, len(prediction)), prediction[ : ], linestyle='dashed', label='Prediction')
-    '''
-    axis1.plot(range(len(prediction)-samples, len(prediction)), \
-               label[len(prediction)-samples : ], \
-               label='Test series')
-    axis1.plot(range(len(prediction)-samples, len(prediction)), \
-               prediction[len(prediction)-samples : , FORECAST], \
-               linestyle='dashed', label='Prediction')
-    '''
-    axis1.legend()
-    axis1.grid(True)
-
-    '''
-    if len(catCounts) <= 10:
-        dfV = pd.DataFrame(columns=['Prediction', 'Labels'])
-        dfV['Prediction'] = prediction[:,0]
-        dfV['Labels'] = label[:,0]
-        axis2 = sns.violinplot(x=dfV['Labels'], y=dfV['Prediction'])
-        axis2.legend()
+    err_txt = "Visualizing test data vs. model forecast"
+    try:
+        if len(prediction.shape) == 2:
+            print("\nvisualizing test data values vs. model prediction is [%s, %s]\n" % (prediction.shape[0], prediction.shape[1]))
+            N = prediction.shape[0]
+        else:
+            err_txt = err_txt + "\nExpected predicted values, 1 per test sample"
+            raise NameError(err_txt)                
         
-    else:
-        print("\n==============================================\n\tWIP visualizeTestVsForecast - second axis \n\tcontinuous label values\n================================\n")
-        axis2.set_title("WIP")
-        axis2.set_xlabel("time periods")
-        axis2.set_ylabel("Data Value")
-        low = 0
-        LOW_PCT = 0.9
-        accurate = 0
-        high = 0
-        HIGH_PCT = 1.1
-        for ndx in range(0, len(prediction)):
-            if prediction[ndx] < label[ndx] * LOW_PCT:
-                low += 1
-            elif prediction[ndx] > label[ndx] * HIGH_PCT:
-                high += 1
-            else:
-                accurate += 1
-    '''
+        ''' scikit-learn scatter plot
+        x = d2r.testY
+        y = prediction
+        colors = np.random.rand(N)
+        area = (30 * np.random.rand(N))**2  # 0 to 15 point radii
+    
+        plt.scatter(x, y, s=area, c=colors, alpha=0.5)
+        plt.show()
+        '''
+        X = d2r.testY.reshape(-1)
+        Y = prediction.reshape(-1)
+        plotData = pd.DataFrame({'x':X, 'y':Y})
         
-    plt.tight_layout()
-    plt.show()
+        cvs = ds.Canvas(plot_width=850, plot_height=500)
+        agg = cvs.points(plotData, 'test Data', 'Prediction Probability')
+        img = ds.tf.shade(agg, cmap=cc.fire)
+        
+        #plotData.plot.scatter('x', 'y')
+    
+    except Exception:
+        exc_info = sys.exc_info()
+        exc_str = exc_info[1].args[0]
+        err_txt = err_txt + "\n\t" + exc_str
+        sys.exit(err_txt)
 
     return
 

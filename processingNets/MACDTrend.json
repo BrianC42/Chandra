@@ -1,42 +1,6 @@
 {
 "comment - description" : "Experimental categorization model to identify MACD_flag based on MACD and MACD_Signal",
-"comment - dataflow section" : "Specification details for the flows of data between processing nodes",
-"dataFlows" : [
-	{
-	"flowName" : "acquiredData",
-	"requiredFields" : {"flowFrom" : "acquireData", "flowTo" : "loadData"},
-	"conditionalFields" : {
-		"flowDataDir" : "internal_flows\\MACDTrendTraining"
-		}
-	},
-	{
-	"flowName" : "loadedData",
-	"requiredFields" : {"flowFrom" : "loadData", "flowTo" : "PrepData"},
-	"conditionalFields" : {
-		"flowDataFile" : "internal_flows\\MACDTrendTraining\\TrendLineCross.csv",
-		"TensorflowData" : {
-			"features" : ["MACD", "MACD_Signal"],
-			"targets" : ["MACD_flag"],
-			"timeSequence" : true, "seriesStepIDField" : ["DateTime"], "seriesDataType" : "TDADateTime", "type" : "relative_time_series"
-			}
-		}
-	},
-	{
-	"flowName" : "MACDTrendCrossPrepared",
-	"requiredFields" : {"flowFrom" : "PrepData", "flowTo" : "MACDTrendCross"},
-	"conditionalFields" : {
-		"flowDataFile" : "internal_flows\\MACDTrendTraining\\TrendLineCrossPrepared.csv",
-		"TensorflowData" : {
-			"features" : ["MACD", "MACD_Signal"],
-			"targets" : ["MACD_flag"],
-			"timeSequence" : true, "seriesStepIDField" : ["DateTime"], "seriesDataType" : "TDADateTime", "type" : "relative_time_series"
-			}
-		}
-	}
-],
-"comment - dataflow" : "definition end ----------------------------------------------",
-"comment - processing node section" : "Specification details for the processing nodes",
-"processNodeSequence" : ["acquireData", "loadData", "PrepData", "MACDTrendCross", "stop"],
+"processNodeSequence" : ["acquireData", "loadData", "PrepData", "MACDTrendCross"],
 "processNodes" : [
 	{
 	"processNodeName" : "stop",
@@ -75,7 +39,7 @@
 			},
 			"normalize" : {
 				"comment types supported" : ["standard", "minmax", "relative_time_series"],
-				"type" : "relative_time_series",
+				"type" : "standard",
 				"features" : [
 					{"feature" : "MACD"},
 					{"feature" : "MACD_Signal"}
@@ -83,7 +47,7 @@
 			},
 			"oneHotEncoding" : {
 				"features" : [
-					{"feature" : "MACD_flag", "categoryType" : "label"}
+					{"feature" : "MACD_flag", "categoryType" : "label", "comment" : "3 values, -1/0/1"}
 				]
 			}
 		}
@@ -95,15 +59,15 @@
 	"conditionalFields" : {
 		"categorizationRegression" : "categorization",
 		"dataPrecision" : "float32", "balanceClasses" : true, "combineSampleCount" : 4,
-		"visualizations" : ["CategorizedTimeSeries", "categoryMatrix"],
+		"visualizations" : ["categoryMatrix", "CategorizedTimeSeries"],
 		"training iterations" : [
 			{
 			"iteration description" : "categorical_crossentropy / [Accuracy, Precision, Recall] / sigmoid (unbalanced)",
 			"iteration parameters" : {
-				"iteration ID" : "MACDTrend",
+				"iteration ID" : "MACDTrend standard",
 				"training iteration description" : "Recurrent model categorizing MACD flag (-1, 0 1) of trend line crossing",
 				"modelFileDir" : "models\\MACDTrend\\",
-				"tensorboard" : {"log file dir" : "logs\\tensorboard\\categorization\\lstm\\MACDTrendLineCross\\"},
+				"tensorboard" : {"log file dir" : "logs\\tensorboard\\MACDTrendLineCross\\"},
 				"forecastInterval" : 0,
 				"modelLayers" : [
     				{"layerName" : "input", "layerType" : "lstm", "featureCount": 2, "timeSteps": 5, "layerUnits" : 256, "returnSequences" : true, "outputActivation" : "tanh"},
@@ -114,7 +78,7 @@
     				{"layerType" : "dense", "layerName" : "output", "layerUnits": 3, "outputActivation" : "softmax"}
 					],
 				"training" : {
-					"verbose" : 2, "batchSize" : 16, "epochs" : 7, "validationSplit" : 0.1, "testSplit" : 0.2, "shuffle" : false,
+					"verbose" : 2, "batchSize" : 16, "epochs" : 15, "validationSplit" : 0.1, "testSplit" : 0.2, "shuffle" : false,
 					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
 					"optimizer" : {"name" : "adam", "learning_rate" : 0.001}, "compilationLoss" : "categorical_crossentropy", "compilationMetrics" : ["categorical_crossentropy"]
 				}
@@ -124,6 +88,42 @@
 	}
 	}
 ],
+"comment - processing node section end" : "-------------------------------------------------------------------------",
+"comment - dataflow section" : "Specification details for the flows of data between processing nodes",
+"dataFlows" : [
+	{
+	"flowName" : "acquiredData",
+	"requiredFields" : {"flowFrom" : "acquireData", "flowTo" : "loadData"},
+	"conditionalFields" : {
+		"flowDataDir" : "internal_flows\\MACDTrendTraining"
+		}
+	},
+	{
+	"flowName" : "loadedData",
+	"requiredFields" : {"flowFrom" : "loadData", "flowTo" : "PrepData"},
+	"conditionalFields" : {
+		"flowDataFile" : "internal_flows\\MACDTrendTraining\\TrendLineCross.csv",
+		"TensorflowData" : {
+			"features" : ["MACD", "MACD_Signal"],
+			"targets" : ["MACD_flag"],
+			"timeSequence" : true, "seriesStepIDField" : ["DateTime"], "seriesDataType" : "TDADateTime", "type" : "relative_time_series"
+			}
+		}
+	},
+	{
+	"flowName" : "MACDTrendCrossPrepared",
+	"requiredFields" : {"flowFrom" : "PrepData", "flowTo" : "MACDTrendCross"},
+	"conditionalFields" : {
+		"flowDataFile" : "internal_flows\\MACDTrendTraining\\TrendLineCrossPrepared.csv",
+		"TensorflowData" : {
+			"features" : ["MACD", "MACD_Signal"],
+			"targets" : ["MACD_flag"],
+			"timeSequence" : true, "seriesStepIDField" : ["DateTime"], "seriesDataType" : "TDADateTime", "type" : "relative_time_series"
+			}
+		}
+	}
+],
+"comment - dataflow section end" : "----------------------------------------------------------------------------------",
 "comment end of specification" : "------------------------------------------------------------------------------------",
 "comment development processNodes" : [
 	{

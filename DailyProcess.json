@@ -57,6 +57,7 @@
 		{"run" : "MultiModelNetwork"},
 		{"available" : "wip"},
 		{"available" : "OnBalanceVolume"},
+		{"available" : "AdvanceDecline"},
 		{"available" : "MultiModelNetwork"}
 		]	
 	},
@@ -81,8 +82,8 @@
 	"Description" : "Bollinger Bands prediction",
 	"run" : false,
 	"controls" : [
-		{"file" : "BollingerBands\\BollingerBands 20241115 163140.keras"},
-		{"scaler" : "BollingerBands\\BollingerBands 20241115 163140 scaler.pkl"},
+		{"file" : "BollingerBands\\BollingerBands 20241223 122110.keras"},
+		{"scaler" : "BollingerBands\\BollingerBands 20241223 122110 scaler.pkl"},
 		{"features" : "BB_Upper,BB_Lower,EMA20,Open,High,Low,Close"},
 		{"timeSteps": 5},
 		{"Outputs" : "10% in 10 Days Probability"},
@@ -101,8 +102,8 @@
 	"Description" : "MACD/moving average classification",
 	"run" : false,
 	"controls" : [
-		{"file" : "MACDTrend\\MACDTrend 20241113 103459.keras"},
-		{"scaler" : "MACDTrend\\MACDTrend 20241113 103459 scaler.pkl"},
+		{"file" : "MACDTrend\\MACDTrend 20241223 120401.keras"},
+		{"scaler" : "MACDTrend\\MACDTrend 20241223 120401 scaler.pkl"},
 		{"Outputs" : "Negative Cross,Neutral,Positive Cross"},
 		{"featureFile" : "market_data\\augmented\\*.csv"},
 		{"features" : "MACD,MACD_Signal"},

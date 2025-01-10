@@ -76,7 +76,7 @@
 			},
 			"normalize" : {
 				"comment types supported" : ["standard", "minmax", "relative_time_series"],
-				"type" : "relative_time_series",
+				"type" : "standard",
 				"features" : [
 					{"feature" : "BB_Upper"},
 					{"feature" : "BB_Lower"},
@@ -108,9 +108,9 @@
 		{
 			"iteration description" : "binary_crossentropy / [Accuracy, Precision, Recall] / sigmoid (unbalanced)",
 			"iteration parameters" : {
-				"iteration ID" : "BollingerBands",
+				"iteration ID" : "BollingerBands standard",
 				"modelFileDir" : "models\\BollingerBands\\",
-				"tensorboard" : {"log file dir" : "logs\\tensorboard\\categorization\\lstm\\BB\\b_c\\"},
+				"tensorboard" : {"log file dir" : "logs\\tensorboard\\BB\\b_c\\"},
 				"forecastInterval" : 0,
 				"modelLayers" : [
     				{"layerName" : "input", "layerType" : "lstm", "featureCount": 7, "timeSteps": 5, "layerUnits" : 64, "returnSequences" : false, "outputActivation" : "tanh"},

@@ -70,13 +70,11 @@ def executeStop(nodeName, d2rP):
     return
 
 def executeDataAcquire(nodeName, d2rP):
-    print("\n============== WIP =============\n\tSeparating data acquisition from load into processing pipeline\n============\n")
     acquireTrainingData(d2rP, nodeName)
 
     return
 
 def executeDataLoad(nodeName, d2rP):
-    print("\n============== WIP =============\n\tSeparating data acquisition from load into processing pipeline\n============\n")
     loadDataIntoTrainingPipeline(d2rP, nodeName)
 
     return

@@ -7,6 +7,7 @@ import sys
 import datetime as dt
 
 import pandas as pd
+import keras
 
 ''' Google workspace requirements start '''
 '''
@@ -227,8 +228,10 @@ class investments(workbooks):
             
             ''' Step 4 - request the basic financial instrument and the latest market data '''
             exc_txt = "\nAn exception occurred - unable to obtain market information on symbols"
-            for rowNdx in range(len(symbolInformation)):
-            #for rowNdx in range(15):
+            symbolCount = len(symbolInformation)
+            tf_progbar = keras.utils.Progbar(symbolCount, width=50, verbose=1, interval=50, stateful_metrics=None, unit_name='symbol')
+            for rowNdx in range(symbolCount):
+                tf_progbar.update(rowNdx)
                 symbol = symbolInformation.loc[rowNdx, 'Symbol']
                 exc_txt = "\nAn exception occurred - with symbol: {}".format(symbol)
             
@@ -508,33 +511,31 @@ class optionTrades(workbooks):
         try:
             ''' Output the potential option trades to Google sheet '''
             exc_txt = "Exception occurred writing the list of potential option trades"
-            print("Options for review\n{}".format(self.filteredOptions))
-            
-            ''' create new tab '''
-            now = dt.datetime.now()
-            sheetName = '{:4d}{:0>2d}{:0>2d}'.format(now.year, now.month, now.day)
-            self.optionsSheetID
-            self.gSheets.addGoogleSheet(self.optionsSheetID, sheetName)
-            
-            ''' write data to new tab '''
-            self.filteredOptions.index.names = ['Symbol', 'Strategy', 'Expiration Date', 'Strike Price']
-            self.filteredOptions = self.filteredOptions.reset_index()
-            
-            # select and reorder the columns
-            outputColumns = ['Symbol', 'Strategy', 'Symbol Price', \
-                            'Expiration Date', 'days To Expiration', 'Strike Price', \
-                            'Max Profit', 'Max Gain APY', \
-                            'bid', 'ask', 'close Price', \
-                            'Option Qty', 'OTM Probability', \
-                            'Premium', 'Commission']
-            googleTab = self.filteredOptions[outputColumns]
-            self.gSheets.updateGoogleSheet(self.optionsSheetID, sheetName + "!A1:Z999", googleTab.columns)
-            self.gSheets.updateGoogleSheet(self.optionsSheetID, sheetName + "!A2:Z999", googleTab)
-            
-            '''
-            self.gSheets.updateGoogleSheet(self.optionsSheetID, sheetName + "!A1:Z999", self.filteredOptions.columns)
-            self.gSheets.updateGoogleSheet(self.optionsSheetID, sheetName + "!A2:Z999", self.filteredOptions)
-            '''
+            if len(self.filteredOptions) > 0:
+                print("Options for review\n{}".format(self.filteredOptions))
+                
+                ''' create new tab '''
+                now = dt.datetime.now()
+                sheetName = '{:4d}{:0>2d}{:0>2d}'.format(now.year, now.month, now.day)
+                self.optionsSheetID
+                self.gSheets.addGoogleSheet(self.optionsSheetID, sheetName)
+                
+                ''' write data to new tab '''
+                self.filteredOptions.index.names = ['Symbol', 'Strategy', 'Expiration Date', 'Strike Price']
+                self.filteredOptions = self.filteredOptions.reset_index()
+                
+                # select and reorder the columns
+                outputColumns = ['Symbol', 'Strategy', 'Symbol Price', \
+                                'Expiration Date', 'days To Expiration', 'Strike Price', \
+                                'Max Profit', 'Max Gain APY', \
+                                'bid', 'ask', 'close Price', \
+                                'Option Qty', 'OTM Probability', \
+                                'Premium', 'Commission']
+                googleTab = self.filteredOptions[outputColumns]
+                self.gSheets.updateGoogleSheet(self.optionsSheetID, sheetName + "!A1:Z999", googleTab.columns)
+                self.gSheets.updateGoogleSheet(self.optionsSheetID, sheetName + "!A2:Z999", googleTab)
+            else:
+                print("No options to review")
             
             return
     

@@ -368,6 +368,7 @@ class BasicMarketDataArchive(basicMarketData):
             '''
             #self.updateArchiveFile()
             self.eod_file = self.archiveFolder + '\\' + self.symbol + '.csv'
+            self.eodErrorFile = self.archiveFolder + '\\'  + 'baddata' + '\\' + self.symbol + '.csv'
             if os.path.isfile(self.eod_file):
                 #print("Basic market data file for {} exists, {}".format(self.symbol, eod_file))
                 self.df_eod = pd.read_csv(self.eod_file)
@@ -410,12 +411,40 @@ class BasicMarketDataArchive(basicMarketData):
                 self.df_marketData = df_new
             else:
                 self.df_marketData = pd.concat([self.df_eod, df_new], ignore_index=True)
-            
+                
+            ''' Data quality check '''
+            '''
+            invalidOpen = (self.df_marketData['Open'] < 0.01).any()
+            invalidHigh = (self.df_marketData['High'] < 0.01).any()
+            invalidLow = (self.df_marketData['Low'] < 0.01).any()
+            invalidClose = (self.df_marketData['Close'] < 0.01).any()
+            invalidVolume = (self.df_marketData['Volume'] == 0.0).any()
+            '''
+                
+            self.df_marketData = self.df_marketData.drop_duplicates(subset='DateTime')
+            goodLen = len(self.df_marketData)
+            badRows = self.df_marketData.isnull().any(axis=1) | (self.df_marketData <= 0.0).any(axis=1)
+            if badRows.any():
+            #if invalidOpen or invalidHigh or invalidLow or invalidClose or invalidVolume:
+                ''' save bad data for analysis '''
+                fullLen = len(self.df_marketData)
+                self.df_marketData.to_csv(self.eodErrorFile, index=False)
+                lastBad = badRows[::-1].idxmax()
+                self.df_marketData = self.df_marketData.iloc[lastBad + 1 : ]
+                goodLen = len(self.df_marketData)
+                print("Removing invalid data for {} from {} samples, {} remain".format(self.eod_file, fullLen, goodLen))
+                '''
+                if 'index' in self.df_marketData:
+                    self.df_marketData = self.df_marketData.drop('index', axis=1)
+                if goodLen > 0:
+                    self.df_marketData.to_csv(self.eod_file, index=False)
+                '''
+            #else:
             # Archive market data
             if 'index' in self.df_marketData:
                 self.df_marketData = self.df_marketData.drop('index', axis=1)
-            self.df_marketData = self.df_marketData.drop_duplicates(subset='DateTime')
-            self.df_marketData.to_csv(self.eod_file, index=False)
+            if goodLen > 0:
+                self.df_marketData.to_csv(self.eod_file, index=False)
 
             return
 
@@ -485,13 +514,15 @@ class EnrichedMarketDataArchive(basicMarketData):
 
     def localArchiveWorker(self, symbol):
         #print("local archive worker thread starting - symbol {}\n\tbasic {}\n\tenriched {}".format(symbol, self.basicArchiveFolder, self.enrichedArchiveFolder))
-        df_basicMarketData = pd.read_csv(self.basicArchiveFolder + '\\' + symbol + '.csv')
-        df_marketData = df_basicMarketData
-        
-        df_marketData = self.calculateEnrichedHistory(df_marketData)
-        
-        df_marketData.to_csv(self.enrichedArchiveFolder + '\\' + symbol + '.csv', index=False)
-        print("enriched {}, {} data points".format(symbol, len(df_marketData)))
+        basicFile = self.basicArchiveFolder + '\\' + symbol + '.csv'
+        if os.path.isfile(basicFile):
+            df_basicMarketData = pd.read_csv(basicFile)
+            df_marketData = df_basicMarketData
+            df_marketData = self.calculateEnrichedHistory(df_marketData)
+            df_marketData.to_csv(self.enrichedArchiveFolder + '\\' + symbol + '.csv', index=False)
+            print("enriched {}, {} data points".format(symbol, len(df_marketData)))
+        else:
+            print("basic data file {} is missing".format(basicFile))
         return symbol
     
     def add_derived_data(self, df_marketData):

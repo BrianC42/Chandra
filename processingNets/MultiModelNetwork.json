@@ -20,7 +20,7 @@
 	"flowName" : "acquiredData",
 	"requiredFields" : {"flowFrom" : "acquireData", "flowTo" : "LoadRawData"},
 	"conditionalFields" : {
-		"flowDataDir" : "internal_flows\\MMN_M1M2"
+		"flowDataDir" : "internal_flows\\MMN_M1M2\\Symbol combined"
 		}
 	},
 	{
@@ -42,7 +42,7 @@
 	"flowName" : "CombinedData",
 	"requiredFields" : {"flowFrom" : "DataCombine", "flowTo" : "acquireCombinedData"},
 	"conditionalFields" : {
-		"flowDataDir" : "internal_flows\\MMN_M1M2",
+		"flowDataDir" : "internal_flows\\MMN_M1M2\\Symbol combined",
 		"flowDataFile" : "CombinedMMN.csv",
 		"TensorflowData" : {
 			"features" : ["Open", "High", "Low", "Close", 
@@ -126,8 +126,8 @@
 					"timeSteps": 5
 				}
 			},
-			"trainedModelFile" : "MACDTrend\\MACDTrend 20241113 103459.keras",
-			"trained scaler" : "MACDTrend\\MACDTrend 20241113 103459 scaler.pkl",
+			"trainedModelFile" : "MACDTrend\\MACDTrend 20241223 120401.keras",
+			"trained scaler" : "MACDTrend\\MACDTrend 20241223 120401 scaler.pkl",
 			"flowDataDir" : "internal_flows\\MMN_M1",
 			"outputLabels" : ["Negative Cross", "Neutral", "Positive Cross"],
 			"outputSynchronizationFeatures" : ["DateTime"],
@@ -155,8 +155,8 @@
 					"timeSteps": 5
 				}
 			},
-			"trainedModelFile" : "BollingerBands\\BollingerBands 20241115 163140.keras",
-			"trained scaler" : "BollingerBands\\BollingerBands 20241115 163140 scaler.pkl",
+			"trainedModelFile" : "BollingerBands\\BollingerBands 20241223 122110.keras",
+			"trained scaler" : "BollingerBands\\BollingerBands 20241223 122110 scaler.pkl",
 			"flowDataDir" : "internal_flows\\MMN_M2",
 			"outputLabels" : ["BB 10 in 10"],
 			"outputSynchronizationFeatures" : ["DateTime"],
@@ -180,7 +180,7 @@
 	"conditionalFields" : {
 		"dataLoadCtrl" : {
 			"comment file spec" : "internal_flows\\MMN_M1M2\\[a-z]*.csv",
-			"inputFile" : ["market_data\\augmented\\[C]*.csv"]
+			"inputFile" : ["market_data\\augmented\\*.csv"]
 		}
 	}
 	},
@@ -188,7 +188,7 @@
 	"processNodeName" : "DataCombine",
 	"requiredFields" : {"processType" : "DataCombine", 
 		"inputFlows" : ["ModelOneOutput", "ModelTwoOutput", "LoadedRawData"], 
-		"combineFileList" : ["[C]*.csv"],
+		"combineFileList" : ["*.csv"],
 		"outputFlow" : "CombinedData"
 	},
 	"conditionalFields" : {
@@ -202,7 +202,7 @@
 	"conditionalFields" : {
 		"dataLoadCtrl" : {
 			"comment file spec" : "folder1\\folder2\\[a-z]*.csv",
-			"inputFile" : ["internal_flows\\MMN_M1M2\\[C]*.csv"]
+			"inputFile" : ["internal_flows\\MMN_M1M2\\Symbol combined\\*.csv"]
 		}
 	}
 	},
@@ -212,7 +212,7 @@
 	"conditionalFields" : {
 		"dataLoadCtrl" : {
 			"comment file spec" : "internal_flows\\MMN_M1M2\\[a-z]*.csv",
-			"inputFile" : ["internal_flows\\MMN_M1M2\\[C]*.csv"]
+			"inputFile" : ["internal_flows\\MMN_M1M2\\Symbol combined\\*.csv"]
 		}
 	}
 	},
@@ -239,13 +239,16 @@
 			},
 			"normalize" : {
 				"comment types supported" : ["standard", "minmax", "relative_time_series"],
-				"type" : "relative_time_series",
+				"type" : "standard",
 				"features" : [
 					{"feature" : "Open"},
 					{"feature" : "High"},
 					{"feature" : "Low"},
 					{"feature" : "Close"},
-					{"feature" : "ADX"}
+					{"feature" : "ADX"},
+					{"feature" : "Volume"},
+					{"feature" : "OBV"},
+					{"feature" : "AccumulationDistribution"}
 				]
 			},
 			"oneHotEncoding" : {
