@@ -49,7 +49,7 @@
 							"Volume", "OBV", "AccumulationDistribution",
 							"Relative Strength", "ADX",
 							"Negative Cross", "Neutral", "Positive Cross", 
-							"BB 10 in 10"],
+							"BB True", "BB False"],
 			"targets" : ["10day10pct"],
 			"timeSequence" : true, "seriesStepIDField" : ["DateTime"], "seriesDataType" : "TDADateTime", "type" : "relative_time_series"
 			}
@@ -73,7 +73,7 @@
 							"Volume", "OBV", "AccumulationDistribution",
 							"Relative Strength", "ADX",
 							"Negative Cross", "Neutral", "Positive Cross", 
-							"BB 10 in 10"],
+							"BB True", "BB False"],
 			"targets" : ["10day10pct"],
 			"timeSequence" : true, "seriesStepIDField" : ["DateTime"], "seriesDataType" : "TDADateTime", "type" : "relative_time_series"
 			}
@@ -90,8 +90,8 @@
 							"Volume", "OBV", "AccumulationDistribution",
 							"Relative Strength", "ADX",
 							"Negative Cross", "Neutral", "Positive Cross", 
-							"BB 10 in 10"],
-			"targets" : ["10day10pct"],
+							"BB True", "BB False"],
+			"targets" : ["x0_False", "x0_True"],
 			"timeSequence" : true, "seriesStepIDField" : ["DateTime"], "seriesDataType" : "TDADateTime", "type" : "relative_time_series"
 			}
 		}
@@ -126,8 +126,8 @@
 					"timeSteps": 5
 				}
 			},
-			"trainedModelFile" : "MACDTrend\\MACDTrend 20241223 120401.keras",
-			"trained scaler" : "MACDTrend\\MACDTrend 20241223 120401 scaler.pkl",
+			"trainedModelFile" : "MACDTrend\\MACD Cross 20250118 090524.keras",
+			"trained scaler" : "MACDTrend\\MACD Cross 20250118 090524 scaler.pkl",
 			"flowDataDir" : "internal_flows\\MMN_M1",
 			"outputLabels" : ["Negative Cross", "Neutral", "Positive Cross"],
 			"outputSynchronizationFeatures" : ["DateTime"],
@@ -145,20 +145,22 @@
 			},
 			"dataPrepCtrl" : {
 				"ignoreBlanks" : true,
-				"scaleFeatures" : ["BB_Upper", "BB_Lower", "EMA20", "Open", "High", "Low", "Close"],
+				"scaleFeatures" : ["BB_Upper", "BB_Lower", "EMA20", "Open", "High", "Low", "Close", "Volume",
+							"Stochastic Oscillator", "ADX", "AccumulationDistribution", "OBV"],
 				"passthruFeatures" : ["DateTime"]
 			},
 			"modelControl" : {
-				"modelFeatures" : ["BB_Upper", "BB_Lower", "EMA20", "Open", "High", "Low", "Close"],
+				"modelFeatures" : ["BB_Upper", "BB_Lower", "EMA20", "Open", "High", "Low", "Close", "Volume",
+							"Stochastic Oscillator", "ADX", "AccumulationDistribution", "OBV"],
 				"rnn" : {
 					"timeSequence" : true, "seriesStepIDField" : ["DateTime"], "seriesDataType" : "TDADateTime", "type" : "relative_time_series",
-					"timeSteps": 5
+					"timeSteps": 20
 				}
 			},
-			"trainedModelFile" : "BollingerBands\\BollingerBands 20241223 122110.keras",
-			"trained scaler" : "BollingerBands\\BollingerBands 20241223 122110 scaler.pkl",
+			"trainedModelFile" : "BollingerBands\\BB 10 in 10 20250118 113514.keras",
+			"trained scaler" : "BollingerBands\\BB 10 in 10 20250118 113514 scaler.pkl",
 			"flowDataDir" : "internal_flows\\MMN_M2",
-			"outputLabels" : ["BB 10 in 10"],
+			"outputLabels" : ["BB True", "BB False"],
 			"outputSynchronizationFeatures" : ["DateTime"],
 			"replaceExistingOutput" : false
 		}
@@ -222,19 +224,11 @@
 	"conditionalFields" : {
 		"dataPrepCtrl" : {
 			"ignoreBlanks" : true,
-			"preparationSequence" : ["normalize"],
+			"preparationSequence" : ["normalize", "oneHotEncoding"],
 			"noPreparation" : {
 				"problem features" : [
-					{"feature" : "Volume"},
-					{"feature" : "OBV"},
-					{"feature" : "AccumulationDistribution"}
 				],
 				"features" : [
-					{"feature" : "Negative Cross"},
-					{"feature" : "Neutral"},
-					{"feature" : "Positive Cross"},
-					{"feature" : "BB 10 in 10"},
-					{"feature" : "Relative Strength"}
 				]
 			},
 			"normalize" : {
@@ -248,12 +242,18 @@
 					{"feature" : "ADX"},
 					{"feature" : "Volume"},
 					{"feature" : "OBV"},
-					{"feature" : "AccumulationDistribution"}
+					{"feature" : "AccumulationDistribution"},
+					{"feature" : "Negative Cross"},
+					{"feature" : "Neutral"},
+					{"feature" : "Positive Cross"},
+					{"feature" : "BB True"},
+					{"feature" : "BB False"},
+					{"feature" : "Relative Strength"}
 				]
 			},
 			"oneHotEncoding" : {
 				"features" : [
-					{"feature" : "", "categoryType" : "label", "comment" : "True/False"}
+					{"feature" : "10day10pct", "categoryType" : "label", "comment" : "True/False"}
 				]
 			}
 		}
@@ -272,22 +272,22 @@
 			"iteration parameters" : {
 				"iteration ID" : "MMN_TA_001",
 				"modelFileDir" : "models\\MMN",
-				"tensorboard" : {"log file dir" : "logs\\tensorboard\\categorization\\lstm\\MMTechAnalysis\\"},
+				"tensorboard" : {"log file dir" : "logs\\tensorboard\\MMN\\"},
 				"forecastInterval" : 0,
 				"modelLayers" : [
-    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 13, "timeSteps": 5, "layerUnits" : 256, "returnSequences" : true, "outputActivation" : "linear"},
-					{"layerName" : "hidden-lstm-1", "layerType" : "lstm", "timeSteps" : 5, "layerUnits" : 64, "returnSequences" : false, "outputActivation" : "linear"},
-					{"layerName" : "dropout1", "layerType" : "dropout", "dropoutRate" : 0.2},
-    				{"layerType" : "dense", "layerName" : "hiddenDense1", "layerUnits" : 32, "outputActivation" : "linear"},
-					{"layerName" : "dropout2", "layerType" : "dropout", "dropoutRate" : 0.2},
-    				{"layerType" : "dense", "layerName" : "output", "layerUnits": 1, "outputActivation" : "linear"}
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 14, "timeSteps": 20, "layerUnits" : 256, "returnSequences" : true, "outputActivation" : "tanh"},
+					{"layerName" : "h-lstm1", "layerType" : "lstm", "timeSteps" : 5, "layerUnits" : 64, "returnSequences" : false, "outputActivation" : "tanh"},
+					{"layerName" : "drop1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hd1", "layerType" : "dense", "layerUnits" : 32, "outputActivation" : "tanh"},
+					{"layerName" : "drop2", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "output", "layerType" : "dense", "layerUnits": 2, "outputActivation" : "softmax"}
 					],
 				"training" : {
 					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
 					"batchSize" : 16, "epochs" : 5, "validationSplit" : 0.1, "testSplit" : 0.2,
 					"shuffle" : false, "balanceClasses" : true,	"verbose" : 2,
 					"optimizer" : {"name" : "adam", "learning_rate" : 0.001}, 
-					"compilationLoss" : "mean_absolute_error", "compilationMetrics" : ["mean_absolute_error"]
+					"compilationLoss" : "categorical_crossentropy", "compilationMetrics" : ["categorical_crossentropy"]
 				}
 				}
 			}

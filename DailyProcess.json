@@ -82,16 +82,16 @@
 	"Description" : "Bollinger Bands prediction",
 	"run" : false,
 	"controls" : [
-		{"file" : "BollingerBands\\BollingerBands 20241223 122110.keras"},
-		{"scaler" : "BollingerBands\\BollingerBands 20241223 122110 scaler.pkl"},
-		{"features" : "BB_Upper,BB_Lower,EMA20,Open,High,Low,Close"},
-		{"timeSteps": 5},
-		{"Outputs" : "10% in 10 Days Probability"},
+		{"file" : "BollingerBands\\BB 10 in 10 20250118 113514.keras"},
+		{"scaler" : "BollingerBands\\BB 10 in 10 20250118 113514 scaler.pkl"},
+		{"Outputs" : "True,False"},
 		{"featureFile" : "market_data\\augmented\\*.csv"},
-		{"threshold" : 0.5},
+		{"features" : "BB_Upper,BB_Lower,EMA20,Open,High,Low,Close,Volume,Stochastic Oscillator,ADX,AccumulationDistribution,OBV"},
 		{"gsheet" : "Development"},
     	{"header range" : "BollingerBand!A1:Z1"},
-    	{"data range" : "BollingerBand!A2:Z"}
+    	{"data range" : "BollingerBand!A2:Z"},
+		{"timeSteps": 20},
+		{"threshold" : "0.9,0.9"}
 		]
 	},
 	{
@@ -102,8 +102,8 @@
 	"Description" : "MACD/moving average classification",
 	"run" : false,
 	"controls" : [
-		{"file" : "MACDTrend\\MACDTrend 20241223 120401.keras"},
-		{"scaler" : "MACDTrend\\MACDTrend 20241223 120401 scaler.pkl"},
+		{"file" : "MACDTrend\\MACD Cross 20250118 090524.keras"},
+		{"scaler" : "MACDTrend\\MACD Cross 20250118 090524 scaler.pkl"},
 		{"Outputs" : "Negative Cross,Neutral,Positive Cross"},
 		{"featureFile" : "market_data\\augmented\\*.csv"},
 		{"features" : "MACD,MACD_Signal"},
@@ -111,7 +111,7 @@
     	{"header range" : "MACDTrend!A1:Z1"},
     	{"data range" : "MACDTrend!A2:Z"},
 		{"timeSteps": 5},
-		{"threshold" : "0.9,1.0,0.9"}
+		{"threshold" : "0.95,1.0,0.95"}
 		]
 	}
 ]

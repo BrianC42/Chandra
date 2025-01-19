@@ -324,8 +324,6 @@ class DailyProcessUI(object):
     def trainKerasModel(self, controls):
         exc_txt = "\nAn exception occurred - training model based on script {}".format(controls.processName)
         try:
-            print("WIP =============\ntrainKerasModel is not yet implemented. Script {}".format(controls.processName))
-            
             for param in controls.processParameterList:
                 paramValue = param.parameterValue.get()
                 print("control parameter - {} set to {}".format(param.parameterName, paramValue))
@@ -564,7 +562,7 @@ class DailyProcessUI(object):
                     self.trainKerasModel(proc)
                     
                 elif proc.processName == "Bollinger Bands":
-                    self.useTrainedRNNPredictionModel(proc)
+                    self.useTrainedRNNCategorizationModel(proc)
                     
                 elif proc.processName == "MACD Trend":
                     self.useTrainedRNNCategorizationModel(proc)
@@ -575,7 +573,7 @@ class DailyProcessUI(object):
                 else:
                     print("{} is not recognized".format(proc.processName))
                 
-                print("Process {} - {}, complete".format(proc.processName, proc.processDescription))
+                print("\nProcess {} - {}, complete".format(proc.processName, proc.processDescription))
         return
     
     def buildFrames(self):

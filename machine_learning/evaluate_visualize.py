@@ -12,7 +12,7 @@ import networkx as nx
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 #import seaborn as sns
-import datashader as ds, colorcet as cc
+#import datashader as ds, colorcet as cc
 
 from tda_api_library import format_tda_datetime
 
@@ -539,9 +539,11 @@ def visualizeTestVsForecast(d2r, prediction):
         Y = prediction.reshape(-1)
         plotData = pd.DataFrame({'x':X, 'y':Y})
         
+        '''
         cvs = ds.Canvas(plot_width=850, plot_height=500)
         agg = cvs.points(plotData, 'test Data', 'Prediction Probability')
         img = ds.tf.shade(agg, cmap=cc.fire)
+        '''
         
         #plotData.plot.scatter('x', 'y')
     
@@ -680,20 +682,31 @@ def visualize_rnn(d2r, prediction):
 
 def reportEvaluationMatrix(d2r, prediction):
 
-    print("\nThe predictions contain %s samples with %s labels" % (prediction.shape[0], prediction.shape[1]))
+    print("\nThe predictions contain {} test samples with {} target labels".format(prediction.shape[0], prediction.shape[1]))
+    print("Evaluation of test data resulted in evaluation probability distributions\n{}".format(pd.DataFrame(prediction).describe().transpose()))
     
     testCategories, testCounts = np.unique(d2r.testY, return_counts=True, axis=0)
-    print("\nTesting labels are \n%s\nwith\n%s distribution" % (testCategories, testCounts))    
+    confusionMatrix = confusion_matrix(d2r.testY, prediction)
+    print("confusion matrix:\nthe i-th row and j-th column entry indicates the number of samples with\nactual label being i-th class and\npredicted label being j-th class")
+    print("Correct prediction counts are in the top left to bottom right diagonal")
+    print("Confusion matrix of predictions is\n{}".format(confusionMatrix.astype(int)))
     
     labelCounts = np.zeros(len(testCategories))
+    confidenceMatrix = np.zeros((prediction.shape[1], prediction.shape[1]))    
     for ndx in range(prediction.shape[0]):
         labelCounts[np.argmax(prediction[ndx])] += 1
-    print("\nBest prediction distribution:\n%s" % labelCounts)
         
-    cMatrix = confusion_matrix(d2r.testY, prediction)
-    print("\nConfusion matrix of predictions is\n%s" % cMatrix.astype(int))
+        for catNdx in range(prediction.shape[1]):
+            for predNdx in range(prediction.shape[1]):
+                confidance = d2r.testY[ndx, catNdx] * prediction[ndx, predNdx]
+                if confidance > confidenceMatrix[catNdx, predNdx]:
+                    confidenceMatrix[catNdx, predNdx] = confidance
+        
+    print("Probability matrix of predictions is\n{}".format(confidenceMatrix))
+    print("Testing labels are \n{}\nthe actual distribution: {}".format(testCategories, testCounts)) 
+    print("Best prediction distribution was: {}".format(labelCounts))
     
-    print("\nEvaluation of test data resulted in evaluation probability distributions\n%s" % pd.DataFrame(prediction).describe().transpose())
+    print("WIP =====\n\tadditional confidence calculations to be added")
     
     return
 

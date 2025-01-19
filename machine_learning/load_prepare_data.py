@@ -81,7 +81,7 @@ def balance_classes(d2r, model_type, categorization):
     
             categories, counts = np.unique(d2r.trainY, return_counts=True)
             #sanityCheckMACD(npX=d2r.trainX, npY=d2r.trainY)
-            print("Prior to balancing training labels are\t%s with %s distribution" % (categories, counts))
+            print("Prior to balancing training labels are\n{} with {} distribution".format(categories, counts))
     
             minCount = min(counts)
             batches = minCount * len(categories)
@@ -121,7 +121,7 @@ def balance_classes(d2r, model_type, categorization):
     
             categories, counts = np.unique(d2r.trainY, return_counts=True)
             #sanityCheckMACD(npX=d2r.trainX, npY=d2r.trainY)
-            print("Prior to balancing training labels are\t%s with %s distribution" % (categories, counts))
+            print("Prior to balancing training labels are\n{} with {} distribution".format(categories, counts))
             minCount = min(counts)
             batches = minCount * len(categories)
             
@@ -160,7 +160,7 @@ def balance_classes(d2r, model_type, categorization):
                   (d2r.trainX.shape, d2r.trainY.shape, d2r.validateX.shape, d2r.validateY.shape, d2r.testX.shape, d2r.testY.shape))
     
             categories, counts = np.unique(d2r.trainY, return_counts=True)
-            print("Prior to balancing training labels are %s with %s distribution" % (categories, counts))
+            print("Prior to balancing training labels are\n{} with {} distribution".format(categories, counts))
     
             minCount = min(counts)
             
@@ -192,12 +192,12 @@ def balance_classes(d2r, model_type, categorization):
             d2r.trainY = npY
     
             categories, counts = np.unique(d2r.trainY, return_counts=True)
-            print("After balancing training labels are %s with %s distribution" % (categories, counts))
+            print("After balancing training labels are\n{} with {} distribution".format(categories, counts))
         
     else:
         ex_txt = "label balancing is not supported for multiple labels in " + model_type + " models"
         labelPatterns, counts = np.unique(d2r.trainY, return_counts=True, axis=0)
-        print("Prior to balancing training labels are\n%s with\n%s distribution" % (labelPatterns, counts))
+        print("Prior to balancing training labels are\n{} with {} distribution".format(labelPatterns, counts))
         if  model_type == INPUT_LAYERTYPE_RNN:
             minCount = min(counts)
             batches = minCount * len(labelPatterns)
@@ -233,7 +233,7 @@ def balance_classes(d2r, model_type, categorization):
         else:
             raise NameError(ex_txt)
         labelPatterns, counts = np.unique(d2r.trainY, return_counts=True, axis=0)
-        print("After balancing training labels are\n%s with %s distribution" % (labelPatterns, counts))
+        print("After balancing training labels are\n{} with {} distribution".format(labelPatterns, counts))
     return
 
 def combineMultipleSamples(d2r, model_goal, combineCount, forecastInterval, data_precision, feature_cols, target_cols):
@@ -479,12 +479,14 @@ def arrangeDataForTraining(d2r):
                 for dkey in d2r.normDataDict:
                     err_txt = "\nError arranging data for training for " + dkey
                     npData   = np.array(d2r.normDataDict[dkey], dtype=float)
-                    if npData.shape[1] > maxCol:
+                    if npData.shape[0] <= nx_time_steps:
+                        print("{} has fewer samples, {}, than time steps required, {}".format(dkey, npData.shape[0], nx_time_steps))
+                    elif npData.shape[1] <= maxCol:
+                        print("{} does not have examples of all targets".format(dkey))
+                    else:
                         features, labels = np_to_sequence(npData, feature_cols, target_cols, nx_time_steps)
                         npX = np.row_stack((npX, features))
                         npY = np.row_stack((npY, labels))
-                    else:
-                        print("{} does not have examples of all targets".format(dkey))
                 err_txt = "\nError creating training, validation and testing data sets"
                 d2r.trainX = npX[ : d2r.trainLen , :]
                 d2r.trainY = npY[ : d2r.trainLen , :]
@@ -657,12 +659,11 @@ def generate1hot(d2r, fields, fieldPrepCtrl):
         else:
             pass
         
-        print("WIP ==============\n\tOneHotEncoder - field replacement is not working correctly\n===========================")
         ''' Replace original data with 1 Hot format '''
         print("dropping {} from\n{}".format(field, d2r.data))
         d2r.data.drop(labels=field, axis=1, inplace=True)
         d2r.data = d2r.data.reset_index(drop=True)
-        print("adding in {} rows from\n{}\nto {} in\n{}".format(len(oneHotField), oneHotField, len(d2r.data), d2r.data))
+        #print("adding in {} rows from\n{}\nto {} in\n{}".format(len(oneHotField), oneHotField, len(d2r.data), d2r.data))
         d2r.data = pd.concat([d2r.data, oneHotField], axis=1)
         print("creates {} rows\n{}".format(len(d2r.data), d2r.data))
         ndxField += 1
@@ -753,7 +754,6 @@ def normalizeFeature(d2r, fields, fieldPrepCtrl, normalizeType):
         df_normalizedFields = pd.DataFrame(normalizedFields, columns=fields)
         d2r.data[fields] = df_normalizedFields
         
-        print("WIP ================\n\tis scaling being done logically\n\tshould it be refit on every dKey?\n===========================")
         tf_progbar = keras.utils.Progbar(len(d2r.dataDict), width=50, verbose=1, interval=10, stateful_metrics=None, unit_name='sample source')
         count = 0
         for dKey in list(d2r.dataDict):

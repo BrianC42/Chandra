@@ -1,4 +1,6 @@
 {
+"comment - network purpose 1" : "work network for development of new networks",
+"comment - network purpose 2" : "initial development done here then copied to named files for refinement",
 "comment - description 1" : "A model to identify situation where a stock price increases 10% within 10 trading days",
 "comment - description 2" : "Approach - use the Bollinger Band technical analysis",
 "comment - dataflow section" : "Specification details for the flows of data between processing nodes -----------------------------",
@@ -16,7 +18,8 @@
 	"conditionalFields" : {
 		"flowDataFile" : "internal_flows\\BBForecast\\BBLoadedData.csv",
 		"TensorflowData" : {
-			"features" : ["BB_Upper", "BB_Lower", "EMA20", "Open", "High", "Low", "Close"],
+			"features" : ["BB_Upper", "BB_Lower", "EMA20", "Open", "High", "Low", "Close", "Volume",
+							"Stochastic Oscillator", "ADX", "AccumulationDistribution", "OBV"],
 			"targets" : ["10day10pct"],
 			"timeSequence" : true, "seriesStepIDField" : ["DateTime"], "seriesDataType" : "TDADateTime", "type" : "relative_time_series"
 			}
@@ -28,8 +31,9 @@
 	"conditionalFields" : {
 		"flowDataFile" : "internal_flows\\BBPrepared.csv",
 		"TensorflowData" : {
-			"features" : ["BB_Upper", "BB_Lower", "EMA20", "Open", "High", "Low", "Close"],
-			"targets" : ["10day10pct"],
+			"features" : ["BB_Upper", "BB_Lower", "EMA20", "Open", "High", "Low", "Close", "Volume",
+							 "Stochastic Oscillator", "ADX", "AccumulationDistribution", "OBV"],
+			"targets" : ["x0_False", "x0_True"],
 			"timeSequence" : true, "seriesStepIDField" : ["DateTime"], "seriesDataType" : "TDADateTime", "type" : "relative_time_series"
 			}
 		}
@@ -59,7 +63,7 @@
 	"requiredFields" : {"processType" : "dataLoad", "inputFlows" : [], "outputFlow" : "LoadedData"},
 	"conditionalFields" : {
 		"dataLoadCtrl" : {
-			"inputFile" : ["market_data\\augmented\\[a-z]*.csv"]
+			"inputFile" : ["*.csv"]
 		}
 	}
 	},
@@ -84,7 +88,12 @@
 					{"feature" : "Open"},
 					{"feature" : "High"},
 					{"feature" : "Low"},
-					{"feature" : "Close"}
+					{"feature" : "Close"},
+					{"feature" : "Volume"},
+					{"feature" : "Stochastic Oscillator"},
+					{"feature" : "ADX"},
+					{"feature" : "AccumulationDistribution"},
+					{"feature" : "OBV"}
 				]
 			},
 			"oneHotEncoding" : {
@@ -101,30 +110,33 @@
 	"requiredFields" : {"processType" : "Tensorflow", "inputFlows" : ["PreparedData"], "outputFlow" : ""},
 	"conditionalFields" : {
 		"categorizationRegression" : "categorization",
-		"dataPrecision" : "float32", "balanceClasses" : true, "combineSampleCount" : 4,
-		"comment visualizations" : ["summary", "trainingFit", "CategorizedTimeSeries", "categoryMatrix"],
+		"dataPrecision" : "float32", "balanceClasses" : true,
+		"comment visualizations" : ["summary", "testVsPrediction", "trainingFit", "CategorizedTimeSeries", "categoryMatrix"],
 		"visualizations" : ["categoryMatrix"],
 		"training iterations" : [
 		{
-			"iteration description" : "binary_crossentropy / [Accuracy, Precision, Recall] / sigmoid (unbalanced)",
 			"iteration parameters" : {
-				"iteration ID" : "BollingerBands standard",
+				"iteration ID" : "BB 10 in 10",
 				"modelFileDir" : "models\\BollingerBands\\",
-				"tensorboard" : {"log file dir" : "logs\\tensorboard\\BB\\b_c\\"},
+				"tensorboard" : {"log file dir" : "logs\\tensorboard\\bb\\"},
 				"forecastInterval" : 0,
 				"modelLayers" : [
-    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 7, "timeSteps": 5, "layerUnits" : 64, "returnSequences" : false, "outputActivation" : "tanh"},
-					{"layerName" : "dropout1", "layerType" : "dropout", "dropoutRate" : 0.2},
-    				{"layerName" : "hiddenDense1", "layerType" : "dense", "layerUnits" : 64, "outputActivation" : "tanh"},
-					{"layerName" : "dropout2", "layerType" : "dropout", "dropoutRate" : 0.2},
-    				{"layerName" : "hiddenDense2", "layerType" : "dense", "layerUnits" : 32, "outputActivation" : "tanh"},
-					{"layerName" : "dropout3", "layerType" : "dropout", "dropoutRate" : 0.2},
-    				{"layerName" : "output", "layerType" : "dense", "layerUnits": 1, "outputActivation" : "sigmoid"}
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 12, "timeSteps": 20, "layerUnits" : 128, "returnSequences" : false, "outputActivation" : "tanh"},
+    				{"layerName" : "hd1", "layerType" : "dense", "layerUnits" : 64, "outputActivation" : "relu"},
+					{"layerName" : "drop1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hd2", "layerType" : "dense", "layerUnits" : 32, "outputActivation" : "relu"},
+					{"layerName" : "drop2", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hd3", "layerType" : "dense", "layerUnits" : 16, "outputActivation" : "relu"},
+					{"layerName" : "drop3", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hd4", "layerType" : "dense", "layerUnits" : 8, "outputActivation" : "relu"},
+					{"layerName" : "drop4", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hd5", "layerType" : "dense", "layerUnits" : 4, "outputActivation" : "relu"},
+    				{"layerName" : "output", "layerType" : "dense", "layerUnits": 2, "outputActivation" : "sigmoid"}
 					],
 				"training" : {
-					"verbose" : 2, "batchSize" : 16, "epochs" : 27, "validationSplit" : 0.1, "testSplit" : 0.2, "shuffle" : false, 
+					"verbose" : 2, "batchSize" : 32, "epochs" : 100, "validationSplit" : 0.1, "testSplit" : 0.2, "shuffle" : false, 
 					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
-					"optimizer" : {"name" : "SGD", "learning_rate" : 0.001}, "compilationLoss" : "binary_crossentropy", "compilationMetrics" : ["Precision"]
+					"optimizer" : {"name" : "SGD", "learning_rate" : 0.001}, "compilationLoss" : "categorical_crossentropy", "compilationMetrics" : ["categorical_crossentropy"]
 				}
 				}
 			}
@@ -133,57 +145,560 @@
 	}
 ],
 "comment end of specification" : "------------------------------------------------------------------------------------",
-"comment trial training iterations" : {
-	"comment indent 1" : {
-		"comment most successful" : "TBD",
-		"training iterations" : [
-			{
-			"iteration description" : "hinge / [Accuracy, Precision, Recall] / sigmoid (unbalanced)",
+"comment - training iterations" : "-----------------------------------------------------------------------------------",
+"training iterations" : [
+		{"comment - ": "BEST TO DATE"},
+		{
 			"iteration parameters" : {
-				"iteration ID" : "BB_103",
-				"modelFileDir" : "d:\\brian\\AI-Projects\\models\\rnn\\lstm\\BB\\",
-				"tensorboard" : {"log file dir" : "d:\\brian\\AI-Projects\\logs\\tensorboard\\categorization\\lstm\\BB\\hinge\\"},
+				"iteration ID" : "BB+ std SGD 1+8+1 lr001 100e relu cce",
+				"modelFileDir" : "models\\BollingerBands\\",
+				"tensorboard" : {"log file dir" : "logs\\tensorboard\\bb\\"},
 				"forecastInterval" : 0,
 				"modelLayers" : [
-    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 7, "timeSteps": 5, "layerUnits" : 256, "returnSequences" : false, "outputActivation" : "tanh"},
-					{"layerName" : "dropout1", "layerType" : "dropout", "dropoutRate" : 0.2},
-    				{"layerName" : "hiddenDense1", "layerType" : "dense", "layerUnits" : 128, "outputActivation" : "tanh"},
-					{"layerName" : "dropout2", "layerType" : "dropout", "dropoutRate" : 0.2},
-    				{"layerName" : "hiddenDense2", "layerType" : "dense", "layerUnits" : 128, "outputActivation" : "tanh"},
-					{"layerName" : "dropout3", "layerType" : "dropout", "dropoutRate" : 0.2},
-    				{"layerName" : "output", "layerType" : "dense", "layerUnits": 1, "outputActivation" : "sigmoid"}
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 12, "timeSteps": 20, "layerUnits" : 128, "returnSequences" : false, "outputActivation" : "tanh"},
+    				{"layerName" : "hd1", "layerType" : "dense", "layerUnits" : 64, "outputActivation" : "relu"},
+					{"layerName" : "drop1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hd2", "layerType" : "dense", "layerUnits" : 32, "outputActivation" : "relu"},
+					{"layerName" : "drop2", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hd3", "layerType" : "dense", "layerUnits" : 16, "outputActivation" : "relu"},
+					{"layerName" : "drop3", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hd4", "layerType" : "dense", "layerUnits" : 8, "outputActivation" : "relu"},
+					{"layerName" : "drop4", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hd5", "layerType" : "dense", "layerUnits" : 4, "outputActivation" : "relu"},
+    				{"layerName" : "output", "layerType" : "dense", "layerUnits": 2, "outputActivation" : "sigmoid"}
 					],
 				"training" : {
-					"verbose" : 2, "batchSize" : 16, "epochs" : 3, "validationSplit" : 0.1, "testSplit" : 0.2, "shuffle" : false, 
+					"verbose" : 2, "batchSize" : 32, "epochs" : 100, "validationSplit" : 0.1, "testSplit" : 0.2, "shuffle" : false, 
 					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
-					"optimizer" : {"name" : "adam", "learning_rate" : 0.001}, "compilationLoss" : "hinge", "compilationMetrics" : ["Recall"]
+					"optimizer" : {"name" : "SGD", "learning_rate" : 0.001}, "compilationLoss" : "categorical_crossentropy", "compilationMetrics" : ["categorical_crossentropy"]
 				}
 				}
 			},
-			{
-			"iteration description" : "binary_crossentropy / [Accuracy, Precision, Recall] / sigmoid (unbalanced)",
+		{
 			"iteration parameters" : {
-				"iteration ID" : "BB_007",
-				"modelFileDir" : "d:\\brian\\AI-Projects\\models\\rnn\\lstm\\BB\\",
-				"tensorboard" : {"log file dir" : "d:\\brian\\AI-Projects\\logs\\tensorboard\\categorization\\lstm\\BB\\b_c\\"},
+				"iteration ID" : "BB+ std SGD 1+5+1 lr001 60e relu cce",
+				"modelFileDir" : "models\\BollingerBands\\",
+				"tensorboard" : {"log file dir" : "logs\\tensorboard\\bb\\"},
 				"forecastInterval" : 0,
 				"modelLayers" : [
-    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 7, "timeSteps": 5, "layerUnits" : 64, "returnSequences" : false, "outputActivation" : "tanh"},
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 12, "timeSteps": 20, "layerUnits" : 128, "returnSequences" : false, "outputActivation" : "tanh"},
+    				{"layerName" : "hd1", "layerType" : "dense", "layerUnits" : 64, "outputActivation" : "relu"},
+					{"layerName" : "drop1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hd2", "layerType" : "dense", "layerUnits" : 32, "outputActivation" : "relu"},
+					{"layerName" : "drop2", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hd3", "layerType" : "dense", "layerUnits" : 16, "outputActivation" : "relu"},
+					{"layerName" : "drop3", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hd4", "layerType" : "dense", "layerUnits" : 8, "outputActivation" : "relu"},
+					{"layerName" : "drop4", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hd5", "layerType" : "dense", "layerUnits" : 4, "outputActivation" : "relu"},
+    				{"layerName" : "output", "layerType" : "dense", "layerUnits": 2, "outputActivation" : "sigmoid"}
+					],
+				"training" : {
+					"verbose" : 2, "batchSize" : 32, "epochs" : 60, "validationSplit" : 0.1, "testSplit" : 0.2, "shuffle" : false, 
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"optimizer" : {"name" : "SGD", "learning_rate" : 0.001}, "compilationLoss" : "categorical_crossentropy", "compilationMetrics" : ["categorical_crossentropy"]
+				}
+				}
+			},
+		{
+			"iteration parameters" : {
+				"iteration ID" : "BB+ std SGD 1+5+1 lr001 200e relu cce",
+				"modelFileDir" : "models\\BollingerBands\\",
+				"tensorboard" : {"log file dir" : "logs\\tensorboard\\bb\\"},
+				"forecastInterval" : 0,
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 12, "timeSteps": 20, "layerUnits" : 128, "returnSequences" : false, "outputActivation" : "tanh"},
+    				{"layerName" : "hd1", "layerType" : "dense", "layerUnits" : 64, "outputActivation" : "relu"},
+					{"layerName" : "drop1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hd2", "layerType" : "dense", "layerUnits" : 32, "outputActivation" : "relu"},
+					{"layerName" : "drop2", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hd3", "layerType" : "dense", "layerUnits" : 16, "outputActivation" : "relu"},
+					{"layerName" : "drop3", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hd4", "layerType" : "dense", "layerUnits" : 8, "outputActivation" : "relu"},
+					{"layerName" : "drop4", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hd5", "layerType" : "dense", "layerUnits" : 4, "outputActivation" : "relu"},
+    				{"layerName" : "output", "layerType" : "dense", "layerUnits": 2, "outputActivation" : "sigmoid"}
+					],
+				"training" : {
+					"verbose" : 2, "batchSize" : 32, "epochs" : 200, "validationSplit" : 0.1, "testSplit" : 0.2, "shuffle" : false, 
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"optimizer" : {"name" : "SGD", "learning_rate" : 0.001}, "compilationLoss" : "categorical_crossentropy", "compilationMetrics" : ["categorical_crossentropy"]
+				}
+				}
+			},
+		{
+			"iteration parameters" : {
+				"iteration ID" : "BB+ std SGD lr01 20e relu cce",
+				"modelFileDir" : "models\\BollingerBands\\",
+				"tensorboard" : {"log file dir" : "logs\\tensorboard\\bb\\"},
+				"forecastInterval" : 0,
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 12, "timeSteps": 20, "layerUnits" : 128, "returnSequences" : false, "outputActivation" : "tanh"},
+    				{"layerName" : "hd1", "layerType" : "dense", "layerUnits" : 64, "outputActivation" : "relu"},
+					{"layerName" : "dropout1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hd2", "layerType" : "dense", "layerUnits" : 32, "outputActivation" : "relu"},
+					{"layerName" : "dropout2", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hd3", "layerType" : "dense", "layerUnits" : 16, "outputActivation" : "relu"},
+					{"layerName" : "dropout3", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hd4", "layerType" : "dense", "layerUnits" : 8, "outputActivation" : "relu"},
+					{"layerName" : "dropout4", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hd5", "layerType" : "dense", "layerUnits" : 4, "outputActivation" : "relu"},
+    				{"layerName" : "output", "layerType" : "dense", "layerUnits": 2, "outputActivation" : "sigmoid"}
+					],
+				"training" : {
+					"verbose" : 2, "batchSize" : 32, "epochs" : 20, "validationSplit" : 0.1, "testSplit" : 0.2, "shuffle" : false, 
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"optimizer" : {"name" : "SGD", "learning_rate" : 0.01}, "compilationLoss" : "categorical_crossentropy", "compilationMetrics" : ["categorical_crossentropy"]
+				}
+				}
+			},
+		{
+			"iteration description" : "binary_crossentropy / [Accuracy, Precision, Recall] / sigmoid (unbalanced)",
+			"iteration parameters" : {
+				"iteration ID" : "BB std 1xLSTM 5d 10e tanh cce",
+				"modelFileDir" : "models\\BollingerBands\\",
+				"tensorboard" : {"log file dir" : "logs\\tensorboard\\bb\\"},
+				"forecastInterval" : 0,
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 7, "timeSteps": 5, "layerUnits" : 256, "returnSequences" : false, "outputActivation" : "tanh"},
 					{"layerName" : "dropout1", "layerType" : "dropout", "dropoutRate" : 0.2},
     				{"layerName" : "hiddenDense1", "layerType" : "dense", "layerUnits" : 64, "outputActivation" : "tanh"},
 					{"layerName" : "dropout2", "layerType" : "dropout", "dropoutRate" : 0.2},
     				{"layerName" : "hiddenDense2", "layerType" : "dense", "layerUnits" : 32, "outputActivation" : "tanh"},
 					{"layerName" : "dropout3", "layerType" : "dropout", "dropoutRate" : 0.2},
-    				{"layerName" : "output", "layerType" : "dense", "layerUnits": 1, "outputActivation" : "sigmoid"}
+    				{"layerName" : "output", "layerType" : "dense", "layerUnits": 2, "outputActivation" : "softmax"}
+					],
+				"training" : {
+					"verbose" : 2, "batchSize" : 32, "epochs" : 10, "validationSplit" : 0.1, "testSplit" : 0.2, "shuffle" : false, 
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"optimizer" : {"name" : "adam", "learning_rate" : 0.001}, "compilationLoss" : "categorical_crossentropy", "compilationMetrics" : ["categorical_crossentropy"]
+				}
+				}
+			},
+		{
+			"iteration description" : "binary_crossentropy / [Accuracy, Precision, Recall] / sigmoid (unbalanced)",
+			"iteration parameters" : {
+				"iteration ID" : "BollingerBands std 2xLSTM 5d 10e tanh cce",
+				"modelFileDir" : "models\\BollingerBands\\",
+				"tensorboard" : {"log file dir" : "logs\\tensorboard\\bb\\"},
+				"forecastInterval" : 0,
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 7, "timeSteps": 5, "layerUnits" : 256, "returnSequences" : true, "outputActivation" : "tanh"},
+					{"layerName" : "hidden-lstm-1", "layerType" : "lstm", "timeSteps" : 5, "layerUnits" : 128, "returnSequences" : false, "outputActivation" : "tanh"},
+					{"layerName" : "dropout1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hiddenDense1", "layerType" : "dense", "layerUnits" : 64, "outputActivation" : "tanh"},
+					{"layerName" : "dropout2", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hiddenDense2", "layerType" : "dense", "layerUnits" : 32, "outputActivation" : "tanh"},
+					{"layerName" : "dropout3", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "output", "layerType" : "dense", "layerUnits": 2, "outputActivation" : "softmax"}
+					],
+				"training" : {
+					"verbose" : 2, "batchSize" : 32, "epochs" : 10, "validationSplit" : 0.1, "testSplit" : 0.2, "shuffle" : false, 
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"optimizer" : {"name" : "adam", "learning_rate" : 0.001}, "compilationLoss" : "categorical_crossentropy", "compilationMetrics" : ["categorical_crossentropy"]
+				}
+				}
+			},
+		{
+			"iteration description" : "binary_crossentropy / [Accuracy, Precision, Recall] / sigmoid (unbalanced)",
+			"iteration parameters" : {
+				"iteration ID" : "BollingerBands std 2xLSTM 10d 5e tanh cce",
+				"modelFileDir" : "models\\BollingerBands\\",
+				"tensorboard" : {"log file dir" : "logs\\tensorboard\\bb\\"},
+				"forecastInterval" : 0,
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 7, "timeSteps": 10, "layerUnits" : 256, "returnSequences" : true, "outputActivation" : "tanh"},
+					{"layerName" : "hidden-lstm-1", "layerType" : "lstm", "timeSteps" : 5, "layerUnits" : 128, "returnSequences" : false, "outputActivation" : "tanh"},
+					{"layerName" : "dropout1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hiddenDense1", "layerType" : "dense", "layerUnits" : 64, "outputActivation" : "tanh"},
+					{"layerName" : "dropout2", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hiddenDense2", "layerType" : "dense", "layerUnits" : 32, "outputActivation" : "tanh"},
+					{"layerName" : "dropout3", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "output", "layerType" : "dense", "layerUnits": 2, "outputActivation" : "softmax"}
+					],
+				"training" : {
+					"verbose" : 2, "batchSize" : 32, "epochs" : 10, "validationSplit" : 0.1, "testSplit" : 0.2, "shuffle" : false, 
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"optimizer" : {"name" : "adam", "learning_rate" : 0.001}, "compilationLoss" : "categorical_crossentropy", "compilationMetrics" : ["categorical_crossentropy"]
+				}
+				}
+			},
+		{
+			"iteration description" : "binary_crossentropy / [Accuracy, Precision, Recall] / sigmoid (unbalanced)",
+			"iteration parameters" : {
+				"iteration ID" : "BollingerBands std 2xLSTM 20d 10e tanh cce",
+				"modelFileDir" : "models\\BollingerBands\\",
+				"tensorboard" : {"log file dir" : "logs\\tensorboard\\bb\\"},
+				"forecastInterval" : 0,
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 7, "timeSteps": 20, "layerUnits" : 256, "returnSequences" : true, "outputActivation" : "tanh"},
+					{"layerName" : "hidden-lstm-1", "layerType" : "lstm", "timeSteps" : 5, "layerUnits" : 128, "returnSequences" : false, "outputActivation" : "tanh"},
+					{"layerName" : "dropout1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hiddenDense1", "layerType" : "dense", "layerUnits" : 64, "outputActivation" : "tanh"},
+					{"layerName" : "dropout2", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hiddenDense2", "layerType" : "dense", "layerUnits" : 32, "outputActivation" : "tanh"},
+					{"layerName" : "dropout3", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "output", "layerType" : "dense", "layerUnits": 2, "outputActivation" : "softmax"}
+					],
+				"training" : {
+					"verbose" : 2, "batchSize" : 32, "epochs" : 10, "validationSplit" : 0.1, "testSplit" : 0.2, "shuffle" : false, 
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"optimizer" : {"name" : "adam", "learning_rate" : 0.001}, "compilationLoss" : "categorical_crossentropy", "compilationMetrics" : ["categorical_crossentropy"]
+				}
+				}
+			},
+		{
+			"iteration description" : "binary_crossentropy / [Accuracy, Precision, Recall] / sigmoid (unbalanced)",
+			"iteration parameters" : {
+				"iteration ID" : "BollingerBands std 2xLSTM 60d 10e tanh cce",
+				"modelFileDir" : "models\\BollingerBands\\",
+				"tensorboard" : {"log file dir" : "logs\\tensorboard\\bb\\"},
+				"forecastInterval" : 0,
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 7, "timeSteps": 60, "layerUnits" : 256, "returnSequences" : true, "outputActivation" : "tanh"},
+					{"layerName" : "hidden-lstm-1", "layerType" : "lstm", "timeSteps" : 5, "layerUnits" : 128, "returnSequences" : false, "outputActivation" : "tanh"},
+					{"layerName" : "dropout1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hiddenDense1", "layerType" : "dense", "layerUnits" : 64, "outputActivation" : "tanh"},
+					{"layerName" : "dropout2", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hiddenDense2", "layerType" : "dense", "layerUnits" : 32, "outputActivation" : "tanh"},
+					{"layerName" : "dropout3", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "output", "layerType" : "dense", "layerUnits": 2, "outputActivation" : "softmax"}
+					],
+				"training" : {
+					"verbose" : 2, "batchSize" : 32, "epochs" : 10, "validationSplit" : 0.1, "testSplit" : 0.2, "shuffle" : false, 
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"optimizer" : {"name" : "adam", "learning_rate" : 0.001}, "compilationLoss" : "categorical_crossentropy", "compilationMetrics" : ["categorical_crossentropy"]
+				}
+				}
+			},
+		{
+			"iteration description" : "binary_crossentropy / [Accuracy, Precision, Recall] / sigmoid (unbalanced)",
+			"iteration parameters" : {
+				"iteration ID" : "BB std 1xLSTM 5d 5e mae mae",
+				"modelFileDir" : "models\\BollingerBands\\",
+				"tensorboard" : {"log file dir" : "logs\\tensorboard\\bb\\"},
+				"forecastInterval" : 0,
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 7, "timeSteps": 5, "layerUnits" : 256, "returnSequences" : false, "outputActivation" : "tanh"},
+					{"layerName" : "dropout1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hiddenDense1", "layerType" : "dense", "layerUnits" : 64, "outputActivation" : "tanh"},
+					{"layerName" : "dropout2", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hiddenDense2", "layerType" : "dense", "layerUnits" : 32, "outputActivation" : "tanh"},
+					{"layerName" : "dropout3", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "output", "layerType" : "dense", "layerUnits": 2, "outputActivation" : "softmax"}
+					],
+				"training" : {
+					"verbose" : 2, "batchSize" : 32, "epochs" : 5, "validationSplit" : 0.1, "testSplit" : 0.2, "shuffle" : false, 
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"optimizer" : {"name" : "adam", "learning_rate" : 0.001}, "compilationLoss" : "mae", "compilationMetrics" : ["mae"]
+				}
+				}
+			},
+		{
+			"iteration description" : "binary_crossentropy / [Accuracy, Precision, Recall] / sigmoid (unbalanced)",
+			"iteration parameters" : {
+				"iteration ID" : "BollingerBands std 2xLSTM 5d 5e mae mae",
+				"modelFileDir" : "models\\BollingerBands\\",
+				"tensorboard" : {"log file dir" : "logs\\tensorboard\\bb\\"},
+				"forecastInterval" : 0,
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 7, "timeSteps": 5, "layerUnits" : 256, "returnSequences" : true, "outputActivation" : "tanh"},
+					{"layerName" : "hidden-lstm-1", "layerType" : "lstm", "timeSteps" : 5, "layerUnits" : 128, "returnSequences" : false, "outputActivation" : "tanh"},
+					{"layerName" : "dropout1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hiddenDense1", "layerType" : "dense", "layerUnits" : 64, "outputActivation" : "tanh"},
+					{"layerName" : "dropout2", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hiddenDense2", "layerType" : "dense", "layerUnits" : 32, "outputActivation" : "tanh"},
+					{"layerName" : "dropout3", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "output", "layerType" : "dense", "layerUnits": 2, "outputActivation" : "softmax"}
+					],
+				"training" : {
+					"verbose" : 2, "batchSize" : 32, "epochs" : 5, "validationSplit" : 0.1, "testSplit" : 0.2, "shuffle" : false, 
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"optimizer" : {"name" : "adam", "learning_rate" : 0.001}, "compilationLoss" : "mae", "compilationMetrics" : ["mae"]
+				}
+				}
+			},
+		{
+			"iteration description" : "binary_crossentropy / [Accuracy, Precision, Recall] / sigmoid (unbalanced)",
+			"iteration parameters" : {
+				"iteration ID" : "BB std 1xLSTM 5d 5e cce cce",
+				"modelFileDir" : "models\\BollingerBands\\",
+				"tensorboard" : {"log file dir" : "logs\\tensorboard\\bb\\"},
+				"forecastInterval" : 0,
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 7, "timeSteps": 5, "layerUnits" : 256, "returnSequences" : false, "outputActivation" : "tanh"},
+					{"layerName" : "dropout1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hiddenDense1", "layerType" : "dense", "layerUnits" : 64, "outputActivation" : "tanh"},
+					{"layerName" : "dropout2", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hiddenDense2", "layerType" : "dense", "layerUnits" : 32, "outputActivation" : "tanh"},
+					{"layerName" : "dropout3", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "output", "layerType" : "dense", "layerUnits": 2, "outputActivation" : "softmax"}
+					],
+				"training" : {
+					"verbose" : 2, "batchSize" : 32, "epochs" : 5, "validationSplit" : 0.1, "testSplit" : 0.2, "shuffle" : false, 
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"optimizer" : {"name" : "adam", "learning_rate" : 0.001}, "compilationLoss" : "categorical_crossentropy", "compilationMetrics" : ["categorical_crossentropy"]
+				}
+				}
+			},
+		{
+			"iteration description" : "binary_crossentropy / [Accuracy, Precision, Recall] / sigmoid (unbalanced)",
+			"iteration parameters" : {
+				"iteration ID" : "BB std 2xLSTM 5d 5e cce cce",
+				"modelFileDir" : "models\\BollingerBands\\",
+				"tensorboard" : {"log file dir" : "logs\\tensorboard\\bb\\"},
+				"forecastInterval" : 0,
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 7, "timeSteps": 5, "layerUnits" : 256, "returnSequences" : true, "outputActivation" : "tanh"},
+					{"layerName" : "hidden-lstm-1", "layerType" : "lstm", "timeSteps" : 5, "layerUnits" : 128, "returnSequences" : false, "outputActivation" : "tanh"},
+					{"layerName" : "dropout1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hiddenDense1", "layerType" : "dense", "layerUnits" : 64, "outputActivation" : "tanh"},
+					{"layerName" : "dropout2", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hiddenDense2", "layerType" : "dense", "layerUnits" : 32, "outputActivation" : "tanh"},
+					{"layerName" : "dropout3", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "output", "layerType" : "dense", "layerUnits": 2, "outputActivation" : "softmax"}
+					],
+				"training" : {
+					"verbose" : 2, "batchSize" : 32, "epochs" : 5, "validationSplit" : 0.1, "testSplit" : 0.2, "shuffle" : false, 
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"optimizer" : {"name" : "adam", "learning_rate" : 0.001}, "compilationLoss" : "categorical_crossentropy", "compilationMetrics" : ["categorical_crossentropy"]
+				}
+				}
+			},
+		{
+			"iteration description" : "binary_crossentropy / [Accuracy, Precision, Recall] / sigmoid (unbalanced)",
+			"iteration parameters" : {
+				"iteration ID" : "BB std 1xLSTM 20d 50e mse mae",
+				"modelFileDir" : "models\\BollingerBands\\",
+				"tensorboard" : {"log file dir" : "logs\\tensorboard\\bb\\"},
+				"forecastInterval" : 0,
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 7, "timeSteps": 20, "layerUnits" : 256, "returnSequences" : false, "outputActivation" : "tanh"},
+					{"layerName" : "dropout1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hiddenDense1", "layerType" : "dense", "layerUnits" : 64, "outputActivation" : "tanh"},
+					{"layerName" : "dropout2", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hiddenDense2", "layerType" : "dense", "layerUnits" : 32, "outputActivation" : "tanh"},
+					{"layerName" : "dropout3", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "output", "layerType" : "dense", "layerUnits": 2, "outputActivation" : "softmax"}
+					],
+				"training" : {
+					"verbose" : 2, "batchSize" : 16, "epochs" : 50, "validationSplit" : 0.1, "testSplit" : 0.2, "shuffle" : false, 
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"optimizer" : {"name" : "adam", "learning_rate" : 0.001}, "compilationLoss" : "mse", "compilationMetrics" : ["mae"]
+				}
+				}
+			},
+		{
+			"iteration description" : "binary_crossentropy / [Accuracy, Precision, Recall] / sigmoid (unbalanced)",
+			"iteration parameters" : {
+				"iteration ID" : "BollingerBands std 2xLSTM 20d 50e mse mae",
+				"modelFileDir" : "models\\BollingerBands\\",
+				"tensorboard" : {"log file dir" : "logs\\tensorboard\\bb\\"},
+				"forecastInterval" : 0,
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 7, "timeSteps": 20, "layerUnits" : 256, "returnSequences" : true, "outputActivation" : "tanh"},
+					{"layerName" : "hidden-lstm-1", "layerType" : "lstm", "timeSteps" : 20, "layerUnits" : 128, "returnSequences" : false, "outputActivation" : "tanh"},
+					{"layerName" : "dropout1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hiddenDense1", "layerType" : "dense", "layerUnits" : 64, "outputActivation" : "tanh"},
+					{"layerName" : "dropout2", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hiddenDense2", "layerType" : "dense", "layerUnits" : 32, "outputActivation" : "tanh"},
+					{"layerName" : "dropout3", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "output", "layerType" : "dense", "layerUnits": 2, "outputActivation" : "softmax"}
+					],
+				"training" : {
+					"verbose" : 2, "batchSize" : 16, "epochs" : 50, "validationSplit" : 0.1, "testSplit" : 0.2, "shuffle" : false, 
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"optimizer" : {"name" : "adam", "learning_rate" : 0.001}, "compilationLoss" : "mse", "compilationMetrics" : ["mae"]
+				}
+				}
+			},
+		{
+			"iteration description" : "binary_crossentropy / [Accuracy, Precision, Recall] / sigmoid (unbalanced)",
+			"iteration parameters" : {
+				"iteration ID" : "BB std 1xLSTM 20d 50e cce cce",
+				"modelFileDir" : "models\\BollingerBands\\",
+				"tensorboard" : {"log file dir" : "logs\\tensorboard\\bb\\"},
+				"forecastInterval" : 0,
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 7, "timeSteps": 20, "layerUnits" : 256, "returnSequences" : false, "outputActivation" : "tanh"},
+					{"layerName" : "dropout1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hiddenDense1", "layerType" : "dense", "layerUnits" : 64, "outputActivation" : "tanh"},
+					{"layerName" : "dropout2", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hiddenDense2", "layerType" : "dense", "layerUnits" : 32, "outputActivation" : "tanh"},
+					{"layerName" : "dropout3", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "output", "layerType" : "dense", "layerUnits": 2, "outputActivation" : "softmax"}
+					],
+				"training" : {
+					"verbose" : 2, "batchSize" : 16, "epochs" : 50, "validationSplit" : 0.1, "testSplit" : 0.2, "shuffle" : false, 
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"optimizer" : {"name" : "adam", "learning_rate" : 0.001}, "compilationLoss" : "categorical_crossentropy", "compilationMetrics" : ["categorical_crossentropy"]
+				}
+				}
+			},
+		{
+			"iteration description" : "binary_crossentropy / [Accuracy, Precision, Recall] / sigmoid (unbalanced)",
+			"iteration parameters" : {
+				"iteration ID" : "BB std 2xLSTM 20d 50e cce cce",
+				"modelFileDir" : "models\\BollingerBands\\",
+				"tensorboard" : {"log file dir" : "logs\\tensorboard\\bb\\"},
+				"forecastInterval" : 0,
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 7, "timeSteps": 20, "layerUnits" : 256, "returnSequences" : true, "outputActivation" : "tanh"},
+					{"layerName" : "hidden-lstm-1", "layerType" : "lstm", "timeSteps" : 20, "layerUnits" : 128, "returnSequences" : false, "outputActivation" : "tanh"},
+					{"layerName" : "dropout1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hiddenDense1", "layerType" : "dense", "layerUnits" : 64, "outputActivation" : "tanh"},
+					{"layerName" : "dropout2", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hiddenDense2", "layerType" : "dense", "layerUnits" : 32, "outputActivation" : "tanh"},
+					{"layerName" : "dropout3", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "output", "layerType" : "dense", "layerUnits": 2, "outputActivation" : "softmax"}
+					],
+				"training" : {
+					"verbose" : 2, "batchSize" : 16, "epochs" : 50, "validationSplit" : 0.1, "testSplit" : 0.2, "shuffle" : false, 
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"optimizer" : {"name" : "adam", "learning_rate" : 0.001}, "compilationLoss" : "categorical_crossentropy", "compilationMetrics" : ["categorical_crossentropy"]
+				}
+				}
+			},
+		{
+			"iteration description" : "binary_crossentropy / [Accuracy, Precision, Recall] / sigmoid (unbalanced)",
+			"iteration parameters" : {
+				"iteration ID" : "BollingerBands std 1xLSTM 10d 10e",
+				"modelFileDir" : "models\\BollingerBands\\",
+				"tensorboard" : {"log file dir" : "logs\\tensorboard\\bb\\"},
+				"forecastInterval" : 0,
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 7, "timeSteps": 5, "layerUnits" : 256, "returnSequences" : false, "outputActivation" : "tanh"},
+					{"layerName" : "dropout1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hiddenDense1", "layerType" : "dense", "layerUnits" : 64, "outputActivation" : "tanh"},
+					{"layerName" : "dropout2", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hiddenDense2", "layerType" : "dense", "layerUnits" : 32, "outputActivation" : "tanh"},
+					{"layerName" : "dropout3", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "output", "layerType" : "dense", "layerUnits": 2, "outputActivation" : "softmax"}
 					],
 				"training" : {
 					"verbose" : 2, "batchSize" : 16, "epochs" : 10, "validationSplit" : 0.1, "testSplit" : 0.2, "shuffle" : false, 
 					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
-					"optimizer" : {"name" : "adam", "learning_rate" : 0.001}, "compilationLoss" : "binary_crossentropy", "compilationMetrics" : ["Recall"]
+					"optimizer" : {"name" : "adam", "learning_rate" : 0.001}, "compilationLoss" : "categorical_crossentropy", "compilationMetrics" : ["categorical_crossentropy"]
+				}
+				}
+			},
+		{
+			"iteration description" : "binary_crossentropy / [Accuracy, Precision, Recall] / sigmoid (unbalanced)",
+			"iteration parameters" : {
+				"iteration ID" : "BollingerBands std 2xLSTM 5d 10e",
+				"modelFileDir" : "models\\BollingerBands\\",
+				"tensorboard" : {"log file dir" : "logs\\tensorboard\\bb\\"},
+				"forecastInterval" : 0,
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 7, "timeSteps": 5, "layerUnits" : 256, "returnSequences" : true, "outputActivation" : "tanh"},
+					{"layerName" : "hidden-lstm-1", "layerType" : "lstm", "timeSteps" : 5, "layerUnits" : 128, "returnSequences" : false, "outputActivation" : "tanh"},
+					{"layerName" : "dropout1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hiddenDense1", "layerType" : "dense", "layerUnits" : 64, "outputActivation" : "tanh"},
+					{"layerName" : "dropout2", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hiddenDense2", "layerType" : "dense", "layerUnits" : 32, "outputActivation" : "tanh"},
+					{"layerName" : "dropout3", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "output", "layerType" : "dense", "layerUnits": 2, "outputActivation" : "softmax"}
+					],
+				"training" : {
+					"verbose" : 2, "batchSize" : 16, "epochs" : 10, "validationSplit" : 0.1, "testSplit" : 0.2, "shuffle" : false, 
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"optimizer" : {"name" : "adam", "learning_rate" : 0.001}, "compilationLoss" : "categorical_crossentropy", "compilationMetrics" : ["categorical_crossentropy"]
+				}
+				}
+			},
+		{
+			"iteration description" : "binary_crossentropy / [Accuracy, Precision, Recall] / sigmoid (unbalanced)",
+			"iteration parameters" : {
+				"iteration ID" : "BollingerBands std 1xLSTM 20d 10e",
+				"modelFileDir" : "models\\BollingerBands\\",
+				"tensorboard" : {"log file dir" : "logs\\tensorboard\\bb\\"},
+				"forecastInterval" : 0,
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 7, "timeSteps": 20, "layerUnits" : 256, "returnSequences" : false, "outputActivation" : "tanh"},
+					{"layerName" : "dropout1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hiddenDense1", "layerType" : "dense", "layerUnits" : 64, "outputActivation" : "tanh"},
+					{"layerName" : "dropout2", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hiddenDense2", "layerType" : "dense", "layerUnits" : 32, "outputActivation" : "tanh"},
+					{"layerName" : "dropout3", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "output", "layerType" : "dense", "layerUnits": 2, "outputActivation" : "softmax"}
+					],
+				"training" : {
+					"verbose" : 2, "batchSize" : 16, "epochs" : 10, "validationSplit" : 0.1, "testSplit" : 0.2, "shuffle" : false, 
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"optimizer" : {"name" : "adam", "learning_rate" : 0.001}, "compilationLoss" : "categorical_crossentropy", "compilationMetrics" : ["categorical_crossentropy"]
+				}
+				}
+			},
+		{
+			"iteration description" : "binary_crossentropy / [Accuracy, Precision, Recall] / sigmoid (unbalanced)",
+			"iteration parameters" : {
+				"iteration ID" : "BollingerBands std 2xLSTM 20d 10e",
+				"modelFileDir" : "models\\BollingerBands\\",
+				"tensorboard" : {"log file dir" : "logs\\tensorboard\\bb\\"},
+				"forecastInterval" : 0,
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 7, "timeSteps": 20, "layerUnits" : 256, "returnSequences" : true, "outputActivation" : "tanh"},
+					{"layerName" : "hidden-lstm-1", "layerType" : "lstm", "timeSteps" : 5, "layerUnits" : 128, "returnSequences" : false, "outputActivation" : "tanh"},
+					{"layerName" : "dropout1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hiddenDense1", "layerType" : "dense", "layerUnits" : 64, "outputActivation" : "tanh"},
+					{"layerName" : "dropout2", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hiddenDense2", "layerType" : "dense", "layerUnits" : 32, "outputActivation" : "tanh"},
+					{"layerName" : "dropout3", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "output", "layerType" : "dense", "layerUnits": 2, "outputActivation" : "softmax"}
+					],
+				"training" : {
+					"verbose" : 2, "batchSize" : 16, "epochs" : 10, "validationSplit" : 0.1, "testSplit" : 0.2, "shuffle" : false, 
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"optimizer" : {"name" : "adam", "learning_rate" : 0.001}, "compilationLoss" : "categorical_crossentropy", "compilationMetrics" : ["categorical_crossentropy"]
+				}
+				}
+			},
+		{
+			"iteration description" : "binary_crossentropy / [Accuracy, Precision, Recall] / sigmoid (unbalanced)",
+			"iteration parameters" : {
+				"iteration ID" : "BollingerBands std 1xLSTM 60d 10e",
+				"modelFileDir" : "models\\BollingerBands\\",
+				"tensorboard" : {"log file dir" : "logs\\tensorboard\\bb\\"},
+				"forecastInterval" : 0,
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 7, "timeSteps": 60, "layerUnits" : 256, "returnSequences" : false, "outputActivation" : "tanh"},
+					{"layerName" : "dropout1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hiddenDense1", "layerType" : "dense", "layerUnits" : 64, "outputActivation" : "tanh"},
+					{"layerName" : "dropout2", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hiddenDense2", "layerType" : "dense", "layerUnits" : 32, "outputActivation" : "tanh"},
+					{"layerName" : "dropout3", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "output", "layerType" : "dense", "layerUnits": 2, "outputActivation" : "softmax"}
+					],
+				"training" : {
+					"verbose" : 2, "batchSize" : 16, "epochs" : 10, "validationSplit" : 0.1, "testSplit" : 0.2, "shuffle" : false, 
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"optimizer" : {"name" : "adam", "learning_rate" : 0.001}, "compilationLoss" : "categorical_crossentropy", "compilationMetrics" : ["categorical_crossentropy"]
+				}
+				}
+			},
+		{
+			"iteration description" : "binary_crossentropy / [Accuracy, Precision, Recall] / sigmoid (unbalanced)",
+			"iteration parameters" : {
+				"iteration ID" : "BollingerBands std 2xLSTM 60d 10e",
+				"modelFileDir" : "models\\BollingerBands\\",
+				"tensorboard" : {"log file dir" : "logs\\tensorboard\\bb\\"},
+				"forecastInterval" : 0,
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 7, "timeSteps": 60, "layerUnits" : 256, "returnSequences" : true, "outputActivation" : "tanh"},
+					{"layerName" : "hidden-lstm-1", "layerType" : "lstm", "timeSteps" : 5, "layerUnits" : 128, "returnSequences" : false, "outputActivation" : "tanh"},
+					{"layerName" : "dropout1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hiddenDense1", "layerType" : "dense", "layerUnits" : 64, "outputActivation" : "tanh"},
+					{"layerName" : "dropout2", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hiddenDense2", "layerType" : "dense", "layerUnits" : 32, "outputActivation" : "tanh"},
+					{"layerName" : "dropout3", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "output", "layerType" : "dense", "layerUnits": 2, "outputActivation" : "softmax"}
+					],
+				"training" : {
+					"verbose" : 2, "batchSize" : 16, "epochs" : 10, "validationSplit" : 0.1, "testSplit" : 0.2, "shuffle" : false, 
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"optimizer" : {"name" : "adam", "learning_rate" : 0.001}, "compilationLoss" : "categorical_crossentropy", "compilationMetrics" : ["categorical_crossentropy"]
 				}
 				}
 			}
-		]
-	}
-}
+]
 }
