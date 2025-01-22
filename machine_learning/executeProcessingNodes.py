@@ -131,13 +131,13 @@ def executeDataCombine(nodeName, d2rP):
             if flow[cc.JSON_FLOW_NAME] in inputFlows:
                 if cc.JSON_FLOW_DATA_DIR in flow[cc.JSON_CONDITIONAL]:
                     inputFlowFolders.append(flow[cc.JSON_CONDITIONAL][cc.JSON_FLOW_DATA_DIR])
-                '''
-                elif cc.JSON_FLOW_DATA_FILE in flow[cc.JSON_CONDITIONAL]:
-                    inputFlowFiles.append(flow[cc.JSON_CONDITIONAL][cc.JSON_FLOW_DATA_FILE])
-                '''
+
             if flow[cc.JSON_FLOW_NAME] == outputFlow:
+                exc_txt = "\nAn exception occurred - output flow {} from {} requires both {} and {}". \
+                    format(flow, nodeName, cc.JSON_FLOW_DATA_DIR, cc.JSON_FLOW_DATA_FILE)
                 outputFlowDir = flow[cc.JSON_CONDITIONAL][cc.JSON_FLOW_DATA_DIR]
-                
+                outputFlowFile = flow[cc.JSON_CONDITIONAL][cc.JSON_FLOW_DATA_FILE]
+                    
         '''
         horizontal merge of all sample columns
         all samples merged must have the same symbol and synchronizationFeatures
@@ -216,8 +216,7 @@ def executeDataCombine(nodeName, d2rP):
             combinedData[symbol].to_csv(outputFile)
             ''' combine into a single sample file "flowDataFile" - 'vertical' merge '''
             df_combined = pd.concat([df_combined, combinedData[symbol]], ignore_index=True)
-        print("WIP ==============\n\tcombined data file fixed. Needs to be configuarable")
-        outputFile = aiwork + "\\" + "internal_flows\\MMN_M1M2\\CombinedMMN.csv"
+        outputFile = aiwork + "\\" + outputFlowFile
         df_combined.to_csv(outputFile)
         d2rP.data = df_combined
         

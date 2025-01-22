@@ -248,6 +248,7 @@ class MarketData(basicMarketData):
             self.period = period
             self.frequencyType = frequencyType
             self.frequency = frequency
+            self.df_marketData = pd.DataFrame(columns=['DateTime', 'Open', 'High', 'Low', 'Close', 'Volume'])
             
             self.validateRequestParams()
             self.requestMarketData()
@@ -293,7 +294,7 @@ class MarketData(basicMarketData):
         #print("Returning candle #{}".format(ndx))
         exc_txt = "\nAn exception occurred - unable to access requested candle"
         try:
-            if ndx > len(self.df_marketData):
+            if ndx >= len(self.df_marketData):
                 raise ValueError
             else:
                 candleDict = {'datetime' : self.df_marketData.iloc[ndx]['DateTime'], \

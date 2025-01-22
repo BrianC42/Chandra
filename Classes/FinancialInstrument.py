@@ -100,69 +100,73 @@ class FinancialInstrument(object):
             self.financialInstrumentDetails = response.text
             self.financialInstrumentDetailsJson = json.loads(self.financialInstrumentDetails)
             
-            exc_txt = "An exception occurred unpacking financial instrument details for {}".format(symbol)
-            instruments = self.financialInstrumentDetailsJson['instruments'][0]
-            fundamentals = instruments['fundamental']
-            #print("Fundamentals: {}".format(fundamentals))
-    
-            self.symbol = symbol
-            self.symbol = instruments['symbol']
-            self.symbol = fundamentals['symbol']
+            self.detailsRetrieved = False
             
-            self.description = instruments['description'] 
-            self.exchange = instruments['exchange']
-            self.assetType = instruments['assetType']
-            
-            self.high52 = float(fundamentals['high52'])
-            self.low52 = float(fundamentals['low52'])
-            self.marketCap = float(fundamentals['marketCap']) 
-            self.eps = float(fundamentals['eps']) 
-            self.dtnVolume = int(fundamentals['dtnVolume'])
-    
-            if 'cusip' in instruments:
-                self.cusip = instruments['cusip']
-            else:
-                self.cusip = ""
+            exc_txt = "\nAn exception occurred unpacking financial instrument details for {}".format(symbol)
+            if 'instruments' in self.financialInstrumentDetailsJson:
+                self.detailsRetrieved = True
+                instruments = self.financialInstrumentDetailsJson['instruments'][0]
+                fundamentals = instruments['fundamental']
+                #print("Fundamentals: {}".format(fundamentals))
+        
+                self.symbol = symbol
+                self.symbol = instruments['symbol']
+                self.symbol = fundamentals['symbol']
                 
-            if 'peRatio' in fundamentals:
-                self.peRatio = float(fundamentals['peRatio'])
-            else:
-                self.peRatio = 0.0
-
-            if 'dividendAmount' in fundamentals:
-                self.dividendAmount = float(fundamentals['dividendAmount'])
-            else:
-                self.dividendAmount = 0.0
-
-            if 'dividendPayAmount' in fundamentals:
-                self.dividendPayAmount = float(fundamentals['dividendPayAmount'])
-            else:
-                self.dividendPayAmount = 0.0
-
-            if 'dividendYield' in fundamentals:
-                self.dividendYield = float(fundamentals['dividendYield']) / 100
-            else:
-                self.dividendYield = 0.0
+                self.description = instruments['description'] 
+                self.exchange = instruments['exchange']
+                self.assetType = instruments['assetType']
+                
+                self.high52 = float(fundamentals['high52'])
+                self.low52 = float(fundamentals['low52'])
+                self.marketCap = float(fundamentals['marketCap']) 
+                self.eps = float(fundamentals['eps']) 
+                self.dtnVolume = int(fundamentals['dtnVolume'])
+        
+                if 'cusip' in instruments:
+                    self.cusip = instruments['cusip']
+                else:
+                    self.cusip = ""
+                    
+                if 'peRatio' in fundamentals:
+                    self.peRatio = float(fundamentals['peRatio'])
+                else:
+                    self.peRatio = 0.0
     
-            if 'sharesOutstanding' in fundamentals:
-                self.sharesOutstanding = float(fundamentals['sharesOutstanding'])
-            else:
-                self.sharesOutstanding = ""
-           
-            if 'dividendPayDate' in fundamentals:
-                self.dividendPayDate, time = self.split_date_time(fundamentals['dividendPayDate'])
-            else:
-                self.dividendPayDate = ""
+                if 'dividendAmount' in fundamentals:
+                    self.dividendAmount = float(fundamentals['dividendAmount'])
+                else:
+                    self.dividendAmount = 0.0
     
-            if 'nextDividendPayDate' in fundamentals:
-                self.nextDividendPayDate, time = self.split_date_time(fundamentals['nextDividendPayDate'])
-            else:
-                self.nextDividendPayDate = ""
+                if 'dividendPayAmount' in fundamentals:
+                    self.dividendPayAmount = float(fundamentals['dividendPayAmount'])
+                else:
+                    self.dividendPayAmount = 0.0
     
-            if 'nextDividendDate' in fundamentals:
-                self.nextDividendDate, time = self.split_date_time(fundamentals['nextDividendDate'])
-            else:
-                self.nextDividendDate = ""
+                if 'dividendYield' in fundamentals:
+                    self.dividendYield = float(fundamentals['dividendYield']) / 100
+                else:
+                    self.dividendYield = 0.0
+        
+                if 'sharesOutstanding' in fundamentals:
+                    self.sharesOutstanding = float(fundamentals['sharesOutstanding'])
+                else:
+                    self.sharesOutstanding = ""
+               
+                if 'dividendPayDate' in fundamentals:
+                    self.dividendPayDate, time = self.split_date_time(fundamentals['dividendPayDate'])
+                else:
+                    self.dividendPayDate = ""
+        
+                if 'nextDividendPayDate' in fundamentals:
+                    self.nextDividendPayDate, time = self.split_date_time(fundamentals['nextDividendPayDate'])
+                else:
+                    self.nextDividendPayDate = ""
+        
+                if 'nextDividendDate' in fundamentals:
+                    self.nextDividendDate, time = self.split_date_time(fundamentals['nextDividendDate'])
+                else:
+                    self.nextDividendDate = ""
            
         except Exception:
             print(exc_txt)
@@ -200,6 +204,14 @@ class FinancialInstrument(object):
     ''' ============ split date time string into date and time strings - end ============= '''            
             
     ''' ============ data service provider and market data controls - start ============= '''
+    @property
+    def detailsRetrieved(self):
+        return self._detailsRetrieved
+    
+    @detailsRetrieved.setter
+    def detailsRetrieved(self, detailsRetrieved):
+        self._detailsRetrieved = detailsRetrieved
+
     @property
     def financialDataServicesObj(self):
         return self._financialDataServicesObj

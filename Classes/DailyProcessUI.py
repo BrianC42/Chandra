@@ -557,7 +557,7 @@ class DailyProcessUI(object):
                 elif proc.processName == "Networks":
                     ''' ML networks that have been debugged (not necessarily optimized) '''
                     self.trainKerasModel(proc)
-                elif proc.processName == "ExperimentaL Network":
+                elif proc.processName == "Experimental Network":
                     ''' ML networks currently under development '''
                     self.trainKerasModel(proc)
                     

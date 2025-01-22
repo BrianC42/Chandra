@@ -707,6 +707,30 @@ def reportEvaluationMatrix(d2r, prediction):
     print("Best prediction distribution was: {}".format(labelCounts))
     
     print("WIP =====\n\tadditional confidence calculations to be added")
+    '''
+    Calculate Key Metrics:
+    
+    3. Calculate Macro-Averaged Metrics
+    Macro-averaged Precision: Calculate the precision for each class individually, then take the average of these per-class precision values.   
+    Macro-averaged Recall: Calculate the recall for each class individually, then take the average of these per-class recall values.   
+    
+    Accuracy: (TP + TN) / (TP + TN + FP + FN) = 0.5896
+    Accuracy: (Total number of correct predictions) / (Total number of samples)
+    
+    Precision (for class 'i'):
+    Precision measures how many of the instances predicted as class 'i' actually belong to class 'i'.   
+    Formula: Precision(i) = TP(i) / (TP(i) + FP(i))
+    Precision: TP / (TP + FP) = 0.5866
+
+    TP(i): True Positives for class 'i' (diagonal element of the confusion matrix)   
+    FP(i): False Positives for class 'i' (sum of the 'i'th column excluding the diagonal element)
+    
+    Recall measures how many of the actual instances of class 'i' were correctly predicted.   
+    Formula: Recall(i) = TP(i) / (TP(i) + FN(i))
+    FN(i): False Negatives for class 'i' (sum of the 'i'th row excluding the diagonal element)    Recall: TP / (TP + FN) = 0.9349
+
+    F1-Score: 2 * (Precision * Recall) / (Precision + Recall) = 0.7209
+    '''
     
     return
 

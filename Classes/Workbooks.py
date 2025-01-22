@@ -236,24 +236,28 @@ class investments(workbooks):
                 exc_txt = "\nAn exception occurred - with symbol: {}".format(symbol)
             
                 instrumentDetails = FinancialInstrument(symbol)
-                mktData = MarketData(symbol, periodType="month", period="1", frequencyType="daily", frequency="1")
-                candle = mktData.iloc(mktData.candleCount()-1)
-                
-                ''' step 5. load the dataframe information '''
-                new_row = {'symbol' : symbol, \
-                           'Last Price' : candle.candleClose, \
-                           'Dividend Yield' : instrumentDetails.dividendYield, \
-                           'Dividend' : instrumentDetails.dividendAmount, \
-                           'Dividend Ex-Date' : instrumentDetails.nextDividendDate, \
-                           "P/E Ratio" : instrumentDetails.peRatio, \
-                           "52 Week High" : instrumentDetails.high52, \
-                           "52 Week Low" : instrumentDetails.low52, \
-                           "Volume" : candle.candleVolume, \
-                           "Shares Outstanding" : instrumentDetails.sharesOutstanding, \
-                           "Market Cap" : instrumentDetails.marketCap
-                           }
-
-                self.df_marktomarket.loc[symbol] = new_row
+                if instrumentDetails.detailsRetrieved:
+                    mktData = MarketData(symbol, periodType="month", period="1", frequencyType="daily", frequency="1")
+                    if mktData.candleCount() > 0:
+                        candle = mktData.iloc(mktData.candleCount()-1)
+                        
+                        ''' step 5. load the dataframe information '''
+                        new_row = {'symbol' : symbol, \
+                                   'Last Price' : candle.candleClose, \
+                                   'Dividend Yield' : instrumentDetails.dividendYield, \
+                                   'Dividend' : instrumentDetails.dividendAmount, \
+                                   'Dividend Ex-Date' : instrumentDetails.nextDividendDate, \
+                                   "P/E Ratio" : instrumentDetails.peRatio, \
+                                   "52 Week High" : instrumentDetails.high52, \
+                                   "52 Week Low" : instrumentDetails.low52, \
+                                   "Volume" : candle.candleVolume, \
+                                   "Shares Outstanding" : instrumentDetails.sharesOutstanding, \
+                                   "Market Cap" : instrumentDetails.marketCap
+                                   }
+        
+                        self.df_marktomarket.loc[symbol] = new_row
+                else:
+                    print("Unable to retrieve financial and market data for {}".format(symbol))
             #print("Mark to market dataframe\n{}".format(self.df_marktomarket))
             
             ''' step 6 - prepare data for Google sheet update '''

@@ -975,7 +975,7 @@ def acquireTrainingData(d2r, nodeName):
                         for dataFile in nx_data_file[node_i]:
                             fileSpecList = glob.glob(dataFile)
                             fileCount = len(fileSpecList)
-                            tf_progbar = keras.utils.Progbar(fileCount, width=50, verbose=1, interval=1, stateful_metrics=None, unit_name='file')
+                            tf_progbar = keras.utils.Progbar(fileCount, width=50, verbose=1, interval=10, stateful_metrics=None, unit_name='file')
                             count = 0
                             for FileSpec in fileSpecList:
                                 if os.path.isfile(FileSpec):

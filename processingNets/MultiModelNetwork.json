@@ -43,7 +43,7 @@
 	"requiredFields" : {"flowFrom" : "DataCombine", "flowTo" : "acquireCombinedData"},
 	"conditionalFields" : {
 		"flowDataDir" : "internal_flows\\MMN_M1M2\\Symbol combined",
-		"flowDataFile" : "CombinedMMN.csv",
+		"flowDataFile" : "internal_flows\\MMN_M1M2\\CombinedMMN.csv",
 		"TensorflowData" : {
 			"features" : ["Open", "High", "Low", "Close", 
 							"Volume", "OBV", "AccumulationDistribution",
@@ -268,6 +268,403 @@
 		"visualizations" : ["categoryMatrix"],
 		"training iterations" : [
 			{
+			"iteration description" : "trials of model structure",
+			"iteration parameters" : {
+				"iteration ID" : "MMN ms311",
+				"modelFileDir" : "models\\MMN\\",
+				"tensorboard" : {"log file dir" : "logs\\tensorboard\\MMN\\"},
+				"forecastInterval" : 0,
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 14, "timeSteps": 20, "layerUnits" : 256, "returnSequences" : false, "outputActivation" : "relu"},
+					{"layerName" : "drop1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hd1", "layerType" : "dense", "layerUnits" : 128, "outputActivation" : "relu"},
+					{"layerName" : "drop2", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hd2", "layerType" : "dense", "layerUnits" : 64, "outputActivation" : "relu"},
+					{"layerName" : "drop3", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hd3", "layerType" : "dense", "layerUnits" : 32, "outputActivation" : "relu"},
+					{"layerName" : "drop4", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "output", "layerType" : "dense", "layerUnits": 2, "outputActivation" : "softmax"}
+					],
+				"training" : {
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"batchSize" : 16, "epochs" : 10, "validationSplit" : 0.1, "testSplit" : 0.2,
+					"shuffle" : false, "balanceClasses" : true,	"verbose" : 2,
+					"optimizer" : {"name" : "SGD", "learning_rate" : 0.001}, 
+					"compilationLoss" : "mse", "compilationMetrics" : ["mae"]
+				}
+				}
+			}
+		]
+	}
+	},
+	{
+	"processNodeName" : "stop",
+	"requiredFields" : {"processType" : "stop", "inputFlows" : [""], "outputFlow" : ""},
+	"conditionalFields" : {}
+	}
+],
+"comment - processNodes end" : "process node definitions end -------------------------------------------------------------------------",
+"comment end of specification" : "----------------------------------------------------------------------------------------------------",
+"comment trial training iterations ================================================================================" : {
+	"comment indent 1" : {
+		"comment most successful" : "TBD",
+		"best to date" : [
+			{
+			"iteration description" : "trials of model structure",
+			"iteration parameters" : {
+				"iteration ID" : "MMN ms311",
+				"modelFileDir" : "models\\MMN",
+				"tensorboard" : {"log file dir" : "logs\\tensorboard\\MMN\\"},
+				"forecastInterval" : 0,
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 14, "timeSteps": 20, "layerUnits" : 256, "returnSequences" : false, "outputActivation" : "relu"},
+					{"layerName" : "drop1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hd1", "layerType" : "dense", "layerUnits" : 128, "outputActivation" : "relu"},
+					{"layerName" : "drop2", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hd2", "layerType" : "dense", "layerUnits" : 64, "outputActivation" : "relu"},
+					{"layerName" : "drop3", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hd3", "layerType" : "dense", "layerUnits" : 32, "outputActivation" : "relu"},
+					{"layerName" : "drop4", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "output", "layerType" : "dense", "layerUnits": 2, "outputActivation" : "softmax"}
+					],
+				"training" : {
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"batchSize" : 16, "epochs" : 10, "validationSplit" : 0.1, "testSplit" : 0.2,
+					"shuffle" : false, "balanceClasses" : true,	"verbose" : 2,
+					"optimizer" : {"name" : "SGD", "learning_rate" : 0.001}, 
+					"compilationLoss" : "mse", "compilationMetrics" : ["mae"]
+				}
+				}
+			}
+		],
+		"show promise training iterations" : [
+			{
+			"iteration description" : "trials of model structure",
+			"iteration parameters" : {
+				"iteration ID" : "MMN ms411",
+				"modelFileDir" : "models\\MMN\\",
+				"tensorboard" : {"log file dir" : "logs\\tensorboard\\MMN\\"},
+				"forecastInterval" : 0,
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 14, "timeSteps": 20, "layerUnits" : 256, "returnSequences" : false, "outputActivation" : "relu"},
+					{"layerName" : "drop1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hd1", "layerType" : "dense", "layerUnits" : 128, "outputActivation" : "relu"},
+					{"layerName" : "drop2", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hd2", "layerType" : "dense", "layerUnits" : 64, "outputActivation" : "relu"},
+					{"layerName" : "drop3", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hd3", "layerType" : "dense", "layerUnits" : 32, "outputActivation" : "relu"},
+					{"layerName" : "drop4", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "output", "layerType" : "dense", "layerUnits": 2, "outputActivation" : "softmax"}
+					],
+				"training" : {
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"batchSize" : 16, "epochs" : 100, "validationSplit" : 0.1, "testSplit" : 0.2,
+					"shuffle" : false, "balanceClasses" : true,	"verbose" : 2,
+					"optimizer" : {"name" : "SGD", "learning_rate" : 0.001}, 
+					"compilationLoss" : "mse", "compilationMetrics" : ["mae"]
+				}
+				}
+			},
+			{
+			"iteration description" : "trials of model structure",
+			"iteration parameters" : {
+				"iteration ID" : "MMN ms412",
+				"modelFileDir" : "models\\MMN\\",
+				"tensorboard" : {"log file dir" : "logs\\tensorboard\\MMN\\"},
+				"forecastInterval" : 0,
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 14, "timeSteps": 20, "layerUnits" : 1024, "returnSequences" : false, "outputActivation" : "relu"},
+					{"layerName" : "drop1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hd1", "layerType" : "dense", "layerUnits" : 512, "outputActivation" : "relu"},
+					{"layerName" : "drop2", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hd2", "layerType" : "dense", "layerUnits" : 512, "outputActivation" : "relu"},
+					{"layerName" : "drop3", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "output", "layerType" : "dense", "layerUnits": 2, "outputActivation" : "softmax"}
+					],
+				"training" : {
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"batchSize" : 16, "epochs" : 100, "validationSplit" : 0.1, "testSplit" : 0.2,
+					"shuffle" : false, "balanceClasses" : true,	"verbose" : 2,
+					"optimizer" : {"name" : "SGD", "learning_rate" : 0.001}, 
+					"compilationLoss" : "mse", "compilationMetrics" : ["mae"]
+				}
+				}
+			},
+			{
+			"iteration description" : "trials of model structure",
+			"iteration parameters" : {
+				"iteration ID" : "MMN ms313",
+				"modelFileDir" : "models\\MMN",
+				"tensorboard" : {"log file dir" : "logs\\tensorboard\\MMN\\"},
+				"forecastInterval" : 0,
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 14, "timeSteps": 20, "layerUnits" : 64, "returnSequences" : false, "outputActivation" : "relu"},
+					{"layerName" : "drop1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hd1", "layerType" : "dense", "layerUnits" : 64, "outputActivation" : "relu"},
+					{"layerName" : "drop2", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hd2", "layerType" : "dense", "layerUnits" : 64, "outputActivation" : "relu"},
+					{"layerName" : "drop3", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "output", "layerType" : "dense", "layerUnits": 2, "outputActivation" : "softmax"}
+					],
+				"training" : {
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"batchSize" : 16, "epochs" : 10, "validationSplit" : 0.1, "testSplit" : 0.2,
+					"shuffle" : false, "balanceClasses" : true,	"verbose" : 2,
+					"optimizer" : {"name" : "SGD", "learning_rate" : 0.001}, 
+					"compilationLoss" : "mse", "compilationMetrics" : ["mae"]
+				}
+				}
+			},
+			{
+			"iteration description" : "trials of model structure",
+			"iteration parameters" : {
+				"iteration ID" : "MMN ms310",
+				"modelFileDir" : "models\\MMN",
+				"tensorboard" : {"log file dir" : "logs\\tensorboard\\MMN\\"},
+				"forecastInterval" : 0,
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 14, "timeSteps": 20, "layerUnits" : 1024, "returnSequences" : false, "outputActivation" : "relu"},
+					{"layerName" : "drop1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hd1", "layerType" : "dense", "layerUnits" : 512, "outputActivation" : "relu"},
+					{"layerName" : "drop2", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hd2", "layerType" : "dense", "layerUnits" : 512, "outputActivation" : "relu"},
+					{"layerName" : "drop3", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hd3", "layerType" : "dense", "layerUnits" : 512, "outputActivation" : "relu"},
+					{"layerName" : "drop4", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "output", "layerType" : "dense", "layerUnits": 2, "outputActivation" : "softmax"}
+					],
+				"training" : {
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"batchSize" : 16, "epochs" : 3, "validationSplit" : 0.1, "testSplit" : 0.2,
+					"shuffle" : false, "balanceClasses" : true,	"verbose" : 2,
+					"optimizer" : {"name" : "SGD", "learning_rate" : 0.001}, 
+					"compilationLoss" : "mse", "compilationMetrics" : ["mae"]
+				}
+				}
+			},
+			{
+			"iteration description" : "trials of optimizers, activations, loss functions",
+			"iteration parameters" : {
+				"iteration ID" : "MMN oal200",
+				"modelFileDir" : "models\\MMN",
+				"tensorboard" : {"log file dir" : "logs\\tensorboard\\MMN\\"},
+				"forecastInterval" : 0,
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 14, "timeSteps": 20, "layerUnits" : 256, "returnSequences" : false, "outputActivation" : "tanh"},
+					{"layerName" : "drop1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hd1", "layerType" : "dense", "layerUnits" : 256, "outputActivation" : "tanh"},
+					{"layerName" : "drop2", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hd2", "layerType" : "dense", "layerUnits" : 256, "outputActivation" : "tanh"},
+					{"layerName" : "drop3", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hd3", "layerType" : "dense", "layerUnits" : 256, "outputActivation" : "tanh"},
+					{"layerName" : "drop4", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "output", "layerType" : "dense", "layerUnits": 2, "outputActivation" : "softmax"}
+					],
+				"training" : {
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"batchSize" : 16, "epochs" : 10, "validationSplit" : 0.1, "testSplit" : 0.2,
+					"shuffle" : false, "balanceClasses" : true,	"verbose" : 2,
+					"optimizer" : {"name" : "SGD", "learning_rate" : 0.001}, 
+					"compilationLoss" : "mse", "compilationMetrics" : ["mae"]
+				}
+				}
+			},
+			{
+			"iteration description" : "trials of optimizers, activations, loss functions",
+			"iteration parameters" : {
+				"iteration ID" : "MMN oal201",
+				"modelFileDir" : "models\\MMN",
+				"tensorboard" : {"log file dir" : "logs\\tensorboard\\MMN\\"},
+				"forecastInterval" : 0,
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 14, "timeSteps": 20, "layerUnits" : 256, "returnSequences" : false, "outputActivation" : "relu"},
+					{"layerName" : "drop1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hd1", "layerType" : "dense", "layerUnits" : 256, "outputActivation" : "relu"},
+					{"layerName" : "drop2", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hd2", "layerType" : "dense", "layerUnits" : 256, "outputActivation" : "relu"},
+					{"layerName" : "drop3", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hd3", "layerType" : "dense", "layerUnits" : 256, "outputActivation" : "relu"},
+					{"layerName" : "drop4", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "output", "layerType" : "dense", "layerUnits": 2, "outputActivation" : "softmax"}
+					],
+				"training" : {
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"batchSize" : 16, "epochs" : 10, "validationSplit" : 0.1, "testSplit" : 0.2,
+					"shuffle" : false, "balanceClasses" : true,	"verbose" : 2,
+					"optimizer" : {"name" : "SGD", "learning_rate" : 0.001}, 
+					"compilationLoss" : "mse", "compilationMetrics" : ["mae"]
+				}
+				}
+			},
+			{
+			"iteration description" : "trials of optimizers, activations, loss functions",
+			"iteration parameters" : {
+				"iteration ID" : "MMN oal200",
+				"modelFileDir" : "models\\MMN",
+				"tensorboard" : {"log file dir" : "logs\\tensorboard\\MMN\\"},
+				"forecastInterval" : 0,
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 14, "timeSteps": 20, "layerUnits" : 256, "returnSequences" : false, "outputActivation" : "tanh"},
+					{"layerName" : "drop1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hd1", "layerType" : "dense", "layerUnits" : 256, "outputActivation" : "tanh"},
+					{"layerName" : "drop2", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hd2", "layerType" : "dense", "layerUnits" : 256, "outputActivation" : "tanh"},
+					{"layerName" : "drop3", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hd3", "layerType" : "dense", "layerUnits" : 128, "outputActivation" : "tanh"},
+					{"layerName" : "drop4", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hd4", "layerType" : "dense", "layerUnits" : 128, "outputActivation" : "tanh"},
+					{"layerName" : "drop5", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hd5", "layerType" : "dense", "layerUnits" : 64, "outputActivation" : "tanh"},
+					{"layerName" : "drop6", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "output", "layerType" : "dense", "layerUnits": 2, "outputActivation" : "softmax"}
+					],
+				"training" : {
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"batchSize" : 16, "epochs" : 10, "validationSplit" : 0.1, "testSplit" : 0.2,
+					"shuffle" : false, "balanceClasses" : true,	"verbose" : 2,
+					"optimizer" : {"name" : "SGD", "learning_rate" : 0.001}, 
+					"compilationLoss" : "mse", "compilationMetrics" : ["mae"]
+				}
+				}
+			},
+			{
+			"iteration description" : "trials of optimizers, activations, loss functions",
+			"iteration parameters" : {
+				"iteration ID" : "MMN oal201",
+				"modelFileDir" : "models\\MMN",
+				"tensorboard" : {"log file dir" : "logs\\tensorboard\\MMN\\"},
+				"forecastInterval" : 0,
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 14, "timeSteps": 20, "layerUnits" : 256, "returnSequences" : false, "outputActivation" : "relu"},
+					{"layerName" : "drop1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hd1", "layerType" : "dense", "layerUnits" : 256, "outputActivation" : "relu"},
+					{"layerName" : "drop2", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hd2", "layerType" : "dense", "layerUnits" : 256, "outputActivation" : "relu"},
+					{"layerName" : "drop3", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hd3", "layerType" : "dense", "layerUnits" : 128, "outputActivation" : "relu"},
+					{"layerName" : "drop4", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hd4", "layerType" : "dense", "layerUnits" : 128, "outputActivation" : "relu"},
+					{"layerName" : "drop5", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hd5", "layerType" : "dense", "layerUnits" : 64, "outputActivation" : "relu"},
+					{"layerName" : "drop6", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "output", "layerType" : "dense", "layerUnits": 2, "outputActivation" : "softmax"}
+					],
+				"training" : {
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"batchSize" : 16, "epochs" : 10, "validationSplit" : 0.1, "testSplit" : 0.2,
+					"shuffle" : false, "balanceClasses" : true,	"verbose" : 2,
+					"optimizer" : {"name" : "SGD", "learning_rate" : 0.001}, 
+					"compilationLoss" : "mse", "compilationMetrics" : ["mae"]
+				}
+				}
+			},
+			{
+			"iteration description" : "trials of optimizers, activations, loss functions",
+			"iteration parameters" : {
+				"iteration ID" : "MMN oal12",
+				"modelFileDir" : "models\\MMN",
+				"tensorboard" : {"log file dir" : "logs\\tensorboard\\MMN\\"},
+				"forecastInterval" : 0,
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 14, "timeSteps": 20, "layerUnits" : 256, "returnSequences" : true, "outputActivation" : "tanh"},
+					{"layerName" : "h-lstm1", "layerType" : "lstm", "timeSteps" : 5, "layerUnits" : 64, "returnSequences" : false, "outputActivation" : "tanh"},
+					{"layerName" : "drop1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hd1", "layerType" : "dense", "layerUnits" : 32, "outputActivation" : "tanh"},
+					{"layerName" : "drop2", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "output", "layerType" : "dense", "layerUnits": 2, "outputActivation" : "softmax"}
+					],
+				"training" : {
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"batchSize" : 16, "epochs" : 5, "validationSplit" : 0.1, "testSplit" : 0.2,
+					"shuffle" : false, "balanceClasses" : true,	"verbose" : 2,
+					"optimizer" : {"name" : "SGD", "learning_rate" : 0.001}, 
+					"compilationLoss" : "mse", "compilationMetrics" : ["mae"]
+				}
+				}
+			},
+			{
+			"iteration description" : "trials of optimizers, activations, loss functions",
+			"iteration parameters" : {
+				"iteration ID" : "MMN oal14",
+				"modelFileDir" : "models\\MMN",
+				"tensorboard" : {"log file dir" : "logs\\tensorboard\\MMN\\"},
+				"forecastInterval" : 0,
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 14, "timeSteps": 20, "layerUnits" : 256, "returnSequences" : true, "outputActivation" : "relu"},
+					{"layerName" : "h-lstm1", "layerType" : "lstm", "timeSteps" : 5, "layerUnits" : 64, "returnSequences" : false, "outputActivation" : "relu"},
+					{"layerName" : "drop1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hd1", "layerType" : "dense", "layerUnits" : 32, "outputActivation" : "relu"},
+					{"layerName" : "drop2", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "output", "layerType" : "dense", "layerUnits": 2, "outputActivation" : "softmax"}
+					],
+				"training" : {
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"batchSize" : 16, "epochs" : 5, "validationSplit" : 0.1, "testSplit" : 0.2,
+					"shuffle" : false, "balanceClasses" : true,	"verbose" : 2,
+					"optimizer" : {"name" : "SGD", "learning_rate" : 0.001}, 
+					"compilationLoss" : "mse", "compilationMetrics" : ["mae"]
+				}
+				}
+			},
+			{
+			"iteration description" : "trials of optimizers, activations, loss functions",
+			"iteration parameters" : {
+				"iteration ID" : "MMN oal112",
+				"modelFileDir" : "models\\MMN",
+				"tensorboard" : {"log file dir" : "logs\\tensorboard\\MMN\\"},
+				"forecastInterval" : 0,
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 14, "timeSteps": 20, "layerUnits" : 256, "returnSequences" : true, "outputActivation" : "tanh"},
+					{"layerName" : "h-lstm1", "layerType" : "lstm", "timeSteps" : 5, "layerUnits" : 256, "returnSequences" : false, "outputActivation" : "tanh"},
+					{"layerName" : "drop1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hd1", "layerType" : "dense", "layerUnits" : 64, "outputActivation" : "tanh"},
+					{"layerName" : "drop2", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hd2", "layerType" : "dense", "layerUnits" : 64, "outputActivation" : "tanh"},
+					{"layerName" : "drop3", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hd3", "layerType" : "dense", "layerUnits" : 46, "outputActivation" : "tanh"},
+					{"layerName" : "drop4", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "output", "layerType" : "dense", "layerUnits": 2, "outputActivation" : "softmax"}
+					],
+				"training" : {
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"batchSize" : 16, "epochs" : 10, "validationSplit" : 0.1, "testSplit" : 0.2,
+					"shuffle" : false, "balanceClasses" : true,	"verbose" : 2,
+					"optimizer" : {"name" : "SGD", "learning_rate" : 0.001}, 
+					"compilationLoss" : "mse", "compilationMetrics" : ["mae"]
+				}
+				}
+			},
+			{
+			"iteration description" : "trials of optimizers, activations, loss functions",
+			"iteration parameters" : {
+				"iteration ID" : "MMN oal114",
+				"modelFileDir" : "models\\MMN",
+				"tensorboard" : {"log file dir" : "logs\\tensorboard\\MMN\\"},
+				"forecastInterval" : 0,
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 14, "timeSteps": 20, "layerUnits" : 256, "returnSequences" : true, "outputActivation" : "relu"},
+					{"layerName" : "h-lstm1", "layerType" : "lstm", "timeSteps" : 5, "layerUnits" : 256, "returnSequences" : false, "outputActivation" : "relu"},
+					{"layerName" : "drop1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hd1", "layerType" : "dense", "layerUnits" : 64, "outputActivation" : "relu"},
+					{"layerName" : "drop2", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hd2", "layerType" : "dense", "layerUnits" : 64, "outputActivation" : "relu"},
+					{"layerName" : "drop3", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hd3", "layerType" : "dense", "layerUnits" : 46, "outputActivation" : "relu"},
+					{"layerName" : "drop4", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "output", "layerType" : "dense", "layerUnits": 2, "outputActivation" : "softmax"}
+					],
+				"training" : {
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"batchSize" : 16, "epochs" : 10, "validationSplit" : 0.1, "testSplit" : 0.2,
+					"shuffle" : false, "balanceClasses" : true,	"verbose" : 2,
+					"optimizer" : {"name" : "SGD", "learning_rate" : 0.001}, 
+					"compilationLoss" : "mse", "compilationMetrics" : ["mae"]
+				}
+				}
+			}
+		],
+		"miscellaneous training iterations =========================================================" : [
+			{
 			"iteration description" : "First multi model combination training",
 			"iteration parameters" : {
 				"iteration ID" : "MMN_TA_001",
@@ -290,23 +687,154 @@
 					"compilationLoss" : "categorical_crossentropy", "compilationMetrics" : ["categorical_crossentropy"]
 				}
 				}
+			},
+			{
+			"iteration description" : "trials of optimizers, activations, loss functions",
+			"iteration parameters" : {
+				"iteration ID" : "MMN oal01",
+				"modelFileDir" : "models\\MMN",
+				"tensorboard" : {"log file dir" : "logs\\tensorboard\\MMN\\"},
+				"forecastInterval" : 0,
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 14, "timeSteps": 20, "layerUnits" : 256, "returnSequences" : true, "outputActivation" : "tanh"},
+					{"layerName" : "h-lstm1", "layerType" : "lstm", "timeSteps" : 5, "layerUnits" : 64, "returnSequences" : false, "outputActivation" : "tanh"},
+					{"layerName" : "drop1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hd1", "layerType" : "dense", "layerUnits" : 32, "outputActivation" : "tanh"},
+					{"layerName" : "drop2", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "output", "layerType" : "dense", "layerUnits": 2, "outputActivation" : "softmax"}
+					],
+				"training" : {
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"batchSize" : 16, "epochs" : 5, "validationSplit" : 0.1, "testSplit" : 0.2,
+					"shuffle" : false, "balanceClasses" : true,	"verbose" : 2,
+					"optimizer" : {"name" : "adam", "learning_rate" : 0.001}, 
+					"compilationLoss" : "categorical_crossentropy", "compilationMetrics" : ["categorical_crossentropy"]
+				}
+				}
+			}
+		],
+		"abject failure training iterations ======================================================================" : [
+			{
+			"iteration description" : "trials of optimizers, activations, loss functions",
+			"iteration parameters" : {
+				"iteration ID" : "MMN oal02",
+				"modelFileDir" : "models\\MMN",
+				"tensorboard" : {"log file dir" : "logs\\tensorboard\\MMN\\"},
+				"forecastInterval" : 0,
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 14, "timeSteps": 20, "layerUnits" : 256, "returnSequences" : true, "outputActivation" : "tanh"},
+					{"layerName" : "h-lstm1", "layerType" : "lstm", "timeSteps" : 5, "layerUnits" : 64, "returnSequences" : false, "outputActivation" : "tanh"},
+					{"layerName" : "drop1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hd1", "layerType" : "dense", "layerUnits" : 32, "outputActivation" : "tanh"},
+					{"layerName" : "drop2", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "output", "layerType" : "dense", "layerUnits": 2, "outputActivation" : "softmax"}
+					],
+				"training" : {
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"batchSize" : 16, "epochs" : 5, "validationSplit" : 0.1, "testSplit" : 0.2,
+					"shuffle" : false, "balanceClasses" : true,	"verbose" : 2,
+					"optimizer" : {"name" : "SGD", "learning_rate" : 0.001}, 
+					"compilationLoss" : "categorical_crossentropy", "compilationMetrics" : ["categorical_crossentropy"]
+				}
+				}
+			},
+			{
+			"iteration description" : "trials of optimizers, activations, loss functions",
+			"iteration parameters" : {
+				"iteration ID" : "MMN oal03",
+				"modelFileDir" : "models\\MMN",
+				"tensorboard" : {"log file dir" : "logs\\tensorboard\\MMN\\"},
+				"forecastInterval" : 0,
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 14, "timeSteps": 20, "layerUnits" : 256, "returnSequences" : true, "outputActivation" : "relu"},
+					{"layerName" : "h-lstm1", "layerType" : "lstm", "timeSteps" : 5, "layerUnits" : 64, "returnSequences" : false, "outputActivation" : "relu"},
+					{"layerName" : "drop1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hd1", "layerType" : "dense", "layerUnits" : 32, "outputActivation" : "relu"},
+					{"layerName" : "drop2", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "output", "layerType" : "dense", "layerUnits": 2, "outputActivation" : "softmax"}
+					],
+				"training" : {
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"batchSize" : 16, "epochs" : 5, "validationSplit" : 0.1, "testSplit" : 0.2,
+					"shuffle" : false, "balanceClasses" : true,	"verbose" : 2,
+					"optimizer" : {"name" : "adam", "learning_rate" : 0.001}, 
+					"compilationLoss" : "categorical_crossentropy", "compilationMetrics" : ["categorical_crossentropy"]
+				}
+				}
+			},
+			{
+			"iteration description" : "trials of optimizers, activations, loss functions",
+			"iteration parameters" : {
+				"iteration ID" : "MMN oal04",
+				"modelFileDir" : "models\\MMN",
+				"tensorboard" : {"log file dir" : "logs\\tensorboard\\MMN\\"},
+				"forecastInterval" : 0,
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 14, "timeSteps": 20, "layerUnits" : 256, "returnSequences" : true, "outputActivation" : "relu"},
+					{"layerName" : "h-lstm1", "layerType" : "lstm", "timeSteps" : 5, "layerUnits" : 64, "returnSequences" : false, "outputActivation" : "relu"},
+					{"layerName" : "drop1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hd1", "layerType" : "dense", "layerUnits" : 32, "outputActivation" : "relu"},
+					{"layerName" : "drop2", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "output", "layerType" : "dense", "layerUnits": 2, "outputActivation" : "softmax"}
+					],
+				"training" : {
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"batchSize" : 16, "epochs" : 5, "validationSplit" : 0.1, "testSplit" : 0.2,
+					"shuffle" : false, "balanceClasses" : true,	"verbose" : 2,
+					"optimizer" : {"name" : "SGD", "learning_rate" : 0.001}, 
+					"compilationLoss" : "categorical_crossentropy", "compilationMetrics" : ["categorical_crossentropy"]
+				}
+				}
+			},
+			{
+			"iteration description" : "trials of optimizers, activations, loss functions",
+			"iteration parameters" : {
+				"iteration ID" : "MMN oal11",
+				"modelFileDir" : "models\\MMN",
+				"tensorboard" : {"log file dir" : "logs\\tensorboard\\MMN\\"},
+				"forecastInterval" : 0,
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 14, "timeSteps": 20, "layerUnits" : 256, "returnSequences" : true, "outputActivation" : "tanh"},
+					{"layerName" : "h-lstm1", "layerType" : "lstm", "timeSteps" : 5, "layerUnits" : 64, "returnSequences" : false, "outputActivation" : "tanh"},
+					{"layerName" : "drop1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hd1", "layerType" : "dense", "layerUnits" : 32, "outputActivation" : "tanh"},
+					{"layerName" : "drop2", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "output", "layerType" : "dense", "layerUnits": 2, "outputActivation" : "softmax"}
+					],
+				"training" : {
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"batchSize" : 16, "epochs" : 5, "validationSplit" : 0.1, "testSplit" : 0.2,
+					"shuffle" : false, "balanceClasses" : true,	"verbose" : 2,
+					"optimizer" : {"name" : "adam", "learning_rate" : 0.001}, 
+					"compilationLoss" : "mse", "compilationMetrics" : ["mae"]
+				}
+				}
+			},
+			{
+			"iteration description" : "trials of optimizers, activations, loss functions",
+			"iteration parameters" : {
+				"iteration ID" : "MMN oal13",
+				"modelFileDir" : "models\\MMN",
+				"tensorboard" : {"log file dir" : "logs\\tensorboard\\MMN\\"},
+				"forecastInterval" : 0,
+				"modelLayers" : [
+    				{"layerName" : "input", "layerType" : "lstm", "featureCount": 14, "timeSteps": 20, "layerUnits" : 256, "returnSequences" : true, "outputActivation" : "relu"},
+					{"layerName" : "h-lstm1", "layerType" : "lstm", "timeSteps" : 5, "layerUnits" : 64, "returnSequences" : false, "outputActivation" : "relu"},
+					{"layerName" : "drop1", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "hd1", "layerType" : "dense", "layerUnits" : 32, "outputActivation" : "relu"},
+					{"layerName" : "drop2", "layerType" : "dropout", "dropoutRate" : 0.2},
+    				{"layerName" : "output", "layerType" : "dense", "layerUnits": 2, "outputActivation" : "softmax"}
+					],
+				"training" : {
+					"lossWeights" : [1.0], "denseRegularation" : false, "regularationValue" : 0.0, "useBias" : true, 
+					"batchSize" : 16, "epochs" : 5, "validationSplit" : 0.1, "testSplit" : 0.2,
+					"shuffle" : false, "balanceClasses" : true,	"verbose" : 2,
+					"optimizer" : {"name" : "adam", "learning_rate" : 0.001}, 
+					"compilationLoss" : "mse", "compilationMetrics" : ["mae"]
+				}
+				}
 			}
 		]
 	}
-	},
-	{
-	"processNodeName" : "stop",
-	"requiredFields" : {"processType" : "stop", "inputFlows" : [""], "outputFlow" : ""},
-	"conditionalFields" : {}
-	}
-],
-"comment - processNodes end" : "process node definitions end -------------------------------------------------------------------------",
-"comment end of specification" : "----------------------------------------------------------------------------------------------------",
-"comment trial training iterations" : {
-	"comment indent 1" : {
-		"comment most successful" : "TBD",
-		"training iterations" : [		]
-	}
 }
-		
 }
