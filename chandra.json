@@ -1,7 +1,4 @@
 {
-
-
-
 "logFile" : "\\logs\\chandra_log.txt",
 "analysislogFile" : "d:\\brian\\AI-Projects\\logs\\AnalyzeSampleevaluationlog.txt",
 "analysisoutputFile" : "d:\\brian\\AI-Projects\\logs\\AnalysisSampleevaluation.txt",
@@ -59,4 +56,5 @@
 	"2" : "\\chandra\\processingNets\\denseWaveForm.json",
 	"3" : "\\chandra\\processingNets\\conv1DWaveForm.json"
 },
-"end of file" : ""}
+"end of file" : ""
+}
